@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "project-sentinel-v2"
+  },
+  "targets": {
+    "backend": {
+      "type": "app_sail",
+      "source": "backend"
+    },
+    "frontend": {
+      "type": "web_client",
+      "source": "frontend/dist"
+    }
+  }
+}

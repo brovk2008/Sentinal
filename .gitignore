@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# System & IDE
+.DS_Store
+.idea/
+.vscode/
+
+# SQLite & Data builds
+backend/data/*.db
+backend/data/*.npy
+backend/data/chunk_metadata.json
+backend/models/ml/saved/
+output/
+*_log.txt
+*.log
+.gemini/
+

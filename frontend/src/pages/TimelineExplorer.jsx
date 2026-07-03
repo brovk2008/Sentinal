@@ -1,0 +1,320 @@
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import Badge from '../components/shared/Badge'
+import LoadingPulse from '../components/shared/LoadingPulse'
+import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram } from '../api'
+
+export default function TimelineExplorer() {
+  const { caseId } = useParams()
+  const navigate = useNavigate()
+  const [cases, setCases] = useState([])
+  const [selectedCase, setSelectedCase] = useState(null)
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+
+  // Mermaid code state
+  const [flowchartCode, setFlowchartCode] = useState('')
+  const [enhancing, setEnhancing] = useState(false)
+
+  // Load case list
+  useEffect(() => {
+    setLoading(true)
+    fetchCases({ page, limit: 30 }).then(res => {
+      const caseList = res.cases || []
+      setCases(caseList)
+      setTotal(res.total || 0)
+      setLoading(false)
+      // Auto-select first case if no caseId in URL
+      if (!caseId && caseList.length > 0) {
+        navigate(`/timeline/${caseList[0].CaseMasterID}`, { replace: true })
+      }
+    }).catch(() => setLoading(false))
+  }, [page])
+
+  // Load case detail if caseId in URL
+  useEffect(() => {
+    if (caseId) {
+      setDetailLoading(true)
+      fetchCaseDetail(caseId).then(data => {
+        setSelectedCase(data)
+        setDetailLoading(false)
+        
+        // Generate base flowchart
+        const caseDetail = data.case
+        if (caseDetail) {
+          const complainant = data.complainants?.[0]?.ComplainantName || 'Unknown Complainant'
+          const baseCode = `graph TD
+  C["Complainant: ${complainant}"] --> FIR["FIR Registered"]
+  FIR --> PS["Station: ${caseDetail.StationName || 'Police Station'}"]
+  PS --> INV["Investigation"]
+`
+          setFlowchartCode(baseCode)
+        }
+      }).catch(() => setDetailLoading(false))
+    }
+  }, [caseId])
+
+  // Render mermaid when code changes
+  useEffect(() => {
+    if (!window.mermaid || !flowchartCode) return
+    const id = 'mermaid-diagram-' + Date.now()
+    const container = document.getElementById('mermaid-container')
+    if (!container) return
+    try {
+      window.mermaid.render(id, flowchartCode).then(({ svg }) => {
+        container.innerHTML = svg
+      }).catch(e => {
+        console.error('Mermaid render error:', e)
+        container.innerHTML = `<pre style="font-size:10px;color:#5a5855">${flowchartCode}</pre>`
+      })
+    } catch (e) {
+      console.error('Mermaid sync error:', e)
+    }
+  }, [flowchartCode])
+
+  // AI enhance diagram click
+  const handleEnhance = async () => {
+    if (!caseId || !flowchartCode) return
+    setEnhancing(true)
+    try {
+      const res = await enhanceDiagram(flowchartCode, caseId)
+      if (res && res.enhanced_mermaid) {
+        setFlowchartCode(res.enhanced_mermaid)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    setEnhancing(false)
+  }
+
+  // Search
+  useEffect(() => {
+    if (search.length < 2) return
+    const timer = setTimeout(() => {
+      searchCases(search).then(setCases).catch(() => {})
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const selectCase = (id) => {
+    navigate(`/timeline/${id}`)
+  }
+
+  const caseDetail = selectedCase?.case
+
+  // Build timeline events from case detail
+  const events = []
+  if (caseDetail) {
+    events.push({
+      date: caseDetail.CrimeRegisteredDate,
+      title: 'FIR Registered',
+      desc: `Crime No: ${caseDetail.CrimeNo}`,
+      color: '#e05252',
+    })
+    if (caseDetail.InfoReceivedPSDate) {
+      events.push({
+        date: caseDetail.InfoReceivedPSDate,
+        title: 'Information Received at PS',
+        desc: `Station: ${caseDetail.StationName}`,
+        color: '#e0a832',
+      })
+    }
+    selectedCase?.arrests?.forEach(a => {
+      events.push({
+        date: a.ArrestSurrenderDate,
+        title: a.ArrestSurrenderTypeID === 1 ? 'Accused Arrested' : 'Accused Surrendered',
+        desc: `Arrest ID: ${a.ArrestSurrenderID}`,
+        color: '#4a9ede',
+      })
+    })
+    selectedCase?.chargesheets?.forEach(cs => {
+      events.push({
+        date: cs.csdate,
+        title: 'Chargesheet Filed',
+        desc: `Type: ${cs.cstype === 'A' ? 'Chargesheet' : cs.cstype === 'B' ? 'False Case' : 'Undetected'}`,
+        color: '#52b788',
+      })
+    })
+    events.sort((a, b) => a.date?.localeCompare(b.date))
+  }
+
+  return (
+    <div style={{ height: '100%', display: 'flex' }}>
+      {/* Left panel — Case list */}
+      <div style={{
+        width: 300, borderRight: '1px solid var(--border-subtle)',
+        display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)',
+      }}>
+        <div style={{ padding: 12 }}>
+          <input
+            className="input"
+            placeholder="Search cases..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ fontSize: 12 }}
+          />
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {loading ? <LoadingPulse height={200} /> : cases.map(c => (
+            <div
+              key={c.CaseMasterID}
+              onClick={() => selectCase(c.CaseMasterID)}
+              style={{
+                padding: '10px 12px',
+                borderBottom: '1px solid var(--border-subtle)',
+                cursor: 'pointer',
+                background: String(c.CaseMasterID) === caseId ? 'rgba(200,129,74,0.08)' : 'transparent',
+                borderLeft: String(c.CaseMasterID) === caseId ? '2px solid var(--copper-400)' : '2px solid transparent',
+              }}
+            >
+              <div className="mono" style={{ fontSize: 11, marginBottom: 3 }}>
+                {c.CrimeNo}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Badge text={c.CaseStatusName} />
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{c.CrimeGroupName}</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
+                {c.DistrictName} · {c.CrimeRegisteredDate}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        <div style={{
+          padding: '8px 12px', borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <button className="btn btn-sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Page {page} · {total.toLocaleString()} cases</span>
+          <button className="btn btn-sm" onClick={() => setPage(p => p + 1)}>Next →</button>
+        </div>
+      </div>
+
+      {/* Center — Timeline */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        {!caseId ? (
+          <div style={{
+            height: '100%', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <div style={{ fontSize: 32, opacity: 0.2 }}>◈</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+              Select a case from the list to view timeline
+            </div>
+          </div>
+        ) : detailLoading ? (
+          <LoadingPulse text="Loading case details..." />
+        ) : caseDetail ? (
+          <div className="fade-in">
+            {/* Case header */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span className="mono" style={{ fontSize: 16 }}>{caseDetail.CrimeNo}</span>
+                <Badge text={caseDetail.CaseStatusName} />
+              </div>
+              <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{caseDetail.CrimeGroupName}</h2>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {caseDetail.DistrictName} · {caseDetail.StationName} · IO: {caseDetail.OfficerName}
+              </div>
+            </div>
+
+            {/* Brief Facts */}
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div className="section-label">BRIEF FACTS</div>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+                {caseDetail.BriefFacts}
+              </p>
+            </div>
+
+            {/* Interactive Flowchart (Mermaid) (7D) */}
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div className="section-label" style={{ marginBottom: 0 }}>Investigation Flowchart</div>
+                <button
+                  className="btn btn-sm btn-copper"
+                  onClick={handleEnhance}
+                  disabled={enhancing}
+                >
+                  {enhancing ? 'Enhancing...' : '✦ AI Enhance'}
+                </button>
+              </div>
+              
+              <div style={{
+                background: 'var(--bg-secondary)', borderRadius: 6,
+                border: '1px solid var(--border-subtle)', padding: 16,
+                display: 'flex', justifyContent: 'center', overflowX: 'auto',
+                minHeight: 120,
+              }}>
+                <div id="mermaid-container" style={{ width: '100%', textAlign: 'center' }} />
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="section-label">CASE TIMELINE</div>
+            <div style={{ position: 'relative', paddingLeft: 24, marginBottom: 24 }}>
+              <div style={{
+                position: 'absolute', left: 7, top: 0, bottom: 0,
+                width: 2, background: 'var(--border-subtle)',
+              }} />
+              {events.map((ev, i) => (
+                <div key={i} style={{ position: 'relative', paddingBottom: 20 }}>
+                  <div style={{
+                    position: 'absolute', left: -20, top: 3,
+                    width: 12, height: 12, borderRadius: '50%',
+                    background: ev.color, border: '2px solid var(--bg-primary)',
+                    zIndex: 1,
+                  }} />
+                  <div className="mono" style={{ fontSize: 10, marginBottom: 2 }}>{ev.date}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{ev.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Accused & Victims */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="card">
+                <div className="section-label">ACCUSED ({selectedCase?.accused?.length || 0})</div>
+                {selectedCase?.accused?.map((a, i) => (
+                  <div key={i} style={{ padding: '4px 0', fontSize: 12, display: 'flex', gap: 8 }}>
+                    <span className="mono">{a.PersonID}</span>
+                    <span>{a.AccusedName}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>Age {a.AgeYear}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div className="section-label">VICTIMS ({selectedCase?.victims?.length || 0})</div>
+                {selectedCase?.victims?.map((v, i) => (
+                  <div key={i} style={{ padding: '4px 0', fontSize: 12 }}>
+                    {v.VictimName} <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>Age {v.AgeYear}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sections */}
+            {selectedCase?.sections?.length > 0 && (
+              <div className="card" style={{ marginTop: 12 }}>
+                <div className="section-label">SECTIONS INVOKED</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {selectedCase.sections.map((s, i) => (
+                    <span key={i} className="badge badge-copper">
+                      {s.ShortName} {s.SectionID}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}

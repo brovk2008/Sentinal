@@ -1,0 +1,59 @@
+:root {
+  /* Backgrounds */
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #0f0f1a;
+  --bg-card: #13131f;
+  --bg-card-hover: #1a1a28;
+  --bg-overlay: rgba(10, 10, 15, 0.95);
+
+  /* Copper accent system */
+  --copper-100: #f5d4b8;
+  --copper-200: #e8b48a;
+  --copper-300: #d9935c;
+  --copper-400: #c8814a;
+  --copper-500: #a8692d;
+  --copper-600: #8a5220;
+
+  /* Status colors */
+  --status-danger: #e05252;
+  --status-warning: #e0a832;
+  --status-success: #52b788;
+  --status-info: #4a9ede;
+  --status-neutral: #6b7280;
+
+  /* Text */
+  --text-primary: #e8e6e0;
+  --text-secondary: #9a9890;
+  --text-muted: #5a5855;
+  --text-copper: #c8814a;
+
+  /* Borders */
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong: rgba(200,129,74,0.30);
+
+  /* Fonts */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Spacing */
+  --sidebar-width: 220px;
+  --topbar-height: 52px;
+  --card-radius: 10px;
+  --card-padding: 16px;
+
+  /* Node colors for network graph */
+  --node-person: #7f77dd;
+  --node-phone: #4a9ede;
+  --node-bank: #52b788;
+  --node-vehicle: #e0a832;
+  --node-case: #e05252;
+
+  /* Chart colors */
+  --chart-1: #7f77dd;
+  --chart-2: #4a9ede;
+  --chart-3: #e05252;
+  --chart-4: #c8814a;
+  --chart-5: #52b788;
+  --chart-6: #6b7280;
+}
