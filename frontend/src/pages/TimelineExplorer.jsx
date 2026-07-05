@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram } from '../api'
+import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram, downloadCaseReport } from '../api'
+import CaseActionPanel from '../components/timeline/CaseActionPanel'
+import CaseCompareModal from '../components/timeline/CaseCompareModal'
 
 export default function TimelineExplorer() {
   const { caseId } = useParams()
@@ -14,10 +16,25 @@ export default function TimelineExplorer() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [showActionPanel, setShowActionPanel] = useState(false)
+  const [compareIds, setCompareIds] = useState([])
+  const [showCompareModal, setShowCompareModal] = useState(false)
 
   // Mermaid code state
   const [flowchartCode, setFlowchartCode] = useState('')
   const [enhancing, setEnhancing] = useState(false)
+  const [reportLoading, setReportLoading] = useState(false)
+
+  const handleDownloadReport = async () => {
+    if (!caseId || !caseDetail?.CrimeNo) return
+    setReportLoading(true)
+    try {
+      await downloadCaseReport(caseId, caseDetail.CrimeNo)
+    } catch (e) {
+      console.error(e)
+    }
+    setReportLoading(false)
+  }
 
   // Load case list
   useEffect(() => {
@@ -148,7 +165,7 @@ export default function TimelineExplorer() {
         width: 300, borderRight: '1px solid var(--border-subtle)',
         display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)',
       }}>
-        <div style={{ padding: 12 }}>
+        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
             className="input"
             placeholder="Search cases..."
@@ -156,30 +173,66 @@ export default function TimelineExplorer() {
             onChange={e => setSearch(e.target.value)}
             style={{ fontSize: 12 }}
           />
+          {compareIds.length >= 2 && (
+            <button
+              className="btn btn-copper btn-sm animate-pulse"
+              onClick={() => setShowCompareModal(true)}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              📊 Compare {compareIds.length} Cases
+            </button>
+          )}
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {loading ? <LoadingPulse height={200} /> : cases.map(c => (
             <div
               key={c.CaseMasterID}
-              onClick={() => selectCase(c.CaseMasterID)}
               style={{
                 padding: '10px 12px',
                 borderBottom: '1px solid var(--border-subtle)',
                 cursor: 'pointer',
                 background: String(c.CaseMasterID) === caseId ? 'rgba(200,129,74,0.08)' : 'transparent',
                 borderLeft: String(c.CaseMasterID) === caseId ? '2px solid var(--copper-400)' : '2px solid transparent',
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center'
               }}
             >
-              <div className="mono" style={{ fontSize: 11, marginBottom: 3 }}>
-                {c.CrimeNo}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Badge text={c.CaseStatusName} />
-                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{c.CrimeGroupName}</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
-                {c.DistrictName} · {c.CrimeRegisteredDate}
+              <input
+                type="checkbox"
+                checked={compareIds.includes(c.CaseMasterID)}
+                onChange={(e) => {
+                  e.stopPropagation()
+                  const isChecked = e.target.checked
+                  setCompareIds(prev => {
+                    if (isChecked) {
+                      if (prev.length >= 3) {
+                        alert("You can compare up to 3 cases at a time.")
+                        return prev
+                      }
+                      return [...prev, c.CaseMasterID]
+                    } else {
+                      return prev.filter(id => id !== c.CaseMasterID)
+                    }
+                  })
+                }}
+                style={{
+                  accentColor: 'var(--copper-500)',
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ flex: 1 }} onClick={() => selectCase(c.CaseMasterID)}>
+                <div className="mono" style={{ fontSize: 11, marginBottom: 3 }}>
+                  {c.CrimeNo}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Badge text={c.CaseStatusName} />
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{c.CrimeGroupName}</span>
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
+                  {c.DistrictName} · {c.CrimeRegisteredDate}
+                </div>
               </div>
             </div>
           ))}
@@ -213,14 +266,33 @@ export default function TimelineExplorer() {
         ) : caseDetail ? (
           <div className="fade-in">
             {/* Case header */}
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <span className="mono" style={{ fontSize: 16 }}>{caseDetail.CrimeNo}</span>
-                <Badge text={caseDetail.CaseStatusName} />
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <span className="mono" style={{ fontSize: 16 }}>{caseDetail.CrimeNo}</span>
+                  <Badge text={caseDetail.CaseStatusName} />
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{caseDetail.CrimeGroupName}</h2>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  {caseDetail.DistrictName} · {caseDetail.StationName} · IO: {caseDetail.OfficerName}
+                </div>
               </div>
-              <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{caseDetail.CrimeGroupName}</h2>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                {caseDetail.DistrictName} · {caseDetail.StationName} · IO: {caseDetail.OfficerName}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="btn btn-sm"
+                  disabled={reportLoading}
+                  onClick={handleDownloadReport}
+                  style={{ borderColor: 'var(--copper-400)', background: 'transparent', color: 'var(--copper-200)' }}
+                >
+                  {reportLoading ? 'Generating...' : '📄 Generate Report'}
+                </button>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => setShowActionPanel(true)}
+                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
+                >
+                  ⚙ Actions
+                </button>
               </div>
             </div>
 
@@ -282,10 +354,15 @@ export default function TimelineExplorer() {
               <div className="card">
                 <div className="section-label">ACCUSED ({selectedCase?.accused?.length || 0})</div>
                 {selectedCase?.accused?.map((a, i) => (
-                  <div key={i} style={{ padding: '4px 0', fontSize: 12, display: 'flex', gap: 8 }}>
+                  <div key={i} style={{ padding: '4px 0', fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
                     <span className="mono">{a.PersonID}</span>
                     <span>{a.AccusedName}</span>
                     <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>Age {a.AgeYear}</span>
+                    {!!a.is_priority && (
+                      <span className="badge badge-danger" style={{ fontSize: 8, padding: '2px 4px', lineHeight: 1 }}>
+                        PRIORITY
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -315,6 +392,29 @@ export default function TimelineExplorer() {
           </div>
         ) : null}
       </div>
+
+      {/* Case Action Slide-in Panel */}
+      {showActionPanel && (
+        <CaseActionPanel
+          caseId={caseId}
+          currentStatusId={caseDetail?.CaseStatusID}
+          accused={selectedCase?.accused || []}
+          onClose={() => setShowActionPanel(false)}
+          onSaveSuccess={() => {
+            fetchCaseDetail(caseId).then(data => {
+              setSelectedCase(data)
+            })
+          }}
+        />
+      )}
+
+      {/* Case Comparison Modal */}
+      {showCompareModal && (
+        <CaseCompareModal
+          caseIds={compareIds}
+          onClose={() => setShowCompareModal(false)}
+        />
+      )}
     </div>
   )
 }

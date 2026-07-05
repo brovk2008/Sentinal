@@ -24,6 +24,7 @@ async function request(endpoint, options = {}) {
 
 // ── Analytics ──
 export const fetchKpis = () => request('/api/v1/analytics/kpis');
+export const fetchKpiSparklines = () => request('/api/v1/analytics/kpi-sparklines');
 export const fetchCrimeDistribution = () => request('/api/v1/analytics/crime-distribution');
 export const fetchTopOffenders = (limit = 5) => request(`/api/v1/analytics/top-offenders?limit=${limit}`);
 export const fetchDistrictComparison = (y1 = 2023, y2 = 2024) =>
@@ -40,6 +41,7 @@ export const fetchHotspots = () => request('/api/v1/heatmap/hotspots');
 export const fetchCasesNear = (lat, lng, radius = 2) =>
   request(`/api/v1/heatmap/cases-near?lat=${lat}&lng=${lng}&radius_km=${radius}`);
 export const fetchDistrictCenters = () => request('/api/v1/heatmap/district-centers');
+export const fetchHeatmapTimelapse = () => request('/api/v1/heatmap/timelapse');
 
 // ── Network ──
 export const fetchNetworkGraph = (limit = 200, syndicateId) => {
@@ -98,3 +100,105 @@ export const enhanceDiagram = (mermaidSource, caseId) =>
 
 // ── AI Forecast ──
 export const fetchForecastRisk = () => request('/api/v1/ai/forecast/top-risk');
+
+// ── Case Actions ──
+export const updateCaseStatus = (caseId, statusId) =>
+  request('/api/v1/actions/update-case-status', {
+    method: 'POST',
+    body: JSON.stringify({ case_id: caseId, status_id: statusId })
+  });
+
+export const addInvestigationNote = (caseId, note, officerId) =>
+  request('/api/v1/actions/add-investigation-note', {
+    method: 'POST',
+    body: JSON.stringify({ case_id: caseId, note, officer_id: officerId })
+  });
+
+export const flagAccused = (accusedId, isPriority) =>
+  request('/api/v1/actions/flag-accused', {
+    method: 'POST',
+    body: JSON.stringify({ accused_id: accusedId, is_priority: isPriority })
+  });
+
+export const linkSyndicate = (caseId, syndicateId) =>
+  request('/api/v1/actions/link-syndicate', {
+    method: 'POST',
+    body: JSON.stringify({ case_id: caseId, syndicate_id: syndicateId })
+  });
+
+export const fetchInvestigationNotes = (caseId) =>
+  request(`/api/v1/actions/investigation-notes/${caseId}`);
+
+// ── Reports ──
+export const downloadCaseReport = async (caseId, crimeNo) => {
+  const url = `${BASE_URL}/api/v1/reports/case/${caseId}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to download PDF report");
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `Sentinel_Report_${crimeNo.replace(/\//g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (err) {
+    console.error("Error downloading report:", err);
+    throw err;
+  }
+};
+
+export const downloadDistrictReport = async (districtName) => {
+  const url = `${BASE_URL}/api/v1/reports/district/${encodeURIComponent(districtName)}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to download district PDF report");
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `District_Report_${districtName}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (err) {
+    console.error("Error downloading district report:", err);
+    throw err;
+  }
+};
+
+export const compareCases = (caseIds) =>
+  request('/api/v1/cases/compare', {
+    method: 'POST',
+    body: JSON.stringify({ case_ids: caseIds })
+  });
+
+// ── Predictive Intelligence ──
+export const fetchReoffendRisk = (accusedId) =>
+  request(`/api/v1/predict/reoffend-risk/${accusedId}`);
+
+export const fetchPredictiveHotspots = (daysAhead = 7, districtId = null) => {
+  let url = `/api/v1/predict/hotspots?days_ahead=${daysAhead}`;
+  if (districtId) url += `&district_id=${districtId}`;
+  return request(url);
+};
+
+export const fetchTemporalPatterns = (districtId = null, crimeHeadId = null) => {
+  const params = new URLSearchParams();
+  if (districtId) params.append('district_id', districtId);
+  if (crimeHeadId) params.append('crime_head_id', crimeHeadId);
+  return request(`/api/v1/predict/temporal-patterns?${params.toString()}`);
+};
+
+export const fetchCaseResolution = (caseId) =>
+  request(`/api/v1/predict/case-resolution?case_id=${caseId}`, {
+    method: 'POST'
+  });
+
+export const fetchLiveRiskScore = () =>
+  request('/api/v1/predict/live-risk-score');
+
+

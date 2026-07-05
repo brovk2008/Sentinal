@@ -1,13 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai
+from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict
+from routers.predict import load_models as load_predict_models
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — load models and embeddings at startup."""
     print("Project Sentinel v2 — Starting up...")
+    load_predict_models()
     yield
     print("Project Sentinel v2 — Shutting down...")
 
@@ -38,6 +40,9 @@ app.include_router(cases.router, prefix="/api/v1/cases", tags=["Cases"])
 app.include_router(financial.router, prefix="/api/v1/financial", tags=["Financial"])
 app.include_router(cdr.router, prefix="/api/v1/cdr", tags=["CDR"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI"])
+app.include_router(actions.router, prefix="/api/v1/actions", tags=["Actions"])
+app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
+app.include_router(predict.router, prefix="/api/v1/predict", tags=["Prediction"])
 
 
 @app.get("/health")

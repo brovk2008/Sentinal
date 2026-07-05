@@ -11,8 +11,10 @@ export default function Topbar() {
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [showSearchDropdown, setShowSearchDropdown] = useState(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const dropdownRef = useRef(null)
   const searchRef = useRef(null)
+  const userRef = useRef(null)
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000)
@@ -31,6 +33,9 @@ export default function Topbar() {
       }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchDropdown(false)
+      }
+      if (userRef.current && !userRef.current.contains(event.target)) {
+        setShowUserDropdown(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -224,15 +229,105 @@ export default function Topbar() {
           {time.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div>
 
-        {/* User avatar */}
-        <div style={{
-          width: 30, height: 30,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--copper-500), var(--copper-400))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 600, color: 'white',
-        }}>
-          SP
+        {/* Demo Toggle Button */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('toggle-demo-mode'))}
+          style={{
+            padding: '6px 10px',
+            borderRadius: 6,
+            border: '1px solid var(--copper-400)',
+            background: 'rgba(200, 129, 74, 0.1)',
+            color: 'var(--copper-200)',
+            fontSize: 10,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            outline: 'none',
+            fontFamily: 'var(--font-sans)',
+            transition: 'opacity 0.2s'
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          ▶ DEMO
+        </button>
+
+        {/* User profile with dropdown */}
+        <div ref={userRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', fontSize: 11 }}>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>ACP Arjun R.</span>
+            <span style={{ color: 'var(--text-muted)' }}>Bengaluru City</span>
+          </div>
+          <div
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            style={{
+              width: 32, height: 32,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--copper-500), var(--copper-400))',
+              display: 'flex', alignItems: 'center', justify: 'center',
+              fontSize: 12, fontWeight: 600, color: 'white',
+              cursor: 'pointer',
+              userSelect: 'none',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            AR
+          </div>
+
+          {showUserDropdown && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0,
+              width: 140, background: 'var(--bg-card)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 6, marginTop: 8, zIndex: 1000,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <button
+                style={{
+                  padding: '8px 12px', background: 'none', border: 'none',
+                  color: 'var(--text-primary)', fontSize: 11, cursor: 'pointer',
+                  textAlign: 'left', outline: 'none'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                View Profile
+              </button>
+              <button
+                style={{
+                  padding: '8px 12px', background: 'none', border: 'none',
+                  color: 'var(--text-primary)', fontSize: 11, cursor: 'pointer',
+                  textAlign: 'left', outline: 'none'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                My Cases
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('sentinel_token')
+                  navigate('/login')
+                }}
+                style={{
+                  padding: '8px 12px', background: 'none', border: 'none',
+                  color: 'var(--status-danger)', fontSize: 11, cursor: 'pointer',
+                  textAlign: 'left', borderTop: '1px solid var(--border-subtle)',
+                  outline: 'none'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -1,7 +1,8 @@
-"""Alerts router — crime spike and anomaly alerts."""
 from fastapi import APIRouter, Query
 from database import query
 from datetime import datetime
+import os
+import httpx
 
 router = APIRouter()
 
@@ -98,3 +99,58 @@ async def alert_stats():
         by_type[a["type"]] = by_type.get(a["type"], 0) + 1
         by_severity[a["severity"]] = by_severity.get(a["severity"], 0) + 1
     return {"total": len(_alerts), "by_type": by_type, "by_severity": by_severity}
+
+
+async def push_to_catalyst_signals(alert: dict):
+    url = os.getenv("CATALYST_SIGNALS_URL")
+    key = os.getenv("CATALYST_SIGNALS_KEY")
+    if url and key:
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    url,
+                    headers={"Authorization": f"Bearer {key}"},
+                    json=alert,
+                    timeout=5
+                )
+        except Exception as e:
+            print(f"[Catalyst Signals] Pushing alert failed: {e}")
+
+
+@router.post("/cron/run-anomaly-scan")
+async def run_anomaly_scan():
+    global _alert_id, _alerts
+    _generate_initial_alerts()
+    
+    txns = query("""
+        SELECT txn_id, sender_name, receiver_name, amount, txn_date, linked_case_id
+        FROM financial_transactions
+        WHERE amount > 500000
+        LIMIT 10
+    """)
+    
+    new_alerts_count = 0
+    existing_titles = set(a['title'] for a in _alerts)
+    
+    for txn in txns:
+        title = f"CRITICAL TRANSACTION: Rs.{txn['amount']:,.0f}"
+        if title not in existing_titles:
+            _alert_id += 1
+            alert = {
+                "id": _alert_id,
+                "type": "SUSPICIOUS_TRANSFER",
+                "title": title,
+                "description": f"Large transfer: {txn['sender_name']} to {txn['receiver_name']}",
+                "case_id": txn.get("linked_case_id"),
+                "severity": "critical",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            _alerts.insert(0, alert)
+            new_alerts_count += 1
+            await push_to_catalyst_signals(alert)
+            
+    return {
+        "status": "success",
+        "scanned_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "new_alerts_detected": new_alerts_count
+    }

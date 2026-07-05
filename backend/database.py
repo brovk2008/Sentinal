@@ -35,3 +35,12 @@ def query_scalar(sql: str, params: tuple = ()):
         cursor = conn.execute(sql, params)
         row = cursor.fetchone()
         return row[0] if row else None
+
+
+def execute(sql: str, params: tuple = ()) -> int:
+    """Execute a write/update query and return the last row ID (if INSERT) or rowcount."""
+    with get_db() as conn:
+        cursor = conn.execute(sql, params)
+        conn.commit()
+        return cursor.lastrowid if cursor.lastrowid else cursor.rowcount
+

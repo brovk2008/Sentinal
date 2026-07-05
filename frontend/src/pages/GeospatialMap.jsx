@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from 'react-leaflet'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
-import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases } from '../api'
+import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases, downloadDistrictReport, fetchHeatmapTimelapse } from '../api'
+import PredictiveLayer from '../components/map/PredictiveLayer'
 import 'leaflet/dist/leaflet.css'
 
 // Karnataka bounds
@@ -168,6 +169,67 @@ export default function GeospatialMap() {
   // Case pin bottom sheet state (7H)
   const [selectedCasePin, setSelectedCasePin] = useState(null)
 
+  const [selectedDistrict, setSelectedDistrict] = useState('')
+  const [districtReportLoading, setDistrictReportLoading] = useState(false)
+
+  const handleDistrictReportDownload = async () => {
+    if (!selectedDistrict) return
+    setDistrictReportLoading(true)
+    try {
+      await downloadDistrictReport(selectedDistrict)
+    } catch (e) {
+      console.error(e)
+    }
+    setDistrictReportLoading(false)
+  }
+
+  // Prediction Mode States
+  const [predictionMode, setPredictionMode] = useState(false)
+  const [predictionDays, setPredictionDays] = useState(7)
+  const [predictionRiskFilter, setPredictionRiskFilter] = useState('all')
+
+  // Timelapse States
+  const [isTimelapseActive, setIsTimelapseActive] = useState(false)
+  const [timelapseFrames, setTimelapseFrames] = useState([])
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1000) // Default 1s per frame
+  const [isTimelapsePlaying, setIsTimelapsePlaying] = useState(false)
+
+  const startTimelapse = async () => {
+    if (timelapseFrames.length === 0) {
+      setLoading(true)
+      try {
+        const res = await fetchHeatmapTimelapse()
+        setTimelapseFrames(res.frames || [])
+        setCurrentFrameIndex(0)
+        setIsTimelapseActive(true)
+        setIsTimelapsePlaying(true)
+      } catch (e) {
+        console.error("Failed to load timelapse", e)
+      }
+      setLoading(false)
+    } else {
+      setCurrentFrameIndex(0)
+      setIsTimelapseActive(true)
+      setIsTimelapsePlaying(true)
+    }
+  }
+
+  useEffect(() => {
+    if (!isTimelapseActive || !isTimelapsePlaying || timelapseFrames.length === 0) return
+
+    const interval = setInterval(() => {
+      setCurrentFrameIndex(prev => {
+        if (prev >= timelapseFrames.length - 1) {
+          return 0
+        }
+        return prev + 1
+      })
+    }, playbackSpeed)
+
+    return () => clearInterval(interval)
+  }, [isTimelapseActive, isTimelapsePlaying, timelapseFrames, playbackSpeed])
+
   const loadData = () => {
     setLoading(true)
     const params = {}
@@ -192,6 +254,10 @@ export default function GeospatialMap() {
 
   useEffect(loadData, [filters.year, filters.crime_group])
 
+  const activePoints = (isTimelapseActive && timelapseFrames[currentFrameIndex])
+    ? timelapseFrames[currentFrameIndex].points
+    : points
+
   return (
     <div style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
       {/* Filters panel */}
@@ -212,6 +278,116 @@ export default function GeospatialMap() {
             {globeMode ? '◈ View 2D Map' : '◎ View 3D Globe'}
           </button>
         </div>
+
+        {!globeMode && (
+          <>
+            <div style={{ marginBottom: 12 }}>
+              <button
+                className="btn btn-sm"
+                style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--copper-500)', background: 'transparent', color: 'var(--copper-200)' }}
+                onClick={startTimelapse}
+                disabled={predictionMode}
+              >
+                ⏱ Play Time-Lapse
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <button
+                onClick={() => setPredictionMode(!predictionMode)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: predictionMode ? 'var(--copper-500)' : 'transparent',
+                  color: predictionMode ? 'white' : 'var(--copper-400)',
+                  border: '1px solid var(--copper-400)',
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {predictionMode ? '⚡ PREDICTIVE ACTIVE' : '◉ Switch to Predictive'}
+              </button>
+            </div>
+
+            {predictionMode && (
+              <div style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 6,
+                padding: '10px 12px',
+                marginBottom: 12,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10
+              }}>
+                <div style={{ fontSize: 10, color: 'var(--text-primary)', fontWeight: 600 }}>PREDICTION SETTINGS</div>
+                <div>
+                  <label style={{ fontSize: 9, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                    Days Ahead: <span style={{ color: 'var(--copper-400)', fontFamily: 'var(--font-mono)' }}>{predictionDays}d</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="7"
+                    max="30"
+                    step="7"
+                    value={predictionDays}
+                    onChange={e => {
+                      const val = parseInt(e.target.value)
+                      if (val <= 10) setPredictionDays(7)
+                      else if (val <= 20) setPredictionDays(14)
+                      else setPredictionDays(30)
+                    }}
+                    style={{
+                      width: '100%',
+                      accentColor: 'var(--copper-500)',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>
+                    <span>7d</span>
+                    <span>14d</span>
+                    <span>30d</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 9, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Risk Level Filter</label>
+                  <select
+                    className="input"
+                    value={predictionRiskFilter}
+                    onChange={e => setPredictionRiskFilter(e.target.value)}
+                    style={{ fontSize: 10, padding: '4px 8px', height: 'auto' }}
+                  >
+                    <option value="all">All Levels</option>
+                    <option value="high+">High & Critical</option>
+                    <option value="critical">Critical Only</option>
+                  </select>
+                </div>
+                
+                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 9 }}>
+                  <div style={{ fontWeight: 500, color: 'var(--text-muted)', marginBottom: 2 }}>LEGEND</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e05252' }} />
+                    <span style={{ color: 'var(--text-secondary)' }}>CRITICAL Risk (Pulsing)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e0a832' }} />
+                    <span style={{ color: 'var(--text-secondary)' }}>HIGH Risk</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#c8814a' }} />
+                    <span style={{ color: 'var(--text-secondary)' }}>MEDIUM Risk</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         <div style={{ marginBottom: 10 }}>
           <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Year</label>
@@ -238,6 +414,39 @@ export default function GeospatialMap() {
             {CRIME_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Select District</label>
+          <select
+            className="input"
+            value={selectedDistrict}
+            onChange={e => setSelectedDistrict(e.target.value)}
+            style={{ fontSize: 12 }}
+          >
+            <option value="">-- Select District --</option>
+            {districts.map(d => (
+              <option key={d.name} value={d.name}>
+                {d.name} ({d.case_count} cases)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          className="btn btn-sm"
+          disabled={!selectedDistrict || districtReportLoading}
+          onClick={handleDistrictReportDownload}
+          style={{
+            width: '100%',
+            justifyContent: 'center',
+            borderColor: 'var(--copper-400)',
+            background: 'transparent',
+            color: 'var(--copper-200)',
+            marginBottom: 12
+          }}
+        >
+          {districtReportLoading ? 'Generating...' : '📄 District Report'}
+        </button>
 
         {!globeMode && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -293,7 +502,7 @@ export default function GeospatialMap() {
             />
             
             {/* Heat Points */}
-            {points.map((p, i) => (
+            {!predictionMode && activePoints.map((p, i) => (
               <CircleMarker
                 key={`hp-${i}`}
                 center={[p.lat, p.lng]}
@@ -305,7 +514,7 @@ export default function GeospatialMap() {
             ))}
 
             {/* Clickable pins representing Case markers (7H) */}
-            {showHotspots && casePins.map((cp) => (
+            {!predictionMode && showHotspots && casePins.map((cp) => (
               <CircleMarker
                 key={`cp-${cp.CaseMasterID}`}
                 center={[cp.latitude, cp.longitude]}
@@ -323,7 +532,7 @@ export default function GeospatialMap() {
             ))}
 
             {/* District Hotspot Clusters */}
-            {showHotspots && hotspots.map((h, i) => (
+            {!predictionMode && showHotspots && hotspots.map((h, i) => (
               <CircleMarker
                 key={`hs-${i}`}
                 center={[h.lat, h.lng]}
@@ -335,6 +544,15 @@ export default function GeospatialMap() {
                 dashArray="4"
               />
             ))}
+
+            {/* Predictive layer */}
+            {predictionMode && (
+              <PredictiveLayer
+                isActive={predictionMode}
+                daysAhead={predictionDays}
+                riskFilter={predictionRiskFilter}
+              />
+            )}
           </MapContainer>
         )}
       </div>
@@ -388,6 +606,104 @@ export default function GeospatialMap() {
               onClick={() => setSelectedCasePin(null)}
             >
               Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Timelapse Controls Overlay */}
+      {isTimelapseActive && timelapseFrames.length > 0 && (
+        <div style={{
+          position: 'absolute', bottom: 42, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+          borderRadius: 8, padding: '12px 20px', zIndex: 2000,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+          display: 'flex', flexDirection: 'column', gap: 10,
+          width: 450, alignItems: 'center'
+        }}>
+          {/* Big Month Display */}
+          <div style={{
+            fontSize: 24, fontWeight: 'bold', fontFamily: 'var(--font-mono)',
+            color: 'var(--copper-400)', tracking: '0.05em'
+          }}>
+            {timelapseFrames[currentFrameIndex]?.label.toUpperCase()}
+          </div>
+
+          {/* Timeline slider progress */}
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Jan 23</span>
+            <input
+              type="range"
+              min="0"
+              max={timelapseFrames.length - 1}
+              value={currentFrameIndex}
+              onChange={e => setCurrentFrameIndex(parseInt(e.target.value))}
+              style={{
+                flex: 1,
+                accentColor: 'var(--copper-500)',
+                background: 'var(--border-subtle)',
+                height: 4,
+                borderRadius: 2,
+                cursor: 'pointer'
+              }}
+            />
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Dec 24</span>
+          </div>
+
+          {/* Buttons row */}
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="btn btn-sm"
+                onClick={() => setIsTimelapsePlaying(!isTimelapsePlaying)}
+                style={{ minWidth: 70 }}
+              >
+                {isTimelapsePlaying ? '❚❚ Pause' : '▶ Play'}
+              </button>
+              <button
+                className="btn btn-sm"
+                onClick={() => {
+                  setIsTimelapsePlaying(false)
+                  setCurrentFrameIndex(0)
+                }}
+              >
+                ■ Reset
+              </button>
+            </div>
+
+            {/* Speed selection */}
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[
+                { speed: 1000, label: '1x' },
+                { speed: 500, label: '2x' },
+                { speed: 250, label: '4x' }
+              ].map(s => (
+                <button
+                  key={s.label}
+                  onClick={() => setPlaybackSpeed(s.speed)}
+                  style={{
+                    padding: '2px 8px', fontSize: 10, borderRadius: 4,
+                    background: playbackSpeed === s.speed ? 'var(--copper-500)' : 'var(--bg-secondary)',
+                    color: playbackSpeed === s.speed ? 'white' : 'var(--text-secondary)',
+                    border: '1px solid var(--border-subtle)', cursor: 'pointer'
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                setIsTimelapseActive(false)
+                setIsTimelapsePlaying(false)
+              }}
+              style={{
+                background: 'none', border: 'none', color: 'var(--status-danger)',
+                fontSize: 11, cursor: 'pointer', outline: 'none'
+              }}
+            >
+              Exit Timelapse
             </button>
           </div>
         </div>

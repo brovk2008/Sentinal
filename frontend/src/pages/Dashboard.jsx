@@ -10,7 +10,7 @@ import RiskGauge from '../components/charts/RiskGauge'
 import {
   fetchKpis, fetchCrimeDistribution, fetchTopOffenders,
   fetchDistrictComparison, fetchMonthlyTrend, fetchRecentTimeline,
-  fetchAlerts, fetchForecastRisk,
+  fetchAlerts, fetchForecastRisk, fetchKpiSparklines,
 } from '../api'
 
 export default function Dashboard() {
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [timeline, setTimeline] = useState([])
   const [alerts, setAlerts] = useState([])
   const [forecast, setForecast] = useState(null)
+  const [sparklines, setSparklines] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function Dashboard() {
       loadData(fetchRecentTimeline, setTimeline, 'Recent Timeline', []),
       loadData(() => fetchAlerts(5), setAlerts, 'Alerts', []),
       loadData(fetchForecastRisk, setForecast, 'Forecast Risk', null),
+      loadData(fetchKpiSparklines, setSparklines, 'KPI Sparklines', null),
     ]).then(() => {
       if (active) {
         setLoading(false);
@@ -87,26 +89,32 @@ export default function Dashboard() {
         <KpiCard
           label="Total Cases" value={kpis?.total_cases || 10000}
           change="+12.4% YoY" onClick={() => navigate('/timeline')}
+          sparklineData={sparklines?.total_cases}
         />
         <KpiCard
           label="Active Investigations" value={kpis?.active_investigations || 0}
           change="+8.2%" onClick={() => navigate('/timeline')}
+          sparklineData={sparklines?.active_investigations}
         />
         <KpiCard
           label="Arrests Made" value={kpis?.arrests_made || 0}
           change="+15.7%" onClick={() => navigate('/persons')}
+          sparklineData={sparklines?.arrests_made}
         />
         <KpiCard
           label="Chargesheets Filed" value={kpis?.chargesheets_filed || 0}
           change="+6.3%"
+          sparklineData={sparklines?.chargesheets_filed}
         />
         <KpiCard
           label="Conviction Rate" value={`${kpis?.conviction_rate || 0}%`}
           change="+2.1%" changeType="up"
+          sparklineData={sparklines?.conviction_rate}
         />
         <KpiCard
           label="Pending in Court" value={kpis?.pending_court || 0}
           change="-3.4%" changeType="down"
+          sparklineData={sparklines?.pending_court}
         />
       </div>
 
@@ -229,7 +237,7 @@ export default function Dashboard() {
         </div>
 
         {/* Risk Gauge */}
-        <div className="card" style={{ padding: '16px 16px 20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: 280, minWidth: 0 }}>
+        <div className="card" style={{ padding: '16px 16px 20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minWidth: 0 }}>
           <div className="section-label" style={{ alignSelf: 'flex-start', marginBottom: 12 }}>PREDICTIVE RISK ({forecast?.district || 'Bengaluru Urban'})</div>
           <RiskGauge value={forecast?.risk_score || 78} />
           <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>

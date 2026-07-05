@@ -6,8 +6,12 @@ const sparkData = [
   { v: 72 }, { v: 85 },
 ]
 
-export default function KpiCard({ label, value, change, changeType = 'up', onClick }) {
+export default function KpiCard({ label, value, change, changeType = 'up', onClick, sparklineData }) {
   const isUp = changeType === 'up'
+
+  const data = sparklineData && sparklineData.length > 0
+    ? sparklineData.map(v => ({ v }))
+    : sparkData
 
   return (
     <div
@@ -30,7 +34,7 @@ export default function KpiCard({ label, value, change, changeType = 'up', onCli
         opacity: 0.15,
       }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparkData}>
+          <AreaChart data={data}>
             <Area
               type="monotone" dataKey="v" stroke="var(--copper-400)"
               fill="var(--copper-500)" strokeWidth={1.5}

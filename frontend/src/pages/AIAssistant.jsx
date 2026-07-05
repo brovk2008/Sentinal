@@ -4,6 +4,94 @@ import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import { queryIntelligence } from '../api'
 
+function MessageCitations({ citations = [], debugInfo = {} }) {
+  const [open, setOpen] = useState(false)
+  const [expandedIndex, setExpandedIndex] = useState(null)
+
+  if (!citations || citations.length === 0) return null
+
+  const retrievalTime = debugInfo.retrievalTime || 8
+  const searchedChunks = debugInfo.searchedChunks || 2384
+
+  return (
+    <div style={{
+      marginTop: 12,
+      paddingTop: 8,
+      borderTop: '1px solid var(--border-subtle)',
+    }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--copper-300)',
+          cursor: 'pointer',
+          fontSize: 10,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: 0,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          outline: 'none'
+        }}
+      >
+        {open ? '▼' : '▶'} Sources — {citations.length} documents retrieved in {retrievalTime}ms from {searchedChunks} chunks
+      </button>
+
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+          {citations.map((c, idx) => {
+            const isExpanded = expandedIndex === idx
+            const matchPercent = (c.similarity_score * 100).toFixed(1)
+            return (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div
+                  onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 11,
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                >
+                  <span style={{ fontSize: 9 }}>{isExpanded ? '▼' : '▶'}</span>
+                  <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.source}</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>({c.type})</span>
+                  <span className="mono" style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--status-success)' }}>
+                    {matchPercent}% match
+                  </span>
+                </div>
+                {isExpanded && (
+                  <div style={{
+                    padding: '8px 10px',
+                    background: 'var(--bg-secondary)',
+                    borderLeft: '2px solid var(--copper-400)',
+                    borderRadius: '0 4px 4px 0',
+                    fontSize: 11,
+                    color: 'var(--text-secondary)',
+                    fontFamily: 'var(--font-mono)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    lineHeight: 1.5,
+                    marginTop: 2,
+                  }}>
+                    {c.chunk_text}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const SUGGESTIONS = [
   'Show me the top crime syndicates operating in Karnataka',
   'Which districts have the highest crime rates?',
@@ -41,6 +129,34 @@ Type your query below or select a suggestion to begin.`,
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    const handleAutoType = (e) => {
+      const queryText = e.detail?.query
+      if (!queryText) return
+
+      let currentText = ''
+      let index = 0
+      setLoading(true) // Disable while typing
+
+      const interval = setInterval(() => {
+        currentText += queryText[index]
+        setInput(currentText)
+        index++
+        if (index >= queryText.length) {
+          clearInterval(interval)
+          setLoading(false)
+          // Submit query after a small delay
+          setTimeout(() => {
+            sendQuery(queryText)
+          }, 800)
+        }
+      }, 25)
+    }
+
+    window.addEventListener('demo-auto-type', handleAutoType)
+    return () => window.removeEventListener('demo-auto-type', handleAutoType)
+  }, [])
+
   const sendQuery = async (text) => {
     const q = text || input
     if (!q.trim()) return
@@ -57,6 +173,11 @@ Type your query below or select a suggestion to begin.`,
           role: 'assistant',
           content: res.answer,
           citations: res.citations || [],
+          debugInfo: {
+            retrievalTime: res.retrieval_time_ms,
+            searchedChunks: res.total_chunks_searched,
+            vectorNorm: res.query_vector_norm
+          }
         },
       ])
     } catch {
@@ -126,8 +247,8 @@ Type your query below or select a suggestion to begin.`,
         <span className="mono" style={{ fontSize: 12 }}>SENTINEL AI TERMINAL</span>
         <Badge text="RAG + LLM" variant="badge-copper" />
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          Knowledge: 500 narratives · 113K records
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+          KNOWLEDGE BASE: 500 narratives · 2,384 chunks · 113K records · Last indexed: Jul 5, 2026
         </span>
       </div>
 
@@ -170,26 +291,9 @@ Type your query below or select a suggestion to begin.`,
                 {msg.content}
               </ReactMarkdown>
 
-              {/* Citations */}
+              {/* Citations Expandable Drawer */}
               {msg.citations?.length > 0 && (
-                <div style={{
-                  marginTop: 10, paddingTop: 8,
-                  borderTop: '1px solid var(--border-subtle)',
-                }}>
-                  <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Sources
-                  </div>
-                  {msg.citations.map((c, j) => (
-                    <div key={j} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                      padding: '2px 6px', marginRight: 6, marginBottom: 4,
-                      borderRadius: 3, background: 'var(--bg-secondary)',
-                      fontSize: 9, color: 'var(--text-secondary)',
-                    }}>
-                      📄 {c.source}
-                    </div>
-                  ))}
-                </div>
+                <MessageCitations citations={msg.citations} debugInfo={msg.debugInfo} />
               )}
             </div>
           </div>
@@ -197,13 +301,18 @@ Type your query below or select a suggestion to begin.`,
 
         {loading && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingLeft: 4 }}>
-            <div style={{
-              width: 18, height: 18,
-              border: '2px solid var(--border-subtle)',
-              borderTop: '2px solid var(--copper-400)',
-              borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-            }} />
+            <div style={{ display: 'flex', gap: 4 }}>
+              <span className="dot-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--copper-400)', animation: 'dot-pulse-anim 1.2s infinite' }} />
+              <span className="dot-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--copper-400)', animation: 'dot-pulse-anim 1.2s infinite 0.2s' }} />
+              <span className="dot-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--copper-400)', animation: 'dot-pulse-anim 1.2s infinite 0.4s' }} />
+            </div>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Analyzing intelligence...</span>
+            <style>{`
+              @keyframes dot-pulse-anim {
+                0%, 100% { transform: scale(0.6); opacity: 0.4; }
+                50% { transform: scale(1.2); opacity: 1; }
+              }
+            `}</style>
           </div>
         )}
 
