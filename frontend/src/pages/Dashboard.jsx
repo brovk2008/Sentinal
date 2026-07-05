@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import KpiCard from '../components/shared/KpiCard'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
+import useLiveFeed from '../hooks/useLiveFeed'
 import CrimeDonut from '../components/charts/CrimeDonut'
 import DistrictBar from '../components/charts/DistrictBar'
 import TrendLine from '../components/charts/TrendLine'
@@ -15,6 +16,9 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [liveCount, setLiveCount] = useState(0)
+  useLiveFeed({ onNewEvent: () => setLiveCount(c => c + 1) })
+
   const [kpis, setKpis] = useState(null)
   const [crimeData, setCrimeData] = useState([])
   const [offenders, setOffenders] = useState([])
@@ -80,6 +84,22 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      
+      {/* Header Row with War Room Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Command Center Dashboard</h1>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Project Sentinel v2 — Karnataka State Police</div>
+        </div>
+        <button
+          className="btn btn-copper"
+          onClick={() => navigate('/warroom')}
+          style={{ padding: '8px 16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          ⚔️ ENTER WAR ROOM
+        </button>
+      </div>
+
       {/* Row 1: KPI Cards */}
       <div style={{
         display: 'grid',
@@ -87,8 +107,8 @@ export default function Dashboard() {
         gap: 12,
       }}>
         <KpiCard
-          label="Total Cases" value={kpis?.total_cases || 10000}
-          change="+12.4% YoY" onClick={() => navigate('/timeline')}
+          label="Total Cases" value={(kpis?.total_cases || 10000) + liveCount}
+          change={liveCount > 0 ? "▲ LIVE" : "+12.4% YoY"} onClick={() => navigate('/timeline')}
           sparklineData={sparklines?.total_cases}
         />
         <KpiCard

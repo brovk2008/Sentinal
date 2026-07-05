@@ -1,15 +1,17 @@
 {
-  "projects": {
-    "default": "project-sentinel-v2"
-  },
-  "targets": {
-    "backend": {
-      "type": "app_sail",
-      "source": "backend"
-    },
-    "frontend": {
-      "type": "web_client",
-      "source": "frontend/dist"
-    }
-  }
+  "id": "YOUR_PROJECT_ID",
+  "project_name": "project-sentinel-v2",
+  "platform": "zoho_catalyst",
+  "services": [
+    "AppSail",
+    "Slate",
+    "DataStore",
+    "QuickML",
+    "Zia",
+    "Signals",
+    "Cron",
+    "Stratus",
+    "Auth",
+    "SmartBrowz"
+  ]
 }

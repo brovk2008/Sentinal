@@ -62,23 +62,37 @@ def predict_hotspots(
     params = (district_id,) if district_id else ()
 
     stations = query(f"""
+        WITH StationCoords AS (
+            SELECT PoliceStationID, AVG(latitude) as center_lat, AVG(longitude) as center_lng
+            FROM CaseMaster
+            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+            GROUP BY PoliceStationID
+        ),
+        RecentCases AS (
+            SELECT
+                PoliceStationID,
+                COUNT(CaseMasterID) as recent_cases,
+                AVG(GravityOffenceID) as avg_gravity,
+                COUNT(DISTINCT CrimeMajorHeadID) as crime_type_diversity
+            FROM CaseMaster
+            WHERE CrimeRegisteredDate >= date((SELECT MAX(CrimeRegisteredDate) FROM CaseMaster), '-30 days')
+            GROUP BY PoliceStationID
+        )
         SELECT
             u.UnitID as station_id,
             u.UnitName as station_name,
             d.DistrictID as district_id,
             d.DistrictName as district_name,
-            COUNT(cm.CaseMasterID) as recent_cases,
-            AVG(cm.GravityOffenceID) as avg_gravity,
-            COUNT(DISTINCT cm.CrimeMajorHeadID) as crime_type_diversity,
-            (SELECT AVG(latitude) FROM CaseMaster WHERE PoliceStationID = u.UnitID) as center_lat,
-            (SELECT AVG(longitude) FROM CaseMaster WHERE PoliceStationID = u.UnitID) as center_lng
+            rc.recent_cases,
+            rc.avg_gravity,
+            rc.crime_type_diversity,
+            sc.center_lat,
+            sc.center_lng
         FROM Unit u
         JOIN District d ON u.DistrictID = d.DistrictID
-        LEFT JOIN CaseMaster cm ON u.UnitID = cm.PoliceStationID
-            AND cm.CrimeRegisteredDate >= date((SELECT MAX(CrimeRegisteredDate) FROM CaseMaster), '-30 days')
+        JOIN StationCoords sc ON u.UnitID = sc.PoliceStationID
+        LEFT JOIN RecentCases rc ON u.UnitID = rc.PoliceStationID
         {district_filter}
-        GROUP BY u.UnitID, u.UnitName, d.DistrictID, d.DistrictName
-        HAVING center_lat IS NOT NULL
     """, params)
 
     target_month = (datetime.now() + timedelta(days=days_ahead)).month

@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram, downloadCaseReport } from '../api'
+import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram, downloadCaseReport, fetchCaseResolution, reconstructTimeline } from '../api'
 import CaseActionPanel from '../components/timeline/CaseActionPanel'
 import CaseCompareModal from '../components/timeline/CaseCompareModal'
+import AITimelineReconstruction from '../components/timeline/AITimelineReconstruction'
 
 export default function TimelineExplorer() {
   const { caseId } = useParams()
@@ -25,15 +26,48 @@ export default function TimelineExplorer() {
   const [enhancing, setEnhancing] = useState(false)
   const [reportLoading, setReportLoading] = useState(false)
 
+  // Reconstruction states
+  const [reconstructionData, setReconstructionData] = useState(null)
+  const [reconstructing, setReconstructing] = useState(false)
+  
+  // Resolution Prediction states
+  const [resolutionPrediction, setResolutionPrediction] = useState(null)
+  const [resolutionPredicting, setResolutionPredicting] = useState(false)
+
+  const handleReconstructTimeline = async () => {
+    if (!caseId) return
+    setReconstructing(true)
+    try {
+      const data = await reconstructTimeline(caseId)
+      setReconstructionData(data)
+    } catch (e) {
+      console.error(e)
+    }
+    setReconstructing(false)
+  }
+
   const handleDownloadReport = async () => {
-    if (!caseId || !caseDetail?.CrimeNo) return
+    const caseObj = selectedCase?.case
+    if (!caseId || !caseObj?.CrimeNo) return
     setReportLoading(true)
     try {
-      await downloadCaseReport(caseId, caseDetail.CrimeNo)
+      await downloadCaseReport(caseId, caseObj.CrimeNo)
     } catch (e) {
       console.error(e)
     }
     setReportLoading(false)
+  }
+
+  const handlePredictResolution = async () => {
+    if (!caseId) return
+    setResolutionPredicting(true)
+    try {
+      const res = await fetchCaseResolution(caseId)
+      setResolutionPrediction(res)
+    } catch (e) {
+      console.error(e)
+    }
+    setResolutionPredicting(false)
   }
 
   // Load case list
@@ -288,6 +322,22 @@ export default function TimelineExplorer() {
                 </button>
                 <button
                   className="btn btn-sm"
+                  disabled={resolutionPredicting}
+                  onClick={handlePredictResolution}
+                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
+                >
+                  {resolutionPredicting ? '🔮 Analyzing...' : '🔮 Predict Resolution'}
+                </button>
+                <button
+                  className="btn btn-sm"
+                  disabled={reconstructing}
+                  onClick={handleReconstructTimeline}
+                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
+                >
+                  {reconstructing ? '🔮 Reconstructing...' : '🔮 Reconstruct Timeline'}
+                </button>
+                <button
+                  className="btn btn-sm"
                   onClick={() => setShowActionPanel(true)}
                   style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
                 >
@@ -413,6 +463,110 @@ export default function TimelineExplorer() {
         <CaseCompareModal
           caseIds={compareIds}
           onClose={() => setShowCompareModal(false)}
+        />
+      )}
+
+      {/* Case Resolution Prediction Modal */}
+      {resolutionPrediction && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 10000, animation: 'fade-in 0.2s ease',
+        }}>
+          <div className="card" style={{
+            width: 480, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
+            background: 'var(--bg-secondary)', border: '1px solid var(--border-strong)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.05em' }}>
+                CASE RESOLUTION FORECAST
+              </div>
+              <button
+                onClick={() => setResolutionPrediction(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20 }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 6 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>FIR: {resolutionPrediction.crime_no}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  Case ID: {resolutionPrediction.case_id}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 10 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Predicted Outcome:</span>
+              <span style={{
+                fontSize: 14, fontWeight: 700, color: 'var(--copper-400)'
+              }}>
+                {resolutionPrediction.predicted_outcome} ({resolutionPrediction.confidence})
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Outcome Probabilities
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {resolutionPrediction.all_outcomes.map(out => (
+                  <div key={out.outcome} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)', width: 100 }}>{out.outcome}</span>
+                    <div style={{ flex: 1, background: 'var(--bg-secondary)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{
+                        background: out.outcome === 'Chargesheeted' ? '#52b788' :
+                                    out.outcome === 'Undetected' ? '#e0a832' : '#e05252',
+                        height: '100%',
+                        width: out.percentage
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', minWidth: 35, textAlign: 'right' }}>
+                      {out.percentage}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 14, marginTop: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+                Key Signal Metrics
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 11 }}>
+                <div style={{ background: 'var(--bg-primary)', padding: 6, borderRadius: 4, textAlign: 'center' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>ACCUSED</div>
+                  <div style={{ fontWeight: 600 }}>{resolutionPrediction.key_signals.accused_count}</div>
+                </div>
+                <div style={{ background: 'var(--bg-primary)', padding: 6, borderRadius: 4, textAlign: 'center' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>ARRESTS</div>
+                  <div style={{ fontWeight: 600 }}>{resolutionPrediction.key_signals.arrests_made}</div>
+                </div>
+                <div style={{ background: 'var(--bg-primary)', padding: 6, borderRadius: 4, textAlign: 'center' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>GRAVITY</div>
+                  <div style={{ fontWeight: 600 }}>{resolutionPrediction.key_signals.crime_gravity}</div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              className="btn btn-copper"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
+              onClick={() => setResolutionPrediction(null)}
+            >
+              Close Analyzer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {reconstructionData && (
+        <AITimelineReconstruction
+          data={reconstructionData}
+          onClose={() => setReconstructionData(null)}
         />
       )}
     </div>

@@ -1,66 +1,62 @@
-import { useState, useEffect } from 'react'
-import { fetchAlerts } from '../../api'
+import useLiveFeed from '../../hooks/useLiveFeed'
 
 export default function LiveFeed() {
-  const [alerts, setAlerts] = useState([])
-  const [currentIdx, setCurrentIdx] = useState(0)
+  const { events, connected } = useLiveFeed()
 
-  useEffect(() => {
-    const load = () => {
-      fetchAlerts(10).then(setAlerts).catch(() => {})
-    }
-    load()
-    const interval = setInterval(load, 30000)
-    return () => clearInterval(interval)
-  }, [])
+  // Format events for ticker display
+  const tickerItems = events.map(e =>
+    `${new Date(e.timestamp).toLocaleTimeString('en-IN')} · ` +
+    `${e.severity === 'CRITICAL' ? '🔴 CRITICAL — ' : ''}` +
+    `${e.crime_type} · ${e.district} · ${e.station} · ` +
+    `Case ${e.crime_no?.slice(-8)}`
+  )
 
-  useEffect(() => {
-    if (alerts.length === 0) return
-    const timer = setInterval(() => {
-      setCurrentIdx(i => (i + 1) % alerts.length)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [alerts.length])
-
-  const current = alerts[currentIdx]
+  const tickerText = tickerItems.join('     ·     ')
 
   return (
     <div style={{
-      gridColumn: '1 / 3',
-      gridRow: '3',
+      gridColumn: '1 / -1',
       background: 'var(--bg-secondary)',
       borderTop: '1px solid var(--border-subtle)',
+      height: 32,
       display: 'flex',
       alignItems: 'center',
-      padding: '0 16px',
       overflow: 'hidden',
-      fontSize: 11,
+      position: 'relative'
     }}>
+      {/* Live indicator */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        color: 'var(--copper-400)', fontFamily: 'var(--font-mono)', fontSize: 10,
-        fontWeight: 600, flexShrink: 0,
+        flexShrink: 0,
+        padding: '0 12px',
+        borderRight: '1px solid var(--border-subtle)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        fontSize: 10,
+        fontWeight: 700,
+        color: connected ? 'var(--status-success)' : 'var(--status-danger)',
+        letterSpacing: '0.08em',
+        height: '100%'
       }}>
-        <span className="live-dot" style={{ background: 'var(--status-danger)' }} />
-        INTEL FEED
+        <span className="live-dot" style={{
+          background: connected ? 'var(--status-success)' : 'var(--status-danger)'
+        }} />
+        LIVE
       </div>
-      <div style={{
-        marginLeft: 16, color: 'var(--text-secondary)', whiteSpace: 'nowrap',
-        overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
-      }}>
-        {current ? (
-          <span>
-            <span className="badge badge-danger" style={{ marginRight: 8, fontSize: 8 }}>
-              {current.type}
-            </span>
-            {current.title} — {current.description}
-          </span>
-        ) : (
-          'Monitoring all systems...'
-        )}
-      </div>
-      <div className="mono" style={{ flexShrink: 0, marginLeft: 16, fontSize: 10, color: 'var(--text-muted)' }}>
-        {alerts.length > 0 ? `${currentIdx + 1}/${alerts.length}` : '—'}
+
+      {/* Scrolling ticker */}
+      <div style={{ flex: 1, overflow: 'hidden', height: '100%' }}>
+        <div style={{
+          display: 'inline-block',
+          whiteSpace: 'nowrap',
+          animation: 'ticker-scroll 60s linear infinite',
+          fontSize: 11,
+          color: 'var(--text-secondary)',
+          lineHeight: '32px',
+          paddingLeft: '100%'
+        }}>
+          {tickerText || 'Awaiting intelligence feed...'}
+        </div>
       </div>
     </div>
   )

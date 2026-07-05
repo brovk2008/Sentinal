@@ -70,33 +70,64 @@ class RAGService:
         return np.random.rand(384).astype(np.float32)
 
     async def retrieve(self, query_text: str, top_k: int = 5) -> list:
-        """Retrieve top_k most similar narratives using cosine similarity."""
+        """Retrieve top_k most similar narratives using hybrid search (Keyword + Vector similarity)."""
         if self.embeddings is None or not self.metadata:
             return []
 
+        # Step 1: Extract keywords
+        query_words = set(query_text.lower().split())
+        stop_words = {'the', 'is', 'in', 'of', 'and', 'a', 'to', 'for', 'that', 'this', 'on', 'with', 'at', 'by', 'an'}
+        keywords = query_words - stop_words
+
+        # Find candidate indices that contain at least one keyword
+        candidate_indices = []
+        for idx, meta in enumerate(self.metadata):
+            text_to_search = f"{meta.get('title', '')} {meta.get('summary', '')}".lower()
+            if any(kw in text_to_search for kw in keywords):
+                candidate_indices.append(idx)
+
+        # Step 2: Vector search
         query_vector = await self.get_embedding(query_text)
-        
-        # Normalize vectors for cosine similarity calculation
         norm_query = np.linalg.norm(query_vector)
         if norm_query == 0:
             return []
+
+        # If keyword search returned enough candidates, restrict vector search to them
+        if len(candidate_indices) >= top_k:
+            filtered_embeddings = self.embeddings[candidate_indices]
+            norm_filtered = np.linalg.norm(filtered_embeddings, axis=1)
+            norm_filtered[norm_filtered == 0] = 1e-10
             
-        norm_embeddings = np.linalg.norm(self.embeddings, axis=1)
-        # Handle zero divisions
-        norm_embeddings[norm_embeddings == 0] = 1e-10
+            similarities = np.dot(filtered_embeddings, query_vector) / (norm_filtered * norm_query)
+            top_local_indices = np.argsort(similarities)[::-1][:top_k]
+            
+            results = []
+            for local_idx in top_local_indices:
+                global_idx = candidate_indices[local_idx]
+                results.append({
+                    "score": float(similarities[local_idx]),
+                    "title": self.metadata[global_idx]["title"],
+                    "summary": self.metadata[global_idx]["summary"],
+                    "type": self.metadata[global_idx]["type"]
+                })
+            return results
+        else:
+            # Fall back to full vector search if candidate pool is too small
+            norm_embeddings = np.linalg.norm(self.embeddings, axis=1)
+            norm_embeddings[norm_embeddings == 0] = 1e-10
 
-        similarities = np.dot(self.embeddings, query_vector) / (norm_embeddings * norm_query)
-        top_indices = np.argsort(similarities)[::-1][:top_k]
+            similarities = np.dot(self.embeddings, query_vector) / (norm_embeddings * norm_query)
+            top_indices = np.argsort(similarities)[::-1][:top_k]
 
-        results = []
-        for idx in top_indices:
-            results.append({
-                "score": float(similarities[idx]),
-                "title": self.metadata[idx]["title"],
-                "summary": self.metadata[idx]["summary"],
-                "type": self.metadata[idx]["type"]
-            })
-        return results
+            results = []
+            for idx in top_indices:
+                results.append({
+                    "score": float(similarities[idx]),
+                    "title": self.metadata[idx]["title"],
+                    "summary": self.metadata[idx]["summary"],
+                    "type": self.metadata[idx]["type"]
+                })
+            return results
 
     async def add_chunks(self, chunks: list[str], source_title: str):
         """Add new text chunks dynamically to the active in-memory embeddings and metadata."""

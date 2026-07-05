@@ -5,7 +5,7 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-async function request(endpoint, options = {}) {
+export async function request(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;
   const config = {
     headers: { 'Content-Type': 'application/json', ...options.headers },
@@ -87,11 +87,13 @@ export const fetchPreIncidentCalls = () => request('/api/v1/cdr/pre-incident-cal
 export const fetchCdrSummary = () => request('/api/v1/cdr/summary');
 
 // ── Intelligence ──
-export const queryIntelligence = (query) =>
-  request('/api/v1/intelligence/query', {
+export const queryIntelligence = (payload) => {
+  const bodyData = typeof payload === 'string' ? { query: payload } : payload;
+  return request('/api/v1/intelligence/query', {
     method: 'POST',
-    body: JSON.stringify({ query }),
+    body: JSON.stringify(bodyData),
   });
+};
 export const enhanceDiagram = (mermaidSource, caseId) =>
   request('/api/v1/intelligence/enhance-diagram', {
     method: 'POST',
@@ -186,6 +188,13 @@ export const fetchPredictiveHotspots = (daysAhead = 7, districtId = null) => {
   return request(url);
 };
 
+export const fetchCrimeType = (stationId, month = null, dayofweek = null) => {
+  let url = `/api/v1/predict/crime-type?station_id=${stationId}`;
+  if (month) url += `&month=${month}`;
+  if (dayofweek) url += `&dayofweek=${dayofweek}`;
+  return request(url);
+};
+
 export const fetchTemporalPatterns = (districtId = null, crimeHeadId = null) => {
   const params = new URLSearchParams();
   if (districtId) params.append('district_id', districtId);
@@ -200,5 +209,64 @@ export const fetchCaseResolution = (caseId) =>
 
 export const fetchLiveRiskScore = () =>
   request('/api/v1/predict/live-risk-score');
+
+// ── Upload helper for FormData ──
+async function uploadRequest(endpoint, formData) {
+  const url = `${BASE_URL}${endpoint}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(`[API Upload] ${endpoint}:`, err);
+    throw err;
+  }
+}
+
+// ── Pinned Evidence Board & Zia ──
+export const fetchBoards = () => request('/api/v1/board/list');
+export const loadBoard = (boardId) => request(`/api/v1/board/load/${boardId}`);
+export const saveBoard = (boardData) => request('/api/v1/board/save', {
+  method: 'POST',
+  body: JSON.stringify(boardData)
+});
+export const deleteBoard = (boardId) => request(`/api/v1/board/${boardId}`, {
+  method: 'DELETE'
+});
+export const uploadEvidence = (formData) => uploadRequest('/api/v1/board/upload-evidence', formData);
+export const matchSuspect = (formData) => uploadRequest('/api/v1/board/match-suspect', formData);
+
+// ── AI Brain & Timeline Reconstruction ──
+export const analyzeBoard = (payload) => request('/api/v1/brain/analyze-board', {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
+export const predictNextCrime = (payload) => request('/api/v1/brain/predict-next-crime', {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
+export const connectDots = (payload) => request('/api/v1/brain/connect-dots', {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
+export const reconstructTimeline = (caseId) => request('/api/v1/brain/reconstruct-timeline', {
+  method: 'POST',
+  body: JSON.stringify({ case_id: caseId })
+});
+export const generateSitrep = (payload) => request('/api/v1/brain/generate-sitrep', {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
+
+// ── Dark Web ──
+export const fetchDarkWebFeed = () => request('/api/v1/darkweb/feed');
+export const fetchThreatAssessment = (syndicateName) =>
+  request(`/api/v1/darkweb/assessment/${encodeURIComponent(syndicateName)}`);
+
+export const uploadToRag = (formData) => uploadRequest('/api/v1/intelligence/upload-to-rag', formData);
+
 
 

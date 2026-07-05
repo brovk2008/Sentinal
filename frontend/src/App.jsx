@@ -12,6 +12,12 @@ import Persons from './pages/Persons'
 import AIAssistant from './pages/AIAssistant'
 import FinancialIntel from './pages/FinancialIntel'
 import CDRAnalytics from './pages/CDRAnalytics'
+import PredictiveIntelligence from './pages/PredictiveIntelligence'
+import EvidenceBoard from './pages/EvidenceBoard'
+import NetworkGraph3D from './pages/NetworkGraph3D'
+import AccusedProfile from './pages/AccusedProfile'
+import DarkWebIntel from './pages/DarkWebIntel'
+import WarRoom from './pages/WarRoom'
 import Login from './pages/Login'
 
 function ProtectedRoute({ children }) {
@@ -76,6 +82,12 @@ export default function App() {
           <Route path="/assistant" element={<AIAssistant />} />
           <Route path="/financial" element={<FinancialIntel />} />
           <Route path="/cdr" element={<CDRAnalytics />} />
+          <Route path="/predict" element={<PredictiveIntelligence />} />
+          <Route path="/board" element={<EvidenceBoard />} />
+          <Route path="/network-3d" element={<NetworkGraph3D />} />
+          <Route path="/accused/:accusedId" element={<AccusedProfile />} />
+          <Route path="/darkweb" element={<DarkWebIntel />} />
+          <Route path="/warroom" element={<WarRoom />} />
         </Route>
       </Routes>
     </BrowserRouter>

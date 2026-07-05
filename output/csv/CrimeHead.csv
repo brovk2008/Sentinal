@@ -1,0 +1,16 @@
+CrimeHeadID,CrimeGroupName,Active
+1,Murder & Culpable Homicide,1
+2,Attempt to Murder,1
+3,Robbery & Dacoity,1
+4,Theft & Burglary,1
+5,Cheating & Fraud,1
+6,Cyber Crime,1
+7,Narcotics,1
+8,Crimes Against Women,1
+9,Crimes Against Children,1
+10,SC/ST Atrocities,1
+11,Arms Act Offences,1
+12,Motor Vehicle Offences,1
+13,Preventive Actions,1
+14,Economic Offences,1
+15,Kidnapping & Abduction,1

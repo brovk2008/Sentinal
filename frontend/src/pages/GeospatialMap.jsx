@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup, useMap } from 'react-leaflet'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
 import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases, downloadDistrictReport, fetchHeatmapTimelapse } from '../api'
 import PredictiveLayer from '../components/map/PredictiveLayer'
+import useLiveFeed from '../hooks/useLiveFeed'
 import 'leaflet/dist/leaflet.css'
 
 // Karnataka bounds
@@ -153,8 +154,53 @@ function ThreeGlobe({ points }) {
   )
 }
 
+function MapRefTracker({ mapRef }) {
+  const map = useMap()
+  useEffect(() => {
+    mapRef.current = map
+    return () => {
+      mapRef.current = null
+    }
+  }, [map, mapRef])
+  return null
+}
+
 export default function GeospatialMap() {
   const navigate = useNavigate()
+  const mapRef = useRef(null)
+  
+  useLiveFeed({
+    onNewEvent: (event) => {
+      if (!mapRef.current || !event.lat || !event.lng) return
+
+      const L = window.L
+      if (!L) return
+
+      // Add a temporary pulsing circle marker at the crime location
+      const circle = L.circle([event.lat, event.lng], {
+        radius: 2000,
+        color: event.severity === 'CRITICAL' ? '#e05252' : '#c8814a',
+        fillColor: event.severity === 'CRITICAL' ? '#e05252' : '#c8814a',
+        fillOpacity: 0.4,
+        weight: 2
+      }).addTo(mapRef.current)
+
+      // Animate radius expanding then remove
+      let r = 2000
+      const expand = setInterval(() => {
+        r += 500
+        circle.setRadius(r)
+        circle.setStyle({ fillOpacity: Math.max(0, 0.4 - (r - 2000) / 15000) })
+        if (r > 8000) {
+          clearInterval(expand)
+          if (mapRef.current) {
+            mapRef.current.removeLayer(circle)
+          }
+        }
+      }, 100)
+    }
+  })
+
   const [points, setPoints] = useState([])
   const [districts, setDistricts] = useState([])
   const [hotspots, setHotspots] = useState([])
@@ -496,6 +542,7 @@ export default function GeospatialMap() {
             style={{ height: '100%', width: '100%', background: 'var(--bg-primary)' }}
             maxBounds={[[10, 72], [20, 80]]}
           >
+            <MapRefTracker mapRef={mapRef} />
             <TileLayer
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               attribution='&copy; CartoDB'

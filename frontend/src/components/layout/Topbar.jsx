@@ -158,6 +158,22 @@ export default function Topbar() {
           )}
         </div>
 
+        <button
+          onClick={() => navigate('/assistant?voice=true')}
+          title="Voice Intelligence Query"
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--border-default)',
+            borderRadius: 6, padding: '4px 8px',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer', fontSize: 13,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            outline: 'none'
+          }}
+        >
+          🎙️
+        </button>
+
         {/* Alert Bell and Sliding Notification Panel (7B) */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <div

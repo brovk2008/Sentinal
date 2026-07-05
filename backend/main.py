@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict
+from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb
 from routers.predict import load_models as load_predict_models
 
 
@@ -23,7 +23,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +43,10 @@ app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI"])
 app.include_router(actions.router, prefix="/api/v1/actions", tags=["Actions"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
 app.include_router(predict.router, prefix="/api/v1/predict", tags=["Prediction"])
+app.include_router(board.router, prefix="/api/v1/board", tags=["Board"])
+app.include_router(brain.router, prefix="/api/v1/brain", tags=["Brain"])
+app.include_router(livefeed.router, prefix="/api/v1/livefeed", tags=["Live Feed"])
+app.include_router(darkweb.router, prefix="/api/v1/darkweb", tags=["Dark Web Intel"])
 
 
 @app.get("/health")

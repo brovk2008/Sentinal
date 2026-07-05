@@ -1,0 +1,32 @@
+ActCode,SectionCode,SectionDescription,Active
+IPC,302,Murder,1
+IPC,307,Attempt to Murder,1
+IPC,376,Rape,1
+IPC,420,Cheating,1
+IPC,379,Theft,1
+IPC,392,Robbery,1
+IPC,395,Dacoity,1
+IPC,498A,Cruelty by Husband,1
+IPC,304B,Dowry Death,1
+IPC,324,Voluntarily Causing Hurt,1
+IT_ACT,66C,Identity Theft,1
+IT_ACT,66D,Cheating by Impersonation,1
+IT_ACT,67,Publishing Obscene Material,1
+IT_ACT,43,Damage to Computer,1
+NDPS,20,Cannabis,1
+NDPS,21,Heroin/Opium,1
+NDPS,22,Psychotropic,1
+NDPS,29,Abetment,1
+POCSO,4,Penetrative Sexual Assault,1
+POCSO,8,Sexual Assault,1
+POCSO,12,Sexual Harassment,1
+SC_ST,3,Atrocities,1
+SC_ST,3A,Grievous Hurt,1
+ARMS,25,Possession,1
+ARMS,27,Use of Arms,1
+MVA,184,Dangerous Driving,1
+MVA,185,Drunk Driving,1
+MVA,304A,Causing Death by Negligence,1
+CRPC,41,Arrest,1
+CRPC,107,Security for Peace,1
+CRPC,151,Preventive,1

@@ -1,0 +1,88 @@
+CourtID,CourtName,DistrictID,StateID,Active
+1,Bengaluru Urban Sessions Court,1,1,1
+2,Bengaluru Urban JMFC Court,1,1,1
+3,Bengaluru Urban Civil Court,1,1,1
+4,Bengaluru Rural Sessions Court,2,1,1
+5,Bengaluru Rural JMFC Court,2,1,1
+6,Bengaluru Rural Civil Court,2,1,1
+7,Mysuru Sessions Court,3,1,1
+8,Mysuru JMFC Court,3,1,1
+9,Tumakuru Sessions Court,4,1,1
+10,Tumakuru JMFC Court,4,1,1
+11,Belagavi Sessions Court,5,1,1
+12,Belagavi JMFC Court,5,1,1
+13,Belagavi Civil Court,5,1,1
+14,Kalaburagi Sessions Court,6,1,1
+15,Kalaburagi JMFC Court,6,1,1
+16,Mangaluru Sessions Court,7,1,1
+17,Mangaluru JMFC Court,7,1,1
+18,Shivamogga Sessions Court,8,1,1
+19,Shivamogga JMFC Court,8,1,1
+20,Shivamogga Civil Court,8,1,1
+21,Davanagere Sessions Court,9,1,1
+22,Davanagere JMFC Court,9,1,1
+23,Ballari Sessions Court,10,1,1
+24,Ballari JMFC Court,10,1,1
+25,Ballari Civil Court,10,1,1
+26,Vijayapura Sessions Court,11,1,1
+27,Vijayapura JMFC Court,11,1,1
+28,Vijayapura Civil Court,11,1,1
+29,Bagalkote Sessions Court,12,1,1
+30,Bagalkote JMFC Court,12,1,1
+31,Bagalkote Civil Court,12,1,1
+32,Bagalkote Family Court,12,1,1
+33,Dharwad Sessions Court,13,1,1
+34,Dharwad JMFC Court,13,1,1
+35,Dharwad Civil Court,13,1,1
+36,Gadag Sessions Court,14,1,1
+37,Gadag JMFC Court,14,1,1
+38,Haveri Sessions Court,15,1,1
+39,Haveri JMFC Court,15,1,1
+40,Haveri Civil Court,15,1,1
+41,Haveri Family Court,15,1,1
+42,Uttara Kannada Sessions Court,16,1,1
+43,Uttara Kannada JMFC Court,16,1,1
+44,Uttara Kannada Civil Court,16,1,1
+45,Udupi Sessions Court,17,1,1
+46,Udupi JMFC Court,17,1,1
+47,Udupi Civil Court,17,1,1
+48,Udupi Family Court,17,1,1
+49,Chikkamagaluru Sessions Court,18,1,1
+50,Chikkamagaluru JMFC Court,18,1,1
+51,Hassan Sessions Court,19,1,1
+52,Hassan JMFC Court,19,1,1
+53,Hassan Civil Court,19,1,1
+54,Kodagu Sessions Court,20,1,1
+55,Kodagu JMFC Court,20,1,1
+56,Mandya Sessions Court,21,1,1
+57,Mandya JMFC Court,21,1,1
+58,Mandya Civil Court,21,1,1
+59,Mandya Family Court,21,1,1
+60,Chamarajanagara Sessions Court,22,1,1
+61,Chamarajanagara JMFC Court,22,1,1
+62,Chamarajanagara Civil Court,22,1,1
+63,Ramanagara Sessions Court,23,1,1
+64,Ramanagara JMFC Court,23,1,1
+65,Ramanagara Civil Court,23,1,1
+66,Ramanagara Family Court,23,1,1
+67,Chikkaballapura Sessions Court,24,1,1
+68,Chikkaballapura JMFC Court,24,1,1
+69,Chikkaballapura Civil Court,24,1,1
+70,Chikkaballapura Family Court,24,1,1
+71,Kolar Sessions Court,25,1,1
+72,Kolar JMFC Court,25,1,1
+73,Kolar Civil Court,25,1,1
+74,Koppal Sessions Court,26,1,1
+75,Koppal JMFC Court,26,1,1
+76,Koppal Civil Court,26,1,1
+77,Koppal Family Court,26,1,1
+78,Raichur Sessions Court,27,1,1
+79,Raichur JMFC Court,27,1,1
+80,Yadgir Sessions Court,28,1,1
+81,Yadgir JMFC Court,28,1,1
+82,Yadgir Civil Court,28,1,1
+83,Yadgir Family Court,28,1,1
+84,Bidar Sessions Court,29,1,1
+85,Bidar JMFC Court,29,1,1
+86,Chitradurga Sessions Court,30,1,1
+87,Chitradurga JMFC Court,30,1,1

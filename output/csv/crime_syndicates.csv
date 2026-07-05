@@ -1,0 +1,21 @@
+syndicate_id,syndicate_name,crime_speciality,leader_name,operating_districts,active_from,active_to,total_cases,total_members
+1,Bengaluru Cyber Fraud Collective,Cyber Fraud,Ashok Kumari,"Bengaluru Urban, Bengaluru Rural",2023-04-19,2024-12-14,0,18
+2,Mysuru Land Grabbing Syndicate,Land Fraud,Priya Swamy,"Mysuru, Mandya",2022-10-15,2024-07-06,0,19
+3,Belagavi Drug Trafficking Network,Narcotics,Srinivas Kulkarni,"Belagavi, Dharwad, Haveri",2022-08-29,2024-08-31,0,13
+4,Kalaburagi Extortion Ring,Extortion,Deepa Kambli,"Kalaburagi, Yadgir, Bidar",2023-06-25,2024-12-30,0,14
+5,Mangaluru Hawala Network,Hawala,Sharada Desai,"Mangaluru, Udupi",2023-01-28,2024-08-15,0,20
+6,Tumakuru Vehicle Theft Gang,Vehicle Theft,Lakshman Shetty,"Tumakuru, Bengaluru Rural",2022-10-08,2024-12-14,0,12
+7,Davanagere Robbery Syndicate,Robbery,Vishwanath Nayak,"Davanagere, Chitradurga, Haveri",2023-06-24,2024-10-29,0,18
+8,Ballari Mining Fraud Network,Mining Fraud,Chetan Kumari,"Ballari, Koppal, Raichur",2022-10-01,2024-12-13,0,18
+9,Vijayapura Cattle Smuggling Ring,Cattle Smuggling,Ramesh Angadi,"Vijayapura, Bagalkote",2023-03-07,2024-09-01,0,11
+10,Shivamogga Forest Mafia,Forest Crime,Venkatesh Poojary,"Shivamogga, Chikkamagaluru",2023-03-18,2024-07-02,0,19
+11,Hubballi-Dharwad Counterfeit Currency Gang,Counterfeit Currency,Radha Prasad,"Dharwad, Gadag",2023-06-22,2024-10-28,0,11
+12,Bengaluru North Narcotics Cell,Narcotics,Saraswathi Hosamani,"Bengaluru Urban, Chikkaballapura",2022-08-28,2024-07-30,0,13
+13,Chikkaballapura Sand Mining Mafia,Sand Mining,Anil Bhat,"Chikkaballapura, Kolar",2023-06-04,2024-08-07,0,10
+14,Raichur Human Trafficking Network,Human Trafficking,Manoj Acharya,"Raichur, Yadgir, Kalaburagi",2023-02-02,2024-07-19,0,17
+15,Kolar Gold Fields Robbery Gang,Robbery,Ganesh Kattimani,"Kolar, Chikkaballapura, Bengaluru Rural",2022-12-01,2024-09-21,0,8
+16,Bidar Cheating Syndicate,Cheating,Mahesh Ganiger,"Bidar, Kalaburagi",2023-02-15,2024-09-25,0,12
+17,Hassan Dowry Death Network,Dowry,Latha Kumari,"Hassan, Kodagu",2023-03-13,2024-09-08,0,14
+18,Mandya Sugar Factory Fraud Ring,Economic Fraud,Santosh Nayak,"Mandya, Mysuru",2023-05-12,2024-07-03,0,12
+19,Udupi Coastal Smuggling Network,Smuggling,Krishna Yadav,"Udupi, Uttara Kannada",2022-06-15,2024-10-11,0,17
+20,Bengaluru South Financial Fraud Cell,Financial Fraud,Nagesh Ganiger,"Bengaluru Urban, Ramanagara",2022-11-16,2024-12-07,0,13

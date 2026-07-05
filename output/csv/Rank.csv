@@ -1,0 +1,14 @@
+RankID,RankName,Hierarchy,Active
+1,Director General of Police,1,1
+2,Additional Director General,2,1
+3,Inspector General of Police,3,1
+4,Deputy Inspector General,4,1
+5,Superintendent of Police,5,1
+6,Additional SP,6,1
+7,Deputy SP,7,1
+8,Circle Inspector,8,1
+9,Police Inspector,9,1
+10,Police Sub-Inspector,10,1
+11,Assistant Sub-Inspector,11,1
+12,Head Constable,12,1
+13,Police Constable,13,1

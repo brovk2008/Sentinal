@@ -4,6 +4,7 @@ const sections = [
   {
     label: 'Command Center',
     items: [
+      { path: '/warroom', icon: '⚔️', label: 'War Room' },
       { path: '/dashboard', icon: '⬡', label: 'Dashboard' },
     ],
   },
@@ -12,6 +13,8 @@ const sections = [
     items: [
       { path: '/timeline', icon: '◈', label: 'Cases & Timeline' },
       { path: '/connections', icon: '⬡', label: 'Connections Board' },
+      { path: '/board', icon: '📌', label: 'Evidence Board' },
+      { path: '/network-3d', icon: '⬡', label: '3D Network' },
       { path: '/map', icon: '◎', label: 'Geospatial Map' },
       { path: '/persons', icon: '◉', label: 'Persons' },
     ],
@@ -21,7 +24,9 @@ const sections = [
     items: [
       { path: '/financial', icon: '◈', label: 'Financial Intel' },
       { path: '/cdr', icon: '◇', label: 'CDR Analytics' },
+      { path: '/predict', icon: '⟁', label: 'Predictive Intel' },
       { path: '/assistant', icon: '◎', label: 'AI Assistant' },
+      { path: '/darkweb', icon: '🕸️', label: 'Dark Web Intel' },
     ],
   },
 ]

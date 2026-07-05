@@ -1,0 +1,324 @@
+UnitID,UnitName,TypeID,ParentUnit,NationalityID,StateID,DistrictID,Active
+1,Karnataka State Police HQ,1,,1,1,1,1
+2,Bengaluru Urban District Police HQ,3,1,1,1,1,1
+3,Bengaluru Urban Town PS,5,2,1,1,1,1
+4,Bengaluru Urban Rural PS,5,2,1,1,1,1
+5,Bengaluru Urban North PS,5,2,1,1,1,1
+6,Bengaluru Urban South PS,5,2,1,1,1,1
+7,Bengaluru Urban East PS,5,2,1,1,1,1
+8,Bengaluru Urban West PS,5,2,1,1,1,1
+9,Bengaluru Urban Central PS,5,2,1,1,1,1
+10,Bengaluru Urban Traffic PS,7,2,1,1,1,1
+11,Bengaluru Rural District Police HQ,3,1,1,1,2,1
+12,Bengaluru Rural Town PS,5,11,1,1,2,1
+13,Bengaluru Rural Rural PS,5,11,1,1,2,1
+14,Bengaluru Rural North PS,5,11,1,1,2,1
+15,Bengaluru Rural South PS,5,11,1,1,2,1
+16,Bengaluru Rural East PS,5,11,1,1,2,1
+17,Bengaluru Rural West PS,5,11,1,1,2,1
+18,Bengaluru Rural Central PS,5,11,1,1,2,1
+19,Bengaluru Rural Traffic PS,7,11,1,1,2,1
+20,Mysuru District Police HQ,3,1,1,1,3,1
+21,Mysuru Town PS,5,20,1,1,3,1
+22,Mysuru Rural PS,5,20,1,1,3,1
+23,Mysuru North PS,5,20,1,1,3,1
+24,Mysuru South PS,5,20,1,1,3,1
+25,Mysuru East PS,5,20,1,1,3,1
+26,Mysuru West PS,5,20,1,1,3,1
+27,Mysuru Central PS,5,20,1,1,3,1
+28,Mysuru Traffic PS,7,20,1,1,3,1
+29,Mysuru Women PS,9,20,1,1,3,1
+30,Mysuru Cyber PS,8,20,1,1,3,1
+31,Tumakuru District Police HQ,3,1,1,1,4,1
+32,Tumakuru Town PS,5,31,1,1,4,1
+33,Tumakuru Rural PS,5,31,1,1,4,1
+34,Tumakuru North PS,5,31,1,1,4,1
+35,Tumakuru South PS,5,31,1,1,4,1
+36,Tumakuru East PS,5,31,1,1,4,1
+37,Tumakuru West PS,5,31,1,1,4,1
+38,Tumakuru Central PS,5,31,1,1,4,1
+39,Tumakuru Traffic PS,7,31,1,1,4,1
+40,Tumakuru Women PS,9,31,1,1,4,1
+41,Belagavi District Police HQ,3,1,1,1,5,1
+42,Belagavi Town PS,5,41,1,1,5,1
+43,Belagavi Rural PS,5,41,1,1,5,1
+44,Belagavi North PS,5,41,1,1,5,1
+45,Belagavi South PS,5,41,1,1,5,1
+46,Belagavi East PS,5,41,1,1,5,1
+47,Belagavi West PS,5,41,1,1,5,1
+48,Belagavi Central PS,5,41,1,1,5,1
+49,Belagavi Traffic PS,7,41,1,1,5,1
+50,Belagavi Women PS,9,41,1,1,5,1
+51,Kalaburagi District Police HQ,3,1,1,1,6,1
+52,Kalaburagi Town PS,5,51,1,1,6,1
+53,Kalaburagi Rural PS,5,51,1,1,6,1
+54,Kalaburagi North PS,5,51,1,1,6,1
+55,Kalaburagi South PS,5,51,1,1,6,1
+56,Kalaburagi East PS,5,51,1,1,6,1
+57,Kalaburagi West PS,5,51,1,1,6,1
+58,Kalaburagi Central PS,5,51,1,1,6,1
+59,Kalaburagi Traffic PS,7,51,1,1,6,1
+60,Kalaburagi Women PS,9,51,1,1,6,1
+61,Mangaluru District Police HQ,3,1,1,1,7,1
+62,Mangaluru Town PS,5,61,1,1,7,1
+63,Mangaluru Rural PS,5,61,1,1,7,1
+64,Mangaluru North PS,5,61,1,1,7,1
+65,Mangaluru South PS,5,61,1,1,7,1
+66,Mangaluru East PS,5,61,1,1,7,1
+67,Mangaluru West PS,5,61,1,1,7,1
+68,Mangaluru Central PS,5,61,1,1,7,1
+69,Mangaluru Traffic PS,7,61,1,1,7,1
+70,Shivamogga District Police HQ,3,1,1,1,8,1
+71,Shivamogga Town PS,5,70,1,1,8,1
+72,Shivamogga Rural PS,5,70,1,1,8,1
+73,Shivamogga North PS,5,70,1,1,8,1
+74,Shivamogga South PS,5,70,1,1,8,1
+75,Shivamogga East PS,5,70,1,1,8,1
+76,Shivamogga West PS,5,70,1,1,8,1
+77,Shivamogga Central PS,5,70,1,1,8,1
+78,Shivamogga Traffic PS,7,70,1,1,8,1
+79,Shivamogga Women PS,9,70,1,1,8,1
+80,Shivamogga Cyber PS,8,70,1,1,8,1
+81,Shivamogga City Market PS,5,70,1,1,8,1
+82,Shivamogga Industrial Area PS,5,70,1,1,8,1
+83,Davanagere District Police HQ,3,1,1,1,9,1
+84,Davanagere Town PS,5,83,1,1,9,1
+85,Davanagere Rural PS,5,83,1,1,9,1
+86,Davanagere North PS,5,83,1,1,9,1
+87,Davanagere South PS,5,83,1,1,9,1
+88,Davanagere East PS,5,83,1,1,9,1
+89,Davanagere West PS,5,83,1,1,9,1
+90,Davanagere Central PS,5,83,1,1,9,1
+91,Davanagere Traffic PS,7,83,1,1,9,1
+92,Ballari District Police HQ,3,1,1,1,10,1
+93,Ballari Town PS,5,92,1,1,10,1
+94,Ballari Rural PS,5,92,1,1,10,1
+95,Ballari North PS,5,92,1,1,10,1
+96,Ballari South PS,5,92,1,1,10,1
+97,Ballari East PS,5,92,1,1,10,1
+98,Ballari West PS,5,92,1,1,10,1
+99,Ballari Central PS,5,92,1,1,10,1
+100,Ballari Traffic PS,7,92,1,1,10,1
+101,Ballari Women PS,9,92,1,1,10,1
+102,Ballari Cyber PS,8,92,1,1,10,1
+103,Ballari City Market PS,5,92,1,1,10,1
+104,Ballari Industrial Area PS,5,92,1,1,10,1
+105,Vijayapura District Police HQ,3,1,1,1,11,1
+106,Vijayapura Town PS,5,105,1,1,11,1
+107,Vijayapura Rural PS,5,105,1,1,11,1
+108,Vijayapura North PS,5,105,1,1,11,1
+109,Vijayapura South PS,5,105,1,1,11,1
+110,Vijayapura East PS,5,105,1,1,11,1
+111,Vijayapura West PS,5,105,1,1,11,1
+112,Vijayapura Central PS,5,105,1,1,11,1
+113,Vijayapura Traffic PS,7,105,1,1,11,1
+114,Vijayapura Women PS,9,105,1,1,11,1
+115,Vijayapura Cyber PS,8,105,1,1,11,1
+116,Vijayapura City Market PS,5,105,1,1,11,1
+117,Bagalkote District Police HQ,3,1,1,1,12,1
+118,Bagalkote Town PS,5,117,1,1,12,1
+119,Bagalkote Rural PS,5,117,1,1,12,1
+120,Bagalkote North PS,5,117,1,1,12,1
+121,Bagalkote South PS,5,117,1,1,12,1
+122,Bagalkote East PS,5,117,1,1,12,1
+123,Bagalkote West PS,5,117,1,1,12,1
+124,Bagalkote Central PS,5,117,1,1,12,1
+125,Bagalkote Traffic PS,7,117,1,1,12,1
+126,Dharwad District Police HQ,3,1,1,1,13,1
+127,Dharwad Town PS,5,126,1,1,13,1
+128,Dharwad Rural PS,5,126,1,1,13,1
+129,Dharwad North PS,5,126,1,1,13,1
+130,Dharwad South PS,5,126,1,1,13,1
+131,Dharwad East PS,5,126,1,1,13,1
+132,Dharwad West PS,5,126,1,1,13,1
+133,Dharwad Central PS,5,126,1,1,13,1
+134,Dharwad Traffic PS,7,126,1,1,13,1
+135,Gadag District Police HQ,3,1,1,1,14,1
+136,Gadag Town PS,5,135,1,1,14,1
+137,Gadag Rural PS,5,135,1,1,14,1
+138,Gadag North PS,5,135,1,1,14,1
+139,Gadag South PS,5,135,1,1,14,1
+140,Gadag East PS,5,135,1,1,14,1
+141,Gadag West PS,5,135,1,1,14,1
+142,Gadag Central PS,5,135,1,1,14,1
+143,Gadag Traffic PS,7,135,1,1,14,1
+144,Haveri District Police HQ,3,1,1,1,15,1
+145,Haveri Town PS,5,144,1,1,15,1
+146,Haveri Rural PS,5,144,1,1,15,1
+147,Haveri North PS,5,144,1,1,15,1
+148,Haveri South PS,5,144,1,1,15,1
+149,Haveri East PS,5,144,1,1,15,1
+150,Haveri West PS,5,144,1,1,15,1
+151,Haveri Central PS,5,144,1,1,15,1
+152,Haveri Traffic PS,7,144,1,1,15,1
+153,Haveri Women PS,9,144,1,1,15,1
+154,Uttara Kannada District Police HQ,3,1,1,1,16,1
+155,Uttara Kannada Town PS,5,154,1,1,16,1
+156,Uttara Kannada Rural PS,5,154,1,1,16,1
+157,Uttara Kannada North PS,5,154,1,1,16,1
+158,Uttara Kannada South PS,5,154,1,1,16,1
+159,Uttara Kannada East PS,5,154,1,1,16,1
+160,Uttara Kannada West PS,5,154,1,1,16,1
+161,Uttara Kannada Central PS,5,154,1,1,16,1
+162,Uttara Kannada Traffic PS,7,154,1,1,16,1
+163,Uttara Kannada Women PS,9,154,1,1,16,1
+164,Udupi District Police HQ,3,1,1,1,17,1
+165,Udupi Town PS,5,164,1,1,17,1
+166,Udupi Rural PS,5,164,1,1,17,1
+167,Udupi North PS,5,164,1,1,17,1
+168,Udupi South PS,5,164,1,1,17,1
+169,Udupi East PS,5,164,1,1,17,1
+170,Udupi West PS,5,164,1,1,17,1
+171,Udupi Central PS,5,164,1,1,17,1
+172,Udupi Traffic PS,7,164,1,1,17,1
+173,Udupi Women PS,9,164,1,1,17,1
+174,Udupi Cyber PS,8,164,1,1,17,1
+175,Udupi City Market PS,5,164,1,1,17,1
+176,Udupi Industrial Area PS,5,164,1,1,17,1
+177,Chikkamagaluru District Police HQ,3,1,1,1,18,1
+178,Chikkamagaluru Town PS,5,177,1,1,18,1
+179,Chikkamagaluru Rural PS,5,177,1,1,18,1
+180,Chikkamagaluru North PS,5,177,1,1,18,1
+181,Chikkamagaluru South PS,5,177,1,1,18,1
+182,Chikkamagaluru East PS,5,177,1,1,18,1
+183,Chikkamagaluru West PS,5,177,1,1,18,1
+184,Chikkamagaluru Central PS,5,177,1,1,18,1
+185,Chikkamagaluru Traffic PS,7,177,1,1,18,1
+186,Chikkamagaluru Women PS,9,177,1,1,18,1
+187,Chikkamagaluru Cyber PS,8,177,1,1,18,1
+188,Chikkamagaluru City Market PS,5,177,1,1,18,1
+189,Chikkamagaluru Industrial Area PS,5,177,1,1,18,1
+190,Hassan District Police HQ,3,1,1,1,19,1
+191,Hassan Town PS,5,190,1,1,19,1
+192,Hassan Rural PS,5,190,1,1,19,1
+193,Hassan North PS,5,190,1,1,19,1
+194,Hassan South PS,5,190,1,1,19,1
+195,Hassan East PS,5,190,1,1,19,1
+196,Hassan West PS,5,190,1,1,19,1
+197,Hassan Central PS,5,190,1,1,19,1
+198,Hassan Traffic PS,7,190,1,1,19,1
+199,Kodagu District Police HQ,3,1,1,1,20,1
+200,Kodagu Town PS,5,199,1,1,20,1
+201,Kodagu Rural PS,5,199,1,1,20,1
+202,Kodagu North PS,5,199,1,1,20,1
+203,Kodagu South PS,5,199,1,1,20,1
+204,Kodagu East PS,5,199,1,1,20,1
+205,Kodagu West PS,5,199,1,1,20,1
+206,Kodagu Central PS,5,199,1,1,20,1
+207,Kodagu Traffic PS,7,199,1,1,20,1
+208,Kodagu Women PS,9,199,1,1,20,1
+209,Kodagu Cyber PS,8,199,1,1,20,1
+210,Kodagu City Market PS,5,199,1,1,20,1
+211,Kodagu Industrial Area PS,5,199,1,1,20,1
+212,Mandya District Police HQ,3,1,1,1,21,1
+213,Mandya Town PS,5,212,1,1,21,1
+214,Mandya Rural PS,5,212,1,1,21,1
+215,Mandya North PS,5,212,1,1,21,1
+216,Mandya South PS,5,212,1,1,21,1
+217,Mandya East PS,5,212,1,1,21,1
+218,Mandya West PS,5,212,1,1,21,1
+219,Mandya Central PS,5,212,1,1,21,1
+220,Mandya Traffic PS,7,212,1,1,21,1
+221,Mandya Women PS,9,212,1,1,21,1
+222,Chamarajanagara District Police HQ,3,1,1,1,22,1
+223,Chamarajanagara Town PS,5,222,1,1,22,1
+224,Chamarajanagara Rural PS,5,222,1,1,22,1
+225,Chamarajanagara North PS,5,222,1,1,22,1
+226,Chamarajanagara South PS,5,222,1,1,22,1
+227,Chamarajanagara East PS,5,222,1,1,22,1
+228,Chamarajanagara West PS,5,222,1,1,22,1
+229,Chamarajanagara Central PS,5,222,1,1,22,1
+230,Chamarajanagara Traffic PS,7,222,1,1,22,1
+231,Chamarajanagara Women PS,9,222,1,1,22,1
+232,Chamarajanagara Cyber PS,8,222,1,1,22,1
+233,Chamarajanagara City Market PS,5,222,1,1,22,1
+234,Chamarajanagara Industrial Area PS,5,222,1,1,22,1
+235,Ramanagara District Police HQ,3,1,1,1,23,1
+236,Ramanagara Town PS,5,235,1,1,23,1
+237,Ramanagara Rural PS,5,235,1,1,23,1
+238,Ramanagara North PS,5,235,1,1,23,1
+239,Ramanagara South PS,5,235,1,1,23,1
+240,Ramanagara East PS,5,235,1,1,23,1
+241,Ramanagara West PS,5,235,1,1,23,1
+242,Ramanagara Central PS,5,235,1,1,23,1
+243,Ramanagara Traffic PS,7,235,1,1,23,1
+244,Ramanagara Women PS,9,235,1,1,23,1
+245,Ramanagara Cyber PS,8,235,1,1,23,1
+246,Ramanagara City Market PS,5,235,1,1,23,1
+247,Chikkaballapura District Police HQ,3,1,1,1,24,1
+248,Chikkaballapura Town PS,5,247,1,1,24,1
+249,Chikkaballapura Rural PS,5,247,1,1,24,1
+250,Chikkaballapura North PS,5,247,1,1,24,1
+251,Chikkaballapura South PS,5,247,1,1,24,1
+252,Chikkaballapura East PS,5,247,1,1,24,1
+253,Chikkaballapura West PS,5,247,1,1,24,1
+254,Chikkaballapura Central PS,5,247,1,1,24,1
+255,Chikkaballapura Traffic PS,7,247,1,1,24,1
+256,Chikkaballapura Women PS,9,247,1,1,24,1
+257,Kolar District Police HQ,3,1,1,1,25,1
+258,Kolar Town PS,5,257,1,1,25,1
+259,Kolar Rural PS,5,257,1,1,25,1
+260,Kolar North PS,5,257,1,1,25,1
+261,Kolar South PS,5,257,1,1,25,1
+262,Kolar East PS,5,257,1,1,25,1
+263,Kolar West PS,5,257,1,1,25,1
+264,Kolar Central PS,5,257,1,1,25,1
+265,Kolar Traffic PS,7,257,1,1,25,1
+266,Kolar Women PS,9,257,1,1,25,1
+267,Kolar Cyber PS,8,257,1,1,25,1
+268,Kolar City Market PS,5,257,1,1,25,1
+269,Koppal District Police HQ,3,1,1,1,26,1
+270,Koppal Town PS,5,269,1,1,26,1
+271,Koppal Rural PS,5,269,1,1,26,1
+272,Koppal North PS,5,269,1,1,26,1
+273,Koppal South PS,5,269,1,1,26,1
+274,Koppal East PS,5,269,1,1,26,1
+275,Koppal West PS,5,269,1,1,26,1
+276,Koppal Central PS,5,269,1,1,26,1
+277,Koppal Traffic PS,7,269,1,1,26,1
+278,Koppal Women PS,9,269,1,1,26,1
+279,Koppal Cyber PS,8,269,1,1,26,1
+280,Koppal City Market PS,5,269,1,1,26,1
+281,Koppal Industrial Area PS,5,269,1,1,26,1
+282,Raichur District Police HQ,3,1,1,1,27,1
+283,Raichur Town PS,5,282,1,1,27,1
+284,Raichur Rural PS,5,282,1,1,27,1
+285,Raichur North PS,5,282,1,1,27,1
+286,Raichur South PS,5,282,1,1,27,1
+287,Raichur East PS,5,282,1,1,27,1
+288,Raichur West PS,5,282,1,1,27,1
+289,Raichur Central PS,5,282,1,1,27,1
+290,Raichur Traffic PS,7,282,1,1,27,1
+291,Raichur Women PS,9,282,1,1,27,1
+292,Raichur Cyber PS,8,282,1,1,27,1
+293,Yadgir District Police HQ,3,1,1,1,28,1
+294,Yadgir Town PS,5,293,1,1,28,1
+295,Yadgir Rural PS,5,293,1,1,28,1
+296,Yadgir North PS,5,293,1,1,28,1
+297,Yadgir South PS,5,293,1,1,28,1
+298,Yadgir East PS,5,293,1,1,28,1
+299,Yadgir West PS,5,293,1,1,28,1
+300,Yadgir Central PS,5,293,1,1,28,1
+301,Yadgir Traffic PS,7,293,1,1,28,1
+302,Bidar District Police HQ,3,1,1,1,29,1
+303,Bidar Town PS,5,302,1,1,29,1
+304,Bidar Rural PS,5,302,1,1,29,1
+305,Bidar North PS,5,302,1,1,29,1
+306,Bidar South PS,5,302,1,1,29,1
+307,Bidar East PS,5,302,1,1,29,1
+308,Bidar West PS,5,302,1,1,29,1
+309,Bidar Central PS,5,302,1,1,29,1
+310,Bidar Traffic PS,7,302,1,1,29,1
+311,Bidar Women PS,9,302,1,1,29,1
+312,Chitradurga District Police HQ,3,1,1,1,30,1
+313,Chitradurga Town PS,5,312,1,1,30,1
+314,Chitradurga Rural PS,5,312,1,1,30,1
+315,Chitradurga North PS,5,312,1,1,30,1
+316,Chitradurga South PS,5,312,1,1,30,1
+317,Chitradurga East PS,5,312,1,1,30,1
+318,Chitradurga West PS,5,312,1,1,30,1
+319,Chitradurga Central PS,5,312,1,1,30,1
+320,Chitradurga Traffic PS,7,312,1,1,30,1
+321,Chitradurga Women PS,9,312,1,1,30,1
+322,Chitradurga Cyber PS,8,312,1,1,30,1
+323,Chitradurga City Market PS,5,312,1,1,30,1

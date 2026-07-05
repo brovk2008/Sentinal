@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence } from '../api'
+import { queryIntelligence, uploadToRag } from '../api'
+import VoiceInterface from '../components/rag/VoiceInterface'
 
 function MessageCitations({ citations = [], debugInfo = {} }) {
   const [open, setOpen] = useState(false)
@@ -119,6 +121,8 @@ I can help you with:
 Type your query below or select a suggestion to begin.`,
     },
   ])
+  const [searchParams] = useSearchParams()
+  const [voiceMode, setVoiceMode] = useState(searchParams.get('voice') === 'true')
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -205,11 +209,7 @@ Type your query below or select a suggestion to begin.`,
     formData.append('file', file)
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/intelligence/upload-to-rag', {
-        method: 'POST',
-        body: formData,
-      })
-      const result = await response.json()
+      const result = await uploadToRag(formData)
       
       if (result.status === 'success') {
         setTimeout(() => {
@@ -247,6 +247,15 @@ Type your query below or select a suggestion to begin.`,
         <span className="mono" style={{ fontSize: 12 }}>SENTINEL AI TERMINAL</span>
         <Badge text="RAG + LLM" variant="badge-copper" />
         <div style={{ flex: 1 }} />
+        <button onClick={() => setVoiceMode(v => !v)} style={{
+          background: voiceMode ? 'var(--copper-400)' : 'transparent',
+          border: '1px solid var(--copper-400)',
+          color: voiceMode ? '#000' : 'var(--copper-400)',
+          padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+          outline: 'none', marginRight: 16
+        }}>
+          🎙️ {voiceMode ? 'VOICE ON' : 'VOICE'}
+        </button>
         <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
           KNOWLEDGE BASE: 500 narratives · 2,384 chunks · 113K records · Last indexed: Jul 5, 2026
         </span>
@@ -348,6 +357,26 @@ Type your query below or select a suggestion to begin.`,
               {s}
             </button>
           ))}
+        </div>
+      )}
+
+      {voiceMode && (
+        <div style={{ padding: '0 20px 12px' }}>
+          <VoiceInterface
+            onTranscript={(t) => setInput(t)}
+            onResponse={({ query, answer, citations }) => {
+              setMessages(prev => [
+                ...prev,
+                { role: 'user', content: query },
+                {
+                  role: 'assistant',
+                  content: answer,
+                  citations: citations || [],
+                  debugInfo: { retrievalTime: 120, searchedChunks: 1000 }
+                }
+              ])
+            }}
+          />
         </div>
       )}
 

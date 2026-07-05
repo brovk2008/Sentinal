@@ -1,0 +1,13 @@
+DesignationID,DesignationName,Active,SortOrder
+1,Station House Officer,1,1
+2,Investigating Officer,1,2
+3,Beat Officer,1,3
+4,Traffic Inspector,1,4
+5,Cyber Crime Inspector,1,5
+6,Desk Officer,1,6
+7,Wireless Operator,1,7
+8,Dog Squad Handler,1,8
+9,Forensic Officer,1,9
+10,Intelligence Officer,1,10
+11,Law and Order Inspector,1,11
+12,Women Help Desk Officer,1,12

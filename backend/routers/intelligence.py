@@ -15,8 +15,12 @@ import numpy as np
 router = APIRouter()
 
 
+from typing import Optional, List
+
 class QueryRequest(BaseModel):
     query: str
+    conversation_history: Optional[List[dict]] = []
+    board_id: Optional[str] = None
 
 
 class DiagramRequest(BaseModel):
@@ -51,7 +55,7 @@ def get_case_by_crime_no(crime_no: str) -> dict | None:
 
 @router.post("/query")
 async def intelligence_query(req: QueryRequest):
-    """Run RAG pipeline: embed query → retrieve → generate answer."""
+    """Run RAG pipeline: embed query → retrieve → generate answer with history and board context."""
     start_time = time.perf_counter()
     
     # Retrieve relevant documents using semantic search
@@ -73,7 +77,22 @@ async def intelligence_query(req: QueryRequest):
         if case_data:
             case_context = f"\n\n[CASE DATABASE ENRICHMENT] Case CrimeNo: {crime_no}\nFull Case Data: {json.dumps(case_data, default=str)}\n"
 
-    if not retrieved and not case_context:
+    # Board context
+    board_context = ""
+    if req.board_id:
+        try:
+            board_row = query_one("SELECT * FROM evidence_boards WHERE board_id = ?", (req.board_id,))
+            if board_row:
+                board_data = json.loads(board_row["data"])
+                board_context = "\n[INVESTIGATION BOARD STATE]\n"
+                for node in board_data.get("nodes", []):
+                    board_context += f"- {node.get('type', 'node').upper()}: {node.get('title', '')} ({', '.join(node.get('tags', []))})\n"
+                for conn in board_data.get("connections", []):
+                    board_context += f"- CONNECTION: {conn.get('label', '')}\n"
+        except Exception as e:
+            print(f"[RAG Board Context] Error: {e}")
+
+    if not retrieved and not case_context and not board_context:
         # Fallback: return direct SQL database queries or simple responses
         return {
             "answer": _generate_data_answer(req.query),
@@ -83,7 +102,7 @@ async def intelligence_query(req: QueryRequest):
             "total_chunks_searched": total_chunks_searched
         }
 
-    context = case_context + "\n\n" + "\n\n---\n\n".join([r["summary"] for r in (retrieved or [])])
+    context = case_context + board_context + "\n\n" + "\n\n---\n\n".join([r["summary"] for r in (retrieved or [])])
     citations = [
         {
             "source": r["title"],
@@ -95,16 +114,18 @@ async def intelligence_query(req: QueryRequest):
         for r in retrieved
     ]
 
-    prompt = f"""You are an AI intelligence analyst for Karnataka Police Project Sentinel.
-Answer the investigator's question using the provided intelligence context.
-Be precise, cite facts, use case numbers and names when available.
-
-INTELLIGENCE CONTEXT:
+    system_prompt = "You are an AI intelligence analyst for Karnataka Police Project Sentinel. Cite facts, case numbers, and names."
+    user_prompt = f"""INTELLIGENCE CONTEXT:
 {context}
 
 QUESTION: {req.query}
 
 Respond in clear markdown. Include specific names, case numbers, dates when available."""
+
+    messages = [{"role": "system", "content": system_prompt}]
+    if req.conversation_history:
+        messages.extend(req.conversation_history[-6:])
+    messages.append({"role": "user", "content": user_prompt})
 
     # 1. Try Catalyst QuickML first if configured
     quickml_url = os.getenv("CATALYST_QUICKML_URL")
@@ -113,25 +134,21 @@ Respond in clear markdown. Include specific names, case numbers, dates when avai
         try:
             async with httpx.AsyncClient() as client:
                 r = await client.post(
-                    quickml_url,
-                    headers={"Authorization": f"Bearer {quickml_key}"},
+                    f"{quickml_url.rstrip('/')}/chat/completions",
+                    headers={
+                        "Authorization": f"Catalyst {quickml_key}",
+                        "Content-Type": "application/json"
+                    },
                     json={
-                        "messages": [{"role": "user", "content": prompt}],
+                        "model": "llama-3-70b",
+                        "messages": messages,
                         "temperature": 0.2,
                     },
                     timeout=30,
                 )
                 if r.status_code == 200:
                     res_json = r.json()
-                    answer = ""
-                    if "choices" in res_json:
-                        answer = res_json["choices"][0]["message"]["content"]
-                    elif "output" in res_json:
-                        answer = res_json["output"]
-                    elif "generated_text" in res_json:
-                        answer = res_json["generated_text"]
-                    else:
-                        answer = str(res_json)
+                    answer = res_json["choices"][0]["message"]["content"]
                     return {
                         "answer": answer,
                         "citations": citations,
@@ -151,7 +168,7 @@ Respond in clear markdown. Include specific names, case numbers, dates when avai
                     headers={"Authorization": f"Bearer {config.GROQ_API_KEY}"},
                     json={
                         "model": config.GROQ_MODEL,
-                        "messages": [{"role": "user", "content": prompt}],
+                        "messages": messages,
                         "max_tokens": 1024,
                     },
                     timeout=30,
