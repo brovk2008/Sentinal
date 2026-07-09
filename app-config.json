@@ -1,0 +1,12 @@
+{
+  "name": "sentinal-backend",
+  "command": "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1",
+  "build_path": "backend",
+  "stack": "python_3_11",
+  "env_variables": {
+    "GROQ_API_KEY": "${GROQ_API_KEY}",
+    "ZCAT_QUICKML_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat"
+  },
+  "memory": 1024,
+  "scripts": {}
+}

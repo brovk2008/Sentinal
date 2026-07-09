@@ -4,8 +4,8 @@ import json
 from config import config
 
 # Catalyst QuickML settings from environment
-QUICKML_URL = os.getenv("CATALYST_QUICKML_URL", "")
-QUICKML_KEY = os.getenv("CATALYST_QUICKML_KEY", "")
+QUICKML_URL = os.getenv("ZCAT_QUICKML_URL") or os.getenv("CATALYST_QUICKML_URL") or ""
+QUICKML_KEY = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
 
 async def call_ai(system_prompt: str, user_prompt: str, max_tokens: int = 2000) -> str:
     """

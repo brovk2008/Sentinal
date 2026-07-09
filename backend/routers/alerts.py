@@ -102,8 +102,8 @@ async def alert_stats():
 
 
 async def push_to_catalyst_signals(alert: dict):
-    url = os.getenv("CATALYST_SIGNALS_URL")
-    key = os.getenv("CATALYST_SIGNALS_KEY")
+    url = os.getenv("ZCAT_SIGNALS_URL") or os.getenv("CATALYST_SIGNALS_URL")
+    key = os.getenv("ZCAT_SIGNALS_KEY") or os.getenv("CATALYST_SIGNALS_KEY")
     if url and key:
         try:
             async with httpx.AsyncClient() as client:

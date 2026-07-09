@@ -244,8 +244,8 @@ async def generate_case_report(case_id: int):
     """
 
     # 1. Try Catalyst SmartBrowz first
-    smartbrowz_url = os.getenv("CATALYST_SMARTBROWZ_URL")
-    smartbrowz_key = os.getenv("CATALYST_SMARTBROWZ_KEY")
+    smartbrowz_url = os.getenv("ZCAT_SMARTBROWZ_URL") or os.getenv("CATALYST_SMARTBROWZ_URL")
+    smartbrowz_key = os.getenv("ZCAT_SMARTBROWZ_KEY") or os.getenv("CATALYST_SMARTBROWZ_KEY")
     if smartbrowz_url and smartbrowz_key:
         try:
             async with httpx.AsyncClient() as client:
@@ -353,8 +353,8 @@ async def generate_district_report(district_name: str):
     """
 
     # 1. Try SmartBrowz
-    smartbrowz_url = os.getenv("CATALYST_SMARTBROWZ_URL")
-    smartbrowz_key = os.getenv("CATALYST_SMARTBROWZ_KEY")
+    smartbrowz_url = os.getenv("ZCAT_SMARTBROWZ_URL") or os.getenv("CATALYST_SMARTBROWZ_URL")
+    smartbrowz_key = os.getenv("ZCAT_SMARTBROWZ_KEY") or os.getenv("CATALYST_SMARTBROWZ_KEY")
     if smartbrowz_url and smartbrowz_key:
         try:
             async with httpx.AsyncClient() as client:

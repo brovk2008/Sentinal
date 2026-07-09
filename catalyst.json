@@ -1,0 +1,11 @@
+{
+  "appsail": [
+    {
+      "source": ".",
+      "name": "sentinal-backend"
+    }
+  ],
+  "apig": {
+    "enabled": true
+  }
+}

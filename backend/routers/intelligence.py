@@ -128,8 +128,8 @@ Respond in clear markdown. Include specific names, case numbers, dates when avai
     messages.append({"role": "user", "content": user_prompt})
 
     # 1. Try Catalyst QuickML first if configured
-    quickml_url = os.getenv("CATALYST_QUICKML_URL")
-    quickml_key = os.getenv("CATALYST_QUICKML_KEY")
+    quickml_url = os.getenv("ZCAT_QUICKML_URL") or os.getenv("CATALYST_QUICKML_URL")
+    quickml_key = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY")
     if quickml_url and quickml_key:
         try:
             async with httpx.AsyncClient() as client:
@@ -292,8 +292,8 @@ async def upload_to_rag(file: UploadFile = File(...)):
     content = await file.read()
 
     # Try Catalyst Stratus file upload if configured
-    stratus_url = os.getenv("CATALYST_STRATUS_URL")
-    stratus_key = os.getenv("CATALYST_STRATUS_KEY")
+    stratus_url = os.getenv("ZCAT_STRATUS_URL") or os.getenv("CATALYST_STRATUS_URL")
+    stratus_key = os.getenv("ZCAT_STRATUS_KEY") or os.getenv("CATALYST_STRATUS_KEY")
     if stratus_url and stratus_key:
         try:
             async with httpx.AsyncClient() as client:
@@ -312,8 +312,8 @@ async def upload_to_rag(file: UploadFile = File(...)):
     extracted_text = ""
     
     # Try Catalyst Zia OCR first if configured
-    zia_key = os.getenv("CATALYST_ZIA_KEY")
-    zia_url = os.getenv("CATALYST_ZIA_OCR_URL") or "https://zia.zoho.com/api/v1/ocr"
+    zia_key = os.getenv("ZCAT_ZIA_KEY") or os.getenv("CATALYST_ZIA_KEY")
+    zia_url = os.getenv("ZCAT_ZIA_OCR_URL") or os.getenv("CATALYST_ZIA_OCR_URL") or "https://zia.zoho.com/api/v1/ocr"
     if zia_key:
         try:
             async with httpx.AsyncClient() as client:
