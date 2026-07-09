@@ -1,11 +1,11 @@
-# Project Sentinel v2 — Catalyst Deployment Checklist
+# Project Sentinal v2 — Catalyst Deployment Checklist
 
 ## Pre-deployment (local)
 - [x] Frontend builds successfully
 - [x] Backend starts with no errors
 - [x] All 22+ endpoints return 200 OK
 - [x] All 14 pages render correctly
-- [x] sentinel.db optimized with VACUUM
+- [x] sentinal.db optimized with VACUUM
 - [x] Dockerfile tested locally
 - [x] requirements.txt has all dependencies pinned
 
@@ -13,7 +13,7 @@
 
 ### Step A — Create AppSail Service (Backend)
 1. Go to Catalyst Console → AppSail
-2. Create new service named: sentinel-backend
+2. Create new service named: sentinal-backend
 3. Select Docker container deployment
 4. Connect your GitHub repo
 5. Set root directory: backend/
@@ -32,7 +32,7 @@
 
 ### Step C — Deploy Frontend to Slate
 1. Go to Catalyst Console → Web Client Hosting (Slate)
-2. Create new client named: sentinel-frontend
+2. Create new client named: sentinal-frontend
 3. Upload the frontend/dist/ folder
 4. Set index document: index.html
 5. Set error document: index.html (for React Router)
@@ -55,4 +55,4 @@ CATALYST_QUICKML_KEY = your_key
 ## Common Issues
 - CORS errors: Backend CORS is already configured for all origins
 - 502 timeout: AppSail needs 60s startup time for ML model loading
-- Missing data: sentinel.db must be included in the Docker build context
+- Missing data: sentinal.db must be included in the Docker build context

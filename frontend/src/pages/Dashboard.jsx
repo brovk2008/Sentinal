@@ -84,12 +84,12 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      
+
       {/* Header Row with War Room Button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Command Center Dashboard</h1>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Project Sentinel v2 — Karnataka State Police</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Project Sentinal v2 — Karnataka State Police</div>
         </div>
         <button
           className="btn btn-copper"
@@ -190,7 +190,7 @@ export default function Dashboard() {
                   <div style={{
                     width: 6, height: 6, borderRadius: '50%',
                     background: ev.CaseStatusName === 'Registered' ? '#e05252' :
-                               ev.CaseStatusName === 'Under Investigation' ? '#e0a832' : '#52b788',
+                      ev.CaseStatusName === 'Under Investigation' ? '#e0a832' : '#52b788',
                     flexShrink: 0,
                   }} />
                   <span style={{ fontSize: 11, color: 'var(--text-primary)', fontWeight: 500 }}>
@@ -264,12 +264,12 @@ export default function Dashboard() {
             {forecast?.risk_factors?.map((f, i) => (
               <div key={i}>• {f}</div>
             )) || (
-              <>
-                <div>• Bengaluru Urban spike detected</div>
-                <div>• Cyber fraud ↑ 23% this quarter</div>
-                <div>• Narcotics activity in Belagavi</div>
-              </>
-            )}
+                <>
+                  <div>• Bengaluru Urban spike detected</div>
+                  <div>• Cyber fraud ↑ 23% this quarter</div>
+                  <div>• Narcotics activity in Belagavi</div>
+                </>
+              )}
           </div>
         </div>
 
@@ -288,7 +288,7 @@ export default function Dashboard() {
                   <span style={{
                     width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
                     background: a.severity === 'critical' ? '#e05252' :
-                               a.severity === 'high' ? '#e0a832' : '#4a9ede',
+                      a.severity === 'high' ? '#e0a832' : '#4a9ede',
                   }} />
                   <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>
                     {a.title}

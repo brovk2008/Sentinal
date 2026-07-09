@@ -35,22 +35,22 @@ export default function EvidenceBoard() {
   const [connectMode, setConnectMode] = useState(false)
   const [fromNodeId, setFromNodeId] = useState(null)
   const [tempLineEnd, setTempLineEnd] = useState(null)
-  
+
   // Selection
   const [selectedNodeId, setSelectedNodeId] = useState(null)
-  
+
   // Dialog / Sidebar states
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [addType, setAddType] = useState(null) // 'photo' | 'document' | 'case' | 'person' | 'location'
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
-  
+
   // AI Brain states
   const [aiSidebar, setAiSidebar] = useState(false)
   const [aiAnalyzing, setAiAnalyzing] = useState(false)
   const [aiInsights, setAiInsights] = useState([])
   const [aiBrief, setAiBrief] = useState('')
-  
+
   // Suspect matching
   const [showMatchModal, setShowMatchModal] = useState(false)
   const [matchLoading, setMatchLoading] = useState(false)
@@ -297,7 +297,7 @@ export default function EvidenceBoard() {
       })
       setAiInsights(res.key_insights || [])
       setAiBrief(res.investigation_brief || '')
-      
+
       // Merge new AI connections
       if (res.new_connections && res.new_connections.length > 0) {
         setConnections(prev => {
@@ -336,7 +336,7 @@ export default function EvidenceBoard() {
             const nodeA = nodes.find(n => n.title.toLowerCase().includes(c.entity_a.toLowerCase()))
             const nodeB = nodes.find(n => n.title.toLowerCase().includes(c.entity_b.toLowerCase()))
             if (nodeA && nodeB) {
-              const exists = updated.some(conn => 
+              const exists = updated.some(conn =>
                 (conn.fromNodeId === nodeA.id && conn.toNodeId === nodeB.id) ||
                 (conn.fromNodeId === nodeB.id && conn.toNodeId === nodeA.id)
               )
@@ -369,7 +369,7 @@ export default function EvidenceBoard() {
     if (!file) return
     const formData = new FormData()
     formData.append('file', file)
-    
+
     // Add loader placeholder node
     const tempId = `node_loading_${Date.now()}`
     const tempNode = {
@@ -464,7 +464,7 @@ export default function EvidenceBoard() {
       fontFamily: 'var(--font-sans)',
       userSelect: 'none'
     }}>
-      
+
       {/* ─── TOOLBAR CONTROLS ─── */}
       <div style={{
         position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
@@ -497,7 +497,7 @@ export default function EvidenceBoard() {
           >
             🔗 {connectMode ? 'Click Card Target' : 'Connect'}
           </button>
-          
+
           <button
             className="btn btn-sm"
             disabled={!selectedNodeId}
@@ -552,7 +552,7 @@ export default function EvidenceBoard() {
           height: '100%',
           pointerEvents: 'none'
         }}>
-          
+
           {/* CURVED STRING SVG LAYER */}
           <svg style={{
             position: 'absolute', top: 0, left: 0,
@@ -563,7 +563,7 @@ export default function EvidenceBoard() {
               const from = nodes.find(n => n.id === conn.fromNodeId)
               const to = nodes.find(n => n.id === conn.toNodeId)
               if (!from || !to) return null
-              
+
               const fx = from.x + 95
               const fy = from.y + 70
               const tx = to.x + 95
@@ -639,7 +639,7 @@ export default function EvidenceBoard() {
                 {node.imageUrl && (
                   <img src={node.imageUrl} style={{ width: '100%', height: 110, objectFit: 'cover', borderRadius: 4 }} />
                 )}
-                
+
                 {node.loading && (
                   <div style={{ height: 110, background: 'var(--bg-secondary)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--text-muted)' }}>
                     Uploading to Zia...
@@ -786,7 +786,7 @@ export default function EvidenceBoard() {
                 <div style={{ background: 'rgba(255,255,255,0.03)', padding: 8, borderRadius: 4, fontSize: 10 }}>
                   <strong>Zia Description:</strong> {matchResults.zia_analysis?.description}
                 </div>
-                
+
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', marginTop: 4 }}>Top 3 Database Matches:</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {matchResults.matches?.map((m, i) => (
@@ -812,7 +812,7 @@ export default function EvidenceBoard() {
                 </div>
               </div>
             )}
-            
+
             <div style={{ fontSize: 9, color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)', paddingTop: 8 }}>
               ⚠️ AI matching is probabilistic. Always verify with official records.
             </div>
@@ -885,11 +885,11 @@ export default function EvidenceBoard() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.05em' }}>
-              🤖 SENTINEL AI BRAIN
+              🤖 SENTINAL AI BRAIN
             </div>
             <button className="btn btn-sm" onClick={() => setAiSidebar(false)}>×</button>
           </div>
-          
+
           <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
             Powered by Catalyst QuickML
           </div>

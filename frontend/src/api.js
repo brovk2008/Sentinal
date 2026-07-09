@@ -1,5 +1,5 @@
 /**
- * Centralized API client for Project Sentinel v2.
+ * Centralized API client for Project Sentinal v2.
  * All backend calls go through this module.
  */
 
@@ -141,7 +141,7 @@ export const downloadCaseReport = async (caseId, crimeNo) => {
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = downloadUrl;
-    a.download = `Sentinel_Report_${crimeNo.replace(/\//g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    a.download = `Sentinal_Report_${crimeNo.replace(/\//g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
     document.body.appendChild(a);
     a.click();
     a.remove();

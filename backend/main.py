@@ -8,14 +8,14 @@ from routers.predict import load_models as load_predict_models
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — load models and embeddings at startup."""
-    print("Project Sentinel v2 — Starting up...")
+    print("Project Sentinal v2 — Starting up...")
     load_predict_models()
     yield
-    print("Project Sentinel v2 — Shutting down...")
+    print("Project Sentinal v2 — Shutting down...")
 
 
 app = FastAPI(
-    title="Project Sentinel v2",
+    title="Project Sentinal v2",
     description="Karnataka Police Crime Intelligence Platform API",
     version="2.0.0",
     lifespan=lifespan,
@@ -51,4 +51,4 @@ app.include_router(darkweb.router, prefix="/api/v1/darkweb", tags=["Dark Web Int
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "2.0.0", "platform": "Project Sentinel v2"}
+    return {"status": "ok", "version": "2.0.0", "platform": "Project Sentinal v2"}

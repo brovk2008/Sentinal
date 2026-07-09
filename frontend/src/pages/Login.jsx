@@ -15,8 +15,8 @@ export default function Login() {
 
     // Delay simulation for premium transition look
     setTimeout(() => {
-      if (email === 'demo@sentinel.ksp' && password === 'Sentinel@2024') {
-        localStorage.setItem('sentinel_token', 'mock-valid-sentinel-jwt-token')
+      if (email === 'demo@sentinal.ksp' && password === 'Sentinal@2024') {
+        localStorage.setItem('sentinal_token', 'mock-valid-sentinal-jwt-token')
         navigate('/dashboard')
       } else {
         setError('Invalid credentials. Access Denied.')
@@ -65,7 +65,7 @@ export default function Login() {
             letterSpacing: '0.08em',
             fontFamily: 'var(--font-mono)'
           }}>
-            PROJECT SENTINEL
+            PROJECT SENTINAL
           </div>
           <div style={{
             fontSize: 10,
@@ -102,7 +102,7 @@ export default function Login() {
               className="input"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="demo@sentinel.ksp"
+              placeholder="demo@sentinal.ksp"
               required
               style={{ width: '100%', fontSize: 13 }}
             />

@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 
 class Config:
-    DB_PATH = str(DATA_DIR / "sentinel.db")
+    DB_PATH = str(DATA_DIR / "sentinal.db")
     EMBEDDINGS_PATH = str(DATA_DIR / "embeddings.npy")
     CHUNK_METADATA_PATH = str(DATA_DIR / "chunk_metadata.json")
     NARRATIVES_PATH = str(DATA_DIR / "investigation_narratives.json")

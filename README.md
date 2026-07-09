@@ -1,4 +1,4 @@
-# Project Sentinel v2
+# Project Sentinal v2
 
 A high-performance, internally consistent fake crime intelligence platform for the Karnataka Police ecosystem (2023-2024), deployed on Zoho Catalyst.
 
@@ -43,7 +43,7 @@ A high-performance, internally consistent fake crime intelligence platform for t
 
 ## Zoho Catalyst Platform Integration
 
-Project Sentinel v2 integrates with the Zoho Catalyst cloud ecosystem:
+Project Sentinal v2 integrates with the Zoho Catalyst cloud ecosystem:
 1. **Catalyst QuickML**: LLM orchestration and model routing. Setup the following environment keys:
    - `CATALYST_QUICKML_URL`
    - `CATALYST_QUICKML_KEY`

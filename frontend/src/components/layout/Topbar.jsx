@@ -21,7 +21,7 @@ export default function Topbar() {
     fetchAlerts(10).then(a => {
       setAlerts(a)
       setAlertCount(a.length)
-    }).catch(() => {})
+    }).catch(() => { })
     return () => clearInterval(timer)
   }, [])
 
@@ -54,7 +54,7 @@ export default function Topbar() {
           setSearchResults(res.slice(0, 8))
           setShowSearchDropdown(true)
         })
-        .catch(() => {})
+        .catch(() => { })
     }, 400)
 
     return () => clearTimeout(delayDebounce)
@@ -328,7 +328,7 @@ export default function Topbar() {
               </button>
               <button
                 onClick={() => {
-                  localStorage.removeItem('sentinel_token')
+                  localStorage.removeItem('sentinal_token')
                   navigate('/login')
                 }}
                 style={{

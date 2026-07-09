@@ -1,6 +1,6 @@
 """
 Feature engineering pipeline for all prediction models.
-Reads sentinel.db and builds structured feature matrices.
+Reads sentinal.db and builds structured feature matrices.
 Output: backend/data/features.pkl (dict of DataFrames)
 """
 import sqlite3
@@ -11,7 +11,7 @@ from pathlib import Path
 
 # Absolute path resolution
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = str(ROOT_DIR / "backend" / "data" / "sentinel.db")
+DB_PATH = str(ROOT_DIR / "backend" / "data" / "sentinal.db")
 OUT_PATH = str(ROOT_DIR / "backend" / "data" / "features.pkl")
 
 print(f"Reading database from: {DB_PATH}")

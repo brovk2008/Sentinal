@@ -42,7 +42,7 @@ export default function WarRoom() {
           target_time: new Date(Date.now() + hoursAhead * 3600 * 1000)
         })
       }
-    }).catch(() => {})
+    }).catch(() => { })
 
     // Fetch operations list seeded from actual syndicates
     fetchSyndicates().then(data => {
@@ -68,7 +68,7 @@ export default function WarRoom() {
         }
       })
       setOperations(ops)
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   // Timer loop
@@ -84,7 +84,7 @@ export default function WarRoom() {
       const h = Math.floor(diff / 3600000)
       const m = Math.floor((diff % 3600000) / 60000)
       const s = Math.floor((diff % 60000) / 1000)
-      setCountdown(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`)
+      setCountdown(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
     }, 1000)
     return () => clearInterval(interval)
   }, [prediction])
@@ -111,7 +111,7 @@ export default function WarRoom() {
       fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', padding: 12,
       overflow: 'hidden', boxSizing: 'border-box'
     }}>
-      
+
       {/* ─── HEADER BAR ─── */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -120,7 +120,7 @@ export default function WarRoom() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span className="live-dot" style={{ background: '#e05252' }} />
           <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.15em' }}>
-            PROJECT SENTINEL ● OPERATION WAR ROOM ● KSP TACTICAL COMMAND
+            PROJECT SENTINAL ● OPERATION WAR ROOM ● KSP TACTICAL COMMAND
           </span>
         </div>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -249,7 +249,7 @@ export default function WarRoom() {
             <div>Meera D: <span style={{ color: '#52b788' }}>ACTIVE</span></div>
           </div>
         </div>
-        
+
         <div style={{
           background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-default)',
           borderRadius: 6, padding: 8, display: 'flex', flexDirection: 'column', gap: 4

@@ -6,7 +6,7 @@ import joblib
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
-DB_PATH = BASE_DIR / "backend" / "data" / "sentinel.db"
+DB_PATH = BASE_DIR / "backend" / "data" / "sentinal.db"
 MODEL_SAVE_DIR = BASE_DIR / "backend" / "models" / "ml" / "saved"
 
 def train():

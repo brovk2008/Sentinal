@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════╗
-║  PROJECT SENTINEL v2 — RAG Investigation Narratives Generator       ║
-║  Reads sentinel.db → Generates 500 investigation_narratives.json    ║
+║  PROJECT SENTINAL v2 — RAG Investigation Narratives Generator       ║
+║  Reads sentinal.db → Generates 500 investigation_narratives.json    ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
-Author : Project Sentinel Team
+Author : Project Sentinal Team
 Version: 2.0.0
 Python : 3.9+
 Usage  : python generate_rag_stories.py
-Input  : ./output/sentinel.db
+Input  : ./output/sentinal.db
 Output : ./output/investigation_narratives.json
 """
 
@@ -29,7 +29,7 @@ START_TIME = time.time()
 # ═══════════════════════════════════════════════════════════════════
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR  = os.path.join(SCRIPT_DIR, "output")
-DB_PATH     = os.path.join(OUTPUT_DIR, "sentinel.db")
+DB_PATH     = os.path.join(OUTPUT_DIR, "sentinal.db")
 OUTPUT_JSON = os.path.join(OUTPUT_DIR, "investigation_narratives.json")
 
 
@@ -45,7 +45,7 @@ def dict_factory(cursor, row):
 def get_conn():
     """Return a connection with dict row factory."""
     if not os.path.exists(DB_PATH):
-        print(f"ERROR: {DB_PATH} not found. Run generate_sentinel_data.py first.")
+        print(f"ERROR: {DB_PATH} not found. Run generate_sentinal_data.py first.")
         raise SystemExit(1)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = dict_factory
@@ -722,7 +722,7 @@ def generate_thematic_report(theme, conn, narrative_id):
 
 def main():
     print("╔══════════════════════════════════════════════════════════════════╗")
-    print("║  PROJECT SENTINEL v2 — RAG Narrative Generation                ║")
+    print("║  PROJECT SENTINAL v2 — RAG Narrative Generation                ║")
     print("╚══════════════════════════════════════════════════════════════════╝")
     print(f"  Input:  {DB_PATH}")
     print(f"  Output: {OUTPUT_JSON}")

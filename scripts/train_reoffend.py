@@ -15,7 +15,7 @@ from pathlib import Path
 
 # Absolute paths
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = str(ROOT_DIR / "backend" / "data" / "sentinel.db")
+DB_PATH = str(ROOT_DIR / "backend" / "data" / "sentinal.db")
 OUT_PATH = str(ROOT_DIR / "backend" / "models" / "ml" / "saved" / "reoffend_risk.joblib")
 
 print(f"Reading database from: {DB_PATH}")

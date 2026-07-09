@@ -315,7 +315,7 @@ async def compare_cases(req: CompareRequest):
 ### **Actionable Recommendations**
 - Coordinate investigating officers across stations: {', '.join(set(c['Station'] for c in case_summaries))}.
 - Verify common telephone contacts, CDR trails, and financial accounts.
-- Link cases under a common syndicate profile in Sentinel Connection Board."""
+- Link cases under a common syndicate profile in Sentinal Connection Board."""
 
     return {
         "cases": cases_data,

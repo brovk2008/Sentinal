@@ -21,7 +21,7 @@ import WarRoom from './pages/WarRoom'
 import Login from './pages/Login'
 
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('sentinel_token')
+  const token = localStorage.getItem('sentinal_token')
   if (!token) {
     return <Navigate to="/login" replace />
   }
@@ -70,7 +70,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+
         {/* Guarded Routes */}
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

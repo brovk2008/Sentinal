@@ -1,7 +1,7 @@
 """
 Live Crime Feed Simulator
 Streams synthetic incoming FIR events via Server-Sent Events (SSE).
-Events are sampled from existing sentinel.db cases to feel realistic.
+Events are sampled from existing sentinal.db cases to feel realistic.
 """
 import asyncio
 import json

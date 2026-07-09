@@ -61,7 +61,7 @@ export default function Sidebar() {
           letterSpacing: '0.08em',
           fontFamily: 'var(--font-mono)',
         }}>
-          PROJECT SENTINEL
+          PROJECT SENTINAL
         </div>
         <div style={{
           fontSize: 9,

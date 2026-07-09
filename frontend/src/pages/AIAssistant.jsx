@@ -107,9 +107,9 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState([
     {
       role: 'system',
-      content: `## Welcome to SENTINEL Intelligence Terminal
+      content: `## Welcome to SENTINAL Intelligence Terminal
 
-I am the AI Intelligence Analyst for Project Sentinel v2.
+I am the AI Intelligence Analyst for Project Sentinal v2.
 
 I can help you with:
 - **Crime pattern analysis** across districts and time periods
@@ -199,7 +199,7 @@ Type your query below or select a suggestion to begin.`,
     if (!file) return
 
     setUploadStatus('Extracting text...')
-    
+
     // Simulate pipeline status steps visually
     setTimeout(() => {
       setUploadStatus('Generating embeddings...')
@@ -210,7 +210,7 @@ Type your query below or select a suggestion to begin.`,
 
     try {
       const result = await uploadToRag(formData)
-      
+
       if (result.status === 'success') {
         setTimeout(() => {
           setUploadStatus(`Added ${result.chunks_added} chunks to knowledge base`)
@@ -244,7 +244,7 @@ Type your query below or select a suggestion to begin.`,
         background: 'var(--bg-secondary)',
       }}>
         <span className="live-dot" />
-        <span className="mono" style={{ fontSize: 12 }}>SENTINEL AI TERMINAL</span>
+        <span className="mono" style={{ fontSize: 12 }}>SENTINAL AI TERMINAL</span>
         <Badge text="RAG + LLM" variant="badge-copper" />
         <div style={{ flex: 1 }} />
         <button onClick={() => setVoiceMode(v => !v)} style={{

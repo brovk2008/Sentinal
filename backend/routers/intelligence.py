@@ -114,7 +114,7 @@ async def intelligence_query(req: QueryRequest):
         for r in retrieved
     ]
 
-    system_prompt = "You are an AI intelligence analyst for Karnataka Police Project Sentinel. Cite facts, case numbers, and names."
+    system_prompt = "You are an AI intelligence analyst for Karnataka Police Project Sentinal. Cite facts, case numbers, and names."
     user_prompt = f"""INTELLIGENCE CONTEXT:
 {context}
 
@@ -191,7 +191,7 @@ Respond in clear markdown. Include specific names, case numbers, dates when avai
         for r in retrieved[:3]:
             answer += f"### {r['title']} (Match: {r['score']:.2%})\n{r['summary']}\n\n"
     if case_context:
-        answer += f"\n### Case Database Matches\nLoaded metadata coordinates and details from Sentinel DB.\n"
+        answer += f"\n### Case Database Matches\nLoaded metadata coordinates and details from Sentinal DB.\n"
     
     return {
         "answer": answer,

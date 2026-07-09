@@ -407,7 +407,7 @@ def generate_reportlab_sitrep_pdf(request: SitrepRequest, data: dict) -> bytes:
 
     story.append(Paragraph(f"<b>{request.classification.upper()} — FOR AUTHORIZED PERSONNEL ONLY</b>", banner_style))
     story.append(Paragraph(f"SITUATION REPORT — {request.investigation_name.upper()}", title_style))
-    story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} · Project Sentinel v2 · Karnataka Police Intelligence", body_style))
+    story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} · Project Sentinal v2 · Karnataka Police Intelligence", body_style))
     story.append(Spacer(1, 10))
 
     story.append(Paragraph("1. Executive Summary", section_title_style))

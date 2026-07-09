@@ -1,6 +1,6 @@
 {
-  "id": "YOUR_PROJECT_ID",
-  "project_name": "project-sentinel-v2",
+  "id": "50170000000065001",
+  "project_name": "Sentinal",
   "platform": "zoho_catalyst",
   "services": [
     "AppSail",
@@ -13,5 +13,32 @@
     "Stratus",
     "Auth",
     "SmartBrowz"
+  ],
+  "defaults": {
+    "project": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "50170000000065001",
+      "name": "Sentinal",
+      "domain": {
+        "id": "50043676705",
+        "name": "sentinal-60073535541.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60073535541",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
   ]
 }

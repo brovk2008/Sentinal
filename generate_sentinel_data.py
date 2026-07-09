@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════╗
-║  PROJECT SENTINEL v2 — Synthetic Crime Intelligence Data Generator  ║
+║  PROJECT SENTINAL v2 — Synthetic Crime Intelligence Data Generator  ║
 ║  Karnataka Police Ecosystem · 2023-2024                             ║
 ║  50,000+ rows · 30+ tables · SQLite + CSV                           ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
-Author : Project Sentinel Team
+Author : Project Sentinal Team
 Version: 2.0.0
 Python : 3.9+
 Deps   : faker
-Usage  : python generate_sentinel_data.py
-Output : ./output/sentinel.db  +  ./output/csv/*.csv
+Usage  : python generate_sentinal_data.py
+Output : ./output/sentinal.db  +  ./output/csv/*.csv
 """
 
 import os
@@ -46,7 +46,7 @@ START_TIME = time.time()
 # ═══════════════════════════════════════════════════════════════════
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
 CSV_DIR    = os.path.join(OUTPUT_DIR, "csv")
-DB_PATH    = os.path.join(OUTPUT_DIR, "sentinel.db")
+DB_PATH    = os.path.join(OUTPUT_DIR, "sentinal.db")
 
 os.makedirs(CSV_DIR, exist_ok=True)
 
@@ -2276,7 +2276,7 @@ def main():
     global case_metadata_global
 
     print("╔══════════════════════════════════════════════════════════════════╗")
-    print("║  PROJECT SENTINEL v2 — Data Generation Starting...             ║")
+    print("║  PROJECT SENTINAL v2 — Data Generation Starting...             ║")
     print("╚══════════════════════════════════════════════════════════════════╝")
     print(f"  Output: {OUTPUT_DIR}")
     print(f"  Seed:   {SEED}")
