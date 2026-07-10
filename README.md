@@ -194,12 +194,15 @@ sentinal/
 
 ## ⚙️ Environment Variables (AppSail Config)
 
-AppSail prohibits environment variables starting with the reserved `CATALYST_` prefix. Sentinal resolves this by using the `SENTINAL_` prefix with standard fallback mappings:
+AppSail prohibits environment variables starting with the reserved `CATALYST_` prefix. Sentinal uses the `SENTINAL_` prefix throughout.
+
+> **QuickML auth note**: Inside AppSail, `zcatalyst_sdk` auto-fetches a fresh OAuth token — no separate API key is needed. The URL itself is the full endpoint (exactly as shown in the Catalyst QuickML console). `SENTINAL_QUICKML_KEY` is only needed for local dev/testing — paste a Zoho OAuth token from the console there.
 
 ```env
 SENTINAL_PROJECT_ID         = "50170000000065001"
-SENTINAL_QUICKML_KEY        = "PASTE_YOUR_QUICKML_API_KEY"
+SENTINAL_ORG_ID             = "60073535541"
 SENTINAL_QUICKML_URL        = "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat"
+SENTINAL_VISION_URL         = "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/qwen/chat"
 SENTINAL_LLM_MODEL          = "GLM-4.7-Flash"
 SENTINAL_VISION_MODEL       = "VL-Qwen3.6-35B-A3B"
 SENTINAL_NLP_TRANSLATE_URL  = "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation"
@@ -208,7 +211,11 @@ SENTINAL_NLP_STT_URL        = "https://api.catalyst.zoho.in/quickml/v1/project/5
 SMARTBROWZ_WEBDRIVER_URL    = "https://smartbrowz.catalyst.zoho.in/selenium/wd/hub?apikey=YOUR_KEY"
 STRATUS_BUCKET              = "sentinal-fir-pdfs"
 SCRAPE_WORKERS              = 8
+
+# Local dev only (not needed inside AppSail):
+SENTINAL_QUICKML_KEY        = "<paste-a-zoho-oauth-token-here>"
 ```
+
 
 ---
 

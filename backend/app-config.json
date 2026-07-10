@@ -8,13 +8,14 @@
   },
   "memory": 2048,
   "env_variables": {
-    "SENTINAL_PROJECT_ID":       "50170000000065001",
-    "SENTINAL_QUICKML_KEY":      "${SENTINAL_QUICKML_KEY}",
-    "SENTINAL_QUICKML_URL":      "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat",
-    "SENTINAL_LLM_MODEL":        "GLM-4.7-Flash",
-    "SENTINAL_VISION_MODEL":     "VL-Qwen3.6-35B-A3B",
-    "SENTINAL_NLP_TRANSLATE_URL":"https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation",
-    "SENTINAL_NLP_TTS_URL":      "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-to-audio",
-    "SENTINAL_NLP_STT_URL":      "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text"
+    "SENTINAL_PROJECT_ID":        "50170000000065001",
+    "SENTINAL_ORG_ID":            "60073535541",
+    "SENTINAL_QUICKML_URL":       "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat",
+    "SENTINAL_VISION_URL":        "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/qwen/chat",
+    "SENTINAL_LLM_MODEL":         "GLM-4.7-Flash",
+    "SENTINAL_VISION_MODEL":      "VL-Qwen3.6-35B-A3B",
+    "SENTINAL_NLP_TRANSLATE_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation",
+    "SENTINAL_NLP_TTS_URL":       "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-to-audio",
+    "SENTINAL_NLP_STT_URL":       "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text"
   }
 }
