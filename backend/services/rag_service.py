@@ -17,14 +17,33 @@ class RAGService:
         emb_path = config.EMBEDDINGS_PATH
         meta_path = config.CHUNK_METADATA_PATH
 
-        if os.path.exists(emb_path):
+        emb_path_gz = str(emb_path) + ".gz"
+        meta_path_gz = str(meta_path) + ".gz"
+
+        if os.path.exists(emb_path_gz):
+            try:
+                import gzip
+                with gzip.open(emb_path_gz, "rb") as f:
+                    self.embeddings = np.load(f)
+                print(f"[RAG] Loaded compressed embeddings from {emb_path_gz}")
+            except Exception as e:
+                print(f"[RAG] Error loading compressed embeddings: {e}")
+        elif os.path.exists(emb_path):
             try:
                 self.embeddings = np.load(emb_path)
                 print(f"[RAG] Loaded embeddings from {emb_path}")
             except Exception as e:
                 print(f"[RAG] Error loading embeddings: {e}")
 
-        if os.path.exists(meta_path):
+        if os.path.exists(meta_path_gz):
+            try:
+                import gzip
+                with gzip.open(meta_path_gz, "rt", encoding="utf-8") as f:
+                    self.metadata = json.load(f)
+                print(f"[RAG] Loaded compressed metadata from {meta_path_gz}")
+            except Exception as e:
+                print(f"[RAG] Error loading compressed metadata: {e}")
+        elif os.path.exists(meta_path):
             try:
                 with open(meta_path, "r", encoding="utf-8") as f:
                     self.metadata = json.load(f)

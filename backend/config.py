@@ -20,10 +20,11 @@ class Config:
     HF_INFERENCE_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
 
     # Catalyst QuickML / Zia
-    CATALYST_PROJECT_ID = os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
-    CATALYST_QUICKML_KEY = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
-    CATALYST_LLM_MODEL = os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
-    CATALYST_VISION_MODEL = os.getenv("CATALYST_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
+    # NOTE: env vars must NOT start with CATALYST_ (reserved by AppSail platform)
+    CATALYST_PROJECT_ID   = os.getenv("SENTINAL_PROJECT_ID",   "50170000000065001")
+    CATALYST_QUICKML_KEY  = os.getenv("SENTINAL_QUICKML_KEY")  or os.getenv("ZCAT_QUICKML_KEY") or ""
+    CATALYST_LLM_MODEL    = os.getenv("SENTINAL_LLM_MODEL",    "GLM-4.7-Flash")
+    CATALYST_VISION_MODEL = os.getenv("SENTINAL_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
 
     USE_CATALYST_DB = os.getenv("USE_CATALYST_DB", "false").lower() == "true"
 

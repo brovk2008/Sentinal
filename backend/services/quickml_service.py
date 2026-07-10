@@ -2,21 +2,38 @@ import httpx
 import os
 from config import config
 
-PROJECT_ID = os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
-QUICKML_BASE = os.getenv(
-    "CATALYST_QUICKML_BASE",
-    f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}",
+# Catalyst AppSail reserves all vars starting with CATALYST_ — use SENTINAL_ prefix.
+# Fallbacks keep local dev (.env with old names) working.
+PROJECT_ID = (
+    os.getenv("SENTINAL_PROJECT_ID")
+    or os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
+)
+QUICKML_BASE = (
+    os.getenv("SENTINAL_QUICKML_BASE")
+    or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}"
 )
 
 QUICKML_URL = (
-    os.getenv("ZCAT_QUICKML_URL")
+    os.getenv("SENTINAL_QUICKML_URL")
+    or os.getenv("ZCAT_QUICKML_URL")
     or os.getenv("CATALYST_QUICKML_URL")
     or f"{QUICKML_BASE}/glm/chat"
 )
-QUICKML_KEY = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
+QUICKML_KEY = (
+    os.getenv("SENTINAL_QUICKML_KEY")
+    or os.getenv("ZCAT_QUICKML_KEY")
+    or os.getenv("CATALYST_QUICKML_KEY")
+    or ""
+)
 
-DEFAULT_LLM_MODEL = os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
-VISION_MODEL = os.getenv("CATALYST_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
+DEFAULT_LLM_MODEL = (
+    os.getenv("SENTINAL_LLM_MODEL")
+    or os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
+)
+VISION_MODEL = (
+    os.getenv("SENTINAL_VISION_MODEL")
+    or os.getenv("CATALYST_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
+)
 
 
 def _resolve_chat_url() -> str:
