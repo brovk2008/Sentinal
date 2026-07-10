@@ -19,6 +19,20 @@
 
 ---
 
+## 🔐 Demo Access
+
+> Use these credentials to log into the live platform instantly — no registration needed.
+
+| Field | Value |
+|---|---|
+| **URL** | https://sentinal-peak.onslate.in |
+| **Email** | `demo@sentinal.ksp` |
+| **Password** | `Sentinal@2024` |
+
+> **Note for judges**: The platform uses Catalyst Authentication. If the demo account doesn't log in on the live Slate URL, use the sign-up page to create a free account — it takes 10 seconds. All features are accessible to any registered user.
+
+---
+
 ## 📌 The Problem
 
 Karnataka State Police (KSP) manages thousands of FIR records across 41 districts and 800+ police stations. The current challenges are:
