@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signupUser } from '../lib/catalystAuth'
+import { isLocalAuthMode, redirectToHostedSignup, signupUser } from '../lib/catalystAuth'
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -8,6 +8,30 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isLocalAuthMode()) {
+      redirectToHostedSignup()
+    }
+  }, [])
+
+  if (!isLocalAuthMode()) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0a0f',
+        color: 'var(--copper-400)',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 13,
+        letterSpacing: '0.1em'
+      }}>
+        REDIRECTING TO CATALYST AUTH...
+      </div>
+    )
+  }
 
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 

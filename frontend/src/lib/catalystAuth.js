@@ -14,6 +14,18 @@ const MOCK_PASSWORD = "Sentinal@2024";
 
 let sdkReady;
 
+export function isLocalAuthMode() {
+  return IS_LOCAL;
+}
+
+export function redirectToHostedLogin(returnPath = "/dashboard") {
+  window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(returnPath)}`;
+}
+
+export function redirectToHostedSignup(returnPath = "/dashboard") {
+  window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(returnPath)}`;
+}
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
@@ -70,7 +82,7 @@ export async function loginUser(email, password) {
     return { success: false, error: "Invalid credentials. Access Denied." };
   }
 
-  window.location.href = "/__catalyst/auth/login?service_url=/dashboard";
+  redirectToHostedLogin();
   return { success: false, error: "Redirecting to Catalyst login..." };
 }
 
@@ -84,10 +96,10 @@ export async function signupUser(name, email, password) {
     };
   }
 
-  window.location.href = "/__catalyst/auth/login?service_url=/dashboard";
+  redirectToHostedSignup();
   return {
     success: false,
-    error: "Public signup is disabled. Sign in with a Catalyst user account.",
+    error: "Redirecting to Catalyst signup...",
   };
 }
 

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { loginUser } from '../lib/catalystAuth'
+import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -8,6 +8,30 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isLocalAuthMode()) {
+      redirectToHostedLogin()
+    }
+  }, [])
+
+  if (!isLocalAuthMode()) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0a0f',
+        color: 'var(--copper-400)',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 13,
+        letterSpacing: '0.1em'
+      }}>
+        REDIRECTING TO CATALYST AUTH...
+      </div>
+    )
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
