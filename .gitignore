@@ -1,19 +1,44 @@
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
+
+# Local environments
 .env
 .env.local
+.env.*.local
+frontend/.env.development
+frontend/.env.production
+
+# Dependencies and build dirs
 node_modules/
 frontend/dist/
 *.log
 .DS_Store
+backend.zip
+*.zip
+*.png
 
-# Large data files (exceed GitHub 100MB limit — regenerate locally with scripts/)
+# Ignore all subdirectories in backend by default (unwanted pip packages)
+backend/*/
+
+# Whitelist project source code subdirectories in backend
+!backend/routers/
+!backend/services/
+!backend/models/
+!backend/data/
+
+# Ignore compiled shared libraries, helper scripts, and vendored dependency files in backend/
+backend/*.so
+backend/six.py
+backend/typing_extensions.py
+backend/threadpoolctl.py
+backend/test_server.py
+get_appsail_logs.js
+deploy_appsail.js
+
+# Ignore large data files (regenerate locally via scripts/)
 backend/data/*.npy
 backend/data/*.jsonl
 backend/data/chunk_metadata.json
 backend/data/sentinal.db
-
-# Build artifacts
-backend.zip
-*.zip
