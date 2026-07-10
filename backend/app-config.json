@@ -1,11 +1,22 @@
 {
   "name": "sentinal-backend",
   "stack": "python3.11",
-  "command": "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1",
+  "command": "uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1",
   "buildPath": ".",
-  "memory": 1024,
+  "port": {
+    "http": 9000
+  },
+  "memory": 2048,
   "env_variables": {
-    "GROQ_API_KEY": "${GROQ_API_KEY}",
-    "CATALYST_QUICKML_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat"
+    "CATALYST_PROJECT_ID": "50170000000065001",
+    "CATALYST_QUICKML_KEY": "${CATALYST_QUICKML_KEY}",
+    "CATALYST_QUICKML_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat",
+    "CATALYST_LLM_MODEL": "GLM-4.7-Flash",
+    "CATALYST_VISION_MODEL": "VL-Qwen3.6-35B-A3B",
+    "CATALYST_NLP_TRANSLATION_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation",
+    "CATALYST_NLP_TTS_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-to-audio",
+    "CATALYST_NLP_STT_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text",
+    "CHROMIUM_PATH": "/usr/bin/chromium",
+    "CHROMEDRIVER_PATH": "/usr/bin/chromedriver"
   }
 }

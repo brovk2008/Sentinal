@@ -17,6 +17,7 @@ const sections = [
       { path: '/network-3d', icon: '⬡', label: '3D Network' },
       { path: '/map', icon: '◎', label: 'Geospatial Map' },
       { path: '/persons', icon: '◉', label: 'Persons' },
+      { path: '/fir-search', icon: '🔍', label: 'FIR Live Search' },
     ],
   },
   {

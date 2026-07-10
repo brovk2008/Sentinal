@@ -5,6 +5,16 @@
       "name": "sentinal-backend"
     }
   ],
+  "functions": {
+    "source": "functions",
+    "targets": [
+      "fir_ocr_processor"
+    ],
+    "ignore": [
+      "node_modules",
+      "*.log"
+    ]
+  },
   "apig": {
     "enabled": true
   }

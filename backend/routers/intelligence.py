@@ -5,9 +5,10 @@ from pydantic import BaseModel
 from database import query, query_one
 from services.rag_service import rag_service
 from config import config
+from services.quickml_service import call_ai_messages
+import httpx
 import json
 import os
-import httpx
 import re
 import time
 import numpy as np
@@ -127,65 +128,17 @@ Respond in clear markdown. Include specific names, case numbers, dates when avai
         messages.extend(req.conversation_history[-6:])
     messages.append({"role": "user", "content": user_prompt})
 
-    # 1. Try Catalyst QuickML first if configured
-    quickml_url = os.getenv("ZCAT_QUICKML_URL") or os.getenv("CATALYST_QUICKML_URL")
-    quickml_key = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY")
-    if quickml_url and quickml_key:
-        try:
-            async with httpx.AsyncClient() as client:
-                r = await client.post(
-                    f"{quickml_url.rstrip('/')}/chat/completions",
-                    headers={
-                        "Authorization": f"Catalyst {quickml_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": "llama-3-70b",
-                        "messages": messages,
-                        "temperature": 0.2,
-                    },
-                    timeout=30,
-                )
-                if r.status_code == 200:
-                    res_json = r.json()
-                    answer = res_json["choices"][0]["message"]["content"]
-                    return {
-                        "answer": answer,
-                        "citations": citations,
-                        "query_vector_norm": query_vector_norm,
-                        "retrieval_time_ms": retrieval_time_ms,
-                        "total_chunks_searched": total_chunks_searched
-                    }
-        except Exception as e:
-            print(f"[QuickML RAG] QuickML call failed: {e}")
+    answer = await call_ai_messages(messages, max_tokens=1024)
+    if answer and not answer.startswith("Catalyst QuickML"):
+        return {
+            "answer": answer,
+            "citations": citations,
+            "query_vector_norm": query_vector_norm,
+            "retrieval_time_ms": retrieval_time_ms,
+            "total_chunks_searched": total_chunks_searched,
+        }
 
-    # 2. Try Groq if key is available
-    if config.GROQ_API_KEY:
-        try:
-            async with httpx.AsyncClient() as client:
-                r = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {config.GROQ_API_KEY}"},
-                    json={
-                        "model": config.GROQ_MODEL,
-                        "messages": messages,
-                        "max_tokens": 1024,
-                    },
-                    timeout=30,
-                )
-            if r.status_code == 200:
-                answer = r.json()["choices"][0]["message"]["content"]
-                return {
-                    "answer": answer,
-                    "citations": citations,
-                    "query_vector_norm": query_vector_norm,
-                    "retrieval_time_ms": retrieval_time_ms,
-                    "total_chunks_searched": total_chunks_searched
-                }
-        except Exception as e:
-            print(f"[Intelligence Router] Groq query failed: {e}")
-
-    # Fallback response formatting retrieved context directly
+    # Fallback: format retrieved context directly when QuickML unavailable
     answer = f"## Semantic Search Results\n\nBased on intelligence matching your query:\n\n"
     if retrieved:
         for r in retrieved[:3]:
@@ -398,8 +351,18 @@ async def intelligence_health():
     """Check intelligence system health."""
     has_narratives = os.path.exists(config.NARRATIVES_PATH)
     has_embeddings = os.path.exists(config.EMBEDDINGS_PATH)
+    fir_count = 0
+    if os.path.exists(config.FIR_RAG_PATH):
+        with open(config.FIR_RAG_PATH, "r", encoding="utf-8", errors="ignore") as f:
+            fir_count = sum(1 for line in f if line.strip())
     return {
         "narratives_loaded": has_narratives,
         "embeddings_available": has_embeddings,
-        "groq_configured": bool(config.GROQ_API_KEY),
+        "chunks_in_memory": len(rag_service.metadata),
+        "fir_records_indexed": fir_count,
+        "llm_provider": "Catalyst QuickML",
+        "llm_model": config.CATALYST_LLM_MODEL,
+        "vision_model": config.CATALYST_VISION_MODEL,
+        "quickml_configured": bool(config.CATALYST_QUICKML_KEY),
+        "nlp_configured": bool(config.CATALYST_QUICKML_KEY),
     }

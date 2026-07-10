@@ -437,7 +437,7 @@ def generate_reportlab_sitrep_pdf(request: SitrepRequest, data: dict) -> bytes:
     story.append(Paragraph(data.get("risk_assessment", "N/A"), body_style))
 
     story.append(Spacer(1, 12))
-    story.append(Paragraph("<i>⚠️ This report was generated with AI assistance (Catalyst QuickML / Llama-3). All intelligence must be verified with primary sources before operational use.</i>", body_style))
+    story.append(Paragraph("<i>⚠️ This report was generated with AI assistance (Catalyst QuickML / GLM-4.7-Flash). All intelligence must be verified with primary sources before operational use.</i>", body_style))
 
     doc.build(story)
     pdf_bytes = buffer.getvalue()

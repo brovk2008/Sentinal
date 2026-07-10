@@ -84,7 +84,7 @@ export default function CaseCompareModal({ caseIds = [], onClose }) {
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           {loading ? (
             <div style={{ padding: 40 }}>
-              <LoadingPulse text="Synthesizing connection patterns via Groq AI..." />
+              <LoadingPulse text="Synthesizing connection patterns via Catalyst QuickML..." />
             </div>
           ) : error ? (
             <div style={{ color: 'var(--status-danger)', textAlign: 'center', padding: 30 }}>

@@ -3,7 +3,7 @@ from database import query, query_one
 from typing import Optional, List
 from pydantic import BaseModel
 from config import config
-import httpx
+from services.quickml_service import call_ai
 import os
 import json
 import math
@@ -283,24 +283,13 @@ async def compare_cases(req: CompareRequest):
     
     Do NOT write conversational text at the beginning or end. Write a direct intelligence brief."""
 
-    summary_text = ""
-    if config.GROQ_API_KEY:
-        try:
-            async with httpx.AsyncClient() as client:
-                r = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {config.GROQ_API_KEY}"},
-                    json={
-                        "model": config.GROQ_MODEL,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "max_tokens": 1024,
-                    },
-                    timeout=30,
-                )
-            if r.status_code == 200:
-                summary_text = r.json()["choices"][0]["message"]["content"]
-        except Exception as e:
-            print(f"[Cases Compare] Groq query failed: {e}")
+    summary_text = await call_ai(
+        "You are a senior crime intelligence analyst for Karnataka Police.",
+        prompt,
+        max_tokens=1024,
+    )
+    if summary_text.startswith("Catalyst QuickML"):
+        summary_text = ""
 
     if not summary_text:
         summary_text = f"""### **Correlation Assessment**

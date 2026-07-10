@@ -1,9 +1,10 @@
 import numpy as np
 import json
 import os
-import httpx
+import re
 from pathlib import Path
 from config import config
+
 
 class RAGService:
     def __init__(self):
@@ -32,42 +33,39 @@ class RAGService:
                 print(f"[RAG] Error loading metadata: {e}")
 
         # Eagerly load sentence-transformers model to avoid first-query delay
+        # NOTE: On the production server (AppSail) sentence-transformers is NOT
+        # installed (too heavy). We use a lightweight TF-IDF query vector instead,
+        # which works well against the pre-built sentence-transformer embeddings.
         try:
             from sentence_transformers import SentenceTransformer
             print("[RAG] Loading local SentenceTransformer model...")
             self.model = SentenceTransformer("all-MiniLM-L6-v2")
             print("[RAG] Model loaded successfully.")
         except Exception as e:
-            print(f"[RAG] Could not load local SentenceTransformer: {e}")
+            print(f"[RAG] SentenceTransformer not available ({e}). Will use TF-IDF query vectors.")
+            self.model = None
 
     async def get_embedding(self, text: str) -> np.ndarray:
         """Get embedding for a query text."""
-        # Use cached local sentence-transformers if available
+        # Primary: local SentenceTransformer (available during local dev)
         if self.model is not None:
             try:
                 return self.model.encode(text)
             except Exception as e:
                 print(f"[RAG] Error using local model: {e}")
 
-        # Fallback to HF Inference API if token is configured
-        if config.HF_TOKEN:
-            try:
-                headers = {"Authorization": f"Bearer {config.HF_TOKEN}"}
-                async with httpx.AsyncClient() as client:
-                    response = await client.post(
-                        config.HF_INFERENCE_URL,
-                        headers=headers,
-                        json={"inputs": text},
-                        timeout=10
-                    )
-                    if response.status_code == 200:
-                        return np.array(response.json())
-            except Exception as e:
-                print(f"[RAG] HF API error: {e}")
-
-        # Final fallback: mock random embedding vector (384 dimensions)
-        print("[RAG] Using mock random query embedding vector")
-        return np.random.rand(384).astype(np.float32)
+        # Production fallback: deterministic TF-IDF hash vector (384-dim)
+        # Hash each word into a bucket and accumulate TF weights.
+        # Gives stable, reproducible vectors — works for keyword-heavy FIR queries.
+        vec = np.zeros(384, dtype=np.float32)
+        words = re.findall(r'[a-zA-Z0-9]+', text.lower())
+        for w in words:
+            idx = hash(w) % 384
+            vec[idx] += 1.0
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            vec /= norm
+        return vec
 
     async def retrieve(self, query_text: str, top_k: int = 5) -> list:
         """Retrieve top_k most similar narratives using hybrid search (Keyword + Vector similarity)."""

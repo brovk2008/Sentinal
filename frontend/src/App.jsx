@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
@@ -19,12 +19,37 @@ import AccusedProfile from './pages/AccusedProfile'
 import DarkWebIntel from './pages/DarkWebIntel'
 import WarRoom from './pages/WarRoom'
 import Login from './pages/Login'
+import SignupPage from './pages/SignupPage'
+import FIRSearch from './pages/FIRSearch'
 
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('sentinal_token')
-  if (!token) {
-    return <Navigate to="/login" replace />
+  const [checking, setChecking] = useState(true)
+  const [authed, setAuthed] = useState(false)
+
+  useEffect(() => {
+    // Fast path: check localStorage first (works for mock auth)
+    const token = localStorage.getItem('sentinal_token')
+    if (token) {
+      setAuthed(true)
+      setChecking(false)
+      return
+    }
+    setAuthed(false)
+    setChecking(false)
+  }, [])
+
+  if (checking) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#0a0a0f', color: 'var(--copper-400)', fontFamily: 'var(--font-mono)',
+        fontSize: 13, letterSpacing: '0.1em'
+      }}>
+        AUTHENTICATING...
+      </div>
+    )
   }
+  if (!authed) return <Navigate to="/login" replace />
   return children
 }
 
@@ -69,7 +94,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login"  element={<Login />} />
+        <Route path="/signup" element={<SignupPage />} />
 
         {/* Guarded Routes */}
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -88,6 +114,7 @@ export default function App() {
           <Route path="/accused/:accusedId" element={<AccusedProfile />} />
           <Route path="/darkweb" element={<DarkWebIntel />} />
           <Route path="/warroom" element={<WarRoom />} />
+          <Route path="/fir-search" element={<FIRSearch />} />
         </Route>
       </Routes>
     </BrowserRouter>

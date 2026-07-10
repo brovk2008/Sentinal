@@ -1,0 +1,14 @@
+{
+  "id": "50170000000084003",
+  "name": "fir_ocr_processor",
+  "type": "advancedio",
+  "stack": "node18",
+  "timeout": 60,
+  "memory": 256,
+  "env_variables": {},
+  "deployment": {
+    "name": "fir_ocr_processor",
+    "type": "advancedio",
+    "stack": "node18"
+  }
+}

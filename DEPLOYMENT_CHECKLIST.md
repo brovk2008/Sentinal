@@ -19,9 +19,10 @@
 5. Set root directory: backend/
 6. Set port: 8000
 7. Add environment variables:
-   - GROQ_API_KEY = [your key]
-   - HF_TOKEN = [your key]
-   - CATALYST_QUICKML_KEY = [your key if available]
+   - CATALYST_QUICKML_KEY = [your Catalyst QuickML key]
+   - CATALYST_LLM_MODEL = GLM-4.7-Flash
+   - CATALYST_VISION_MODEL = VL-Qwen3.6-35B-A3B
+   - HF_TOKEN = [optional, embedding fallback only]
 8. Deploy and wait for health check to pass
 9. Copy the AppSail URL (format: xxx.catalystappsail.in)
 
@@ -47,9 +48,14 @@ Run these checks against your live URLs:
 ## Environment Variables for AppSail
 Set these in Catalyst Console → AppSail → Environment Variables:
 ```
-GROQ_API_KEY = your_key
-HF_TOKEN = your_token
+CATALYST_PROJECT_ID = 50170000000065001
 CATALYST_QUICKML_KEY = your_key
+CATALYST_LLM_MODEL = GLM-4.7-Flash
+CATALYST_VISION_MODEL = VL-Qwen3.6-35B-A3B
+CATALYST_NLP_TRANSLATION_URL = https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation
+CATALYST_NLP_TTS_URL = https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-to-audio
+CATALYST_NLP_STT_URL = https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text
+HF_TOKEN = your_token
 ```
 
 ## Common Issues

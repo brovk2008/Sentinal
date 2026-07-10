@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { loginUser } from '../lib/catalystAuth'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -8,21 +9,19 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Delay simulation for premium transition look
-    setTimeout(() => {
-      if (email === 'demo@sentinal.ksp' && password === 'Sentinal@2024') {
-        localStorage.setItem('sentinal_token', 'mock-valid-sentinal-jwt-token')
-        navigate('/dashboard')
-      } else {
-        setError('Invalid credentials. Access Denied.')
-      }
-      setLoading(false)
-    }, 800)
+    const result = await loginUser(email, password)
+    setLoading(false)
+
+    if (result.success) {
+      navigate('/dashboard')
+    } else {
+      setError(result.error || 'Invalid credentials. Access Denied.')
+    }
   }
 
   return (
@@ -147,9 +146,17 @@ export default function Login() {
           textAlign: 'center',
           background: 'var(--bg-secondary)',
           fontSize: 10,
-          color: 'var(--text-muted)'
+          color: 'var(--text-muted)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6
         }}>
-          CONFIDENTIAL SYSTEM · SECURED TERMINAL
+          <div>CONFIDENTIAL SYSTEM · SECURED TERMINAL</div>
+          <div>
+            <Link to="/signup" style={{ color: 'var(--copper-400)', textDecoration: 'none', fontSize: 11 }}>
+              Register new officer account →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

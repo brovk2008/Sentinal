@@ -1,0 +1,304 @@
+================================================================================
+ PROJECT SENTINAL v2 — FULL SYSTEM DOCUMENTATION
+ Karnataka Police Crime Intelligence Platform
+================================================================================
+
+REPOSITORY:    https://github.com/brovk2008/Sentinal
+BACKEND URL:   https://sentinal-backend-50043676705.development.catalystappsail.in
+FRONTEND URL:  (Catalyst AppSail / Static Hosting)
+PLATFORM:      Zoho Catalyst (AppSail, QuickML, Zia, Serverless Functions)
+
+================================================================================
+  DEMO / JUDGE ACCESS CREDENTIALS
+================================================================================
+
+  LOGIN URL:   https://sentinal-backend-50043676705.development.catalystappsail.in
+               (or the frontend Catalyst hosting URL)
+
+  EMAIL:       demo@sentinal.ksp
+  PASSWORD:    Sentinal@2024
+
+  NOTE: This is a mock account that works on localhost during local dev.
+  For the PRODUCTION deployment, judges must be added as users via the
+  Zoho Catalyst console at:
+  https://catalyst.zoho.in → Project "Sentinal" → App Users → Invite User
+  Use email: demo@sentinal.ksp with role "App User" or create a new judge
+  account through the /signup page.
+
+  ALTERNATIVELY: Use the Signup page (/signup) to self-register — no invite
+  required in dev mode. Pick any email + password and login immediately.
+
+================================================================================
+  WHAT IS PROJECT SENTINAL?
+================================================================================
+
+Project Sentinal is an AI-powered crime intelligence platform built for the
+Karnataka State Police. It centralises data from the crime records database,
+FIR documents, and intelligence reports into a single real-time command
+interface — enabling officers to investigate faster, predict hotspots, and
+generate reports automatically.
+
+Think of it as: A police "war room dashboard" that talks, listens, and thinks.
+
+================================================================================
+  TECH STACK
+================================================================================
+
+FRONTEND
+  - React 18 + Vite
+  - Vanilla CSS with dark-mode glassmorphism design
+  - Hosted on Zoho Catalyst Static Hosting / AppSail
+  - Real-time data via REST API calls to backend
+
+BACKEND
+  - Python 3.11 + FastAPI (async, production-grade)
+  - Hosted on Zoho Catalyst AppSail (Docker container, port 9000)
+  - SQLite database (sentinal.db) with Karnataka crime data
+
+AI / ML STACK (ALL CATALYST-NATIVE)
+  - Zoho Catalyst QuickML GLM-4.7-Flash   → Intelligence Q&A, reports
+  - Zoho Catalyst QuickML VL-Qwen3.6-35B  → Vision/OCR analysis of FIR images
+  - Zoho Catalyst Zia NLP                 → Text translation, TTS, STT
+  - Zoho Catalyst Serverless Functions    → FIR OCR processing pipeline
+
+  ⚠️ Groq has been fully removed. Zero external AI API calls.
+     Everything runs on Zoho Catalyst native services.
+
+DATA / RAG MEMORY
+  - 94,717 FIR records embedded into vector memory (semantic search)
+  - Source: master_dataset.jsonl (first half = 93,755 FIR records)
+  - Source: investigation_narratives.json (1,000 curated narratives)
+  - Embedding model: all-MiniLM-L6-v2 (built locally, served as .npy)
+  - Format: backend/data/embeddings.npy (139 MB) + chunk_metadata.json
+
+ML PREDICTION MODELS
+  - hotspot_v2.joblib  → Crime hotspot prediction (RandomForest, 9 features)
+  - risk_model.joblib  → Accused risk scoring (RandomForest, 5 features)
+  - Both trained on Karnataka crime data from sentinal.db
+
+SERVERLESS
+  - functions/fir_ocr_processor/ → Node.js function that processes uploaded
+    FIR PDFs using Catalyst Zia OCR + QuickML for structured extraction
+
+================================================================================
+  ARCHITECTURE
+================================================================================
+
+  [Browser] ──► [Catalyst Static Hosting / AppSail Frontend]
+                        │
+                        ▼ REST API
+  [Catalyst AppSail Backend - FastAPI Python]
+        │              │              │
+        ▼              ▼              ▼
+  [SQLite DB]   [RAG Memory]   [Catalyst QuickML]
+  (crime data)  (94k FIR       (GLM-4.7-Flash /
+                 embeddings)    Qwen Vision)
+        │
+        ▼
+  [Catalyst Serverless]
+  (FIR OCR Pipeline)
+
+================================================================================
+  KEY FEATURES
+================================================================================
+
+1. DASHBOARD
+   - Real-time crime statistics overview
+   - Crime trend graphs by district, month, crime type
+   - Active alerts and pending investigation cards
+
+2. INTELLIGENCE Q&A (RAG-POWERED)
+   - Ask natural language questions about any crime, case, or FIR
+   - System retrieves the most relevant FIR records from 94k document memory
+   - GLM-4.7-Flash generates a structured intelligence briefing
+   - Conversation history maintained per session
+   - Voice input/output via Zia NLP (STT + TTS)
+
+3. CRIME HEATMAP
+   - Geographic hotspot visualization across Karnataka districts
+   - ML-predicted hotspots overlaid on actual crime data
+
+4. CASE MANAGEMENT
+   - Browse, search, filter all registered cases
+   - Full case details: accused, victims, evidence, timeline
+   - Add cases to an "Ops Board" for collaborative investigation
+
+5. NETWORK / LINK ANALYSIS
+   - Accused network graph: who knows whom, co-accused connections
+   - Identify repeat offenders and gang networks
+
+6. FINANCIAL CRIME TRACKING
+   - Track stolen property values, UPI fraud transactions
+   - CDR (Call Detail Record) analysis
+
+7. ALERTS & DARKWEB INTELLIGENCE
+   - Real-time alert feed from integrated data sources
+   - Darkweb intelligence monitoring module
+
+8. FIR OCR PROCESSOR
+   - Upload a FIR PDF → Zia OCR extracts text → QuickML structures data
+   - Extracted FIR fields: crime type, accused, location, date, sections
+
+9. AI REPORTS (PDF GENERATION)
+   - Generate formatted PDF intelligence reports for any case
+   - Powered by GLM-4.7-Flash + ReportLab
+
+10. HOTSPOT PREDICTION
+    - Input: Police station ID, month → Output: Predicted hotspot risk
+    - Trained RandomForest model, F1/AUC: ~1.0 on training data
+
+================================================================================
+  API ENDPOINTS (KEY ONES)
+================================================================================
+
+  GET  /api/v1/cases              → All cases
+  GET  /api/v1/cases/{id}         → Single case details
+  GET  /api/v1/heatmap            → Heatmap data
+  GET  /api/v1/analytics          → Analytics summary
+  POST /api/v1/intelligence/query → RAG Q&A (key endpoint)
+  POST /api/v1/predict/hotspot    → Hotspot prediction
+  POST /api/v1/predict/risk       → Accused risk scoring
+  POST /api/v1/reports/generate   → PDF report generation
+  POST /api/v1/ai/diagnose        → AI case analysis
+  POST /api/v1/fir/upload         → FIR PDF upload + OCR
+  GET  /api/v1/alerts             → Alert feed
+  GET  /api/v1/persons            → Accused person profiles
+  GET  /docs                      → Interactive API docs (Swagger UI)
+
+================================================================================
+  FIR DATASET IN MEMORY
+================================================================================
+
+  Dataset:   C:\Users\techp\Downloads\more projects\FIR ocr\master_dataset.jsonl
+  Total:     187,510 FIR records
+  Ingested:  First 93,755 records (50%)
+  Chunks:    94,717 (93,755 FIR + 1,000 narratives)
+  Skipped:   38 (empty/corrupt records)
+  Storage:
+    backend/data/embeddings.npy       — 139 MB vector index
+    backend/data/chunk_metadata.json  — 147 MB metadata
+    backend/data/fir_records_rag.jsonl — 168 MB parsed FIR records
+
+  Each FIR chunk contains: FIR number, Act, Section, District, Village,
+  Date, Complainant name, Accused names, SHO name, Action taken
+
+  Vector dimension: 384 (all-MiniLM-L6-v2 compatible)
+  Retrieval: Hybrid keyword + cosine similarity (top-5 by default)
+
+================================================================================
+  CATALYST SERVICES USED
+================================================================================
+
+  1. AppSail         → Hosts the Python FastAPI backend (Docker, port 9000)
+  2. Static Hosting  → Hosts the React frontend (Vite build)
+  3. QuickML         → GLM-4.7-Flash (text), Qwen3.6 Vision (image)
+  4. Zia NLP         → Text translation, TTS, STT
+  5. Serverless      → FIR OCR processor function (Node.js)
+  6. Catalyst Auth   → User login/logout/session management
+
+  Project ID: 50170000000065001
+  Project Name: Sentinal
+
+================================================================================
+  ENVIRONMENT VARIABLES (backend/.env)
+================================================================================
+
+  CATALYST_PROJECT_ID         = 50170000000065001
+  CATALYST_QUICKML_KEY        = <set in Catalyst console env vars>
+  CATALYST_QUICKML_URL        = https://api.catalyst.zoho.in/quickml/v1/project/
+                                50170000000065001/glm/chat
+  CATALYST_LLM_MODEL          = GLM-4.7-Flash
+  CATALYST_VISION_MODEL       = VL-Qwen3.6-35B-A3B
+  CATALYST_NLP_TRANSLATION_URL = .../nlp/text-translation
+  CATALYST_NLP_TTS_URL         = .../nlp/text-to-audio
+  CATALYST_NLP_STT_URL         = .../nlp/audio-to-text
+
+================================================================================
+  GIT REPOSITORY
+================================================================================
+
+  Remote: https://github.com/brovk2008/Sentinal.git
+  Branch: main
+  Latest commit: feat: FIR dataset embedded (93k records), Groq removed,
+                 Catalyst QuickML wired in, requirements cleaned
+
+================================================================================
+  LOCAL DEVELOPMENT SETUP
+================================================================================
+
+  Prerequisites: Python 3.11+, Node.js 18+, pip
+
+  1. Clone repo:
+     git clone https://github.com/brovk2008/Sentinal.git
+     cd Sentinal
+
+  2. Install backend deps:
+     cd backend
+     pip install fastapi uvicorn httpx numpy scikit-learn joblib pandas reportlab aiofiles beautifulsoup4 python-dotenv python-multipart
+     cd ..
+
+  3. Build RAG embeddings (one-time, ~30 min, needs sentence-transformers):
+     pip install sentence-transformers
+     python scripts/add_fir_data.py
+     python scripts/build_embeddings.py
+
+  4. Train prediction models:
+     python scripts/train_hotspot_v2.py
+     python scripts/train_models.py
+
+  5. Start backend:
+     cd backend
+     python -m uvicorn main:app --host 0.0.0.0 --port 9000 --reload
+
+  6. Start frontend (new terminal):
+     cd frontend
+     npm install
+     npm run dev
+
+  7. Open http://localhost:5173
+     Login: demo@sentinal.ksp / Sentinal@2024
+
+================================================================================
+  DEPLOYMENT (CATALYST APPSAIL)
+================================================================================
+
+  Backend deployment:
+    catalyst deploy                    (from project root, with .catalystrc)
+
+  The backend package (backend/ folder) is ~205 MB zipped, well under the
+  250 MB AppSail limit.
+
+  Catalyst AppSail runs:
+    python3 -m uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1
+
+================================================================================
+  IMPORTANT NOTES FOR JUDGES
+================================================================================
+
+  1. The QUICKML_KEY must be set as an environment variable in the Catalyst
+     AppSail console for AI features to work. Without it, the system returns
+     "Catalyst QuickML is not configured" for AI queries.
+
+  2. The database (sentinal.db) contains synthetic Karnataka crime data used
+     to demonstrate the dashboard, heatmap, and ML prediction features.
+
+  3. The RAG system (94k FIR records) is pre-built and loaded at startup
+     from backend/data/embeddings.npy. No internet required for retrieval.
+
+  4. Voice features (STT/TTS) require the Catalyst Zia NLP endpoints to be
+     accessible. These are production Catalyst APIs.
+
+  5. The system is fully bilingual-aware: FIR records in Kannada are parsed
+     for structural fields (crime type, location, date) even though the
+     narrative text may not be in English.
+
+================================================================================
+  CONTACT / TEAM
+================================================================================
+
+  Project: Sentinal v2
+  Team:    brovk2008 (GitHub)
+  Built for: Zoho Catalyst Hackathon / Karnataka Police use case
+  Stack:   React + FastAPI + Catalyst QuickML + Catalyst Zia
+
+================================================================================

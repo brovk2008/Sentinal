@@ -5,7 +5,7 @@ A high-performance, internally consistent fake crime intelligence platform for t
 ## Tech Stack
 - **Frontend**: React + Vite, Leaflet Maps, vis-network force-directed graph rendering, Recharts analytics, and custom Palantir-inspired CSS variables layout.
 - **Backend**: FastAPI (Python 3.11+), SQLite local data storage.
-- **RAG & ML**: Custom KNN semantic retrieval system with Sentence Transformers (or dynamic HTTP API embeddings) + Groq Llama 3.3 for analyst chats, and a Scikit-Learn recidivism prediction model.
+- **RAG & ML**: Custom KNN semantic retrieval with Sentence Transformers + Catalyst QuickML (GLM-4.7-Flash) for analyst chats, and Scikit-Learn recidivism prediction.
 
 ## Directory Structure
 - `frontend/`: Vite React app with central style system and Leaflet integration.
@@ -20,10 +20,11 @@ A high-performance, internally consistent fake crime intelligence platform for t
    cd backend
    pip install -r requirements.txt
    ```
-2. Build embeddings and ML models:
+2. Build embeddings and ingest FIR dataset:
    ```bash
-   python ../scripts/train_models.py
-   python ../scripts/build_embeddings.py
+   python scripts/add_fir_data.py
+   python scripts/build_embeddings.py
+   python scripts/train_models.py
    ```
 3. Start the dev server:
    ```bash
@@ -44,20 +45,20 @@ A high-performance, internally consistent fake crime intelligence platform for t
 ## Zoho Catalyst Platform Integration
 
 Project Sentinal v2 integrates with the Zoho Catalyst cloud ecosystem:
-1. **Catalyst QuickML**: LLM orchestration and model routing. Setup the following environment keys:
-   - `CATALYST_QUICKML_URL`
-   - `CATALYST_QUICKML_KEY`
-2. **Catalyst Zia OCR**: Extraction of text from uploaded files to RAG:
-   - `CATALYST_ZIA_KEY`
-   - `CATALYST_ZIA_OCR_URL`
-3. **Catalyst Stratus**: Cloud storage for RAG evidence file uploads:
-   - `CATALYST_STRATUS_URL`
-   - `CATALYST_STRATUS_KEY`
-4. **Catalyst SmartBrowz**: HTML-to-PDF report compiler:
-   - `CATALYST_SMARTBROWZ_URL`
-   - `CATALYST_SMARTBROWZ_KEY`
-5. **Catalyst Signals**: Active anomaly and spike alert triggers:
-   - `CATALYST_SIGNALS_URL`
-   - `CATALYST_SIGNALS_KEY`
+1. **Catalyst QuickML — GLM-4.7-Flash**: Primary LLM for analyst chat, case summaries, and intelligence synthesis.
+2. **Catalyst QuickML — Qwen 3.6 Vision (VL-Qwen3.6-35B-A3B)**: Multimodal image + text analysis for evidence and diagram enhancement.
+3. **Catalyst Zia NLP**: Text Translation, Text-to-Audio Synthesis, and Audio-to-Text Transcription for voice interface and Kannada support.
+4. **Catalyst Zia OCR**: Extraction of text from uploaded FIR PDFs/images into RAG.
+5. **Catalyst Stratus**: Cloud storage for RAG evidence file uploads.
+6. **Catalyst SmartBrowz**: HTML-to-PDF report compiler.
+7. **Catalyst Signals**: Active anomaly and spike alert triggers.
+
+Key environment variables:
+   - `CATALYST_QUICKML_KEY` / `CATALYST_QUICKML_URL`
+   - `CATALYST_LLM_MODEL` (default: `GLM-4.7-Flash`)
+   - `CATALYST_VISION_MODEL` (default: `VL-Qwen3.6-35B-A3B`)
+   - `CATALYST_NLP_TRANSLATION_URL`, `CATALYST_NLP_TTS_URL`, `CATALYST_NLP_STT_URL`
+   - `CATALYST_ZIA_KEY`, `CATALYST_ZIA_OCR_URL`
+   - `CATALYST_STRATUS_URL`, `CATALYST_STRATUS_KEY`
 
 All integrations gracefully degrade to local SQLite/SentenceTransformers/ReportLab/weasyprint fallbacks if keys are not set.

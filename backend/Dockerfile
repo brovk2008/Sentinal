@@ -15,7 +15,17 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libgdk-pixbuf2.0-0 \
     shared-mime-info \
+    chromium \
+    chromium-driver \
+    fonts-liberation \
+    libgbm1 \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libxss1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
+
 
 WORKDIR /app
 
@@ -30,12 +40,12 @@ COPY . .
 RUN mkdir -p data models/ml/saved
 
 # Expose port
-EXPOSE 8000
+EXPOSE 9000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+    CMD python -c "import os, urllib.request; port = os.environ.get('X_ZOHO_CATALYST_LISTEN_PORT', '9000'); urllib.request.urlopen(f'http://localhost:{port}/health')"
 
 # Start command
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
-     "--workers", "1", "--timeout-keep-alive", "30"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${X_ZOHO_CATALYST_LISTEN_PORT:-9000} --workers 1 --timeout-keep-alive 30"]
+

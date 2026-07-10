@@ -268,5 +268,27 @@ export const fetchThreatAssessment = (syndicateName) =>
 
 export const uploadToRag = (formData) => uploadRequest('/api/v1/intelligence/upload-to-rag', formData);
 
+// ── Catalyst NLP (Zia / QuickML) ──
+export const fetchNlpStatus = () => request('/api/v1/nlp/status');
+export const translateText = (text, sourceLang = 'en', targetLang = 'kn') =>
+  request('/api/v1/nlp/translate', {
+    method: 'POST',
+    body: JSON.stringify({ text, source_lang: sourceLang, target_lang: targetLang }),
+  });
+export const textToSpeech = (text, language = 'en-IN') =>
+  request('/api/v1/nlp/text-to-speech', {
+    method: 'POST',
+    body: JSON.stringify({ text, language }),
+  });
 
+async function uploadAudio(endpoint, audioBlob, language = 'en-IN') {
+  const url = `${BASE_URL}${endpoint}?language=${encodeURIComponent(language)}`;
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'recording.webm');
+  const res = await fetch(url, { method: 'POST', body: formData });
+  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  return res.json();
+}
 
+export const speechToText = (audioBlob, language = 'en-IN') =>
+  uploadAudio('/api/v1/nlp/speech-to-text', audioBlob, language);

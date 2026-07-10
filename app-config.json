@@ -1,12 +1,20 @@
 {
   "name": "sentinal-backend",
-  "command": "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1",
+  "command": "python3 -m uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1",
   "build_path": "backend",
   "stack": "python_3_11",
-  "env_variables": {
-    "GROQ_API_KEY": "${GROQ_API_KEY}",
-    "ZCAT_QUICKML_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat"
+  "memory": 2048,
+  "port": {
+    "http": 9000
   },
-  "memory": 1024,
+  "env_variables": {
+    "CATALYST_PROJECT_ID": "50170000000065001",
+    "CATALYST_QUICKML_KEY": "${CATALYST_QUICKML_KEY}",
+    "ZCAT_QUICKML_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/glm/chat",
+    "CATALYST_LLM_MODEL": "GLM-4.7-Flash",
+    "CATALYST_NLP_TRANSLATION_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation",
+    "CATALYST_NLP_TTS_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-to-audio",
+    "CATALYST_NLP_STT_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text"
+  },
   "scripts": {}
 }
