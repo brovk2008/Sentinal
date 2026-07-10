@@ -35,50 +35,57 @@ export default function DataIngestion() {
   const [searchLoading, setSearchLoading] = useState(false);
 
   const consoleEndRef = useRef(null);
+  const intervalRef = useRef(null);
 
-  // Load districts on mount
+  // ── Single-shot status check (no interval) on mount ─────────────────────
   useEffect(() => {
     fetchScraperDistricts()
       .then(res => {
-        if (res && res.districts) {
-          setDistricts(res.districts);
-        }
+        if (res && res.districts) setDistricts(res.districts);
       })
       .catch(err => console.error('Failed to load districts', err));
 
-    // Refresh query list initially
-    handleSearch();
-  }, []);
+    // Check once if a scrape was already running before we opened the page
+    fetchScraperStatus()
+      .then(res => {
+        if (res) {
+          setStatus(res);
+          if (res.status === 'running') startPolling(); // Resume live feed
+        }
+      })
+      .catch(() => {});
 
-  // Poll status when running
-  useEffect(() => {
-    let interval = null;
-    
-    const checkStatus = () => {
+    handleSearch();
+
+    // Cleanup: clear any lingering interval when component unmounts
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []); // ← runs exactly once
+
+  // ── Polling helpers — only active while a scrape is running ─────────────
+  const startPolling = () => {
+    if (intervalRef.current) return; // already polling
+    intervalRef.current = setInterval(() => {
       fetchScraperStatus()
         .then(res => {
-          if (res) {
-            setStatus(res);
-            if (res.status !== 'running') {
-              clearInterval(interval);
-              // Search again to show new records
-              handleSearch();
-            }
+          if (!res) return;
+          setStatus(res);
+          if (res.status !== 'running') {
+            // Scrape finished — stop polling immediately
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+            handleSearch(); // Refresh the data index table
           }
         })
-        .catch(err => console.error('Status check error', err));
-    };
+        .catch(err => console.error('[Scraper poll]', err));
+    }, 2000);
+  };
 
-    // Initial check
-    checkStatus();
-
-    // Set interval if status is running
-    interval = setInterval(checkStatus, 2000);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [status.status]);
+  const stopPolling = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
 
   // Auto scroll console
   useEffect(() => {
@@ -94,8 +101,8 @@ export default function DataIngestion() {
         if (res.error) {
           alert(res.error);
         } else {
-          // Immediately set status running to trigger polling hook
           setStatus(prev => ({ ...prev, status: 'running', year }));
+          startPolling(); // ← Begin 2-second live feed, stops itself when done
         }
       })
       .catch(err => {
@@ -107,7 +114,9 @@ export default function DataIngestion() {
   const handleStopScrape = () => {
     stopScraper()
       .then(() => {
-        alert('Stop signal dispatched to workers.');
+        // Stop polling optimistically — backend will confirm via next status check
+        stopPolling();
+        setStatus(prev => ({ ...prev, status: 'stopped' }));
       })
       .catch(err => console.error(err));
   };
