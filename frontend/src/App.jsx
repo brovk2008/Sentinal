@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
@@ -22,43 +22,7 @@ import Login from './pages/Login'
 import SignupPage from './pages/SignupPage'
 import FIRSearch from './pages/FIRSearch'
 import DataIngestion from './pages/DataIngestion'
-import { getCurrentUser } from './lib/catalystAuth'
-
-function ProtectedRoute({ children }) {
-  const [checking, setChecking] = useState(true)
-  const [authed, setAuthed] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    getCurrentUser()
-      .then(user => {
-        if (active) setAuthed(!!user)
-      })
-      .catch(() => {
-        if (active) setAuthed(false)
-      })
-      .finally(() => {
-        if (active) setChecking(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  if (checking) {
-    return (
-      <div style={{
-        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#0a0a0f', color: 'var(--copper-400)', fontFamily: 'var(--font-mono)',
-        fontSize: 13, letterSpacing: '0.1em'
-      }}>
-        AUTHENTICATING...
-      </div>
-    )
-  }
-  if (!authed) return <Navigate to="/login" replace />
-  return children
-}
+import AuthGuard from './components/AuthGuard'
 
 function Layout() {
   return (
@@ -107,7 +71,7 @@ export default function App() {
         <Route path="/app/*" element={<Navigate to="/dashboard" replace />} />
 
         {/* Guarded Routes */}
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route element={<AuthGuard><Layout /></AuthGuard>}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<GeospatialMap />} />
