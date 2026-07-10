@@ -6,6 +6,7 @@ const sections = [
     items: [
       { path: '/warroom', icon: '⚔️', label: 'War Room' },
       { path: '/dashboard', icon: '⬡', label: 'Dashboard' },
+      { path: '/ingestion', icon: '📥', label: 'Data Ingestion' },
     ],
   },
   {

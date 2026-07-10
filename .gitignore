@@ -27,6 +27,7 @@ backend/*/
 !backend/services/
 !backend/models/
 !backend/data/
+!backend/scrapers/
 
 # Ignore compiled shared libraries, helper scripts, and vendored dependency files in backend/
 backend/*.so

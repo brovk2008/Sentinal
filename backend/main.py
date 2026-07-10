@@ -15,8 +15,9 @@ except Exception as e:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp
+from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp, scraper
 from routers.predict import load_models as load_predict_models
+from scrapers.scraper_store import init_scrape_table
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,8 +26,9 @@ async def lifespan(app: FastAPI):
         with open("startup_debug.txt", "a") as f:
             f.write("Lifespan starting...\n")
         load_predict_models()
+        init_scrape_table()
         with open("startup_debug.txt", "a") as f:
-            f.write("Models loaded successfully.\n")
+            f.write("Models and scrape table initialised successfully.\n")
     except Exception as e:
         with open("startup_debug.txt", "a") as f:
             f.write(f"Lifespan error: {traceback.format_exc()}\n")
@@ -81,6 +83,7 @@ app.include_router(brain.router, prefix="/api/v1/brain", tags=["Brain"])
 app.include_router(livefeed.router, prefix="/api/v1/livefeed", tags=["Live Feed"])
 app.include_router(darkweb.router, prefix="/api/v1/darkweb", tags=["Dark Web Intel"])
 app.include_router(fir_scraper.router, prefix="/api/v1/fir", tags=["FIR Scraper"])
+app.include_router(scraper.router, prefix="/api/v1/scraper", tags=["KSP FIR Scraper (SmartBrowz)"])
 app.include_router(nlp.router, prefix="/api/v1/nlp", tags=["Catalyst NLP"])
 
 

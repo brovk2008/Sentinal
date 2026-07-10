@@ -21,6 +21,7 @@ import WarRoom from './pages/WarRoom'
 import Login from './pages/Login'
 import SignupPage from './pages/SignupPage'
 import FIRSearch from './pages/FIRSearch'
+import DataIngestion from './pages/DataIngestion'
 
 function ProtectedRoute({ children }) {
   const [checking, setChecking] = useState(true)
@@ -115,6 +116,7 @@ export default function App() {
           <Route path="/darkweb" element={<DarkWebIntel />} />
           <Route path="/warroom" element={<WarRoom />} />
           <Route path="/fir-search" element={<FIRSearch />} />
+          <Route path="/ingestion" element={<DataIngestion />} />
         </Route>
       </Routes>
     </BrowserRouter>

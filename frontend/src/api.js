@@ -292,3 +292,27 @@ async function uploadAudio(endpoint, audioBlob, language = 'en-IN') {
 
 export const speechToText = (audioBlob, language = 'en-IN') =>
   uploadAudio('/api/v1/nlp/speech-to-text', audioBlob, language);
+
+// ── KSP FIR Scraper (SmartBrowz Edition) ──
+export const startScraper = (year, districtIds = null) =>
+  request('/api/v1/scraper/start', {
+    method: 'POST',
+    body: JSON.stringify({ year, district_ids: districtIds }),
+  });
+
+export const fetchScraperStatus = () => request('/api/v1/scraper/status');
+
+export const stopScraper = () =>
+  request('/api/v1/scraper/stop', {
+    method: 'POST',
+  });
+
+export const queryScrapedFirs = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/api/v1/scraper/query?${qs}`);
+};
+
+export const getScrapedFirPdfUrl = (stratusKey) =>
+  request(`/api/v1/scraper/pdf/${encodeURIComponent(stratusKey)}`);
+
+export const fetchScraperDistricts = () => request('/api/v1/scraper/districts');
