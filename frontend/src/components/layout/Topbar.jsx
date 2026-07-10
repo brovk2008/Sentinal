@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchAlerts, searchCases } from '../../api'
+import { logoutUser } from '../../lib/catalystAuth'
 
 export default function Topbar() {
   const navigate = useNavigate()
@@ -327,10 +328,7 @@ export default function Topbar() {
                 My Cases
               </button>
               <button
-                onClick={() => {
-                  localStorage.removeItem('sentinal_token')
-                  navigate('/login')
-                }}
+                onClick={logoutUser}
                 style={{
                   padding: '8px 12px', background: 'none', border: 'none',
                   color: 'var(--status-danger)', fontSize: 11, cursor: 'pointer',

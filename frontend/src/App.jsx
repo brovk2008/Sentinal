@@ -22,21 +22,27 @@ import Login from './pages/Login'
 import SignupPage from './pages/SignupPage'
 import FIRSearch from './pages/FIRSearch'
 import DataIngestion from './pages/DataIngestion'
+import { getCurrentUser } from './lib/catalystAuth'
 
 function ProtectedRoute({ children }) {
   const [checking, setChecking] = useState(true)
   const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
-    // Fast path: check localStorage first (works for mock auth)
-    const token = localStorage.getItem('sentinal_token')
-    if (token) {
-      setAuthed(true)
-      setChecking(false)
-      return
+    let active = true
+    getCurrentUser()
+      .then(user => {
+        if (active) setAuthed(!!user)
+      })
+      .catch(() => {
+        if (active) setAuthed(false)
+      })
+      .finally(() => {
+        if (active) setChecking(false)
+      })
+    return () => {
+      active = false
     }
-    setAuthed(false)
-    setChecking(false)
   }, [])
 
   if (checking) {

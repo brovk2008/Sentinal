@@ -1,135 +1,128 @@
-/**
- * Catalyst Auth REST API wrapper for Sentinel v2
- * Project ID: 50170000000065001
- *
- * Uses Catalyst Authentication REST API directly (no browser SDK on npm).
- * Falls back to mock auth when running on localhost so local dev still works.
- */
+const IS_LOCAL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
 
-const PROJECT_ID = "50170000000065001";
-const CATALYST_AUTH_BASE = `https://api.catalyst.zoho.com/baas/v1/project/${PROJECT_ID}/auth`;
-
-const IS_LOCAL = window.location.hostname === "localhost" ||
-                 window.location.hostname === "127.0.0.1";
-
-// ── Mock credentials (local dev only) ─────────────────────────────────────────
-const MOCK_CREDS = {
-  email: "demo@sentinal.ksp",
-  password: "Sentinal@2024",
-  user: {
-    email_id: "demo@sentinal.ksp",
-    first_name: "Demo",
-    last_name: "Officer",
-    user_id: "mock-001",
-    role: "admin",
-  },
+const MOCK_USER = {
+  email_id: "demo@sentinal.ksp",
+  first_name: "Demo",
+  last_name: "Officer",
+  user_id: "mock-001",
+  role: "officer",
 };
+const MOCK_EMAIL = "demo@sentinal.ksp";
+const MOCK_PASSWORD = "Sentinal@2024";
 
-// ── Auth functions ────────────────────────────────────────────────────────────
+let sdkReady;
 
-export async function signupUser(name, email, password) {
-  if (IS_LOCAL) {
-    // Mock: always succeeds locally
-    return {
-      success: true,
-      data: { message: "Mock signup OK. Use demo@sentinal.ksp / Sentinal@2024 to login." },
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", reject, { once: true });
+      if (existing.dataset.loaded === "true") resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      resolve();
     };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureCatalystSdk() {
+  if (IS_LOCAL) return null;
+  if (!sdkReady) {
+    sdkReady = loadScript(
+      "https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js",
+    ).then(() => loadScript("/__catalyst/sdk/init.js"));
   }
-  try {
-    const firstName = name.split(" ")[0];
-    const lastName = name.split(" ").slice(1).join(" ") || "";
-    const res = await fetch(`${CATALYST_AUTH_BASE}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        first_name: firstName,
-        last_name: lastName,
-        email_id: email,
-        password,
-        redirect_url: window.location.origin + "/dashboard",
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Signup failed");
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message || "Signup failed" };
-  }
+  await sdkReady;
+  return window.catalyst;
+}
+
+function normalizeUser(response) {
+  const data = response?.content || response?.data || response;
+  if (!data || data.status === 401) return null;
+  return {
+    user_id: data.user_id || data.zuid || "",
+    email_id: data.email_id || "",
+    first_name: data.first_name || "",
+    last_name: data.last_name || "",
+    role: data.role_details?.role_name || data.user_type || "officer",
+  };
 }
 
 export async function loginUser(email, password) {
-  // ── Local dev mock ─────────────────────────────────────────────────────────
   if (IS_LOCAL) {
-    if (email === MOCK_CREDS.email && password === MOCK_CREDS.password) {
-      localStorage.setItem("sentinal_token", "mock-valid-sentinal-jwt-token");
-      localStorage.setItem("sentinal_user", JSON.stringify(MOCK_CREDS.user));
-      return { success: true, data: MOCK_CREDS.user };
+    if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
+      localStorage.setItem("sentinal_user", JSON.stringify(MOCK_USER));
+      localStorage.setItem("sentinal_authed", "1");
+      localStorage.removeItem("sentinal_token");
+      return { success: true, data: MOCK_USER };
     }
     return { success: false, error: "Invalid credentials. Access Denied." };
   }
 
-  // ── Catalyst Auth REST API ─────────────────────────────────────────────────
+  window.location.href = "/__catalyst/auth/login?service_url=/dashboard";
+  return { success: false, error: "Redirecting to Catalyst login..." };
+}
+
+export async function signupUser(name, email, password) {
+  if (IS_LOCAL) {
+    return {
+      success: true,
+      data: {
+        message: "Mock signup OK. Use demo@sentinal.ksp / Sentinal@2024 to login.",
+      },
+    };
+  }
+
+  window.location.href = "/__catalyst/auth/login?service_url=/dashboard";
+  return {
+    success: false,
+    error: "Public signup is disabled. Sign in with a Catalyst user account.",
+  };
+}
+
+export async function getCurrentUser() {
+  if (IS_LOCAL) {
+    const cached = localStorage.getItem("sentinal_user");
+    return cached ? JSON.parse(cached) : null;
+  }
+
   try {
-    const res = await fetch(`${CATALYST_AUTH_BASE}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email_id: email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data?.message || "Authentication failed");
-    }
-    // Catalyst sets a session cookie; also store a flag in localStorage
-    localStorage.setItem("sentinal_token", "catalyst-session-active");
-    const user = data?.data?.user_details || data?.data || {};
+    const catalyst = await ensureCatalystSdk();
+    const response = await catalyst.userManagement().getCurrentProjectUser();
+    const user = normalizeUser(response);
+    if (!user?.email_id && !user?.user_id) return null;
+
     localStorage.setItem("sentinal_user", JSON.stringify(user));
-    return { success: true, data: user };
-  } catch (err) {
-    return { success: false, error: err.message || "Authentication failed" };
+    localStorage.setItem("sentinal_authed", "1");
+    localStorage.removeItem("sentinal_token");
+    return user;
+  } catch {
+    localStorage.removeItem("sentinal_authed");
+    localStorage.removeItem("sentinal_user");
+    localStorage.removeItem("sentinal_token");
+    return null;
   }
 }
 
 export async function logoutUser() {
-  localStorage.removeItem("sentinal_token");
+  localStorage.removeItem("sentinal_authed");
   localStorage.removeItem("sentinal_user");
-  if (!IS_LOCAL) {
-    try {
-      await fetch(`${CATALYST_AUTH_BASE}/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch { /* ignore */ }
-  }
+  localStorage.removeItem("sentinal_token");
+
   window.location.href = "/login";
 }
 
-export async function getCurrentUser() {
-  const token = localStorage.getItem("sentinal_token");
-  if (!token) return null;
-
-  // Local mock
-  if (token === "mock-valid-sentinal-jwt-token") {
-    const cached = localStorage.getItem("sentinal_user");
-    return cached ? JSON.parse(cached) : MOCK_CREDS.user;
-  }
-
-  // Catalyst session check
-  if (!IS_LOCAL) {
-    try {
-      const res = await fetch(`${CATALYST_AUTH_BASE}/currentuser`, {
-        credentials: "include",
-      });
-      if (!res.ok) {
-        localStorage.removeItem("sentinal_token");
-        return null;
-      }
-      const data = await res.json();
-      return data?.data || null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
+export function isAuthed() {
+  return !!localStorage.getItem("sentinal_authed");
 }
