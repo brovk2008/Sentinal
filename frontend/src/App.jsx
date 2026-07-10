@@ -103,6 +103,8 @@ export default function App() {
       <Routes>
         <Route path="/login"  element={<Login />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/app" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/app/*" element={<Navigate to="/dashboard" replace />} />
 
         {/* Guarded Routes */}
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

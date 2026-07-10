@@ -19,11 +19,13 @@ export function isLocalAuthMode() {
 }
 
 export function redirectToHostedLogin(returnPath = "/dashboard") {
-  window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(returnPath)}`;
+  const serviceUrl = new URL(returnPath, window.location.origin).href;
+  window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(serviceUrl)}`;
 }
 
 export function redirectToHostedSignup(returnPath = "/dashboard") {
-  window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(returnPath)}`;
+  const serviceUrl = new URL(returnPath, window.location.origin).href;
+  window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(serviceUrl)}`;
 }
 
 function loadScript(src) {
