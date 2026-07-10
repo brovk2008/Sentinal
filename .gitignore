@@ -39,6 +39,7 @@ get_appsail_logs.js
 deploy_appsail.js
 
 # Ignore large data files (regenerate locally via scripts/)
+data_raw/
 backend/data/*.npy
 backend/data/*.jsonl
 backend/data/chunk_metadata.json

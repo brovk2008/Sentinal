@@ -16,6 +16,12 @@
     ]
   },
   "apig": {
-    "enabled": false
-  }
+    "enabled": true
+  },
+  "slate": [
+    {
+      "name": "sentinal-peak",
+      "source": "C:\\Users\\techp\\Downloads\\more projects\\Sentinal new\\frontend"
+    }
+  ]
 }
