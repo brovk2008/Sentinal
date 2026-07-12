@@ -138,8 +138,9 @@ export function isLocalAuthMode() { return IS_LOCAL; }
 
 /**
  * Redirect to login.
- * • Custom domain  → serverless app's index.html?redirect_back=<origin-url>
- * • Serverless     → /__catalyst/auth/login, PRESERVING ?redirect_back if present
+ * • Custom domain  → serverless app's /app/index.html?redirect_back=<origin-url>
+ * • Serverless     → /__catalyst/auth/login, PRESERVING current URL if redirect_back present
+ *                    Falls back to /app<returnPath> to stay inside the web client base path.
  */
 export function redirectToLogin(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
@@ -149,12 +150,19 @@ export function redirectToLogin(returnPath = "/dashboard") {
     return;
   }
 
-  // On the serverless domain: if redirect_back is already in the URL,
-  // use the FULL current URL as service_url so it survives the auth round-trip.
+  // On serverless domain, ALL routes live under /app/ (web client base path).
+  // If redirect_back is already in the current URL, use the full URL (it already
+  // has /app/... prefix). Otherwise construct service_url with /app prefix so
+  // Catalyst auth redirects back into the web client, not root /dashboard.
   const params = new URLSearchParams(window.location.search);
-  const serviceUrl = params.has("redirect_back")
-    ? window.location.href                                    // preserve ?redirect_back
-    : new URL(returnPath, window.location.origin).href;
+  let serviceUrl;
+  if (params.has("redirect_back")) {
+    serviceUrl = window.location.href;           // already has /app/...
+  } else {
+    // Detect base path: /app on catalystserverless.in, empty on other hosts
+    const basePath = window.location.pathname.startsWith("/app") ? "/app" : "";
+    serviceUrl = new URL(basePath + returnPath, window.location.origin).href;
+  }
 
   window.location.href =
     `/__catalyst/auth/login?service_url=${encodeURIComponent(serviceUrl)}`;
@@ -167,7 +175,8 @@ export function redirectToSignup(returnPath = "/dashboard") {
       `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}&mode=signup`;
     return;
   }
-  const serviceUrl = new URL(returnPath, window.location.origin).href;
+  const basePath = window.location.pathname.startsWith("/app") ? "/app" : "";
+  const serviceUrl = new URL(basePath + returnPath, window.location.origin).href;
   window.location.href =
     `/__catalyst/auth/signup?service_url=${encodeURIComponent(serviceUrl)}`;
 }

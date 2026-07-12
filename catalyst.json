@@ -15,6 +15,9 @@
       "*.log"
     ]
   },
+  "client": {
+    "source": "frontend/dist"
+  },
   "apig": {
     "enabled": true
   }
