@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
 import LiveFeed from './components/layout/LiveFeed'
@@ -25,13 +25,20 @@ import DataIngestion from './pages/DataIngestion'
 import PatternIntel from './pages/PatternIntel'
 import AuthGuard from './components/AuthGuard'
 
-// ─── Router base path ────────────────────────────────────────────────────────
-// The Catalyst Web Client deployment serves the app under /app/ on the
-// catalystserverless.in domain. We set the BrowserRouter basename so that
-// React Router generates / resolves URLs with the correct /app/ prefix there.
-// On onslate.in (Slate), the app is served at root /, so basename stays "/".
-const IS_SERVERLESS_DOMAIN = window.location.hostname.includes('catalystserverless.in')
-const ROUTER_BASE = IS_SERVERLESS_DOMAIN ? '/app' : '/'
+// ─── Routing strategy ────────────────────────────────────────────────────────
+// We use HashRouter (#/dashboard, #/map, etc.) because:
+//
+//  • On catalystserverless.in the web client is served at /app/ — sub-paths
+//    like /app/dashboard are NOT served by Catalyst (INVALID_URL_PATTERN).
+//    With HashRouter the actual server URL is always /app/index.html#/dashboard
+//    which Catalyst serves correctly.
+//
+//  • On onslate.in (Catalyst Slate) the SPA fallback serves index.html for any
+//    path, so BrowserRouter would also work, but HashRouter is safe here too.
+//
+//  • Auth redirects (?redirect_back, ?auth_user, ?logout) are read from
+//    window.location.search (NOT from the hash), so they survive the
+//    /__catalyst/auth/login → service_url → index.html round-trip correctly.
 
 function Layout() {
   return (
@@ -58,15 +65,6 @@ function Layout() {
   )
 }
 
-// On the serverless domain, the SSO bridge lands the user on /app/index.html
-// (with optional ?redirect_back / ?auth_user query params).
-// With basename="/app" the router sees path "/index.html" — redirect to /dashboard
-// so that AuthGuard / getCurrentUser() can run with the query params intact.
-function IndexHtmlRedirect() {
-  const location = useLocation()
-  return <Navigate to={`/dashboard${location.search}${location.hash}`} replace />
-}
-
 export default function App() {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -81,40 +79,33 @@ export default function App() {
   }, [])
 
   return (
-    <BrowserRouter basename={ROUTER_BASE}>
+    <HashRouter>
       <Routes>
-        <Route path="/login"      element={<Login />} />
-        <Route path="/signup"     element={<SignupPage />} />
-
-        {/*
-          Handles the SSO bridge entry point: /app/index.html?redirect_back=...
-          basename="/app" makes the router see this as /index.html
-          Preserve query string so getCurrentUser() can read redirect_back / auth_user.
-        */}
-        <Route path="/index.html" element={<IndexHtmlRedirect />} />
+        <Route path="/login"   element={<Login />} />
+        <Route path="/signup"  element={<SignupPage />} />
 
         {/* Guarded Routes */}
         <Route element={<AuthGuard><Layout /></AuthGuard>}>
-          <Route path="/"                     element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard"            element={<Dashboard />} />
-          <Route path="/map"                  element={<GeospatialMap />} />
-          <Route path="/connections"          element={<ConnectionsBoard />} />
-          <Route path="/timeline/:caseId?"    element={<TimelineExplorer />} />
-          <Route path="/persons"              element={<Persons />} />
-          <Route path="/assistant"            element={<AIAssistant />} />
-          <Route path="/financial"            element={<FinancialIntel />} />
-          <Route path="/cdr"                  element={<CDRAnalytics />} />
-          <Route path="/predict"              element={<PredictiveIntelligence />} />
-          <Route path="/board"                element={<EvidenceBoard />} />
-          <Route path="/network-3d"           element={<NetworkGraph3D />} />
-          <Route path="/accused/:accusedId"   element={<AccusedProfile />} />
-          <Route path="/darkweb"              element={<DarkWebIntel />} />
-          <Route path="/warroom"              element={<WarRoom />} />
-          <Route path="/fir-search"           element={<FIRSearch />} />
-          <Route path="/ingestion"            element={<DataIngestion />} />
-          <Route path="/patterns"             element={<PatternIntel />} />
+          <Route path="/"                   element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard"          element={<Dashboard />} />
+          <Route path="/map"                element={<GeospatialMap />} />
+          <Route path="/connections"        element={<ConnectionsBoard />} />
+          <Route path="/timeline/:caseId?"  element={<TimelineExplorer />} />
+          <Route path="/persons"            element={<Persons />} />
+          <Route path="/assistant"          element={<AIAssistant />} />
+          <Route path="/financial"          element={<FinancialIntel />} />
+          <Route path="/cdr"                element={<CDRAnalytics />} />
+          <Route path="/predict"            element={<PredictiveIntelligence />} />
+          <Route path="/board"              element={<EvidenceBoard />} />
+          <Route path="/network-3d"         element={<NetworkGraph3D />} />
+          <Route path="/accused/:accusedId" element={<AccusedProfile />} />
+          <Route path="/darkweb"            element={<DarkWebIntel />} />
+          <Route path="/warroom"            element={<WarRoom />} />
+          <Route path="/fir-search"         element={<FIRSearch />} />
+          <Route path="/ingestion"          element={<DataIngestion />} />
+          <Route path="/patterns"           element={<PatternIntel />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }

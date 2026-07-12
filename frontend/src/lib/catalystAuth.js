@@ -138,31 +138,32 @@ export function isLocalAuthMode() { return IS_LOCAL; }
 
 /**
  * Redirect to login.
- * • Custom domain  → serverless app's /app/index.html?redirect_back=<origin-url>
- * • Serverless     → /__catalyst/auth/login, PRESERVING current URL if redirect_back present
- *                    Falls back to /app<returnPath> to stay inside the web client base path.
+ * • Custom domain  → serverless /app/index.html?redirect_back=<origin-url>
+ * • Serverless     → /__catalyst/auth/login
+ *   - service_url is always /app/index.html (HashRouter: hash holds the route,
+ *     server URL stays at /app/index.html which Catalyst actually serves)
+ *   - If current URL has ?redirect_back we include it in the service_url so
+ *     it survives the auth round-trip
  */
 export function redirectToLogin(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
-    const returnUrl = new URL(returnPath, window.location.origin).href;
+    // Bridge to serverless domain for auth. returnUrl is where we come back to
+    // on the custom domain after the SSO bridge completes.
+    const returnUrl = new URL(window.location.origin + "/#" + returnPath).href;
     window.location.href =
       `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}`;
     return;
   }
 
-  // On serverless domain, ALL routes live under /app/ (web client base path).
-  // If redirect_back is already in the current URL, use the full URL (it already
-  // has /app/... prefix). Otherwise construct service_url with /app prefix so
-  // Catalyst auth redirects back into the web client, not root /dashboard.
+  // On the serverless domain the web client is at /app/index.html.
+  // With HashRouter the server URL is always /app/index.html regardless of
+  // what #/route the user is on. Build service_url using /app/index.html,
+  // preserving the redirect_back query param if present.
   const params = new URLSearchParams(window.location.search);
-  let serviceUrl;
-  if (params.has("redirect_back")) {
-    serviceUrl = window.location.href;           // already has /app/...
-  } else {
-    // Detect base path: /app on catalystserverless.in, empty on other hosts
-    const basePath = window.location.pathname.startsWith("/app") ? "/app" : "";
-    serviceUrl = new URL(basePath + returnPath, window.location.origin).href;
-  }
+  const appBase = `${window.location.origin}/app/index.html`;
+  const serviceUrl = params.has("redirect_back")
+    ? `${appBase}?${params.toString()}`       // preserve redirect_back
+    : appBase;                                // plain entry point
 
   window.location.href =
     `/__catalyst/auth/login?service_url=${encodeURIComponent(serviceUrl)}`;
@@ -170,13 +171,12 @@ export function redirectToLogin(returnPath = "/dashboard") {
 
 export function redirectToSignup(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
-    const returnUrl = new URL(returnPath, window.location.origin).href;
+    const returnUrl = new URL(window.location.origin + "/#" + returnPath).href;
     window.location.href =
       `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}&mode=signup`;
     return;
   }
-  const basePath = window.location.pathname.startsWith("/app") ? "/app" : "";
-  const serviceUrl = new URL(basePath + returnPath, window.location.origin).href;
+  const serviceUrl = `${window.location.origin}/app/index.html`;
   window.location.href =
     `/__catalyst/auth/signup?service_url=${encodeURIComponent(serviceUrl)}`;
 }
