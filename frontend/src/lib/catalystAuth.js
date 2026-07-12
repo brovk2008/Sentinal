@@ -73,9 +73,11 @@ function ensureCatalystSdk() {
     sdkReady = Promise.race([
       loadScript("https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js")
         .then(async () => {
-          if (IS_CUSTOM_DOMAIN) {
-            // On custom domain: manually init SDK pointing to the real Catalyst serverless API
-            console.log("[Auth] Custom domain — initializing Catalyst SDK with explicit api_domain");
+          // On serverless domain: load the platform-provided init.js
+          try {
+            await loadScript("/__catalyst/sdk/init.js");
+          } catch (e) {
+            console.warn("[Auth] init.js failed, falling back to manual init", e);
             window.catalyst.initApp(
               {
                 project_Id: "50170000000065001",
@@ -88,25 +90,6 @@ function ensureCatalystSdk() {
               },
               { org_id: "60073535541" }
             );
-          } else {
-            // On *.catalystserverless.in: load the platform-provided init.js
-            try {
-              await loadScript("/__catalyst/sdk/init.js");
-            } catch (e) {
-              console.warn("[Auth] init.js failed, falling back to manual init", e);
-              window.catalyst.initApp(
-                {
-                  project_Id: "50170000000065001",
-                  zaid: "50043676705",
-                  auth_domain: "https://accounts.zohoportal.in",
-                  is_appsail: false,
-                  stratus_domain: "-development.zohostratus.in",
-                  nimbus_domain: "-development.nimbuspop.com",
-                  api_domain: CATALYST_BASE,
-                },
-                { org_id: "60073535541" }
-              );
-            }
           }
           return window.catalyst;
         }),
@@ -149,12 +132,35 @@ export function isLocalAuthMode() {
   return IS_LOCAL;
 }
 
+function checkUrlForAuthUser() {
+  const params = new URLSearchParams(window.location.search);
+  const authUserStr = params.get("auth_user");
+  if (authUserStr) {
+    try {
+      const user = JSON.parse(decodeURIComponent(authUserStr));
+      if (user?.email_id || user?.user_id) {
+        localStorage.setItem("sentinal_user", JSON.stringify(user));
+        localStorage.setItem("sentinal_authed", "1");
+        
+        // Remove parameter from URL without reload
+        params.delete("auth_user");
+        const newSearch = params.toString();
+        const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "") + window.location.hash;
+        window.history.replaceState({}, document.title, newUrl);
+        return user;
+      }
+    } catch (e) {
+      console.error("[Auth] Failed to parse auth_user from URL:", e);
+    }
+  }
+  return null;
+}
+
 export function redirectToLogin(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
-    // Stamp the timestamp so we can detect infinite-loop on return
-    sessionStorage.setItem("sentinal_auth_ts", String(Date.now()));
     const returnUrl = new URL(returnPath, window.location.origin).href;
-    window.location.href = `${CATALYST_BASE}/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
+    // Redirect to the serverless app page which handles auth and redirects back
+    window.location.href = `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}`;
   } else {
     const returnUrl = new URL(returnPath, window.location.origin).href;
     window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
@@ -164,7 +170,7 @@ export function redirectToLogin(returnPath = "/dashboard") {
 export function redirectToSignup(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
     const returnUrl = new URL(returnPath, window.location.origin).href;
-    window.location.href = `${CATALYST_BASE}/__catalyst/auth/signup?service_url=${encodeURIComponent(returnUrl)}`;
+    window.location.href = `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}&signup=true`;
   } else {
     const returnUrl = new URL(returnPath, window.location.origin).href;
     window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(returnUrl)}`;
@@ -214,64 +220,40 @@ export async function getCurrentUser() {
     return cached ? JSON.parse(cached) : null;
   }
 
-  // ── Custom domain path ────────────────────────────────────────────────────
-  // On onslate.in, the Catalyst JS SDK cannot verify the session because
-  // the session cookie lives on catalystserverless.in (different origin).
-  // Instead we call our backend proxy at /api/v1/auth/whoami which forwards
-  // the cookie server-side where cross-domain restrictions don't apply.
-  if (IS_CUSTOM_DOMAIN) {
-    const BACKEND = "https://sentinal-backend-50043676705.development.catalystappsail.in";
+  // ── Custom Domain SSO Redirect Handle ──────────────────────────────────────
+  const urlUser = checkUrlForAuthUser();
+  if (urlUser) return urlUser;
 
-    // Anti-loop guard: if we already tried auth and it still fails, don't
-    // redirect again — show the error instead.
-    const authAttemptTs = sessionStorage.getItem("sentinal_auth_ts");
-    const justCameBackFromAuth =
-      authAttemptTs && Date.now() - parseInt(authAttemptTs, 10) < 60000;
-
-    // Check localStorage for cached user first (persists across redirects)
-    const cached = localStorage.getItem("sentinal_user");
-    if (cached) {
-      try {
-        const u = JSON.parse(cached);
-        if (u?.email_id || u?.user_id) return u;
-      } catch { /* ignore */ }
-    }
-
+  // Check cached session
+  const cached = localStorage.getItem("sentinal_user");
+  if (cached) {
     try {
-      const resp = await fetch(`${BACKEND}/api/v1/auth/whoami`, {
-        credentials: "include",
-        headers: { "Accept": "application/json" },
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data?.user) {
-          const user = data.user;
-          localStorage.setItem("sentinal_user", JSON.stringify(user));
-          localStorage.setItem("sentinal_authed", "1");
-          sessionStorage.removeItem("sentinal_auth_ts");
-          return user;
-        }
-      }
-    } catch (e) {
-      console.warn("[Auth] Backend whoami failed:", e.message);
-    }
-
-    // Proxy call failed or returned 401.
-    clearSession();
-
-    if (justCameBackFromAuth) {
-      // We already redirected to Catalyst and came back — still failing.
-      // Don't loop. Return null and let AuthGuard show the error state.
-      console.warn("[Auth] Auth redirect already tried — not looping. Please ensure you are logged into Catalyst.");
-      return null;
-    }
-
-    // First attempt: mark timestamp and redirect to Catalyst login.
-    return null; // AuthGuard will call redirectToLogin()
+      const u = JSON.parse(cached);
+      if (u?.email_id || u?.user_id) return u;
+    } catch { /* ignore */ }
   }
 
-  // ── Standard catalystserverless.in path ────────────────────────────────────
+  if (IS_CUSTOM_DOMAIN) {
+    // If not cached, we return null to let AuthGuard trigger the redirect
+    clearSession();
+    return null;
+  }
+
+  // ── Serverless Domain Authenticated Path ──────────────────────────────────
+  // Check if we need to log out first (SSO logout redirect)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("logout") === "true") {
+    clearSession();
+    if (!IS_LOCAL) {
+      try {
+        const catalyst = await ensureCatalystSdk();
+        if (catalyst?.auth) await catalyst.auth.signOut();
+      } catch { /* ignore */ }
+    }
+    window.location.href = "/login";
+    return new Promise(() => {});
+  }
+
   try {
     const catalyst = await ensureCatalystSdk();
     if (!catalyst) return null;
@@ -287,6 +269,16 @@ export async function getCurrentUser() {
     localStorage.setItem("sentinal_user", JSON.stringify(user));
     localStorage.setItem("sentinal_authed", "1");
     localStorage.removeItem("sentinal_token");
+
+    // SSO Redirect back if requested
+    const redirectBack = params.get("redirect_back");
+    if (redirectBack) {
+      const targetUrl = new URL(redirectBack);
+      targetUrl.searchParams.set("auth_user", JSON.stringify(user));
+      window.location.href = targetUrl.href;
+      return new Promise(() => {}); // prevent rendering
+    }
+
     return user;
   } catch (error) {
     console.warn("[Auth] getCurrentUser failed:", error.message);
@@ -298,15 +290,15 @@ export async function getCurrentUser() {
 export async function logoutUser() {
   clearSession();
 
+  if (IS_CUSTOM_DOMAIN) {
+    // Redirect to serverless domain to trigger sign out there
+    window.location.href = `${CATALYST_BASE}/app/index.html?logout=true`;
+    return;
+  }
+
   if (!IS_LOCAL) {
     try {
-      const catalyst = await Promise.race([
-        ensureCatalystSdk(),
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("timeout")), 3000);
-        }),
-      ]);
-
+      const catalyst = await ensureCatalystSdk();
       if (catalyst?.auth) {
         await catalyst.auth.signOut();
       }
