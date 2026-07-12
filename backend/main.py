@@ -15,7 +15,7 @@ except Exception as e:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp, scraper
+from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp, scraper, uploads, auth
 from routers.predict import load_models as load_predict_models
 from scrapers.scraper_store import init_scrape_table
 
@@ -84,6 +84,8 @@ app.include_router(darkweb.router, prefix="/api/v1/darkweb", tags=["Dark Web Int
 app.include_router(fir_scraper.router, prefix="/api/v1/fir", tags=["FIR Scraper"])
 app.include_router(scraper.router, prefix="/api/v1/scraper", tags=["KSP FIR Scraper (SmartBrowz)"])
 app.include_router(nlp.router, prefix="/api/v1/nlp", tags=["Catalyst NLP"])
+app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["File Uploads"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 
 
 @app.get("/health")

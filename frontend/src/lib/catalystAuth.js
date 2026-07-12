@@ -151,8 +151,8 @@ export function isLocalAuthMode() {
 
 export function redirectToLogin(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
-    // On custom domain: auth must happen on the real Catalyst serverless URL.
-    // After login, Catalyst will redirect back to service_url (our custom domain path).
+    // Stamp the timestamp so we can detect infinite-loop on return
+    sessionStorage.setItem("sentinal_auth_ts", String(Date.now()));
     const returnUrl = new URL(returnPath, window.location.origin).href;
     window.location.href = `${CATALYST_BASE}/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
   } else {
@@ -214,6 +214,64 @@ export async function getCurrentUser() {
     return cached ? JSON.parse(cached) : null;
   }
 
+  // ── Custom domain path ────────────────────────────────────────────────────
+  // On onslate.in, the Catalyst JS SDK cannot verify the session because
+  // the session cookie lives on catalystserverless.in (different origin).
+  // Instead we call our backend proxy at /api/v1/auth/whoami which forwards
+  // the cookie server-side where cross-domain restrictions don't apply.
+  if (IS_CUSTOM_DOMAIN) {
+    const BACKEND = "https://sentinal-backend-50043676705.development.catalystappsail.in";
+
+    // Anti-loop guard: if we already tried auth and it still fails, don't
+    // redirect again — show the error instead.
+    const authAttemptTs = sessionStorage.getItem("sentinal_auth_ts");
+    const justCameBackFromAuth =
+      authAttemptTs && Date.now() - parseInt(authAttemptTs, 10) < 60000;
+
+    // Check localStorage for cached user first (persists across redirects)
+    const cached = localStorage.getItem("sentinal_user");
+    if (cached) {
+      try {
+        const u = JSON.parse(cached);
+        if (u?.email_id || u?.user_id) return u;
+      } catch { /* ignore */ }
+    }
+
+    try {
+      const resp = await fetch(`${BACKEND}/api/v1/auth/whoami`, {
+        credentials: "include",
+        headers: { "Accept": "application/json" },
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.user) {
+          const user = data.user;
+          localStorage.setItem("sentinal_user", JSON.stringify(user));
+          localStorage.setItem("sentinal_authed", "1");
+          sessionStorage.removeItem("sentinal_auth_ts");
+          return user;
+        }
+      }
+    } catch (e) {
+      console.warn("[Auth] Backend whoami failed:", e.message);
+    }
+
+    // Proxy call failed or returned 401.
+    clearSession();
+
+    if (justCameBackFromAuth) {
+      // We already redirected to Catalyst and came back — still failing.
+      // Don't loop. Return null and let AuthGuard show the error state.
+      console.warn("[Auth] Auth redirect already tried — not looping. Please ensure you are logged into Catalyst.");
+      return null;
+    }
+
+    // First attempt: mark timestamp and redirect to Catalyst login.
+    return null; // AuthGuard will call redirectToLogin()
+  }
+
+  // ── Standard catalystserverless.in path ────────────────────────────────────
   try {
     const catalyst = await ensureCatalystSdk();
     if (!catalyst) return null;
