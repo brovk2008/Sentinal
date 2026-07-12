@@ -42,6 +42,15 @@ export const fetchCasesNear = (lat, lng, radius = 2) =>
   request(`/api/v1/heatmap/cases-near?lat=${lat}&lng=${lng}&radius_km=${radius}`);
 export const fetchDistrictCenters = () => request('/api/v1/heatmap/district-centers');
 export const fetchHeatmapTimelapse = () => request('/api/v1/heatmap/timelapse');
+export const fetchDbscanClusters = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/api/v1/heatmap/dbscan-clusters?${qs}`);
+};
+export const fetchPredictNext = (districtId = null) => {
+  const url = `/api/v1/intelligence/predict-next${districtId ? `?district_id=${districtId}` : ''}`;
+  return request(url);
+};
+
 
 // ── Network ──
 export const fetchNetworkGraph = (limit = 200, syndicateId) => {
@@ -85,6 +94,30 @@ export const fetchTowerActivity = (districtId) => {
 };
 export const fetchPreIncidentCalls = () => request('/api/v1/cdr/pre-incident-calls');
 export const fetchCdrSummary = () => request('/api/v1/cdr/summary');
+
+// ── CDR Advanced ──
+export const uploadCdrFile = (formData) => uploadRequest('/api/v1/cdr/upload', formData);
+export const fetchMovementTrail = (phone) => request(`/api/v1/cdr/movement-trail/${encodeURIComponent(phone)}`);
+export const fetchCommonContacts = (phone, minCalls = 2) => request(`/api/v1/cdr/common-contacts/${encodeURIComponent(phone)}?min_calls=${minCalls}`);
+export const fetchTowerDump = (towerId, date) => request(`/api/v1/cdr/tower-dump/${encodeURIComponent(towerId)}?date=${date}`);
+export const fetchImeiTrace = (imei) => request(`/api/v1/cdr/imei-trace/${encodeURIComponent(imei)}`);
+export const fetchPreIncidentWindow = (payload) => request('/api/v1/cdr/pre-incident-window', {
+  method: 'POST',
+  body: JSON.stringify(payload),
+});
+
+// ── File Uploads ──
+export const uploadFile = (formData) => uploadRequest('/api/v1/uploads/upload', formData);
+export const listUploads = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/api/v1/uploads/list?${qs}`);
+};
+export const getUploadedFile = (fileId) => request(`/api/v1/uploads/file/${fileId}`);
+export const deleteUploadedFile = (fileId) => request(`/api/v1/uploads/file/${fileId}`, { method: 'DELETE' });
+
+// ── Pattern Intelligence ──
+export const fetchPatterns = () => request('/api/v1/intelligence/patterns');
+
 
 // ── Intelligence ──
 export const queryIntelligence = (payload) => {

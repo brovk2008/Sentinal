@@ -1,0 +1,110 @@
+{
+  "nav": {
+    "dashboard":       "डैशबोर्ड",
+    "map":             "भू-स्थानिक नक्शा",
+    "cases":           "मामले",
+    "canvas":          "जाँच कैनवास",
+    "persons":         "व्यक्ति",
+    "cdr":             "CDR विश्लेषण",
+    "network":         "नेटवर्क ग्राफ",
+    "timeline":        "समयरेखा",
+    "predictive":      "पूर्वानुमान",
+    "evidence":        "साक्ष्य बोर्ड",
+    "darkweb":         "डार्क वेब",
+    "financial":       "वित्तीय खुफिया",
+    "warroom":         "वॉर रूम",
+    "ai":              "AI सहायक",
+    "dataingestion":   "डेटा इनजेस्शन",
+    "firsearch":       "FIR खोज",
+    "logout":          "लॉग आउट"
+  },
+  "common": {
+    "search":          "खोजें...",
+    "loading":         "लोड हो रहा है...",
+    "error":           "त्रुटि",
+    "save":            "सहेजें",
+    "cancel":          "रद्द करें",
+    "delete":          "हटाएं",
+    "confirm":         "पुष्टि करें",
+    "close":           "बंद करें",
+    "submit":          "सबमिट करें",
+    "upload":          "अपलोड",
+    "download":        "डाउनलोड",
+    "refresh":         "ताज़ा करें",
+    "noData":          "कोई डेटा उपलब्ध नहीं",
+    "select":          "चुनें...",
+    "required":        "आवश्यक",
+    "optional":        "वैकल्पिक",
+    "language":        "भाषा"
+  },
+  "auth": {
+    "login":           "लॉगिन",
+    "signup":          "साइन अप",
+    "email":           "ईमेल",
+    "password":        "पासवर्ड",
+    "loginTitle":      "प्रोजेक्ट सेंटिनल",
+    "loginSubtitle":   "कर्नाटक पुलिस खुफिया मंच",
+    "signupTitle":     "खाता बनाएं",
+    "forgotPassword":  "पासवर्ड भूल गए?",
+    "noAccount":       "खाता नहीं है?",
+    "haveAccount":     "पहले से खाता है?"
+  },
+  "canvas": {
+    "title":           "जाँच कैनवास",
+    "addNode":         "नोड जोड़ें",
+    "connectDots":     "AI कनेक्ट डॉट्स",
+    "analyzeBoard":    "AI विश्लेषण",
+    "saveBoard":       "कैनवास सहेजें",
+    "clearBoard":      "कैनवास साफ करें",
+    "nodeTypes": {
+      "person":        "व्यक्ति",
+      "case":          "मामला",
+      "location":      "स्थान",
+      "phone":         "फोन",
+      "vehicle":       "वाहन",
+      "evidence":      "साक्ष्य",
+      "financial":     "वित्तीय"
+    },
+    "savedSuccess":    "कैनवास सफलतापूर्वक सहेजा गया",
+    "saveError":       "कैनवास सहेजने में विफल"
+  },
+  "map": {
+    "title":           "भू-स्थानिक खुफिया नक्शा",
+    "heatmap":         "अपराध हीटमैप",
+    "clusters":        "DBSCAN क्लस्टर",
+    "predictNext":     "अगले अपराध का पूर्वानुमान",
+    "severity": {
+      "critical":      "अतिगंभीर",
+      "high":          "उच्च",
+      "medium":        "मध्यम",
+      "low":           "निम्न"
+    }
+  },
+  "cdr": {
+    "title":           "CDR विश्लेषण",
+    "uploadCdr":       "CDR फ़ाइल अपलोड करें",
+    "movementTrail":   "आवागमन रिकॉर्ड",
+    "commonContacts":  "संपर्क नेटवर्क",
+    "towerDump":       "टॉवर डंप",
+    "imeiTrace":       "IMEI ट्रेस",
+    "preIncident":     "पूर्व-घटना विंडो",
+    "phonePlaceholder":"फोन नंबर दर्ज करें..."
+  },
+  "ai": {
+    "title":           "AI सहायक",
+    "placeholder":     "मामलों, संदिग्धों, पैटर्न के बारे में कुछ भी पूछें...",
+    "send":            "भेजें",
+    "thinking":        "सोच रहा है...",
+    "citations":       "स्रोत",
+    "clearHistory":    "इतिहास साफ करें"
+  },
+  "uploads": {
+    "title":           "फ़ाइल अपलोड",
+    "dragDrop":        "यहाँ फ़ाइलें खींचें और छोड़ें, या चुनने के लिए क्लिक करें",
+    "supported":       "समर्थित: चित्र, PDF, CSV, ऑडियो, वीडियो",
+    "analyzing":       "फ़ाइल का विश्लेषण हो रहा है...",
+    "summary":         "AI विश्लेषण सारांश",
+    "label":           "फ़ाइल लेबल",
+    "caseId":          "मामला ID (वैकल्पिक)"
+  }
+}

@@ -1,40 +1,44 @@
 import { NavLink, useLocation } from 'react-router-dom'
-
-const sections = [
-  {
-    label: 'Command Center',
-    items: [
-      { path: '/warroom', icon: '⚔️', label: 'War Room' },
-      { path: '/dashboard', icon: '⬡', label: 'Dashboard' },
-      { path: '/ingestion', icon: '📥', label: 'Data Ingestion' },
-    ],
-  },
-  {
-    label: 'Investigations',
-    items: [
-      { path: '/timeline', icon: '◈', label: 'Cases & Timeline' },
-      { path: '/connections', icon: '⬡', label: 'Connections Board' },
-      { path: '/board', icon: '📌', label: 'Evidence Board' },
-      { path: '/network-3d', icon: '⬡', label: '3D Network' },
-      { path: '/map', icon: '◎', label: 'Geospatial Map' },
-      { path: '/persons', icon: '◉', label: 'Persons' },
-      { path: '/fir-search', icon: '🔍', label: 'FIR Live Search' },
-    ],
-  },
-  {
-    label: 'Intelligence',
-    items: [
-      { path: '/financial', icon: '◈', label: 'Financial Intel' },
-      { path: '/cdr', icon: '◇', label: 'CDR Analytics' },
-      { path: '/predict', icon: '⟁', label: 'Predictive Intel' },
-      { path: '/assistant', icon: '◎', label: 'AI Assistant' },
-      { path: '/darkweb', icon: '🕸️', label: 'Dark Web Intel' },
-    ],
-  },
-]
+import { useTranslation } from 'react-i18next'
 
 export default function Sidebar() {
+  const { t } = useTranslation()
   const location = useLocation()
+
+  const sections = [
+    {
+      label: t('Command Center'),
+      items: [
+        { path: '/warroom', icon: '⚔️', label: t('nav.warroom') },
+        { path: '/dashboard', icon: '⬡', label: t('nav.dashboard') },
+        { path: '/ingestion', icon: '📥', label: t('nav.dataingestion') },
+      ],
+    },
+    {
+      label: t('Investigations'),
+      items: [
+        { path: '/timeline', icon: '◈', label: t('nav.cases') },
+        { path: '/connections', icon: '⬡', label: t('nav.canvas') },
+        { path: '/patterns', icon: '⟁', label: 'Pattern Intel' },
+        { path: '/board', icon: '📌', label: t('nav.evidence') },
+        { path: '/network-3d', icon: '⬡', label: '3D Network' },
+        { path: '/map', icon: '◎', label: t('nav.map') },
+        { path: '/persons', icon: '◉', label: t('nav.persons') },
+        { path: '/fir-search', icon: '🔍', label: t('nav.firsearch') },
+      ],
+    },
+    {
+      label: t('Intelligence'),
+      items: [
+        { path: '/financial', icon: '◈', label: t('nav.financial') },
+        { path: '/cdr', icon: '◇', label: t('nav.cdr') },
+        { path: '/predict', icon: '⟁', label: t('nav.predictive') },
+        { path: '/assistant', icon: '◎', label: t('nav.ai') },
+        { path: '/darkweb', icon: '🕸️', label: t('nav.darkweb') },
+      ],
+    },
+  ]
+
 
   return (
     <aside style={{

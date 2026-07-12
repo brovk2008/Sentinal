@@ -22,6 +22,7 @@ import Login from './pages/Login'
 import SignupPage from './pages/SignupPage'
 import FIRSearch from './pages/FIRSearch'
 import DataIngestion from './pages/DataIngestion'
+import PatternIntel from './pages/PatternIntel'
 import AuthGuard from './components/AuthGuard'
 
 function Layout() {
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="/warroom" element={<WarRoom />} />
           <Route path="/fir-search" element={<FIRSearch />} />
           <Route path="/ingestion" element={<DataIngestion />} />
+          <Route path="/patterns" element={<PatternIntel />} />
         </Route>
       </Routes>
     </BrowserRouter>

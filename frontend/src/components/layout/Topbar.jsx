@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchAlerts, searchCases } from '../../api'
 import { logoutUser } from '../../lib/catalystAuth'
+import { useTranslation } from 'react-i18next'
 
 export default function Topbar() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [time, setTime] = useState(new Date())
   const [alertCount, setAlertCount] = useState(0)
@@ -13,9 +15,26 @@ export default function Topbar() {
   const [searchResults, setSearchResults] = useState([])
   const [showSearchDropdown, setShowSearchDropdown] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [showLang, setShowLang] = useState(false)
   const dropdownRef = useRef(null)
   const searchRef = useRef(null)
   const userRef = useRef(null)
+  const langRef = useRef(null)
+
+  const LANGS = [
+    { code: 'en', label: 'EN', name: 'English' },
+    { code: 'hi', label: 'हिं', name: 'Hindi' },
+    { code: 'kn', label: 'ಕನ್', name: 'Kannada' },
+    { code: 'ta', label: 'தமிழ்', name: 'Tamil' },
+    { code: 'te', label: 'తె', name: 'Telugu' },
+    { code: 'ur', label: 'اردو', name: 'Urdu' },
+  ]
+
+  const switchLanguage = (code) => {
+    i18n.changeLanguage(code)
+    localStorage.setItem('sentinal_lang', code)
+    setShowLang(false)
+  }
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000)
@@ -37,6 +56,9 @@ export default function Topbar() {
       }
       if (userRef.current && !userRef.current.contains(event.target)) {
         setShowUserDropdown(false)
+      }
+      if (langRef.current && !langRef.current.contains(event.target)) {
+        setShowLang(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -244,6 +266,57 @@ export default function Topbar() {
           {time.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
           {' '}
           {time.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        </div>
+
+        {/* Language Switcher */}
+        <div ref={langRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowLang(v => !v)}
+            title={t('common.language')}
+            style={{
+              padding: '5px 9px', borderRadius: 6,
+              border: '1px solid var(--border-default)',
+              background: showLang ? 'var(--bg-card-hover)' : 'var(--bg-secondary)',
+              color: 'var(--text-primary)', fontSize: 11, fontWeight: 700,
+              cursor: 'pointer', outline: 'none', fontFamily: 'var(--font-sans)',
+              letterSpacing: '0.01em', transition: 'background 0.2s',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            🌐 {LANGS.find(l => l.code === i18n.language)?.label || 'EN'}
+          </button>
+          {showLang && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 8, zIndex: 1001,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              overflow: 'hidden', minWidth: 130,
+            }}>
+              {LANGS.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => switchLanguage(lang.code)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    padding: '8px 14px', background: i18n.language === lang.code
+                      ? 'rgba(200,129,74,0.15)' : 'none',
+                    border: 'none',
+                    color: i18n.language === lang.code ? 'var(--copper-300)' : 'var(--text-primary)',
+                    fontSize: 12, cursor: 'pointer',
+                    fontWeight: i18n.language === lang.code ? 700 : 400,
+                    fontFamily: 'var(--font-sans)',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { if (i18n.language !== lang.code) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                  onMouseLeave={e => { if (i18n.language !== lang.code) e.currentTarget.style.background = 'none' }}
+                >
+                  {lang.label} — {lang.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Demo Toggle Button */}

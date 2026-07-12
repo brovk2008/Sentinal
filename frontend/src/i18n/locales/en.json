@@ -1,0 +1,110 @@
+{
+  "nav": {
+    "dashboard":       "Dashboard",
+    "map":             "Geospatial Map",
+    "cases":           "Cases",
+    "canvas":          "Investigation Canvas",
+    "persons":         "Persons",
+    "cdr":             "CDR Analytics",
+    "network":         "Network Graph",
+    "timeline":        "Timeline",
+    "predictive":      "Predictive Intel",
+    "evidence":        "Evidence Board",
+    "darkweb":         "Dark Web",
+    "financial":       "Financial Intel",
+    "warroom":         "War Room",
+    "ai":              "AI Assistant",
+    "dataingestion":   "Data Ingestion",
+    "firsearch":       "FIR Search",
+    "logout":          "Logout"
+  },
+  "common": {
+    "search":          "Search...",
+    "loading":         "Loading...",
+    "error":           "Error",
+    "save":            "Save",
+    "cancel":          "Cancel",
+    "delete":          "Delete",
+    "confirm":         "Confirm",
+    "close":           "Close",
+    "submit":          "Submit",
+    "upload":          "Upload",
+    "download":        "Download",
+    "refresh":         "Refresh",
+    "noData":          "No data available",
+    "select":          "Select...",
+    "required":        "Required",
+    "optional":        "Optional",
+    "language":        "Language"
+  },
+  "auth": {
+    "login":           "Login",
+    "signup":          "Sign Up",
+    "email":           "Email",
+    "password":        "Password",
+    "loginTitle":      "Project Sentinal",
+    "loginSubtitle":   "Karnataka Police Intelligence Platform",
+    "signupTitle":     "Create Account",
+    "forgotPassword":  "Forgot password?",
+    "noAccount":       "Don't have an account?",
+    "haveAccount":     "Already have an account?"
+  },
+  "canvas": {
+    "title":           "Investigation Canvas",
+    "addNode":         "Add Node",
+    "connectDots":     "AI Connect Dots",
+    "analyzeBoard":    "AI Analyze",
+    "saveBoard":       "Save Canvas",
+    "clearBoard":      "Clear Canvas",
+    "nodeTypes": {
+      "person":        "Person",
+      "case":          "Case",
+      "location":      "Location",
+      "phone":         "Phone",
+      "vehicle":       "Vehicle",
+      "evidence":      "Evidence",
+      "financial":     "Financial"
+    },
+    "savedSuccess":    "Canvas saved successfully",
+    "saveError":       "Failed to save canvas"
+  },
+  "map": {
+    "title":           "Geospatial Intelligence Map",
+    "heatmap":         "Crime Heatmap",
+    "clusters":        "DBSCAN Clusters",
+    "predictNext":     "Next Crime Prediction",
+    "severity": {
+      "critical":      "Critical",
+      "high":          "High",
+      "medium":        "Medium",
+      "low":           "Low"
+    }
+  },
+  "cdr": {
+    "title":           "CDR Analytics",
+    "uploadCdr":       "Upload CDR File",
+    "movementTrail":   "Movement Trail",
+    "commonContacts":  "Contact Network",
+    "towerDump":       "Tower Dump",
+    "imeiTrace":       "IMEI Trace",
+    "preIncident":     "Pre-Incident Window",
+    "phonePlaceholder":"Enter phone number..."
+  },
+  "ai": {
+    "title":           "AI Assistant",
+    "placeholder":     "Ask anything about cases, suspects, patterns...",
+    "send":            "Send",
+    "thinking":        "Thinking...",
+    "citations":       "Sources",
+    "clearHistory":    "Clear History"
+  },
+  "uploads": {
+    "title":           "File Upload",
+    "dragDrop":        "Drag & drop files here, or click to select",
+    "supported":       "Supports: Images, PDFs, CSV, Audio, Video",
+    "analyzing":       "Analyzing file...",
+    "summary":         "AI Analysis Summary",
+    "label":           "File Label",
+    "caseId":          "Case ID (optional)"
+  }
+}

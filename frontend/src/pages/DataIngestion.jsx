@@ -8,6 +8,8 @@ import {
   getScrapedFirPdfUrl
 } from '../api';
 
+import FileUploader from '../components/FileUploader';
+
 export default function DataIngestion() {
   const [year, setYear] = useState('2024');
   const [districts, setDistricts] = useState([]);
@@ -581,6 +583,24 @@ export default function DataIngestion() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Manual evidence upload section */}
+      <div style={{
+        marginTop: 32,
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 8,
+        padding: 20
+      }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--copper-400)', marginTop: 0, marginBottom: 16 }}>
+          MANUAL EVIDENCE UPLOAD
+        </h2>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Upload any file — suspect photos, CDR CSVs, CCTV frames, PDFs.
+          AI analyzes automatically and makes content searchable.
+        </p>
+        <FileUploader onUploadComplete={(f) => console.log('Uploaded:', f)} />
       </div>
     </div>
   );

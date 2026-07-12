@@ -6,6 +6,7 @@ import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram, downloadCaseR
 import CaseActionPanel from '../components/timeline/CaseActionPanel'
 import CaseCompareModal from '../components/timeline/CaseCompareModal'
 import AITimelineReconstruction from '../components/timeline/AITimelineReconstruction'
+import FileUploader from '../components/FileUploader'
 
 export default function TimelineExplorer() {
   const { caseId } = useParams()
@@ -352,6 +353,15 @@ export default function TimelineExplorer() {
               <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
                 {caseDetail.BriefFacts}
               </p>
+            </div>
+
+            {/* Attach Evidence Files */}
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div className="section-label">ATTACH EVIDENCE FILES</div>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+                Upload case file evidence, suspect photos, CDR logs, or financial records. Zia and Catalyst LLM will auto-analyze the contents.
+              </p>
+              <FileUploader caseId={caseId} onUploadComplete={(f) => console.log('Uploaded to case:', f)} />
             </div>
 
             {/* Interactive Flowchart (Mermaid) (7D) */}

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, CircleMarker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, CircleMarker, Circle, Polyline, Popup, useMap } from 'react-leaflet'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
-import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases, downloadDistrictReport, fetchHeatmapTimelapse } from '../api'
+import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases, downloadDistrictReport, fetchHeatmapTimelapse, fetchDbscanClusters, fetchPredictNext, fetchMovementTrail } from '../api'
 import PredictiveLayer from '../components/map/PredictiveLayer'
 import useLiveFeed from '../hooks/useLiveFeed'
 import 'leaflet/dist/leaflet.css'
@@ -240,6 +240,47 @@ export default function GeospatialMap() {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
   const [playbackSpeed, setPlaybackSpeed] = useState(1000) // Default 1s per frame
   const [isTimelapsePlaying, setIsTimelapsePlaying] = useState(false)
+
+  // DBSCAN Cluster States
+  const [showDbscan, setShowDbscan] = useState(false)
+  const [dbscanClusters, setDbscanClusters] = useState([])
+  const [dbscanLoading, setDbscanLoading] = useState(false)
+  const [nextCrime, setNextCrime] = useState(null)
+  const [showNextCrime, setShowNextCrime] = useState(false)
+
+  const loadDbscan = async () => {
+    setDbscanLoading(true)
+    try {
+      const [clRes, ncRes] = await Promise.all([
+        fetchDbscanClusters(),
+        fetchPredictNext(),
+      ])
+      setDbscanClusters(clRes.clusters || [])
+      setNextCrime(ncRes)
+      setShowDbscan(true)
+    } catch (e) { console.error('[DBSCAN]', e) }
+    setDbscanLoading(false)
+  }
+
+  // CDR Movement Trail States
+  const [cdrPhone, setCdrPhone] = useState('')
+  const [cdrTrail, setCdrTrail] = useState([])
+  const [showTrail, setShowTrail] = useState(false)
+  const [trailLoading, setTrailLoading] = useState(false)
+
+  const loadCdrTrail = async () => {
+    if (!cdrPhone.trim()) return
+    setTrailLoading(true)
+    try {
+      const data = await fetchMovementTrail(cdrPhone.trim())
+      setCdrTrail(data.trail || data.locations || [])
+      setShowTrail(true)
+    } catch (e) {
+      console.error('CDR trail load failed:', e)
+    }
+    setTrailLoading(false)
+  }
+
 
   const startTimelapse = async () => {
     if (timelapseFrames.length === 0) {
@@ -501,10 +542,146 @@ export default function GeospatialMap() {
           </label>
         )}
 
+        {/* DBSCAN Controls */}
+        {!globeMode && (
+          <div style={{ marginTop: 10 }}>
+            <button
+              onClick={loadDbscan}
+              disabled={dbscanLoading}
+              style={{
+                width: '100%', padding: '7px 0', borderRadius: 6,
+                border: '1px solid rgba(82,224,122,0.4)',
+                background: showDbscan ? 'rgba(82,224,122,0.1)' : 'transparent',
+                color: '#52e07a', fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
+                marginBottom: 6,
+              }}
+            >{dbscanLoading ? 'Clustering...' : showDbscan ? `✓ ${dbscanClusters.length} Clusters` : '⬡ DBSCAN Clusters'}</button>
+
+            <button
+              onClick={() => { setShowNextCrime(v => !v); if (!nextCrime) loadDbscan() }}
+              style={{
+                width: '100%', padding: '7px 0', borderRadius: 6,
+                border: '1px solid rgba(200,129,74,0.4)',
+                background: showNextCrime ? 'rgba(200,129,74,0.1)' : 'transparent',
+                color: 'var(--copper-300,#e8a87c)', fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
+              }}
+            >🔮 Next Crime Prediction</button>
+
+            {/* CDR movement trail control panel */}
+            <div style={{
+              marginTop: 14,
+              borderTop: '1px solid var(--border-subtle)',
+              paddingTop: 10
+            }}>
+              <div style={{ fontSize: 10, color: 'var(--copper-400)', fontWeight: 700,
+                           letterSpacing: '0.1em', marginBottom: 8 }}>
+                📱 CDR MOVEMENT TRAIL
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                <input
+                  value={cdrPhone}
+                  onChange={e => setCdrPhone(e.target.value)}
+                  placeholder="Phone number..."
+                  style={{
+                    flex: 1, background: 'var(--bg-primary)',
+                    border: '1px solid var(--border-subtle)', borderRadius: 4,
+                    color: 'var(--text-primary)', fontSize: 11, padding: '4px 8px',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={loadCdrTrail}
+                  disabled={trailLoading}
+                  style={{
+                    background: 'rgba(200,129,74,0.15)', border: '1px solid var(--copper-400)',
+                    borderRadius: 4, color: 'var(--copper-400)', fontSize: 11,
+                    padding: '4px 8px', cursor: 'pointer', outline: 'none'
+                  }}
+                >
+                  {trailLoading ? '...' : 'Track'}
+                </button>
+              </div>
+              {showTrail && cdrTrail.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, color: 'var(--status-success)' }}>
+                    ✓ {cdrTrail.length} points plotted
+                  </span>
+                  <button
+                    onClick={() => { setShowTrail(false); setCdrTrail([]); setCdrPhone('') }}
+                    style={{ background: 'none', border: 'none', color: '#e05252', fontSize: 10, cursor: 'pointer', padding: 0 }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div style={{ marginTop: 12, fontSize: 10, color: 'var(--text-muted)' }}>
           {points.length.toLocaleString()} points loaded
         </div>
       </div>
+
+      {/* Next Crime Prediction Floating Panel */}
+      {showNextCrime && nextCrime && (
+        <div style={{
+          position: 'absolute', top: 80, right: 20, width: 280, zIndex: 1000,
+          background: 'rgba(10,10,22,0.95)',
+          border: '1px solid rgba(200,129,74,0.4)',
+          borderRadius: 14, padding: 18,
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--copper-300,#e8a87c)' }}>
+              🔮 Next Crime Prediction
+            </span>
+            <button onClick={() => setShowNextCrime(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>×</button>
+          </div>
+          <div style={{ fontSize: 11, lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+              {nextCrime.predicted_crime || 'Unknown'}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>
+              {nextCrime.predicted_time}
+            </div>
+            <div style={{
+              background: 'rgba(200,129,74,0.1)', border: '1px solid rgba(200,129,74,0.25)',
+              borderRadius: 8, padding: '8px 12px', marginBottom: 8,
+            }}>
+              <div style={{ fontSize: 10, color: 'var(--copper-300,#e8a87c)', marginBottom: 3 }}>CONFIDENCE</div>
+              <div style={{ fontWeight: 700, fontSize: 18, color: '#fff' }}>
+                {nextCrime.confidence || 0}%
+              </div>
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+              {nextCrime.basis || ''}
+            </div>
+            {nextCrime.recommended_action && (
+              <div style={{
+                marginTop: 8, fontSize: 10, color: '#52e07a',
+                borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8,
+              }}>
+                ⚡ {nextCrime.recommended_action}
+              </div>
+            )}
+            {nextCrime.top_5_crimes?.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Top Crime Types</div>
+                {nextCrime.top_5_crimes.slice(0, 5).map((c, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.65)', marginBottom: 2 }}>
+                    <span>{c.crime}</span>
+                    <span style={{ color: 'var(--copper-300,#e8a87c)' }}>{c.frequency} cases</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Legend */}
       {!globeMode && (
@@ -539,8 +716,11 @@ export default function GeospatialMap() {
           <MapContainer
             center={KA_CENTER}
             zoom={7}
+            scrollWheelZoom
+            dragging
+            doubleClickZoom
+            zoomControl
             style={{ height: '100%', width: '100%', background: 'var(--bg-primary)' }}
-            maxBounds={[[10, 72], [20, 80]]}
           >
             <MapRefTracker mapRef={mapRef} />
             <TileLayer
@@ -591,6 +771,62 @@ export default function GeospatialMap() {
                 dashArray="4"
               />
             ))}
+
+            {/* DBSCAN Cluster Circles */}
+            {showDbscan && dbscanClusters.map((cl, i) => {
+              const col = cl.severity === 'CRITICAL' ? '#e05252'
+                : cl.severity === 'HIGH'     ? '#e09052'
+                : cl.severity === 'MEDIUM'   ? '#e0cc52'
+                :                              '#52e07a'
+              return (
+                <Circle
+                  key={`dbscan-${i}`}
+                  center={[cl.lat, cl.lng]}
+                  radius={cl.radius_meters}
+                  pathOptions={{
+                    color: col, fillColor: col,
+                    fillOpacity: 0.15, weight: 2, dashArray: '6,4',
+                  }}
+                >
+                  <Popup>
+                    <div style={{ fontSize: 11 }}>
+                      <strong>Cluster #{cl.cluster_id}</strong><br/>
+                      Crimes: {cl.count} | Severity: {cl.severity}<br/>
+                      Top crime: {cl.top_crime}<br/>
+                      Predicted next: <em>{cl.predicted_next}</em>
+                    </div>
+                  </Popup>
+                </Circle>
+              )
+            })}
+
+            {/* CDR movement trail overlay */}
+            {showTrail && cdrTrail.length > 0 && (
+              <>
+                {cdrTrail.map((pt, i) => (
+                  <CircleMarker
+                    key={`cdr-pt-${i}`}
+                    center={[pt.lat, pt.lng]}
+                    radius={8}
+                    pathOptions={{ fillColor: '#e0a832', fillOpacity: 0.9, color: '#fff', weight: 1 }}
+                  >
+                    <Popup>
+                      <div style={{ fontFamily: 'monospace', fontSize: 11 }}>
+                        <b>Tower: {pt.tower_id || pt.cell_id}</b><br/>
+                        Phone: {cdrPhone}<br/>
+                        Time: {pt.date || pt.timestamp} {pt.time || ''}<br/>
+                        Called: {pt.called_no || pt.called || 'N/A'}<br/>
+                        Duration: {pt.duration_sec || pt.duration || 0}s
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                ))}
+                <Polyline
+                  positions={cdrTrail.map(pt => [pt.lat, pt.lng])}
+                  pathOptions={{ color: '#e0a832', weight: 2, dashArray: '6,4', opacity: 0.7 }}
+                />
+              </>
+            )}
 
             {/* Predictive layer */}
             {predictionMode && (

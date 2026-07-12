@@ -16,6 +16,7 @@ import {
 } from '../api'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
+import FileUploader from '../components/FileUploader'
 
 export default function EvidenceBoard() {
   // Main states
@@ -724,16 +725,20 @@ export default function EvidenceBoard() {
             ) : addType === 'photo' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                  Upload image file (Zia will auto-analyze faces/text):
+                  Upload image or evidence file (analyzed by AI):
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    handleFileUpload(e)
-                    setShowAddMenu(false)
+                <FileUploader
+                  caseId={boardId}
+                  onUploadComplete={(file) => {
+                    handleCreateNode(
+                      file.label || file.filename,
+                      file.ai_summary?.slice(0, 50) || 'Uploaded Evidence',
+                      file.ai_summary || '',
+                      file.stratus_url || null,
+                      { tags: file.ai_tags || ['UPLOADED'] }
+                    );
+                    setShowAddMenu(false);
                   }}
-                  style={{ fontSize: 11 }}
                 />
               </div>
             ) : (

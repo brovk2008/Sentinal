@@ -99,6 +99,22 @@ Interactive map dashboard using Leaflet with district and station-level drill-do
 ### 🕸️ Criminal Network Graph
 Interactive force-directed graph built with Vis-Network mapping associations between co-accused suspects. Clicking a suspect node instantly reveals their active IPC sections, Modus Operandi (MO), case history, and linked syndicates.
 
+### 📎 Universal Evidence Upload
+Drag-and-drop any file — suspect photos, CDR CSVs, CCTV frames, PDFs, audio. Catalyst Qwen Vision analyzes images (physical description, objects, license plates). pdfplumber extracts FIR text. CDR CSVs auto-pipe to the CDR engine. All uploads are searchable by the AI assistant.
+
+### 🎯 Pattern Intelligence Engine
+Real criminological analysis:
+- **MO Clustering** — identical crime method + section + time = likely same offender
+- **Repeat Victimization** — same victim/location targeted again (research-backed)
+- **Spree Detection** — rapid succession crimes in same area = active perpetrator
+- **Next Crime Prediction** — historical day-of-week + month pattern forecasting
+
+### 📱 CDR Movement Trail
+Upload CDR CSV (BSNL/Airtel/Jio formats auto-detected). Plot suspect movement trail across towers on the live map. Tower dump, IMEI trace, pre-incident window, common contacts network.
+
+### 🌐 Language Support
+Full UI in: English · हिंदी (Hindi) · ಕನ್ನಡ (Kannada) · தமிழ் (Tamil) · తెలుగు (Telugu) · اردو (Urdu). Instant switching — no page reload. All nav, auth, and UI strings translated.
+
 ### 🤖 AI Intelligence Assistant (RAG)
 Analysts can query the case files in natural language:
 > *"List repeat offenders in Bengaluru City linked to cyber fraud cases"*

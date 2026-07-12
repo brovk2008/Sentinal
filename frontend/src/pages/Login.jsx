@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
+import { useTranslation } from 'react-i18next'
 
 export default function Login() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -88,7 +90,7 @@ export default function Login() {
             letterSpacing: '0.08em',
             fontFamily: 'var(--font-mono)'
           }}>
-            PROJECT SENTINAL
+            {t('auth.loginTitle') || 'PROJECT SENTINAL'}
           </div>
           <div style={{
             fontSize: 10,
@@ -96,7 +98,7 @@ export default function Login() {
             textTransform: 'uppercase',
             letterSpacing: '0.12em'
           }}>
-            Karnataka Police Crime Intelligence Portal
+            {t('auth.loginSubtitle') || 'Karnataka Police Intelligence Platform'}
           </div>
         </div>
 
@@ -118,7 +120,7 @@ export default function Login() {
 
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4, textTransform: 'uppercase' }}>
-              Officer Email ID
+              {t('auth.email') || 'Officer Email ID'}
             </label>
             <input
               type="email"
@@ -133,7 +135,7 @@ export default function Login() {
 
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4, textTransform: 'uppercase' }}>
-              Secured Passphrase
+              {t('auth.password') || 'Secured Passphrase'}
             </label>
             <input
               type="password"
@@ -159,7 +161,7 @@ export default function Login() {
               fontWeight: 600
             }}
           >
-            {loading ? 'Authorizing Credentials...' : 'Authenticate Access →'}
+            {loading ? 'Authorizing Credentials...' : (t('auth.login') || 'Authenticate Access →')}
           </button>
         </form>
 
@@ -178,7 +180,7 @@ export default function Login() {
           <div>CONFIDENTIAL SYSTEM · SECURED TERMINAL</div>
           <div>
             <Link to="/signup" style={{ color: 'var(--copper-400)', textDecoration: 'none', fontSize: 11 }}>
-              Register new officer account →
+              {t('auth.signupTitle') || 'Register new officer account →'}
             </Link>
           </div>
         </div>

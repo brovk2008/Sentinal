@@ -1,0 +1,110 @@
+{
+  "nav": {
+    "dashboard":       "ڈیش بورڈ",
+    "map":             "جغرافیائی نقشہ",
+    "cases":           "مقدمات",
+    "canvas":          "تحقیقاتی کینوس",
+    "persons":         "افراد",
+    "cdr":             "CDR تجزیہ",
+    "network":         "نیٹ ورک گراف",
+    "timeline":        "ٹائم لائن",
+    "predictive":      "پیش گوئی انٹیلی جنس",
+    "evidence":        "ثبوت بورڈ",
+    "darkweb":         "ڈارک ویب",
+    "financial":       "مالیاتی انٹیلی جنس",
+    "warroom":         "وار روم",
+    "ai":              "AI معاون",
+    "dataingestion":   "ڈیٹا انجیسٹ",
+    "firsearch":       "FIR تلاش",
+    "logout":          "لاگ آؤٹ"
+  },
+  "common": {
+    "search":          "تلاش کریں...",
+    "loading":         "لوڈ ہو رہا ہے...",
+    "error":           "خرابی",
+    "save":            "محفوظ کریں",
+    "cancel":          "منسوخ کریں",
+    "delete":          "حذف کریں",
+    "confirm":         "تصدیق کریں",
+    "close":           "بند کریں",
+    "submit":          "جمع کریں",
+    "upload":          "اپلوڈ",
+    "download":        "ڈاؤن لوڈ",
+    "refresh":         "تازہ کریں",
+    "noData":          "کوئی ڈیٹا نہیں",
+    "select":          "منتخب کریں...",
+    "required":        "ضروری",
+    "optional":        "اختیاری",
+    "language":        "زبان"
+  },
+  "auth": {
+    "login":           "لاگ ان",
+    "signup":          "سائن اپ",
+    "email":           "ای میل",
+    "password":        "پاس ورڈ",
+    "loginTitle":      "پروجیکٹ سینٹینل",
+    "loginSubtitle":   "کرناٹک پولیس انٹیلی جنس پلیٹ فارم",
+    "signupTitle":     "اکاؤنٹ بنائیں",
+    "forgotPassword":  "پاس ورڈ بھول گئے؟",
+    "noAccount":       "اکاؤنٹ نہیں ہے؟",
+    "haveAccount":     "پہلے سے اکاؤنٹ ہے؟"
+  },
+  "canvas": {
+    "title":           "تحقیقاتی کینوس",
+    "addNode":         "نوڈ شامل کریں",
+    "connectDots":     "AI نقاط جوڑیں",
+    "analyzeBoard":    "AI تجزیہ",
+    "saveBoard":       "کینوس محفوظ کریں",
+    "clearBoard":      "کینوس صاف کریں",
+    "nodeTypes": {
+      "person":        "شخص",
+      "case":          "مقدمہ",
+      "location":      "مقام",
+      "phone":         "فون",
+      "vehicle":       "گاڑی",
+      "evidence":      "ثبوت",
+      "financial":     "مالیاتی"
+    },
+    "savedSuccess":    "کینوس کامیابی سے محفوظ ہو گیا",
+    "saveError":       "کینوس محفوظ کرنے میں ناکامی"
+  },
+  "map": {
+    "title":           "جغرافیائی انٹیلی جنس نقشہ",
+    "heatmap":         "جرائم ہیٹ میپ",
+    "clusters":        "DBSCAN کلسٹرز",
+    "predictNext":     "اگلے جرم کی پیش گوئی",
+    "severity": {
+      "critical":      "انتہائی سنگین",
+      "high":          "زیادہ",
+      "medium":        "اعتدال پسند",
+      "low":           "کم"
+    }
+  },
+  "cdr": {
+    "title":           "CDR تجزیہ",
+    "uploadCdr":       "CDR فائل اپلوڈ کریں",
+    "movementTrail":   "نقل و حرکت کا ریکارڈ",
+    "commonContacts":  "رابطہ نیٹ ورک",
+    "towerDump":       "ٹاور ڈمپ",
+    "imeiTrace":       "IMEI ٹریس",
+    "preIncident":     "پیشگی واقعہ ونڈو",
+    "phonePlaceholder":"فون نمبر درج کریں..."
+  },
+  "ai": {
+    "title":           "AI معاون",
+    "placeholder":     "مقدمات، مشتبہ افراد، نمونوں کے بارے میں کچھ بھی پوچھیں...",
+    "send":            "بھیجیں",
+    "thinking":        "سوچ رہا ہے...",
+    "citations":       "ذرائع",
+    "clearHistory":    "تاریخ صاف کریں"
+  },
+  "uploads": {
+    "title":           "فائل اپلوڈ",
+    "dragDrop":        "یہاں فائلیں گھسیٹ کر چھوڑیں",
+    "supported":       "معاون: تصاویر، PDF، CSV، آڈیو، ویڈیو",
+    "analyzing":       "فائل کا تجزیہ ہو رہا ہے...",
+    "summary":         "AI تجزیہ خلاصہ",
+    "label":           "فائل لیبل",
+    "caseId":          "مقدمہ ID (اختیاری)"
+  }
+}

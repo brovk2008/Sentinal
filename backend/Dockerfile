@@ -39,6 +39,9 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p data models/ml/saved
 
+# Pre-train all ML models to align version serialization
+RUN python retrain_all.py
+
 # Expose port
 EXPOSE 9000
 

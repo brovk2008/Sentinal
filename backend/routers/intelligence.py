@@ -78,7 +78,7 @@ async def intelligence_query(req: QueryRequest):
         if case_data:
             case_context = f"\n\n[CASE DATABASE ENRICHMENT] Case CrimeNo: {crime_no}\nFull Case Data: {json.dumps(case_data, default=str)}\n"
 
-    # Board context
+    # Board context — evidence board (pinboard)
     board_context = ""
     if req.board_id:
         try:
@@ -93,8 +93,71 @@ async def intelligence_query(req: QueryRequest):
         except Exception as e:
             print(f"[RAG Board Context] Error: {e}")
 
-    if not retrieved and not case_context and not board_context:
-        # Fallback: return direct SQL database queries or simple responses
+    # Canvas board state (ReactFlow ConnectionsBoard)
+    canvas_context = ""
+    if req.board_id:
+        try:
+            import sqlite3 as _sqlite3
+            _con = _sqlite3.connect(config.DB_PATH)
+            _con.row_factory = _sqlite3.Row
+            canvas_row = _con.execute(
+                "SELECT nodes_json, edges_json FROM board_state WHERE case_id = ?", (req.board_id,)
+            ).fetchone()
+            _con.close()
+            if canvas_row:
+                _nodes = json.loads(canvas_row["nodes_json"] or "[]")
+                _edges = json.loads(canvas_row["edges_json"] or "[]")
+                canvas_context = f"\n[INVESTIGATION CANVAS ({len(_nodes)} nodes, {len(_edges)} connections)]\n"
+                for n in _nodes[:20]:
+                    d = n.get("data", {})
+                    canvas_context += f"  - {d.get('type','?').upper()}: {d.get('label','?')}\n"
+        except Exception as e:
+            print(f"[RAG Canvas Context] Error: {e}")
+
+    # Uploaded files for this case
+    files_context = ""
+    if req.board_id:
+        try:
+            import sqlite3 as _sqlite3
+            _con = _sqlite3.connect(config.DB_PATH)
+            _con.row_factory = _sqlite3.Row
+            _files = _con.execute(
+                "SELECT label, file_type, ai_summary FROM uploaded_files WHERE case_id=? LIMIT 10",
+                (req.board_id,)
+            ).fetchall()
+            _con.close()
+            if _files:
+                files_context = "\n[UPLOADED EVIDENCE FILES]\n"
+                for f in _files:
+                    files_context += f"  [{f['label'] or f['file_type']}]: {f['ai_summary']}\n"
+        except Exception as e:
+            print(f"[RAG Files Context] Error: {e}")
+
+    # CDR context — inject if a phone number is mentioned in the query
+    cdr_context = ""
+    phone_matches = re.findall(r'\b[6-9]\d{9}\b', req.query)
+    if phone_matches:
+        try:
+            import sqlite3 as _sqlite3
+            _con = _sqlite3.connect(config.DB_PATH)
+            _con.row_factory = _sqlite3.Row
+            for ph in phone_matches[:2]:
+                _cdr = _con.execute(
+                    "SELECT called, date, time, tower_id FROM cdr_records "
+                    "WHERE phone=? ORDER BY date DESC, time DESC LIMIT 20",
+                    (ph,)
+                ).fetchall()
+                if _cdr:
+                    cdr_context += f"\n[CDR DATA FOR {ph}]\n"
+                    for r in _cdr:
+                        cdr_context += f"  {r['date']} {r['time'] or ''}: called {r['called']}, tower {r['tower_id']}\n"
+            _con.close()
+        except Exception as e:
+            print(f"[RAG CDR Context] Error: {e}")
+
+    extra_context = canvas_context + files_context + cdr_context
+
+    if not retrieved and not case_context and not board_context and not extra_context:
         return {
             "answer": _generate_data_answer(req.query),
             "citations": [],
@@ -103,7 +166,7 @@ async def intelligence_query(req: QueryRequest):
             "total_chunks_searched": total_chunks_searched
         }
 
-    context = case_context + board_context + "\n\n" + "\n\n---\n\n".join([r["summary"] for r in (retrieved or [])])
+    context = case_context + board_context + extra_context + "\n\n" + "\n\n---\n\n".join([r["summary"] for r in (retrieved or [])])
     citations = [
         {
             "source": r["title"],
@@ -366,3 +429,52 @@ async def intelligence_health():
         "quickml_configured": bool(config.CATALYST_QUICKML_KEY),
         "nlp_configured": bool(config.CATALYST_QUICKML_KEY),
     }
+
+
+# ─── Pattern Detection Endpoints ─────────────────────────────────────
+
+@router.get("/patterns")
+async def get_patterns():
+    """
+    Returns all active criminological patterns:
+    - Repeat victimization
+    - Modus operandi clusters
+    - Crime sprees
+    """
+    try:
+        from services.pattern_engine import (
+            detect_repeat_victimization,
+            detect_modus_operandi_clusters,
+            detect_crime_sprees,
+        )
+        return {
+            "repeat_victimization": detect_repeat_victimization(),
+            "mo_clusters":          detect_modus_operandi_clusters(),
+            "sprees":               detect_crime_sprees(),
+        }
+    except Exception as e:
+        return {"error": str(e), "repeat_victimization": [], "mo_clusters": [], "sprees": []}
+
+
+@router.get("/predict-next")
+async def predict_next(district_id: Optional[int] = Query(None)):
+    """
+    Predict the most likely next crime based on historical temporal patterns
+    for the current month and day-of-week.
+    """
+    try:
+        from services.pattern_engine import predict_next_crime
+        from services.alert_service import send_hotspot_alert
+        prediction = predict_next_crime(district_id=district_id)
+        if prediction and prediction.get("confidence", 0) > 80:
+            send_hotspot_alert(
+                district=prediction.get("top_district", "Bengaluru"),
+                crime_type=prediction.get("predicted_crime", "Cyber Crime"),
+                spike_pct=35.0,
+                station=prediction.get("top_station", "Cyber Crime PS"),
+            )
+        return prediction
+    except Exception as e:
+        return {"error": str(e), "prediction": "Analysis failed", "confidence": 0}
+
+

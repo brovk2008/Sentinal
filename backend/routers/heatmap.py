@@ -135,3 +135,81 @@ async def heatmap_timelapse():
             "points": frames_dict[m]
         })
     return {"frames": frames}
+
+
+@router.get("/dbscan-clusters")
+async def dbscan_clusters(
+    eps_km: float = Query(2.0, ge=0.5, le=50.0, description="Cluster radius in km"),
+    min_samples: int = Query(5, ge=2, le=100, description="Min crimes to form a cluster"),
+    year: Optional[int] = Query(None),
+    crime_head: Optional[str] = Query(None),
+):
+    """
+    Run DBSCAN on crime lat/lng to find natural crime clusters.
+    Returns cluster centers, crime counts, dominant crime type, predicted next crime.
+    """
+    import numpy as np
+    from sklearn.cluster import DBSCAN
+
+    conditions = ["cm.latitude IS NOT NULL", "cm.longitude IS NOT NULL"]
+    params = []
+    if year:
+        conditions.append("strftime('%Y', cm.CrimeRegisteredDate) = ?")
+        params.append(str(year))
+    if crime_head:
+        conditions.append("ch.CrimeGroupName = ?")
+        params.append(crime_head)
+
+    where = " AND ".join(conditions)
+    rows = query(f"""
+        SELECT cm.latitude, cm.longitude, ch.CrimeGroupName as crime_head,
+               cm.CrimeRegisteredDate
+        FROM CaseMaster cm
+        LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
+        WHERE {where}
+    """, tuple(params))
+
+    if len(rows) < min_samples:
+        return {"clusters": [], "total_clusters": 0, "note": "Insufficient data points"}
+
+    coords = np.array([[float(r["latitude"]), float(r["longitude"])] for r in rows])
+    eps_rad = eps_km / 6371.0
+    db = DBSCAN(eps=eps_rad, min_samples=min_samples,
+                algorithm='ball_tree', metric='haversine').fit(np.radians(coords))
+    labels = db.labels_
+
+    clusters = []
+    for label in set(labels):
+        if label == -1:
+            continue
+        mask = labels == label
+        pts = coords[mask]
+        cluster_rows = [rows[i] for i in range(len(rows)) if mask[i]]
+
+        center_lat = float(np.mean(pts[:, 0]))
+        center_lng = float(np.mean(pts[:, 1]))
+        count = int(np.sum(mask))
+
+        crime_counts = {}
+        for r in cluster_rows:
+            ch = r["crime_head"] or "Unknown"
+            crime_counts[ch] = crime_counts.get(ch, 0) + 1
+
+        top_crime = max(crime_counts, key=crime_counts.get) if crime_counts else "Unknown"
+        severity = "CRITICAL" if count >= 100 else "HIGH" if count >= 50 else "MEDIUM" if count >= 20 else "LOW"
+
+        clusters.append({
+            "cluster_id":      int(label),
+            "lat":             round(center_lat, 5),
+            "lng":             round(center_lng, 5),
+            "radius_meters":   int(eps_km * 1000),
+            "count":           count,
+            "top_crime":       top_crime,
+            "crime_breakdown": crime_counts,
+            "severity":        severity,
+            "predicted_next":  top_crime,
+        })
+
+    clusters.sort(key=lambda x: x["count"], reverse=True)
+    return {"clusters": clusters, "total_clusters": len(clusters)}
+

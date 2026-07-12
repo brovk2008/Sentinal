@@ -5,6 +5,7 @@ import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import { queryIntelligence, uploadToRag } from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
+import { useTranslation } from 'react-i18next'
 
 function MessageCitations({ citations = [], debugInfo = {} }) {
   const [open, setOpen] = useState(false)
@@ -104,6 +105,7 @@ const SUGGESTIONS = [
 ]
 
 export default function AIAssistant() {
+  const { t } = useTranslation()
   const [messages, setMessages] = useState([
     {
       role: 'system',
@@ -244,7 +246,7 @@ Type your query below or select a suggestion to begin.`,
         background: 'var(--bg-secondary)',
       }}>
         <span className="live-dot" />
-        <span className="mono" style={{ fontSize: 12 }}>SENTINAL AI TERMINAL</span>
+        <span className="mono" style={{ fontSize: 12 }}>{t('ai.title') || 'SENTINAL AI TERMINAL'}</span>
         <Badge text="RAG + LLM" variant="badge-copper" />
         <div style={{ flex: 1 }} />
         <button onClick={() => setVoiceMode(v => !v)} style={{
@@ -412,7 +414,7 @@ Type your query below or select a suggestion to begin.`,
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && sendQuery()}
-          placeholder="Ask the intelligence system..."
+          placeholder={t('ai.placeholder') || "Ask the intelligence system..."}
           style={{ flex: 1, fontSize: 13 }}
           disabled={loading || !!uploadStatus}
         />

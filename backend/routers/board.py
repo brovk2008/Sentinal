@@ -74,7 +74,29 @@ def init_board_db():
     except Exception as e:
         print(f"[Board Router] Error initializing table: {e}")
 
+    # ── Canvas board_state table (for ReactFlow ConnectionsBoard) ─────
+    try:
+        execute("""
+            CREATE TABLE IF NOT EXISTS board_state (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                case_id    TEXT NOT NULL UNIQUE,
+                nodes_json TEXT DEFAULT '[]',
+                edges_json TEXT DEFAULT '[]',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+    except Exception as e:
+        print(f"[Board Router] Error creating board_state table: {e}")
+
 init_board_db()
+
+# ─── Canvas Board (ReactFlow) schemas ────────────────────────────────
+
+class CanvasSaveRequest(BaseModel):
+    case_id: str
+    nodes: list
+    edges: list
+
 
 # Pydantic Schemas
 class BoardSaveRequest(BaseModel):
@@ -298,3 +320,46 @@ async def match_suspect(file: UploadFile = File(...)):
         }
     except Exception as e:
         raise HTTPException(500, f"Suspect matching failed: {e}")
+
+
+# ─── Canvas Board Endpoints (ReactFlow ConnectionsBoard) ─────────────
+
+@router.get("/canvas/load/{case_id}")
+def canvas_load(case_id: str):
+    """Load ReactFlow nodes + edges for a given case canvas."""
+    row = query_one("SELECT nodes_json, edges_json, updated_at FROM board_state WHERE case_id = ?", (case_id,))
+    if not row:
+        return {"nodes": [], "edges": [], "case_id": case_id}
+    try:
+        return {
+            "case_id":    case_id,
+            "nodes":      json.loads(row["nodes_json"] or "[]"),
+            "edges":      json.loads(row["edges_json"] or "[]"),
+            "updated_at": row["updated_at"],
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Error decoding canvas state: {e}")
+
+
+@router.post("/canvas/save")
+def canvas_save(req: CanvasSaveRequest):
+    """Persist ReactFlow nodes + edges for a case canvas."""
+    now = datetime.now().isoformat()
+    nodes_str = json.dumps(req.nodes)
+    edges_str = json.dumps(req.edges)
+    try:
+        exists = query_one("SELECT case_id FROM board_state WHERE case_id = ?", (req.case_id,))
+        if exists:
+            execute(
+                "UPDATE board_state SET nodes_json = ?, edges_json = ?, updated_at = ? WHERE case_id = ?",
+                (nodes_str, edges_str, now, req.case_id)
+            )
+        else:
+            execute(
+                "INSERT INTO board_state (case_id, nodes_json, edges_json, updated_at) VALUES (?, ?, ?, ?)",
+                (req.case_id, nodes_str, edges_str, now)
+            )
+        return {"success": True, "case_id": req.case_id, "updated_at": now}
+    except Exception as e:
+        raise HTTPException(500, f"Failed to save canvas: {e}")
+

@@ -57,6 +57,22 @@ export const DEMO_STEPS = [
   },
   {
     step: 8,
+    title: "Pattern Intelligence",
+    narrative: "The system detects an active crime spree — same MO across 7 FIRs in 3 districts. Likely same offender.",
+    action: "navigate",
+    target: "/patterns",
+    highlight: null
+  },
+  {
+    step: 9,
+    title: "Upload Suspect Photo",
+    narrative: "Officer uploads a CCTV frame. AI identifies physical features, auto-tags, and adds to canvas.",
+    action: "navigate",
+    target: "/connections",
+    highlight: null
+  },
+  {
+    step: 10,
     title: "Investigation Complete",
     narrative: "Suspect identified, financial trail documented, chargesheet ready.",
     action: "navigate",
