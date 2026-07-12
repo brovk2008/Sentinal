@@ -1,27 +1,40 @@
 /**
  * catalystAuth.js - Sentinal v2
  *
- * Handles local mock auth and production Catalyst hosted auth without
- * allowing the app to hang forever while the SDK is loading.
+ * Auth strategy:
  *
- * CUSTOM DOMAIN NOTE:
- * When served from a custom domain (onslate.in / GitHub Pages), the Catalyst
- * auth portal and SDK init.js are NOT available at /__catalyst/... paths.
- * We redirect auth to the canonical Catalyst serverless URL instead.
+ * 1. localhost            → mock auth (local only)
+ * 2. onslate.in           → IS_CUSTOM_DOMAIN = true
+ *    • Check URL for ?auth_user=... (set by serverless domain on SSO return)
+ *    • Check localStorage cache
+ *    • If no session: redirect to serverless app with ?redirect_back=<origin>
+ *
+ * 3. catalystserverless.in → IS_CUSTOM_DOMAIN = false
+ *    • Native Catalyst SDK auth via /__catalyst/sdk/init.js
+ *    • If ?redirect_back is present: after auth, redirect to custom domain
+ *      with ?auth_user=<user-json> appended
+ *    • redirectToLogin() preserves ?redirect_back so it survives the
+ *      /__catalyst/auth/login round-trip
+ *
+ * Logout:
+ *    • Custom domain redirects to serverless with ?logout=true
+ *    • Serverless clears session and runs catalyst.auth.signOut()
  */
 
 const IS_LOCAL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
 
-// The canonical Catalyst-hosted client URL where auth actually works
-const CATALYST_BASE = "https://sentinal-60073535541.development.catalystserverless.in";
+// The canonical Catalyst-hosted serverless client URL (where SDK & BAAS work natively)
+const CATALYST_BASE =
+  "https://sentinal-60073535541.development.catalystserverless.in";
 
-// Are we on the custom domain (onslate.in or any non-catalystserverless host)?
+// onslate.in is a custom/Slate domain – auth must be bridged to the serverless app
 const IS_CUSTOM_DOMAIN =
   !IS_LOCAL &&
   !window.location.hostname.includes("catalystserverless.in");
 
+/* ── Mock user (local dev only) ──────────────────────────────────────── */
 const MOCK_USER = {
   email_id: "demo@sentinal.ksp",
   first_name: "Demo",
@@ -29,92 +42,78 @@ const MOCK_USER = {
   user_id: "mock-001",
   role: "officer",
 };
-const MOCK_EMAIL = "demo@sentinal.ksp";
+const MOCK_EMAIL    = "demo@sentinal.ksp";
 const MOCK_PASSWORD = "Sentinal@2024";
 
+/* ── SDK loader ───────────────────────────────────────────────────────── */
 let sdkReady = null;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
-      if (
-        existing.dataset.loaded === "true" ||
-        existing.readyState === "complete" ||
-        document.readyState !== "loading"
-      ) {
+      if (existing.dataset.loaded === "true" || document.readyState !== "loading") {
         resolve();
         return;
       }
-
       existing.addEventListener("load", resolve, { once: true });
       existing.addEventListener("error", reject, { once: true });
       return;
     }
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.onload = () => {
-      script.dataset.loaded = "true";
-      resolve();
-    };
-    script.onerror = reject;
-    document.head.appendChild(script);
+    const s = document.createElement("script");
+    s.src   = src;
+    s.async = true;
+    s.onload  = () => { s.dataset.loaded = "true"; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
   });
 }
 
 function ensureCatalystSdk() {
   if (IS_LOCAL) return Promise.resolve(null);
-
   if (!sdkReady) {
-    const SDK_TIMEOUT_MS = 10000;
-
     sdkReady = Promise.race([
-      loadScript("https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js")
-        .then(async () => {
-          // On serverless domain: load the platform-provided init.js
-          try {
-            await loadScript("/__catalyst/sdk/init.js");
-          } catch (e) {
-            console.warn("[Auth] init.js failed, falling back to manual init", e);
-            window.catalyst.initApp(
-              {
-                project_Id: "50170000000065001",
-                zaid: "50043676705",
-                auth_domain: "https://accounts.zohoportal.in",
-                is_appsail: false,
-                stratus_domain: "-development.zohostratus.in",
-                nimbus_domain: "-development.nimbuspop.com",
-                api_domain: CATALYST_BASE,
-              },
-              { org_id: "60073535541" }
-            );
-          }
-          return window.catalyst;
-        }),
-      new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Catalyst SDK timed out after 10s")),
-          SDK_TIMEOUT_MS
-        )
+      loadScript(
+        "https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js"
+      ).then(async () => {
+        // Prefer platform-provided init.js (sets correct api_domain for this host)
+        try {
+          await loadScript("/__catalyst/sdk/init.js");
+        } catch (e) {
+          console.warn("[Auth] init.js unavailable, using manual init", e);
+          window.catalyst.initApp(
+            {
+              project_Id:     "50170000000065001",
+              zaid:           "50043676705",
+              auth_domain:    "https://accounts.zohoportal.in",
+              is_appsail:     false,
+              stratus_domain: "-development.zohostratus.in",
+              nimbus_domain:  "-development.nimbuspop.com",
+              api_domain:     CATALYST_BASE,
+            },
+            { org_id: "60073535541" }
+          );
+        }
+        return window.catalyst;
+      }),
+      new Promise((_, rej) =>
+        setTimeout(() => rej(new Error("Catalyst SDK timed out")), 10_000)
       ),
     ]);
   }
-
   return sdkReady;
 }
 
+/* ── Helpers ──────────────────────────────────────────────────────────── */
 function normalizeUser(response) {
-  const data = response?.content || response?.data || response;
-  if (!data || data.status === 401) return null;
-
+  const d = response?.content || response?.data || response;
+  if (!d || d.status === 401) return null;
   return {
-    user_id: data.user_id || data.userid || data.zuid || "",
-    email_id: data.email_id || data.emailid || "",
-    first_name: data.first_name || data.firstname || "",
-    last_name: data.last_name || data.lastname || "",
-    role: data.role_details?.role_name || data.user_type || "officer",
+    user_id:    d.user_id    || d.userid    || d.zuid  || "",
+    email_id:   d.email_id   || d.emailid   || "",
+    first_name: d.first_name || d.firstname || "",
+    last_name:  d.last_name  || d.lastname  || "",
+    role:       d.role_details?.role_name || d.user_type || "officer",
   };
 }
 
@@ -124,63 +123,58 @@ function clearSession() {
   localStorage.removeItem("sentinal_token");
 }
 
-export function isLocalDev() {
-  return IS_LOCAL;
+function getCachedUser() {
+  try {
+    const raw = localStorage.getItem("sentinal_user");
+    if (!raw) return null;
+    const u = JSON.parse(raw);
+    return (u?.email_id || u?.user_id) ? u : null;
+  } catch { return null; }
 }
 
-export function isLocalAuthMode() {
-  return IS_LOCAL;
-}
+/* ── Public API ────────────────────────────────────────────────────────── */
+export function isLocalDev()      { return IS_LOCAL; }
+export function isLocalAuthMode() { return IS_LOCAL; }
 
-function checkUrlForAuthUser() {
-  const params = new URLSearchParams(window.location.search);
-  const authUserStr = params.get("auth_user");
-  if (authUserStr) {
-    try {
-      const user = JSON.parse(decodeURIComponent(authUserStr));
-      if (user?.email_id || user?.user_id) {
-        localStorage.setItem("sentinal_user", JSON.stringify(user));
-        localStorage.setItem("sentinal_authed", "1");
-        
-        // Remove parameter from URL without reload
-        params.delete("auth_user");
-        const newSearch = params.toString();
-        const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "") + window.location.hash;
-        window.history.replaceState({}, document.title, newUrl);
-        return user;
-      }
-    } catch (e) {
-      console.error("[Auth] Failed to parse auth_user from URL:", e);
-    }
-  }
-  return null;
-}
-
+/**
+ * Redirect to login.
+ * • Custom domain  → serverless app's index.html?redirect_back=<origin-url>
+ * • Serverless     → /__catalyst/auth/login, PRESERVING ?redirect_back if present
+ */
 export function redirectToLogin(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
     const returnUrl = new URL(returnPath, window.location.origin).href;
-    // Redirect to the serverless app page which handles auth and redirects back
-    window.location.href = `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}`;
-  } else {
-    const returnUrl = new URL(returnPath, window.location.origin).href;
-    window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
+    window.location.href =
+      `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}`;
+    return;
   }
+
+  // On the serverless domain: if redirect_back is already in the URL,
+  // use the FULL current URL as service_url so it survives the auth round-trip.
+  const params = new URLSearchParams(window.location.search);
+  const serviceUrl = params.has("redirect_back")
+    ? window.location.href                                    // preserve ?redirect_back
+    : new URL(returnPath, window.location.origin).href;
+
+  window.location.href =
+    `/__catalyst/auth/login?service_url=${encodeURIComponent(serviceUrl)}`;
 }
 
 export function redirectToSignup(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
     const returnUrl = new URL(returnPath, window.location.origin).href;
-    window.location.href = `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}&signup=true`;
-  } else {
-    const returnUrl = new URL(returnPath, window.location.origin).href;
-    window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(returnUrl)}`;
+    window.location.href =
+      `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}&mode=signup`;
+    return;
   }
+  const serviceUrl = new URL(returnPath, window.location.origin).href;
+  window.location.href =
+    `/__catalyst/auth/signup?service_url=${encodeURIComponent(serviceUrl)}`;
 }
 
 export function redirectToHostedLogin(returnPath = "/dashboard") {
   redirectToLogin(returnPath);
 }
-
 export function redirectToHostedSignup(returnPath = "/dashboard") {
   redirectToSignup(returnPath);
 }
@@ -195,65 +189,96 @@ export async function loginUser(email, password) {
     }
     return { success: false, error: "Invalid credentials. Access Denied." };
   }
-
   redirectToLogin("/dashboard");
-  return { success: false, error: "Redirecting to Catalyst login..." };
+  return { success: false, error: "Redirecting to Catalyst login…" };
 }
 
 export async function signupUser() {
   if (IS_LOCAL) {
     return {
       success: true,
-      data: {
-        message: "Mock signup OK. Use demo@sentinal.ksp / Sentinal@2024 to login.",
-      },
+      data: { message: "Mock signup OK. Use demo@sentinal.ksp / Sentinal@2024 to log in." },
     };
   }
-
   redirectToSignup("/dashboard");
-  return { success: false, error: "Redirecting to Catalyst signup..." };
+  return { success: false, error: "Redirecting to Catalyst signup…" };
 }
 
+/**
+ * Get the currently authenticated user.
+ *
+ * Flow:
+ *  1. Local → return mock cache
+ *  2. URL has ?auth_user=... → extract, save to localStorage, clean URL
+ *  3. Custom domain → return cache or null (triggers SSO redirect via AuthGuard)
+ *  4. Serverless + ?logout=true → sign out and go to /login
+ *  5. Serverless (no redirect_back) → SDK getCurrentProjectUser
+ *  6. Serverless + ?redirect_back → authenticate; on success redirect back with ?auth_user=
+ */
 export async function getCurrentUser() {
-  if (IS_LOCAL) {
-    const cached = localStorage.getItem("sentinal_user");
-    return cached ? JSON.parse(cached) : null;
-  }
+  /* ── 1. Local mock ── */
+  if (IS_LOCAL) return getCachedUser();
 
-  // ── Custom Domain SSO Redirect Handle ──────────────────────────────────────
-  const urlUser = checkUrlForAuthUser();
-  if (urlUser) return urlUser;
-
-  // Check cached session
-  const cached = localStorage.getItem("sentinal_user");
-  if (cached) {
-    try {
-      const u = JSON.parse(cached);
-      if (u?.email_id || u?.user_id) return u;
-    } catch { /* ignore */ }
-  }
-
-  if (IS_CUSTOM_DOMAIN) {
-    // If not cached, we return null to let AuthGuard trigger the redirect
-    clearSession();
-    return null;
-  }
-
-  // ── Serverless Domain Authenticated Path ──────────────────────────────────
-  // Check if we need to log out first (SSO logout redirect)
   const params = new URLSearchParams(window.location.search);
+
+  /* ── 2. SSO return: ?auth_user=<user-json> ── */
+  const authUserStr = params.get("auth_user");
+  if (authUserStr) {
+    try {
+      const user = JSON.parse(authUserStr);
+      if (user?.email_id || user?.user_id) {
+        localStorage.setItem("sentinal_user", JSON.stringify(user));
+        localStorage.setItem("sentinal_authed", "1");
+        // Clean URL without triggering reload
+        params.delete("auth_user");
+        const qs = params.toString();
+        const clean =
+          window.location.pathname +
+          (qs ? `?${qs}` : "") +
+          window.location.hash;
+        window.history.replaceState({}, document.title, clean);
+        return user;
+      }
+    } catch (e) {
+      console.error("[Auth] Failed to parse auth_user from URL:", e);
+    }
+  }
+
+  /* ── 3. Custom domain (onslate.in) ── */
+  if (IS_CUSTOM_DOMAIN) {
+    const cached = getCachedUser();
+    if (cached) return cached;
+    clearSession();
+    return null; // → AuthGuard → redirectToLogin → SSO bridge
+  }
+
+  /* ── 4. Serverless: ?logout=true ── */
   if (params.get("logout") === "true") {
     clearSession();
-    if (!IS_LOCAL) {
-      try {
-        const catalyst = await ensureCatalystSdk();
-        if (catalyst?.auth) await catalyst.auth.signOut();
-      } catch { /* ignore */ }
-    }
+    try {
+      const catalyst = await ensureCatalystSdk();
+      if (catalyst?.auth) await catalyst.auth.signOut();
+    } catch { /* best-effort */ }
     window.location.href = "/login";
-    return new Promise(() => {});
+    return new Promise(() => {}); // never resolves; navigation pending
   }
 
+  const redirectBack = params.get("redirect_back");
+
+  /* ── 5. Check localStorage cache ── */
+  const cached = getCachedUser();
+  if (cached) {
+    if (redirectBack) {
+      // Already logged in on serverless – send user data back to custom domain
+      const target = new URL(redirectBack);
+      target.searchParams.set("auth_user", JSON.stringify(cached));
+      window.location.href = target.href;
+      return new Promise(() => {});
+    }
+    return cached;
+  }
+
+  /* ── 6. SDK auth (native Catalyst session) ── */
   try {
     const catalyst = await ensureCatalystSdk();
     if (!catalyst) return null;
@@ -263,25 +288,24 @@ export async function getCurrentUser() {
 
     if (!user?.email_id && !user?.user_id) {
       clearSession();
-      return null;
+      return null; // → AuthGuard → redirectToLogin (preserving redirect_back)
     }
 
     localStorage.setItem("sentinal_user", JSON.stringify(user));
     localStorage.setItem("sentinal_authed", "1");
     localStorage.removeItem("sentinal_token");
 
-    // SSO Redirect back if requested
-    const redirectBack = params.get("redirect_back");
     if (redirectBack) {
-      const targetUrl = new URL(redirectBack);
-      targetUrl.searchParams.set("auth_user", JSON.stringify(user));
-      window.location.href = targetUrl.href;
-      return new Promise(() => {}); // prevent rendering
+      // Authenticated! Bridge user back to the custom domain.
+      const target = new URL(redirectBack);
+      target.searchParams.set("auth_user", JSON.stringify(user));
+      window.location.href = target.href;
+      return new Promise(() => {});
     }
 
     return user;
   } catch (error) {
-    console.warn("[Auth] getCurrentUser failed:", error.message);
+    console.warn("[Auth] getCurrentUser SDK error:", error.message);
     clearSession();
     return null;
   }
@@ -291,7 +315,7 @@ export async function logoutUser() {
   clearSession();
 
   if (IS_CUSTOM_DOMAIN) {
-    // Redirect to serverless domain to trigger sign out there
+    // Bridge logout to the serverless domain where the real session lives
     window.location.href = `${CATALYST_BASE}/app/index.html?logout=true`;
     return;
   }
@@ -299,12 +323,8 @@ export async function logoutUser() {
   if (!IS_LOCAL) {
     try {
       const catalyst = await ensureCatalystSdk();
-      if (catalyst?.auth) {
-        await catalyst.auth.signOut();
-      }
-    } catch {
-      // Best effort only; local session has already been cleared.
-    }
+      if (catalyst?.auth) await catalyst.auth.signOut();
+    } catch { /* best-effort */ }
   }
 
   window.location.href = "/login";

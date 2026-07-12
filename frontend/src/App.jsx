@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
 import LiveFeed from './components/layout/LiveFeed'
@@ -50,6 +50,13 @@ function Layout() {
   )
 }
 
+// Redirect /app and /app/* to /dashboard while preserving query params
+// This is important for the SSO bridge: ?redirect_back, ?logout, ?auth_user
+function AppRedirect() {
+  const location = useLocation()
+  return <Navigate to={`/dashboard${location.search}${location.hash}`} replace />
+}
+
 export default function App() {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -68,8 +75,9 @@ export default function App() {
       <Routes>
         <Route path="/login"  element={<Login />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/app" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/app/*" element={<Navigate to="/dashboard" replace />} />
+        {/* Preserve query params (?redirect_back, ?logout, ?auth_user) for SSO bridge */}
+        <Route path="/app" element={<AppRedirect />} />
+        <Route path="/app/*" element={<AppRedirect />} />
 
         {/* Guarded Routes */}
         <Route element={<AuthGuard><Layout /></AuthGuard>}>
