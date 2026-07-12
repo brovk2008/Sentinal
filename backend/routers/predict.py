@@ -32,14 +32,24 @@ def load_models():
     }
     for name, filename in model_files.items():
         path = MODELS_DIR / filename
-        if path.exists():
-            try:
+        try:
+            if path.exists():
                 _models[name] = joblib.load(path)
                 print(f"  Loaded prediction model: {name}")
-            except Exception as e:
-                print(f"  ERROR: Failed to load prediction model {name} ({filename}): {e}")
-        else:
-            print(f"  WARNING: Model file not found: {filename} — train it first")
+            else:
+                raise FileNotFoundError(f"Model file missing: {filename}")
+        except Exception as e:
+            print(f"  Failed to load model {name} ({e}). Attempting self-healing retraining...")
+            try:
+                from services.ml_trainer import retrain_by_name
+                success = retrain_by_name(name)
+                if success and path.exists():
+                    _models[name] = joblib.load(path)
+                    print(f"  Prediction model {name} successfully retrained and loaded.")
+                else:
+                    print(f"  Self-healing failed: model {name} could not be retrained.")
+            except Exception as train_err:
+                print(f"  Self-healing error for {name}: {train_err}")
 
 
 # ─── 1. HOTSPOT PREDICTION ──────────────────────────────────────────

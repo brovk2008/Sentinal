@@ -11,14 +11,24 @@ class MLService:
         self.load_model()
 
     def load_model(self):
-        if MODEL_PATH.exists():
-            try:
+        try:
+            if MODEL_PATH.exists():
                 self.model = joblib.load(str(MODEL_PATH))
                 print(f"[ML] Risk model loaded from {MODEL_PATH}")
-            except Exception as e:
-                print(f"[ML] Error loading model: {e}")
-        else:
-            print(f"[ML] Model file not found at {MODEL_PATH}. Prediction fallback active.")
+            else:
+                raise FileNotFoundError(f"Model file missing at {MODEL_PATH}")
+        except Exception as e:
+            print(f"[ML] Risk model load failed ({e}). Attempting self-healing retraining...")
+            try:
+                from services.ml_trainer import train_risk_model
+                success = train_risk_model()
+                if success and MODEL_PATH.exists():
+                    self.model = joblib.load(str(MODEL_PATH))
+                    print(f"[ML] Risk model successfully retrained and loaded.")
+                else:
+                    print(f"[ML] Retraining failed or output file not found.")
+            except Exception as train_err:
+                print(f"[ML] Self-healing retraining failed: {train_err}")
 
     def predict_risk(self, age: int, gender_id: int, gravity_id: int, major_head_id: int, station_id: int) -> float:
         """Predict risk score/probability between 0.0 and 1.0."""
