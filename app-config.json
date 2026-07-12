@@ -1,6 +1,6 @@
 {
   "name": "sentinal-backend",
-  "command": "python3 -m uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1",
+  "command": "python3 main.py",
   "build_path": "backend",
   "stack": "python_3_11",
   "memory": 2048,
