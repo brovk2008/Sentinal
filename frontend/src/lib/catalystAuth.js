@@ -3,11 +3,24 @@
  *
  * Handles local mock auth and production Catalyst hosted auth without
  * allowing the app to hang forever while the SDK is loading.
+ *
+ * CUSTOM DOMAIN NOTE:
+ * When served from a custom domain (onslate.in / GitHub Pages), the Catalyst
+ * auth portal and SDK init.js are NOT available at /__catalyst/... paths.
+ * We redirect auth to the canonical Catalyst serverless URL instead.
  */
 
 const IS_LOCAL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
+
+// The canonical Catalyst-hosted client URL where auth actually works
+const CATALYST_BASE = "https://sentinal-60073535541.development.catalystserverless.in";
+
+// Are we on the custom domain (onslate.in or any non-catalystserverless host)?
+const IS_CUSTOM_DOMAIN =
+  !IS_LOCAL &&
+  !window.location.hostname.includes("catalystserverless.in");
 
 const MOCK_USER = {
   email_id: "demo@sentinal.ksp",
@@ -55,18 +68,54 @@ function ensureCatalystSdk() {
   if (IS_LOCAL) return Promise.resolve(null);
 
   if (!sdkReady) {
-    const SDK_TIMEOUT_MS = 8000;
+    const SDK_TIMEOUT_MS = 10000;
 
     sdkReady = Promise.race([
       loadScript("https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js")
-        .then(() => loadScript("/__catalyst/sdk/init.js"))
-        .then(() => window.catalyst),
-      new Promise((_, reject) => {
+        .then(async () => {
+          if (IS_CUSTOM_DOMAIN) {
+            // On custom domain: manually init SDK pointing to the real Catalyst serverless API
+            console.log("[Auth] Custom domain — initializing Catalyst SDK with explicit api_domain");
+            window.catalyst.initApp(
+              {
+                project_Id: "50170000000065001",
+                zaid: "50043676705",
+                auth_domain: "https://accounts.zohoportal.in",
+                is_appsail: false,
+                stratus_domain: "-development.zohostratus.in",
+                nimbus_domain: "-development.nimbuspop.com",
+                api_domain: CATALYST_BASE,
+              },
+              { org_id: "60073535541" }
+            );
+          } else {
+            // On *.catalystserverless.in: load the platform-provided init.js
+            try {
+              await loadScript("/__catalyst/sdk/init.js");
+            } catch (e) {
+              console.warn("[Auth] init.js failed, falling back to manual init", e);
+              window.catalyst.initApp(
+                {
+                  project_Id: "50170000000065001",
+                  zaid: "50043676705",
+                  auth_domain: "https://accounts.zohoportal.in",
+                  is_appsail: false,
+                  stratus_domain: "-development.zohostratus.in",
+                  nimbus_domain: "-development.nimbuspop.com",
+                  api_domain: CATALYST_BASE,
+                },
+                { org_id: "60073535541" }
+              );
+            }
+          }
+          return window.catalyst;
+        }),
+      new Promise((_, reject) =>
         setTimeout(
-          () => reject(new Error("Catalyst SDK load timed out after 8s")),
-          SDK_TIMEOUT_MS,
-        );
-      }),
+          () => reject(new Error("Catalyst SDK timed out after 10s")),
+          SDK_TIMEOUT_MS
+        )
+      ),
     ]);
   }
 
@@ -101,13 +150,25 @@ export function isLocalAuthMode() {
 }
 
 export function redirectToLogin(returnPath = "/dashboard") {
-  const returnUrl = new URL(returnPath, window.location.origin).href;
-  window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
+  if (IS_CUSTOM_DOMAIN) {
+    // On custom domain: auth must happen on the real Catalyst serverless URL.
+    // After login, Catalyst will redirect back to service_url (our custom domain path).
+    const returnUrl = new URL(returnPath, window.location.origin).href;
+    window.location.href = `${CATALYST_BASE}/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
+  } else {
+    const returnUrl = new URL(returnPath, window.location.origin).href;
+    window.location.href = `/__catalyst/auth/login?service_url=${encodeURIComponent(returnUrl)}`;
+  }
 }
 
 export function redirectToSignup(returnPath = "/dashboard") {
-  const returnUrl = new URL(returnPath, window.location.origin).href;
-  window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(returnUrl)}`;
+  if (IS_CUSTOM_DOMAIN) {
+    const returnUrl = new URL(returnPath, window.location.origin).href;
+    window.location.href = `${CATALYST_BASE}/__catalyst/auth/signup?service_url=${encodeURIComponent(returnUrl)}`;
+  } else {
+    const returnUrl = new URL(returnPath, window.location.origin).href;
+    window.location.href = `/__catalyst/auth/signup?service_url=${encodeURIComponent(returnUrl)}`;
+  }
 }
 
 export function redirectToHostedLogin(returnPath = "/dashboard") {
