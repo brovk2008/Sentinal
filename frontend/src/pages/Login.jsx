@@ -87,8 +87,18 @@ export default function Login() {
           <img
             src={logo}
             alt="Sentinal"
-            style={{ height: 60, width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+            style={{ height: 60, width: 'auto', objectFit: 'contain' }}
           />
+          <div style={{
+            fontSize: 18,
+            fontWeight: 800,
+            color: 'var(--copper-400)',
+            letterSpacing: '0.15em',
+            fontFamily: 'var(--font-mono)',
+            margin: '6px 0 2px 0'
+          }}>
+            SENTINAL
+          </div>
           <div style={{
             fontSize: 10,
             color: 'var(--text-muted)',

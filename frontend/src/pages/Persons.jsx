@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
+import Icon from '../components/Icons'
 import { fetchRepeatOffenders, searchPersons, fetchReoffendRisk } from '../api'
 
 export default function Persons() {
+  const navigate = useNavigate()
   const [offenders, setOffenders] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -153,19 +155,31 @@ export default function Persons() {
                 🔗 {o.syndicate[0].syndicate_name} — {o.syndicate[0].role}
               </div>
             )}
-
-            {/* Risk Assessment Section */}
+            {/* Action Buttons */}
             <div style={{
-              marginTop: 10,
-              paddingTop: 8,
+              marginTop: 12,
+              paddingTop: 10,
               borderTop: '1px solid var(--border-subtle)',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              flexDirection: 'column',
               gap: 8
             }}>
+              {/* Dossier button (always visible) */}
+              <button
+                className="btn btn-sm btn-outline"
+                style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/accused/${o.accused_id}`);
+                }}
+              >
+                <Icon name="person" size={12} />
+                View Criminal Dossier
+              </button>
+
+              {/* Risk Assessment */}
               {riskScores[o.accused_id] ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Recidivism Risk:</span>
                     <span style={{
@@ -178,31 +192,22 @@ export default function Persons() {
                       {(riskScores[o.accused_id].risk_score * 100).toFixed(1)}% ({riskScores[o.accused_id].risk_level})
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 4 }}>
-                    {riskScores[o.accused_id].risk_factors.slice(0, 2).map((rf, i) => (
-                      <span key={i} style={{
-                        padding: '1px 5px', borderRadius: 3, fontSize: 8,
-                        background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)'
-                      }}>
-                        {rf}
-                      </span>
-                    ))}
-                  </div>
                   <button
                     className="btn btn-sm"
-                    style={{ marginTop: 6, fontSize: 10, padding: '2px 8px', width: '100%', justifyContent: 'center' }}
+                    style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       setActiveRiskPerson(riskScores[o.accused_id]);
                     }}
                   >
+                    <Icon name="predict" size={12} />
                     View Risk Assessment Report
                   </button>
                 </div>
               ) : (
                 <button
                   className="btn btn-sm btn-copper"
-                  style={{ fontSize: 10, padding: '4px 10px', width: '100%', justifyContent: 'center' }}
+                  style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
                   disabled={assessingId === o.accused_id}
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -217,6 +222,7 @@ export default function Persons() {
                     }
                   }}
                 >
+                  <Icon name="predict" size={12} />
                   {assessingId === o.accused_id ? 'Assessing Risk...' : '⚡ Run Risk Assessment'}
                 </button>
               )}

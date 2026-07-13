@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { fetchNetworkGraph } from '../api'
 import LoadingPulse from '../components/shared/LoadingPulse'
 
 export default function NetworkGraph3D() {
+  const navigate = useNavigate()
   const mountRef = useRef(null)
   const sceneRef = useRef(null)
   const [selectedNode, setSelectedNode] = useState(null)
@@ -338,12 +340,38 @@ export default function NetworkGraph3D() {
           </div>
           
           <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 10, paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 9, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginBottom: 4 }}>
               Entity matches database records. Connection weight active.
             </div>
-            <button className="btn btn-xs btn-copper" style={{ width: '100%', justifyContent: 'center' }}>
-              Open Case File
-            </button>
+            {selectedNode.type === 'person' && (
+              <button
+                className="btn btn-xs btn-copper"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => {
+                  const pid = selectedNode.id.replace('p_', '');
+                  navigate(`/accused/${pid}`);
+                }}
+              >
+                📁 Open Criminal Dossier
+              </button>
+            )}
+            {selectedNode.type === 'case' && (
+              <button
+                className="btn btn-xs btn-copper"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => {
+                  const cid = selectedNode.id.replace('c_', '');
+                  navigate(`/timeline/${cid}`);
+                }}
+              >
+                📂 Open Case File
+              </button>
+            )}
+            {!['person', 'case'].includes(selectedNode.type) && (
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '4px 0' }}>
+                Inspect mode active
+              </div>
+            )}
           </div>
         </div>
       )}

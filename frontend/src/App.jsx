@@ -23,6 +23,7 @@ import SignupPage from './pages/SignupPage'
 import FIRSearch from './pages/FIRSearch'
 import DataIngestion from './pages/DataIngestion'
 import PatternIntel from './pages/PatternIntel'
+import Profile from './pages/Profile'
 import AuthGuard from './components/AuthGuard'
 
 // ─── Routing strategy ────────────────────────────────────────────────────────
@@ -104,6 +105,7 @@ export default function App() {
           <Route path="/fir-search"         element={<FIRSearch />} />
           <Route path="/ingestion"          element={<DataIngestion />} />
           <Route path="/patterns"           element={<PatternIntel />} />
+          <Route path="/profile"            element={<Profile />} />
         </Route>
       </Routes>
     </HashRouter>
