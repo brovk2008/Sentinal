@@ -1,0 +1,12 @@
+{
+  "name": "fir-scraper",
+  "command": "uvicorn main:app --host 0.0.0.0 --port 8080 --workers 1",
+  "build_path": ".",
+  "stack": "docker",
+  "port": 8080,
+  "env_variables": {
+    "SMARTBROWZ_WEBDRIVER_URL": "https://60073535541:YOUR_API_KEY@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
+  },
+  "memory": 2048,
+  "scripts": {}
+}
