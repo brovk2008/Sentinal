@@ -95,6 +95,17 @@ export default function Topbar() {
     return 'var(--status-info)'
   }
 
+  // Parse user from localstorage dynamically
+  const user = JSON.parse(localStorage.getItem('sentinal_user') || '{}')
+  const getDisplayName = (u) => {
+    if (!u) return 'Officer'
+    if (u.first_name && u.first_name.trim()) return u.first_name
+    if (u.email_id) return u.email_id.split('@')[0]
+    return 'Officer'
+  }
+  const displayName = getDisplayName(user)
+  const initials = displayName.slice(0, 2).toUpperCase()
+
   return (
     <header style={{
       gridColumn: '2',
@@ -347,8 +358,8 @@ export default function Topbar() {
         {/* User profile with dropdown */}
         <div ref={userRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', fontSize: 11 }}>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>ACP Arjun R.</span>
-            <span style={{ color: 'var(--text-muted)' }}>Bengaluru City</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{displayName}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 9 }}>{user.email_id?.split('@')[1] || 'Karnataka Police'}</span>
           </div>
           <div
             onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -356,15 +367,15 @@ export default function Topbar() {
               width: 32, height: 32,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, var(--copper-500), var(--copper-400))',
-              display: 'flex', alignItems: 'center', justify: 'center',
-              fontSize: 12, fontWeight: 600, color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: 'white',
               cursor: 'pointer',
               userSelect: 'none',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            AR
+            {initials}
           </div>
 
           {showUserDropdown && (
@@ -379,6 +390,7 @@ export default function Topbar() {
               flexDirection: 'column'
             }}>
               <button
+                onClick={() => { setShowUserDropdown(false); navigate('/profile'); }}
                 style={{
                   padding: '8px 12px', background: 'none', border: 'none',
                   color: 'var(--text-primary)', fontSize: 11, cursor: 'pointer',
@@ -390,6 +402,7 @@ export default function Topbar() {
                 View Profile
               </button>
               <button
+                onClick={() => { setShowUserDropdown(false); navigate('/timeline?officer=me'); }}
                 style={{
                   padding: '8px 12px', background: 'none', border: 'none',
                   color: 'var(--text-primary)', fontSize: 11, cursor: 'pointer',

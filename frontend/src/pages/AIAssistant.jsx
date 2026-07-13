@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence, uploadToRag } from '../api'
+import { queryIntelligence, uploadToRag, textToSpeech } from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
 import { useTranslation } from 'react-i18next'
 
@@ -192,7 +192,40 @@ Type your query below or select a suggestion to begin.`,
         { role: 'assistant', content: '⚠️ Intelligence query failed. Please try again.' },
       ])
     }
-    setLoading(false)
+  }
+
+  const handlePlayTTS = async (text) => {
+    const cleanText = text
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\[.*?\]\(.*?\)/g, '')
+      .replace(/\n/g, ' ')
+      .slice(0, 500)
+
+    try {
+      const tts = await textToSpeech(cleanText, 'en-IN')
+      if (tts.success && tts.audio_base64) {
+        const audio = new Audio(`data:audio/wav;base64,${tts.audio_base64}`)
+        await audio.play()
+      } else {
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel()
+          const utterance = new SpeechSynthesisUtterance(cleanText)
+          utterance.lang = 'en-IN'
+          window.speechSynthesis.speak(utterance)
+        }
+      }
+    } catch (e) {
+      console.warn('[TTS] Failed to play audio:', e)
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(cleanText)
+        utterance.lang = 'en-IN'
+        window.speechSynthesis.speak(utterance)
+      }
+    }
   }
 
   // RAG File Upload handler (7G)
@@ -288,7 +321,33 @@ Type your query below or select a suggestion to begin.`,
               color: 'var(--text-primary)',
               fontSize: 13,
               lineHeight: 1.6,
+              position: 'relative',
             }}>
+              {msg.role === 'assistant' && (
+                <button
+                  onClick={() => handlePlayTTS(msg.content)}
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title="Speak Response"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                </button>
+              )}
               <ReactMarkdown
                 components={{
                   h2: ({ children }) => <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--copper-400)' }}>{children}</h2>,

@@ -17,6 +17,7 @@ import {
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
 import FileUploader from '../components/FileUploader'
+import Icon from '../components/Icons'
 
 export default function EvidenceBoard() {
   // Main states
@@ -190,35 +191,38 @@ export default function EvidenceBoard() {
       handleConnectClick(id)
       return
     }
-    setDraggingNodeId(id)
     setSelectedNodeId(id)
     const node = nodes.find(n => n.id === id)
     if (node) {
-      const clientX = e.clientX
-      const clientY = e.clientY
-      setDragStartOffset({
-        x: clientX - node.x * zoom,
-        y: clientY - node.y * zoom
-      })
+      const startX = e.clientX - node.x * zoom
+      const startY = e.clientY - node.y * zoom
+
+      const onMove = (ev) => {
+        setNodes(prev => prev.map(n => {
+          if (n.id === id) {
+            return {
+              ...n,
+              x: (ev.clientX - startX) / zoom,
+              y: (ev.clientY - startY) / zoom
+            }
+          }
+          return n
+        }))
+      }
+
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+      }
+
+      window.addEventListener('mousemove', onMove)
+      window.addEventListener('mouseup', onUp)
     }
     e.stopPropagation()
   }
 
   const handleCanvasMouseMove = (e) => {
-    if (draggingNodeId) {
-      const clientX = e.clientX
-      const clientY = e.clientY
-      setNodes(prev => prev.map(n => {
-        if (n.id === draggingNodeId) {
-          return {
-            ...n,
-            x: (clientX - dragStartOffset.x) / zoom,
-            y: (clientY - dragStartOffset.y) / zoom
-          }
-        }
-        return n
-      }))
-    } else if (fromNodeId && tempLineEnd) {
+    if (fromNodeId && tempLineEnd) {
       // Connect line cursor tracking
       const canvasBounds = canvasRef.current.getBoundingClientRect()
       setTempLineEnd({
@@ -229,7 +233,7 @@ export default function EvidenceBoard() {
   }
 
   const handleCanvasMouseUp = () => {
-    setDraggingNodeId(null)
+    // Handled at window level dynamically
   }
 
   const handleBgMouseDown = (e) => {
@@ -474,10 +478,10 @@ export default function EvidenceBoard() {
         boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
       }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm btn-copper" onClick={() => handleOpenAdd('photo')}>+ Photo</button>
-          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)' }} onClick={() => handleOpenAdd('document')}>+ Notes</button>
-          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)' }} onClick={() => handleOpenAdd('case')}>+ Case</button>
-          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)' }} onClick={() => handleOpenAdd('person')}>+ suspect</button>
+          <button className="btn btn-sm btn-copper" style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => handleOpenAdd('photo')}><Icon name="photo" size={12} color="#000" /> Photo</button>
+          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => handleOpenAdd('document')}><Icon name="canvas" size={12} /> Notes</button>
+          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => handleOpenAdd('case')}><Icon name="cases" size={12} /> Case</button>
+          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => handleOpenAdd('person')}><Icon name="person" size={12} /> Suspect</button>
         </div>
 
         <span style={{ width: 1, height: 16, background: 'var(--border-subtle)' }} />
@@ -488,7 +492,8 @@ export default function EvidenceBoard() {
             style={{
               background: connectMode ? 'var(--copper-500)' : 'transparent',
               color: connectMode ? 'white' : 'var(--copper-300)',
-              border: '1px solid var(--copper-500)'
+              border: '1px solid var(--copper-500)',
+              display: 'flex', alignItems: 'center', gap: 4
             }}
             onClick={() => {
               setConnectMode(!connectMode)
@@ -496,35 +501,35 @@ export default function EvidenceBoard() {
               setTempLineEnd(null)
             }}
           >
-            🔗 {connectMode ? 'Click Card Target' : 'Connect'}
+            <Icon name="connect" size={12} color={connectMode ? 'white' : 'var(--copper-300)'} /> {connectMode ? 'Click Target' : 'Connect'}
           </button>
 
           <button
             className="btn btn-sm"
             disabled={!selectedNodeId}
-            style={{ borderColor: selectedNodeId ? '#e05252' : 'var(--border-subtle)', color: selectedNodeId ? '#e05252' : 'var(--text-muted)' }}
+            style={{ borderColor: selectedNodeId ? '#e05252' : 'var(--border-subtle)', color: selectedNodeId ? '#e05252' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}
             onClick={handleDeleteSelected}
           >
-            🗑 Delete
+            <Icon name="trash" size={12} color={selectedNodeId ? '#e05252' : 'var(--text-muted)'} /> Delete
           </button>
         </div>
 
         <span style={{ width: 1, height: 16, background: 'var(--border-subtle)' }} />
 
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm btn-copper" onClick={handleAIAnalyze} disabled={aiAnalyzing}>
-            🤖 AI Analyze
+          <button className="btn btn-sm btn-copper" style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={handleAIAnalyze} disabled={aiAnalyzing}>
+            <Icon name="ai" size={12} color="#000" /> AI Analyze
           </button>
-          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)' }} onClick={handleConnectDots} disabled={aiAnalyzing}>
-            🔗 Connect Dots
+          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={handleConnectDots} disabled={aiAnalyzing}>
+            <Icon name="dots" size={12} /> Connect Dots
           </button>
-          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)' }} onClick={() => setShowMatchModal(true)}>
-            🔍 Zia Match
+          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => setShowMatchModal(true)}>
+            <Icon name="analyze" size={12} /> Zia Match
           </button>
-          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)' }} onClick={() => setShowSitrepModal(true)}>
-            📋 SITREP
+          <button className="btn btn-sm" style={{ border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => setShowSitrepModal(true)}>
+            <Icon name="alert" size={12} /> SITREP
           </button>
-          <button className="btn btn-sm btn-copper" onClick={() => performSave(true)}>💾 Save</button>
+          <button className="btn btn-sm btn-copper" style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => performSave(true)}><Icon name="save" size={12} color="#000" /> Save</button>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import logo from '../../assets/logo.png'
+import Icon from '../Icons'
 
 export default function Sidebar() {
   const { t } = useTranslation()
@@ -10,32 +11,32 @@ export default function Sidebar() {
     {
       label: t('Command Center'),
       items: [
-        { path: '/warroom', icon: '⚔️', label: t('nav.warroom') },
-        { path: '/dashboard', icon: '⬡', label: t('nav.dashboard') },
-        { path: '/ingestion', icon: '📥', label: t('nav.dataingestion') },
+        { path: '/warroom', icon: <Icon name="warroom" size={13} />, label: t('nav.warroom') },
+        { path: '/dashboard', icon: <Icon name="dashboard" size={13} />, label: t('nav.dashboard') },
+        { path: '/ingestion', icon: <Icon name="ingestion" size={13} />, label: t('nav.dataingestion') },
       ],
     },
     {
       label: t('Investigations'),
       items: [
-        { path: '/timeline', icon: '◈', label: t('nav.cases') },
-        { path: '/connections', icon: '⬡', label: t('nav.canvas') },
-        { path: '/patterns', icon: '⟁', label: 'Pattern Intel' },
-        { path: '/board', icon: '📌', label: t('nav.evidence') },
-        { path: '/network-3d', icon: '⬡', label: '3D Network' },
-        { path: '/map', icon: '◎', label: t('nav.map') },
-        { path: '/persons', icon: '◉', label: t('nav.persons') },
-        { path: '/fir-search', icon: '🔍', label: t('nav.firsearch') },
+        { path: '/timeline', icon: <Icon name="cases" size={13} />, label: t('nav.cases') },
+        { path: '/connections', icon: <Icon name="canvas" size={13} />, label: t('nav.canvas') },
+        { path: '/patterns', icon: <Icon name="pattern" size={13} />, label: 'Pattern Intel' },
+        { path: '/board', icon: <Icon name="evidence" size={13} />, label: t('nav.evidence') },
+        { path: '/network-3d', icon: <Icon name="network" size={13} />, label: '3D Network' },
+        { path: '/map', icon: <Icon name="map" size={13} />, label: t('nav.map') },
+        { path: '/persons', icon: <Icon name="persons" size={13} />, label: t('nav.persons') },
+        { path: '/fir-search', icon: <Icon name="fir" size={13} />, label: t('nav.firsearch') },
       ],
     },
     {
       label: t('Intelligence'),
       items: [
-        { path: '/financial', icon: '◈', label: t('nav.financial') },
-        { path: '/cdr', icon: '◇', label: t('nav.cdr') },
-        { path: '/predict', icon: '⟁', label: t('nav.predictive') },
-        { path: '/assistant', icon: '◎', label: t('nav.ai') },
-        { path: '/darkweb', icon: '🕸️', label: t('nav.darkweb') },
+        { path: '/financial', icon: <Icon name="financial" size={13} />, label: t('nav.financial') },
+        { path: '/cdr', icon: <Icon name="cdr" size={13} />, label: t('nav.cdr') },
+        { path: '/predict', icon: <Icon name="predict" size={13} />, label: t('nav.predictive') },
+        { path: '/assistant', icon: <Icon name="ai" size={13} />, label: t('nav.ai') },
+        { path: '/darkweb', icon: <Icon name="darkweb" size={13} />, label: t('nav.darkweb') },
       ],
     },
   ]
@@ -65,12 +66,33 @@ export default function Sidebar() {
           src={logo}
           alt="Sentinal"
           style={{
-            height: 36,
+            height: 28,
             width: 'auto',
             objectFit: 'contain',
             flexShrink: 0,
           }}
         />
+        <div>
+          <div style={{
+            fontSize: 13,
+            fontWeight: 800,
+            color: 'var(--copper-400)',
+            letterSpacing: '0.12em',
+            fontFamily: 'var(--font-mono)',
+            lineHeight: 1,
+          }}>
+            SENTINAL
+          </div>
+          <div style={{
+            fontSize: 8,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.1em',
+            marginTop: 2,
+            textTransform: 'uppercase',
+          }}>
+            v2 · KSP Intelligence
+          </div>
+        </div>
       </div>
 
       {/* Navigation sections */}

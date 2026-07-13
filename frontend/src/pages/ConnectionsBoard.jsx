@@ -8,11 +8,13 @@ import ReactFlow, {
   Background, Controls, MiniMap,
   addEdge, useNodesState, useEdgesState,
   MarkerType, Panel,
+  Handle, Position,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useTranslation } from 'react-i18next'
 import { connectDots, analyzeBoard, queryIntelligence } from '../api'
 import FileUploader from '../components/FileUploader'
+import Icon from '../components/Icons'
 
 // ── API helpers ─────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -33,59 +35,95 @@ async function saveCanvas(caseId, nodes, edges) {
 
 // ── Node type colours ───────────────────────────────────────────────
 const NODE_TYPES = {
-  person:    { color: '#e05252', icon: '👤', label: 'Person' },
-  case:      { color: 'var(--copper-500,#c8814a)', icon: '📁', label: 'Case' },
-  location:  { color: '#52b0e0', icon: '📍', label: 'Location' },
-  phone:     { color: '#52e07a', icon: '📱', label: 'Phone' },
-  vehicle:   { color: '#b452e0', icon: '🚗', label: 'Vehicle' },
-  evidence:  { color: '#e0c852', icon: '🔍', label: 'Evidence' },
-  financial: { color: '#52e0cc', icon: '💰', label: 'Financial' },
+  person:    { color: '#e05252', icon: <Icon name="person" size={13} />, label: 'Person' },
+  case:      { color: 'var(--copper-500,#c8814a)', icon: <Icon name="cases" size={13} />, label: 'Case' },
+  location:  { color: '#52b0e0', icon: <Icon name="map" size={13} />, label: 'Location' },
+  phone:     { color: '#52e07a', icon: <Icon name="cdr" size={13} />, label: 'Phone' },
+  vehicle:   { color: '#b452e0', icon: <Icon name="predict" size={13} />, label: 'Vehicle' },
+  evidence:  { color: '#e0c852', icon: <Icon name="search" size={13} />, label: 'Evidence' },
+  financial: { color: '#52e0cc', icon: <Icon name="financial" size={13} />, label: 'Financial' },
 }
 
 // ── Custom Node renderer ─────────────────────────────────────────────
 function SentinalNode({ data, selected }) {
   const cfg = NODE_TYPES[data.type] || NODE_TYPES.evidence
   return (
-    <div style={{
-      minWidth: 160, maxWidth: 220,
-      background: selected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
-      border: `2px solid ${selected ? cfg.color : 'rgba(255,255,255,0.15)'}`,
-      borderRadius: 12, padding: '10px 14px',
-      boxShadow: selected
-        ? `0 0 18px ${cfg.color}55`
-        : '0 4px 16px rgba(0,0,0,0.4)',
-      cursor: 'grab',
-      transition: 'border-color 0.2s, box-shadow 0.2s',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-        <span style={{ fontSize: 16 }}>{cfg.icon}</span>
-        <span style={{
-          fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-          color: cfg.color, letterSpacing: '0.08em',
-        }}>{data.type}</span>
-      </div>
+    <>
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{
+          background: cfg.color,
+          border: '2px solid #0a0a16',
+          width: 8,
+          height: 8,
+        }}
+      />
       <div style={{
-        fontSize: 13, fontWeight: 600, color: '#fff',
-        lineHeight: 1.3, marginBottom: 3,
-        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-      }}>{data.label}</div>
-      {data.subtitle && (
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.3 }}>
-          {data.subtitle}
+        minWidth: 160, maxWidth: 220,
+        background: selected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+        border: `2px solid ${selected ? cfg.color : 'rgba(255,255,255,0.15)'}`,
+        borderRadius: 12, padding: '10px 14px',
+        boxShadow: selected
+          ? `0 0 18px ${cfg.color}55`
+          : '0 4px 16px rgba(0,0,0,0.4)',
+        cursor: 'grab',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+      }}>
+        {data.imageUrl && (
+          <img
+            src={data.imageUrl}
+            alt={data.label}
+            style={{
+              width: '100%',
+              maxHeight: 90,
+              objectFit: 'cover',
+              borderRadius: 6,
+              marginBottom: 8,
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+          />
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <span style={{ display: 'flex', alignItems: 'center' }}>{cfg.icon}</span>
+          <span style={{
+            fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+            color: cfg.color, letterSpacing: '0.08em',
+          }}>{data.type}</span>
         </div>
-      )}
-      {data.tags?.length > 0 && (
-        <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {data.tags.slice(0, 3).map(tag => (
-            <span key={tag} style={{
-              fontSize: 8, padding: '2px 5px', borderRadius: 4,
-              background: `${cfg.color}22`, color: cfg.color,
-              border: `1px solid ${cfg.color}44`,
-            }}>{tag}</span>
-          ))}
-        </div>
-      )}
-    </div>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: '#fff',
+          lineHeight: 1.3, marginBottom: 3,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        }}>{data.label}</div>
+        {data.subtitle && (
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.3 }}>
+            {data.subtitle}
+          </div>
+        )}
+        {data.tags?.length > 0 && (
+          <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+            {data.tags.slice(0, 3).map(tag => (
+              <span key={tag} style={{
+                fontSize: 8, padding: '2px 5px', borderRadius: 4,
+                background: `${cfg.color}22`, color: cfg.color,
+                border: `1px solid ${cfg.color}44`,
+              }}>{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{
+          background: cfg.color,
+          border: '2px solid #0a0a16',
+          width: 8,
+          height: 8,
+        }}
+      />
+    </>
   )
 }
 
@@ -464,6 +502,7 @@ export default function ConnectionsBoard() {
                     label: file.label || 'Uploaded File',
                     subtitle: file.ai_summary ? (file.ai_summary.slice(0, 60) + '...') : '',
                     tags: file.ai_tags || [],
+                    imageUrl: file.stratus_url || null,
                   },
                 }]);
               }

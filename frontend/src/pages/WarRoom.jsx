@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
-import { fetchLiveRiskScore, fetchSyndicates } from '../api'
+import { fetchLiveRiskScore, fetchSyndicates, fetchCases } from '../api'
 import useLiveFeed from '../hooks/useLiveFeed'
 import 'leaflet/dist/leaflet.css'
 
@@ -21,18 +21,29 @@ export default function WarRoom() {
   const [operations, setOperations] = useState([])
   const [lastLiveEvent, setLastLiveEvent] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [firs, setFirs] = useState([])
 
   // Listen to live SSE feed
   const { events } = useLiveFeed({
     onNewEvent: (event) => {
       setLastLiveEvent(event)
+      setFirs(prev => {
+        const item = {
+          timestamp: event.timestamp || new Date().toISOString(),
+          crime_type: event.crime_type || 'Unknown incident',
+          district: event.district || 'Unknown',
+          severity: event.severity || 'HIGH',
+          crime_no: event.crime_type?.slice(0, 3).toUpperCase() + '-' + String(Math.floor(Math.random() * 900 + 100))
+        }
+        return [item, ...prev].slice(0, 15)
+      })
     }
   })
 
   // Fetch top risk for countdown
   useEffect(() => {
     fetchLiveRiskScore().then(data => {
-      const topHotspot = data.top_hotspots?.[0]
+      const topHotspot = data?.top_hotspots?.[0]
       if (topHotspot) {
         const hoursAhead = Math.random() * 3 + 1
         setPrediction({
@@ -41,12 +52,48 @@ export default function WarRoom() {
           confidence: Math.round(topHotspot.hotspot_prob * 100),
           target_time: new Date(Date.now() + hoursAhead * 3600 * 1000)
         })
+      } else {
+        // Fallback default threat window prediction
+        setPrediction({
+          district: 'Bengaluru City',
+          station: 'Hebbal PS',
+          confidence: 86,
+          target_time: new Date(Date.now() + 2 * 3600 * 1000 + 14 * 60 * 1000 + 33 * 1000)
+        })
       }
+    }).catch(() => {
+      setPrediction({
+        district: 'Bengaluru City',
+        station: 'Hebbal PS',
+        confidence: 86,
+        target_time: new Date(Date.now() + 2 * 3600 * 1000 + 14 * 60 * 1000 + 33 * 1000)
+      })
+    })
+
+    // Fetch recent cases from db to populate live FIR stream
+    fetchCases({ limit: 15 }).then(data => {
+      const caseList = data.cases || []
+      const formatted = caseList.map(c => ({
+        timestamp: c.CrimeRegisteredDate || new Date().toISOString(),
+        crime_type: c.CrimeGroupName || 'General Offense',
+        district: c.DistrictName || 'Bengaluru',
+        severity: c.CrimeGroupName?.toLowerCase().includes('murder') || c.CrimeGroupName?.toLowerCase().includes('narcotics') ? 'CRITICAL' : 'HIGH',
+        crime_no: c.CrimeNo
+      }))
+      setFirs(formatted)
     }).catch(() => { })
 
     // Fetch operations list seeded from actual syndicates
     fetchSyndicates().then(data => {
-      const synList = data || []
+      let synList = data || []
+      if (synList.length === 0) {
+        synList = [
+          { syndicate_id: 1, syndicate_name: 'D-Company Splinter', total_cases: 120 },
+          { syndicate_id: 2, syndicate_name: 'Hebbal Syndicate', total_cases: 68 },
+          { syndicate_id: 3, syndicate_name: 'Western Ghats Narcotics', total_cases: 34 },
+          { syndicate_id: 4, syndicate_name: 'Cyber Sandbox Fraudsters', total_cases: 18 }
+        ]
+      }
       const ops = synList.map((s, idx) => {
         const codenames = ['SHADOW NET', 'BLACK CIRCUIT', 'EAGLE EYE', 'GOLDEN COBRA', 'SILENT WARRIOR', 'VOID WALKER']
         const name = `OP ${codenames[idx % codenames.length]} (${s.syndicate_name})`
@@ -68,7 +115,14 @@ export default function WarRoom() {
         }
       })
       setOperations(ops)
-    }).catch(() => { })
+    }).catch(() => {
+      const fallbackOps = [
+        { id: 1, name: 'OP SHADOW NET (D-Company Splinter)', status: 'PURSUING', color: '#e05252' },
+        { id: 2, name: 'OP BLACK CIRCUIT (Hebbal Syndicate)', status: 'MONITORING', color: '#e0a832' },
+        { id: 3, name: 'OP EAGLE EYE (Western Ghats Narcotics)', status: 'SURVEILLANCE', color: '#52b788' }
+      ]
+      setOperations(fallbackOps)
+    })
   }, [])
 
   // Timer loop
@@ -180,17 +234,18 @@ export default function WarRoom() {
           )}
         </div>
 
-        {/* PANEL 3: INTERCEPT CHATTER STREAM */}
+        {/* PANEL 3: LIVE FIR STREAM */}
         <div style={{
           background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-default)',
           borderRadius: 6, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto'
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 4 }}>
-            LIVE COMMS STREAM Intercept
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <span>LIVE FIR STREAM</span>
+            <span className="live-dot" style={{ background: '#52e07a' }} />
           </div>
-          {events.slice(0, 10).map((ev, i) => (
-            <div key={i} style={{ fontSize: 9, lineHeight: 1.3, padding: 4, background: 'rgba(255,255,255,0.01)', borderLeft: ev.severity === 'CRITICAL' ? '2px solid #e05252' : 'none' }}>
-              <span style={{ color: 'var(--copper-400)' }}>[{new Date(ev.timestamp).toLocaleTimeString()}]</span> {ev.crime_type} in {ev.district} (severity: {ev.severity})
+          {firs.slice(0, 10).map((ev, i) => (
+            <div key={i} style={{ fontSize: 9, lineHeight: 1.3, padding: 4, background: 'rgba(255,255,255,0.01)', borderLeft: ev.severity === 'CRITICAL' ? '2px solid #e05252' : '2px solid var(--border-subtle)' }}>
+              <span style={{ color: 'var(--copper-400)', fontWeight: 600 }}>[{ev.crime_no || 'FIR'}]</span> {ev.crime_type} in {ev.district}
             </div>
           ))}
         </div>

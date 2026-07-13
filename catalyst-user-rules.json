@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Login Redirect",
+    "source_endpoint": "/app/index.html",
+    "target_endpoint": "/app/index.html",
+    "target": "client",
+    "method": "GET",
+    "throttling": {
+      "overall": {},
+      "ip": {}
+    },
+    "system": true
+  }
+]

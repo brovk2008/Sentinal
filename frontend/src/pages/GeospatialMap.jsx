@@ -165,9 +165,28 @@ function MapRefTracker({ mapRef }) {
   return null
 }
 
+const TILE_LAYERS = {
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; CartoDB',
+    label: 'Dark',
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    label: 'Satellite',
+  },
+  street: {
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; OpenStreetMap &copy; CartoDB',
+    label: 'Street',
+  },
+}
+
 export default function GeospatialMap() {
   const navigate = useNavigate()
   const mapRef = useRef(null)
+  const [mapStyle, setMapStyle] = useState('dark')
   
   useLiveFeed({
     onNewEvent: (event) => {
@@ -536,10 +555,40 @@ export default function GeospatialMap() {
         </button>
 
         {!globeMode && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={showHotspots} onChange={e => setShowHotspots(e.target.checked)} />
-            Show hotspots & pins
-          </label>
+          <>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={showHotspots} onChange={e => setShowHotspots(e.target.checked)} />
+              Show hotspots & pins
+            </label>
+
+            <div style={{ marginTop: 12, marginBottom: 12 }}>
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Map Layer Style
+              </div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {Object.entries(TILE_LAYERS).map(([key, cfg]) => (
+                  <button
+                    key={key}
+                    onClick={() => setMapStyle(key)}
+                    style={{
+                      flex: 1,
+                      padding: '4px 0',
+                      fontSize: 9,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      borderRadius: 4,
+                      background: mapStyle === key ? 'var(--copper-500)' : 'transparent',
+                      border: `1px solid ${mapStyle === key ? 'var(--copper-400)' : 'var(--border-subtle)'}`,
+                      color: mapStyle === key ? '#000' : 'var(--text-secondary)',
+                      outline: 'none',
+                    }}
+                  >
+                    {cfg.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         {/* DBSCAN Controls */}
@@ -724,8 +773,9 @@ export default function GeospatialMap() {
           >
             <MapRefTracker mapRef={mapRef} />
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; CartoDB'
+              key={mapStyle}
+              url={TILE_LAYERS[mapStyle].url}
+              attribution={TILE_LAYERS[mapStyle].attribution}
             />
             
             {/* Heat Points */}
