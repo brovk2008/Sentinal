@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
 import { useTranslation } from 'react-i18next'
+import logo from '../assets/logo.png'
 
 export default function Login() {
   const { t } = useTranslation()
@@ -83,15 +84,11 @@ export default function Login() {
           alignItems: 'center',
           gap: 6
         }}>
-          <div style={{
-            fontSize: 24,
-            fontWeight: 'bold',
-            color: 'var(--copper-400)',
-            letterSpacing: '0.08em',
-            fontFamily: 'var(--font-mono)'
-          }}>
-            {t('auth.loginTitle') || 'PROJECT SENTINAL'}
-          </div>
+          <img
+            src={logo}
+            alt="Sentinal"
+            style={{ height: 60, width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+          />
           <div style={{
             fontSize: 10,
             color: 'var(--text-muted)',

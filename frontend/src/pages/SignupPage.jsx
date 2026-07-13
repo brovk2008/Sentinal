@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, redirectToHostedSignup, signupUser } from '../lib/catalystAuth'
+import logo from '../assets/logo.png'
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -105,12 +106,11 @@ export default function SignupPage() {
           background: 'var(--bg-secondary)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
         }}>
-          <div style={{
-            fontSize: 24, fontWeight: 'bold', color: 'var(--copper-400)',
-            letterSpacing: '0.08em', fontFamily: 'var(--font-mono)',
-          }}>
-            PROJECT SENTINAL
-          </div>
+          <img
+            src={logo}
+            alt="Sentinal"
+            style={{ height: 60, width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+          />
           <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
             Officer Account Registration
           </div>

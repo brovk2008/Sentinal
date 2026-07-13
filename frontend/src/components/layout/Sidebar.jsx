@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import logo from '../../assets/logo.png'
 
 export default function Sidebar() {
   const { t } = useTranslation()
@@ -53,31 +54,23 @@ export default function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{
-        padding: '14px 16px',
+        padding: '10px 16px',
         borderBottom: '1px solid var(--border-subtle)',
         height: 'var(--topbar-height)',
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 10,
       }}>
-        <div style={{
-          fontSize: 13,
-          fontWeight: 700,
-          color: 'var(--copper-400)',
-          letterSpacing: '0.08em',
-          fontFamily: 'var(--font-mono)',
-        }}>
-          PROJECT SENTINAL
-        </div>
-        <div style={{
-          fontSize: 9,
-          color: 'var(--text-muted)',
-          letterSpacing: '0.12em',
-          marginTop: 1,
-          textTransform: 'uppercase',
-        }}>
-          v2 · Karnataka Police Intelligence
-        </div>
+        <img
+          src={logo}
+          alt="Sentinal"
+          style={{
+            height: 36,
+            width: 'auto',
+            objectFit: 'contain',
+            flexShrink: 0,
+          }}
+        />
       </div>
 
       {/* Navigation sections */}
