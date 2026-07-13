@@ -1,6 +1,10 @@
 import os
 import sys
 import traceback
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 # Write immediate diagnostic info at startup
 try:
@@ -12,9 +16,9 @@ try:
 except Exception as e:
     pass
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+# Detect if running inside Zoho Catalyst AppSail production environment
+IS_CATALYST = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV"))
+
 from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp, scraper, uploads, auth
 from routers.predict import load_models as load_predict_models
 from scrapers.scraper_store import init_scrape_table
@@ -48,20 +52,74 @@ app = FastAPI(
 )
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://sentinal-peak.onslate.in",
-        "https://sentinal-60073535541.development.onslate.in",
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "https://sentinal-60073535541.development.catalystappsail.in",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# ─── Defensive Header Deduplication Middleware ───────────────────────────────
+class DeduplicateCORSMiddleware:
+    """
+    ASGI Middleware to ensure Access-Control-* response headers are never duplicated.
+    If a proxy (like Catalyst AppSail / ZGS Gateway) or internal middleware adds duplicate
+    headers, this middleware ensures only a single value is sent for Access-Control-Allow-Origin
+    and Access-Control-Allow-Credentials.
+    """
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = message.get("headers", [])
+                new_headers = []
+                seen_keys = set()
+
+                for key_bytes, value_bytes in headers:
+                    key_lower = key_bytes.lower()
+                    
+                    if key_lower in (b"access-control-allow-origin", b"access-control-allow-credentials"):
+                        # If value contains a comma-separated duplicate, keep only the first item
+                        val_str = value_bytes.decode("utf-8", errors="ignore")
+                        if "," in val_str:
+                            parts = [p.strip() for p in val_str.split(",") if p.strip()]
+                            if parts:
+                                value_bytes = parts[0].encode("utf-8")
+
+                        # Drop duplicate header entries
+                        if key_lower in seen_keys:
+                            continue
+                        seen_keys.add(key_lower)
+
+                    new_headers.append((key_bytes, value_bytes))
+
+                message["headers"] = new_headers
+
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+app.add_middleware(DeduplicateCORSMiddleware)
+
+
+# ─── Environment-Aware CORS Configuration ─────────────────────────────────────
+# Zoho Catalyst AppSail's ZGS Gateway automatically manages CORS headers for all origins
+# in production. Adding CORSMiddleware in production causes duplicate headers
+# (e.g. 'https://sentinal-peak.onslate.in, https://sentinal-peak.onslate.in').
+# Therefore, CORSMiddleware is only enabled in local development mode.
+if not IS_CATALYST:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:3000",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Mount all routers
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
