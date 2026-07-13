@@ -17,7 +17,8 @@ frontend/dist/
 .DS_Store
 backend.zip
 *.zip
-*.png
+# (PNG/image assets are committed — logo etc.)
+# *.png  ← removed, was blocking logo.png
 
 # Ignore all subdirectories in backend by default (unwanted pip packages)
 backend/*/
@@ -28,6 +29,7 @@ backend/*/
 !backend/models/
 !backend/data/
 !backend/scrapers/
+!backend/fir_scraper/
 
 # Ignore compiled shared libraries, helper scripts, and vendored dependency files in backend/
 backend/*.so
