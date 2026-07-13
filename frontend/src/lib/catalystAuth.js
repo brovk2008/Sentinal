@@ -1,35 +1,31 @@
 /**
  * catalystAuth.js - Sentinal v2
  *
- * Auth strategy:
+ * Authentication module designed for HashRouter (<HashRouter>) on Zoho Catalyst.
  *
- * 1. localhost            → mock auth (local only)
- * 2. onslate.in           → IS_CUSTOM_DOMAIN = true
- *    • Check URL for ?auth_user=... (set by serverless domain on SSO return)
- *    • Check localStorage cache
- *    • If no session: redirect to serverless app with ?redirect_back=<origin>
+ * URL Specification for HashRouter:
+ *   `<base_url>[?query_params]#<hash_path>`
  *
- * 3. catalystserverless.in → IS_CUSTOM_DOMAIN = false
- *    • Native Catalyst SDK auth via /__catalyst/sdk/init.js
- *    • If ?redirect_back is present: after auth, redirect to custom domain
- *      with ?auth_user=<user-json> appended
- *    • redirectToLogin() preserves ?redirect_back so it survives the
- *      /__catalyst/auth/login round-trip
- *
- * Logout:
- *    • Custom domain redirects to serverless with ?logout=true
- *    • Serverless clears session and runs catalyst.auth.signOut()
+ * Host Environments:
+ * 1. localhost / 127.0.0.1 (Local Dev):
+ *    - Uses mock user session.
+ * 2. onslate.in (Custom Domain / Catalyst Slate):
+ *    - IS_CUSTOM_DOMAIN = true.
+ *    - Relies on SSO bridge to catalystserverless.in for native Catalyst session management.
+ * 3. catalystserverless.in (Catalyst Web Client):
+ *    - IS_CUSTOM_DOMAIN = false.
+ *    - Hosts native Catalyst Web SDK and authentication endpoints (/__catalyst/auth/login).
  */
 
 const IS_LOCAL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
 
-// The canonical Catalyst-hosted serverless client URL (where SDK & BAAS work natively)
+// Canonical Catalyst serverless domain hosting native SDK & BAAS endpoints
 const CATALYST_BASE =
   "https://sentinal-60073535541.development.catalystserverless.in";
 
-// onslate.in is a custom/Slate domain – auth must be bridged to the serverless app
+// Custom domain flag (Slate / custom domain where SDK session cookies are non-first-party)
 const IS_CUSTOM_DOMAIN =
   !IS_LOCAL &&
   !window.location.hostname.includes("catalystserverless.in");
@@ -44,6 +40,55 @@ const MOCK_USER = {
 };
 const MOCK_EMAIL    = "demo@sentinal.ksp";
 const MOCK_PASSWORD = "Sentinal@2024";
+
+/* ── Helper: Canonical HashRouter App Entry URL Builder ──────────────── */
+/**
+ * Constructs a URL formatted specifically for HashRouter:
+ * `<base_url>[?query_params]#<hash_path>`
+ *
+ * Ensures that whenever Catalyst auth redirects back to service_url, the URL
+ * contains the hash fragment (e.g. #/dashboard), preventing HashRouter from
+ * throwing "No routes matched location /app/".
+ */
+export function getAppEntryUrl({
+  baseUrl = null,
+  hashPath = "/dashboard",
+  queryParams = null,
+} = {}) {
+  let base = baseUrl;
+  if (!base) {
+    if (IS_LOCAL || IS_CUSTOM_DOMAIN) {
+      base = `${window.location.origin}/`;
+    } else {
+      base = `${window.location.origin}/app/index.html`;
+    }
+  }
+
+  // Ensure hashPath starts with '/'
+  const normalizedHash = hashPath.startsWith("/") ? hashPath : `/${hashPath}`;
+
+  // Format search query parameters if provided
+  let queryString = "";
+  if (queryParams) {
+    let params;
+    if (queryParams instanceof URLSearchParams) {
+      params = queryParams;
+    } else {
+      params = new URLSearchParams();
+      Object.entries(queryParams).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) {
+          params.set(k, typeof v === "object" ? JSON.stringify(v) : v);
+        }
+      });
+    }
+    const str = params.toString();
+    if (str) {
+      queryString = `?${str}`;
+    }
+  }
+
+  return `${base}${queryString}#${normalizedHash}`;
+}
 
 /* ── SDK loader ───────────────────────────────────────────────────────── */
 let sdkReady = null;
@@ -76,7 +121,6 @@ function ensureCatalystSdk() {
       loadScript(
         "https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js"
       ).then(async () => {
-        // Prefer platform-provided init.js (sets correct api_domain for this host)
         try {
           await loadScript("/__catalyst/sdk/init.js");
         } catch (e) {
@@ -138,45 +182,69 @@ export function isLocalAuthMode() { return IS_LOCAL; }
 
 /**
  * Redirect to login.
- * • Custom domain  → serverless /app/index.html?redirect_back=<origin-url>
- * • Serverless     → /__catalyst/auth/login
- *   - service_url is always /app/index.html (HashRouter: hash holds the route,
- *     server URL stays at /app/index.html which Catalyst actually serves)
- *   - If current URL has ?redirect_back we include it in the service_url so
- *     it survives the auth round-trip
+ * • Custom Domain (onslate.in): Redirects to serverless domain's entry point with redirect_back
+ * • Serverless Domain: Redirects to /__catalyst/auth/login with service_url formatted for HashRouter
  */
 export function redirectToLogin(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
-    // Bridge to serverless domain for auth. returnUrl is where we come back to
-    // on the custom domain after the SSO bridge completes.
-    const returnUrl = new URL(window.location.origin + "/#" + returnPath).href;
-    window.location.href =
-      `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}`;
+    // 1. Target return URL on custom domain (e.g. https://sentinal-peak.onslate.in/#/dashboard)
+    const returnUrl = getAppEntryUrl({
+      baseUrl: `${window.location.origin}/`,
+      hashPath: returnPath,
+    });
+
+    // 2. Redirect to serverless app entry point preserving hash route & redirect_back query
+    window.location.href = getAppEntryUrl({
+      baseUrl: `${CATALYST_BASE}/app/index.html`,
+      hashPath: returnPath,
+      queryParams: { redirect_back: returnUrl },
+    });
     return;
   }
 
-  // On the serverless domain the web client is at /app/index.html.
-  // With HashRouter the server URL is always /app/index.html regardless of
-  // what #/route the user is on. Build service_url using /app/index.html,
-  // preserving the redirect_back query param if present.
-  const params = new URLSearchParams(window.location.search);
-  const appBase = `${window.location.origin}/app/index.html`;
-  const serviceUrl = params.has("redirect_back")
-    ? `${appBase}?${params.toString()}`       // preserve redirect_back
-    : appBase;                                // plain entry point
+  // On serverless domain: construct service_url for Catalyst native auth
+  const currentParams = new URLSearchParams(window.location.search);
+  const redirectBack = currentParams.get("redirect_back");
+  const queryObj = redirectBack ? { redirect_back: redirectBack } : null;
+
+  // service_url explicitly includes the HashRouter path (e.g. /app/index.html?redirect_back=...#/dashboard)
+  const serviceUrl = getAppEntryUrl({
+    baseUrl: `${window.location.origin}/app/index.html`,
+    hashPath: returnPath,
+    queryParams: queryObj,
+  });
 
   window.location.href =
     `/__catalyst/auth/login?service_url=${encodeURIComponent(serviceUrl)}`;
 }
 
+/**
+ * Redirect to signup.
+ */
 export function redirectToSignup(returnPath = "/dashboard") {
   if (IS_CUSTOM_DOMAIN) {
-    const returnUrl = new URL(window.location.origin + "/#" + returnPath).href;
-    window.location.href =
-      `${CATALYST_BASE}/app/index.html?redirect_back=${encodeURIComponent(returnUrl)}&mode=signup`;
+    const returnUrl = getAppEntryUrl({
+      baseUrl: `${window.location.origin}/`,
+      hashPath: returnPath,
+    });
+    window.location.href = getAppEntryUrl({
+      baseUrl: `${CATALYST_BASE}/app/index.html`,
+      hashPath: returnPath,
+      queryParams: { redirect_back: returnUrl, mode: "signup" },
+    });
     return;
   }
-  const serviceUrl = `${window.location.origin}/app/index.html`;
+
+  const currentParams = new URLSearchParams(window.location.search);
+  const redirectBack = currentParams.get("redirect_back");
+  const queryObj = redirectBack ? { redirect_back: redirectBack } : null;
+
+  const serviceUrl = getAppEntryUrl({
+    baseUrl: `${window.location.origin}/app/index.html`,
+    hashPath: returnPath,
+    queryParams: queryObj,
+  });
+
   window.location.href =
     `/__catalyst/auth/signup?service_url=${encodeURIComponent(serviceUrl)}`;
 }
@@ -220,9 +288,8 @@ export async function signupUser() {
  *  1. Local → return mock cache
  *  2. URL has ?auth_user=... → extract, save to localStorage, clean URL
  *  3. Custom domain → return cache or null (triggers SSO redirect via AuthGuard)
- *  4. Serverless + ?logout=true → sign out and go to /login
- *  5. Serverless (no redirect_back) → SDK getCurrentProjectUser
- *  6. Serverless + ?redirect_back → authenticate; on success redirect back with ?auth_user=
+ *  4. Serverless + ?logout=true → sign out and redirect to #/login
+ *  5. Serverless + cached session / SDK auth → return user (redirecting to custom domain if ?redirect_back is present)
  */
 export async function getCurrentUser() {
   /* ── 1. Local mock ── */
@@ -238,13 +305,12 @@ export async function getCurrentUser() {
       if (user?.email_id || user?.user_id) {
         localStorage.setItem("sentinal_user", JSON.stringify(user));
         localStorage.setItem("sentinal_authed", "1");
-        // Clean URL without triggering reload
+
+        // Clean query parameter from URL without page reload while preserving hash route
         params.delete("auth_user");
         const qs = params.toString();
-        const clean =
-          window.location.pathname +
-          (qs ? `?${qs}` : "") +
-          window.location.hash;
+        const hash = window.location.hash || "#/dashboard";
+        const clean = window.location.pathname + (qs ? `?${qs}` : "") + hash;
         window.history.replaceState({}, document.title, clean);
         return user;
       }
@@ -268,7 +334,12 @@ export async function getCurrentUser() {
       const catalyst = await ensureCatalystSdk();
       if (catalyst?.auth) await catalyst.auth.signOut();
     } catch { /* best-effort */ }
-    window.location.href = "/login";
+
+    // Redirect to HashRouter login path
+    window.location.href = getAppEntryUrl({
+      baseUrl: `${window.location.origin}/app/index.html`,
+      hashPath: "/login",
+    });
     return new Promise(() => {}); // never resolves; navigation pending
   }
 
@@ -320,12 +391,21 @@ export async function getCurrentUser() {
   }
 }
 
+/**
+ * Logout user.
+ * • Custom domain: Redirects to serverless app with ?logout=true to destroy remote session
+ * • Serverless domain: Destroys session via SDK and redirects to #/login
+ */
 export async function logoutUser() {
   clearSession();
 
   if (IS_CUSTOM_DOMAIN) {
     // Bridge logout to the serverless domain where the real session lives
-    window.location.href = `${CATALYST_BASE}/app/index.html?logout=true`;
+    window.location.href = getAppEntryUrl({
+      baseUrl: `${CATALYST_BASE}/app/index.html`,
+      hashPath: "/login",
+      queryParams: { logout: "true" },
+    });
     return;
   }
 
@@ -336,7 +416,10 @@ export async function logoutUser() {
     } catch { /* best-effort */ }
   }
 
-  window.location.href = "/login";
+  window.location.href = getAppEntryUrl({
+    baseUrl: `${window.location.origin}/app/index.html`,
+    hashPath: "/login",
+  });
 }
 
 export function isAuthed() {
