@@ -296,42 +296,45 @@ def _get_stations(district_filter=None) -> list:
     from selenium.webdriver.support import expected_conditions as EC
 
     _log("Discovering police stations via SmartBrowz...")
-    driver   = _make_driver("station-discovery")
     stations = []
     targets  = district_filter or sorted(DISTRICT_NAMES.keys())
 
     try:
-        for did in targets:
-            if _STOP_FLAG.is_set():
-                break
-            dname = DISTRICT_NAMES.get(did, str(did))
-            _log(f"Station discovery: District {did} ({dname})")
-            driver.get(BASE_URL)
-            try:
-                SeleniumSelect(
-                    WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.NAME, "district_id"))
-                    )
-                ).select_by_value(str(did))
-
-                ps_el = WebDriverWait(driver, 10).until(
-                    lambda d: d.find_element(By.NAME, "ps_id")
-                )
-                WebDriverWait(driver, 10).until(
-                    lambda d: len(SeleniumSelect(ps_el).options) > 1
-                )
-                for o in SeleniumSelect(ps_el).options:
-                    sid   = o.get_attribute("value")
-                    sname = o.text.strip()
-                    if sid and sid != "1" and "Select" not in sname:
-                        stations.append((did, dname, sid, sname))
-            except Exception as e:
-                _log(f"Station discovery error ({dname}): {e}")
-    finally:
+        driver = _make_driver("station-discovery")
         try:
-            driver.quit()
-        except Exception:
-            pass
+            for did in targets:
+                if _STOP_FLAG.is_set():
+                    break
+                dname = DISTRICT_NAMES.get(did, str(did))
+                _log(f"Station discovery: District {did} ({dname})")
+                try:
+                    driver.get(BASE_URL)
+                    SeleniumSelect(
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.NAME, "district_id"))
+                        )
+                    ).select_by_value(str(did))
+
+                    ps_el = WebDriverWait(driver, 10).until(
+                        lambda d: d.find_element(By.NAME, "ps_id")
+                    )
+                    WebDriverWait(driver, 10).until(
+                        lambda d: len(SeleniumSelect(ps_el).options) > 1
+                    )
+                    for o in SeleniumSelect(ps_el).options:
+                        sid   = o.get_attribute("value")
+                        sname = o.text.strip()
+                        if sid and sid != "1" and "Select" not in sname:
+                            stations.append((did, dname, sid, sname))
+                except Exception as e:
+                    _log(f"Station discovery warning ({dname}): {e}")
+        finally:
+            try:
+                driver.quit()
+            except Exception:
+                pass
+    except Exception as drv_err:
+        _log(f"SmartBrowz driver initialization notice: {drv_err}")
 
     # If live discovery produced no stations (e.g. driver creation failed), use static fallbacks
     if not stations:
