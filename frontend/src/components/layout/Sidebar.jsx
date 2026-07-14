@@ -13,7 +13,8 @@ export default function Sidebar() {
       items: [
         { path: '/warroom', icon: <Icon name="warroom" size={13} />, label: t('nav.warroom') },
         { path: '/dashboard', icon: <Icon name="dashboard" size={13} />, label: t('nav.dashboard') },
-        { path: '/ingestion', icon: <Icon name="ingestion" size={13} />, label: t('nav.dataingestion') },
+        { path: '/upload', icon: <Icon name="ingestion" size={13} />, label: 'Upload Intel' },
+        { path: '/ingestion', icon: <Icon name="fir" size={13} />, label: t('nav.dataingestion') },
       ],
     },
     {

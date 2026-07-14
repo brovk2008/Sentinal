@@ -322,6 +322,53 @@ async def match_suspect(file: UploadFile = File(...)):
         raise HTTPException(500, f"Suspect matching failed: {e}")
 
 
+# Pre-built investigation scenario for demo mode
+DEMO_BOARD = {
+    "nodes": [
+        {"id": "n1", "type": "sentinalNode", "position": {"x": 200, "y": 200},
+         "data": {"type": "person", "label": "Ashok Kumar",
+                  "subtitle": "Suspected Syndicate Coordinator",
+                  "risk": "HIGH"}},
+        {"id": "n2", "type": "sentinalNode", "position": {"x": 550, "y": 150},
+         "data": {"type": "case", "label": "Case #456 — UPI Cyber Fraud",
+                  "subtitle": "Bengaluru Urban · Under Investigation"}},
+        {"id": "n3", "type": "sentinalNode", "position": {"x": 550, "y": 350},
+         "data": {"type": "person", "label": "Ramesh Kumar",
+                  "subtitle": "Financial Mule · 3 prior cases",
+                  "risk": "HIGH"}},
+        {"id": "n4", "type": "sentinalNode", "position": {"x": 300, "y": 420},
+         "data": {"type": "location", "label": "Hebbal, Bengaluru",
+                  "subtitle": "Known meeting point"}},
+        {"id": "n5", "type": "sentinalNode", "position": {"x": 800, "y": 250},
+         "data": {"type": "financial", "label": "Account 90812328",
+                  "subtitle": "₹2.4Cr suspicious transactions"}},
+    ],
+    "edges": [
+        {"id": "e1", "source": "n1", "target": "n2",
+         "label": "Primary Beneficiary",
+         "style": {"stroke": "#c8814a", "strokeWidth": 2},
+         "markerEnd": {"type": "arrowclosed", "color": "#c8814a"}},
+        {"id": "e2", "source": "n1", "target": "n3",
+         "label": "Co-accused (3 cases)",
+         "style": {"stroke": "#e05252", "strokeWidth": 2},
+         "markerEnd": {"type": "arrowclosed", "color": "#e05252"}},
+        {"id": "e3", "source": "n3", "target": "n5",
+         "label": "Controls account",
+         "style": {"stroke": "#4ac880", "strokeWidth": 1.5},
+         "markerEnd": {"type": "arrowclosed", "color": "#4ac880"}},
+        {"id": "e4", "source": "n1", "target": "n4",
+         "label": "Active location",
+         "style": {"stroke": "#4a9eff", "strokeWidth": 1.5},
+         "markerEnd": {"type": "arrowclosed", "color": "#4a9eff"}},
+    ]
+}
+
+@router.get("/demo")
+def get_demo_board():
+    """Returns pre-built demo board for presentation mode."""
+    return DEMO_BOARD
+
+
 # ─── Canvas Board Endpoints (ReactFlow ConnectionsBoard) ─────────────
 
 @router.get("/canvas/load/{case_id}")

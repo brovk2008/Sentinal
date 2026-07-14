@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 # Format: https://<projectId>:<apiKey>@webdriver.catalystsmartbrowz.in/browser360/webdriver/<projectId>
 SMARTBROWZ_URL = os.environ.get(
     "SMARTBROWZ_WEBDRIVER_URL",
-    ""
+    "https://60073535541:5442bad1657a042b133011611f1a54f60c4f3d946fd6d81ea1e68909eed4172b@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
 )
 
 

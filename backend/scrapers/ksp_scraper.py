@@ -30,7 +30,7 @@ BASE_URL    = "https://ksp.karnataka.gov.in/firsearch/en"
 
 SMARTBROWZ_URL = os.getenv(
     "SMARTBROWZ_WEBDRIVER_URL",
-    "https://smartbrowz.catalyst.zoho.com/selenium/wd/hub?apikey=PASTE_YOUR_KEY"
+    "https://60073535541:5442bad1657a042b133011611f1a54f60c4f3d946fd6d81ea1e68909eed4172b@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
 )
 
 DISTRICT_NAMES = {
@@ -87,19 +87,25 @@ def _make_driver(worker_id):
 
         opts = Options()
         opts.add_argument("--no-sandbox")
-        opts.add_argument("--headless")
         opts.add_argument("--disable-dev-shm-usage")
         opts.add_argument("--disable-blink-features=AutomationControlled")
-        opts.add_experimental_option("excludeSwitches", ["enable-automation"])
+        opts.add_argument("--window-size=1280,800")
 
         driver = webdriver.Remote(
             command_executor=SMARTBROWZ_URL,
             options=opts
         )
+        # Test connection immediately
+        try:
+            driver.get("about:blank")
+            _log(f"Worker {worker_id}: SmartBrowz connected ✓ session={driver.session_id}")
+        except Exception as e:
+            _log(f"Worker {worker_id}: SmartBrowz connection FAILED: {e}")
+            raise
+
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
-        _log(f"Worker {worker_id}: SmartBrowz browser connected")
         return driver
     except Exception as e:
         _log(f"Worker {worker_id}: Failed to connect SmartBrowz — {e}")
@@ -470,12 +476,21 @@ def run_scraper(year: str, district_ids=None):
         })
 
     _log(f"=== Sentinal Scraper START | Year: {year} ===")
+    _log(f"SmartBrowz Webdriver URL: {SMARTBROWZ_URL[:60]}...")
 
-    stations = _get_stations(district_ids)
+    try:
+        stations = _get_stations(district_ids)
+    except Exception as e:
+        _log(f"FATAL: Station discovery failed: {e}")
+        _log("Check SMARTBROWZ_WEBDRIVER_URL in AppSail env vars")
+        with progress_lock:
+            scrape_progress["status"] = "error"
+        return
+
     if not stations:
         with progress_lock:
             scrape_progress["status"] = "error"
-        _log("No stations discovered — check SmartBrowz URL and network")
+        _log("ERROR: No stations discovered. Check SmartBrowz connection.")
         return
 
     # Distribute round-robin across workers

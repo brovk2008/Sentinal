@@ -1,380 +1,315 @@
+/**
+ * NetworkGraph3D.jsx — Flat Force-Directed Graph (Obsidian-Style)
+ * Uses D3 force simulation. Beautiful, clean, dark-themed, and highly interactive.
+ */
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import * as d3 from 'd3'
 import { fetchNetworkGraph } from '../api'
-import LoadingPulse from '../components/shared/LoadingPulse'
+
+const NODE_COLORS = {
+  person:    '#e05252',
+  case:      '#c8814a',
+  phone:     '#52e07a',
+  bank:      '#52e0cc',
+  vehicle:   '#b452e0',
+  location:  '#52b0e0',
+  evidence:  '#e0c852',
+}
+
+const NODE_LABELS = {
+  person:    'Person',
+  case:      'Case File',
+  phone:     'Phone Record',
+  bank:      'Bank Account',
+  vehicle:   'Vehicle Record',
+  location:  'Location Tower',
+  evidence:  'Evidence',
+}
 
 export default function NetworkGraph3D() {
   const navigate = useNavigate()
-  const mountRef = useRef(null)
-  const sceneRef = useRef(null)
+  const svgRef = useRef(null)
   const [selectedNode, setSelectedNode] = useState(null)
-  const [stats, setStats] = useState({ nodes: 0, edges: 0 })
   const [loading, setLoading] = useState(true)
+  const [graphData, setGraphData] = useState({ nodes: [], edges: [] })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterType, setFilterType] = useState('All')
+  const simulationRef = useRef(null)
 
   useEffect(() => {
-    const THREE = window.THREE
-    if (!THREE) {
-      console.error("Three.js not found on window object.")
-      return
-    }
-
-    setLoading(true)
-
-    // ─── Scene setup ────────────────────────────────────────────────
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#07070a')
-    scene.fog = new THREE.FogExp2('#07070a', 0.006)
-
-    const camera = new THREE.PerspectiveCamera(
-      60, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 2000
-    )
-    camera.position.set(0, 0, 320)
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    mountRef.current.appendChild(renderer.domElement)
-
-    // ─── Orbit Controls (custom high-performance manual implementation) ────────────
-    let isDragging = false, prevMouse = { x: 0, y: 0 }
-    let spherical = { theta: 0, phi: Math.PI / 2, radius: 320 }
-
-    const dom = renderer.domElement
-
-    const onMouseDown = (e) => {
-      isDragging = true
-      prevMouse = { x: e.clientX, y: e.clientY }
-    }
-    const onMouseUp = () => { isDragging = false }
-    const onMouseMove = (e) => {
-      if (!isDragging) return
-      spherical.theta -= (e.clientX - prevMouse.x) * 0.004
-      spherical.phi   -= (e.clientY - prevMouse.y) * 0.004
-      spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi))
-      prevMouse = { x: e.clientX, y: e.clientY }
-      
-      updateCameraPosition()
-    }
-    const onWheel = (e) => {
-      e.preventDefault()
-      spherical.radius = Math.max(80, Math.min(750, spherical.radius + e.deltaY * 0.25))
-      updateCameraPosition()
-    }
-
-    const updateCameraPosition = () => {
-      camera.position.set(
-        spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta),
-        spherical.radius * Math.cos(spherical.phi),
-        spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta)
-      )
-      camera.lookAt(0, 0, 0)
-    }
-
-    dom.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mouseup', onMouseUp)
-    window.addEventListener('mousemove', onMouseMove)
-    dom.addEventListener('wheel', onWheel)
-
-    updateCameraPosition()
-
-    // ─── Node color & size configs ──────────────────────────────────
-    const nodeColors = {
-      person:  0x7f77dd, // purple
-      case:    0xe05252, // red
-      phone:   0x4a9ede, // blue
-      bank:    0x52b788, // green
-      vehicle: 0xe0a832  // orange
-    }
-    const nodeSizes = {
-      person: 4.5, case: 3.5, phone: 2.5, bank: 2.5, vehicle: 2.5
-    }
-
-    // Positions & forces variables
-    const positions = {}
-    const velocities = {}
-    const meshes = {}
-    const edges = []
-
-    // Fetch vis network nodes and edges from API
-    fetchNetworkGraph(240).then(data => {
-      const nodeList = data.nodes || []
-      const edgeList = data.edges || []
-
-      // Create 3D Nodes
-      nodeList.forEach(node => {
-        const radius = 160
-        const theta = Math.random() * Math.PI * 2
-        const phi = Math.acos(2 * Math.random() - 1)
-        
-        positions[node.id] = new THREE.Vector3(
-          radius * Math.sin(phi) * Math.cos(theta),
-          radius * Math.cos(phi),
-          radius * Math.sin(phi) * Math.sin(theta)
-        )
-        velocities[node.id] = new THREE.Vector3(0, 0, 0)
-
-        // Sphere mesh creation
-        const size = nodeSizes[node.type] || 3.0
-        const geo = new THREE.SphereGeometry(size, 16, 16)
-        const mat = new THREE.MeshPhongMaterial({
-          color: nodeColors[node.type] || 0xffffff,
-          emissive: nodeColors[node.type] || 0xffffff,
-          emissiveIntensity: 0.25,
-          shininess: 120
-        })
-        const mesh = new THREE.Mesh(geo, mat)
-        mesh.position.copy(positions[node.id])
-        mesh.userData = { nodeId: node.id, nodeData: node }
-        scene.add(mesh)
-        meshes[node.id] = mesh
+    fetchNetworkGraph(400)
+      .then(data => {
+        setGraphData(data)
+        setLoading(false)
       })
-
-      // Create 3D Edges
-      edgeList.forEach(edge => {
-        const fromPos = positions[edge.from]
-        const toPos = positions[edge.to]
-        if (!fromPos || !toPos) return
-
-        const points = [fromPos.clone(), toPos.clone()]
-        const geo = new THREE.BufferGeometry().setFromPoints(points)
-        const mat = new THREE.LineBasicMaterial({
-          color: 0x444455,
-          opacity: 0.35,
-          transparent: true
-        })
-        const line = new THREE.Line(geo, mat)
-        scene.add(line)
-        edges.push({ from: edge.from, to: edge.to, line })
-      })
-
-      setStats({ nodes: nodeList.length, edges: edgeList.length })
-      setLoading(false)
-
-      // --- Force Simulation math step ---
-      const nodeIds = nodeList.map(n => n.id)
-      const adjList = {}
-      edgeList.forEach(e => {
-        if (!adjList[e.from]) adjList[e.from] = []
-        if (!adjList[e.to]) adjList[e.to] = []
-        adjList[e.from].push(e.to)
-        adjList[e.to].push(e.from)
-      })
-
-      let simStep = 0
-      const simulate = () => {
-        if (simStep > 240) return
-
-        nodeIds.forEach(id => {
-          const pos = positions[id]
-          const vel = velocities[id]
-
-          // Repulsion
-          nodeIds.forEach(otherId => {
-            if (otherId === id) return
-            const diff = pos.clone().sub(positions[otherId])
-            const dist = Math.max(diff.length(), 6)
-            const force = 900 / (dist * dist)
-            vel.addScaledVector(diff.normalize(), force)
-          })
-
-          // Attraction
-          ;(adjList[id] || []).forEach(otherId => {
-            const diff = positions[otherId].clone().sub(pos)
-            const dist = diff.length()
-            const force = dist * 0.012
-            vel.addScaledVector(diff.normalize(), force)
-          })
-
-          // Center gravity
-          vel.addScaledVector(pos.clone().negate(), 0.004)
-
-          // Damping
-          vel.multiplyScalar(0.82)
-          pos.add(vel)
-
-          if (meshes[id]) meshes[id].position.copy(pos)
-        })
-
-        // Re-align lines
-        edges.forEach(({ from, to, line }) => {
-          if (positions[from] && positions[to]) {
-            const points = [positions[from].clone(), positions[to].clone()]
-            line.geometry.setFromPoints(points)
-            line.geometry.attributes.position.needsUpdate = true
-          }
-        })
-
-        simStep++
-      }
-
-      // ─── Lights ──────────────────────────────────────────────────
-      scene.add(new THREE.AmbientLight(0xffffff, 0.45))
-      const dirLight = new THREE.DirectionalLight(0xc8814a, 0.9)
-      dirLight.position.set(120, 120, 120)
-      scene.add(dirLight)
-      const dirLight2 = new THREE.DirectionalLight(0x4a9ede, 0.4)
-      dirLight2.position.set(-120, -60, -120)
-      scene.add(dirLight2)
-
-      // ─── Raycaster ───────────────────────────────────────────────
-      const raycaster = new THREE.Raycaster()
-      const mouse = new THREE.Vector2()
-
-      const onClick = (e) => {
-        const rect = dom.getBoundingClientRect()
-        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-        
-        raycaster.setFromCamera(mouse, camera)
-        const intersects = raycaster.intersectObjects(Object.values(meshes))
-        
-        if (intersects.length > 0) {
-          const hit = intersects[0].object
-          setSelectedNode(hit.userData.nodeData)
-          
-          // Highlight
-          Object.values(meshes).forEach(m => {
-            m.material.emissiveIntensity = m === hit ? 1.1 : 0.08
-            m.scale.setScalar(m === hit ? 1.4 : 1.0)
-          })
-        }
-      }
-      dom.addEventListener('click', onClick)
-
-      // ─── Animation loop ──────────────────────────────────────────
-      let animId
-      const animate = () => {
-        animId = requestAnimationFrame(animate)
-        simulate()
-        renderer.render(scene, camera)
-      }
-      animate()
-
-      // Cleanup
-      sceneRef.current = {
-        cleanup: () => {
-          cancelAnimationFrame(animId)
-          dom.removeEventListener('mousedown', onMouseDown)
-          window.removeEventListener('mouseup', onMouseUp)
-          window.removeEventListener('mousemove', onMouseMove)
-          dom.removeEventListener('wheel', onWheel)
-          dom.removeEventListener('click', onClick)
-        }
-      }
-    }).catch(err => {
-      console.error(err)
-      setLoading(false)
-    })
-
-    return () => {
-      if (sceneRef.current) sceneRef.current.cleanup()
-      renderer.dispose()
-      if (mountRef.current) mountRef.current.innerHTML = ''
-    }
+      .catch(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    if (loading || !graphData.nodes?.length) return
+    drawGraph(graphData)
+  }, [graphData, loading, filterType, searchTerm])
+
+  const drawGraph = (data) => {
+    const svg = d3.select(svgRef.current)
+    const container = svgRef.current
+    if (!container) return
+    const width = container.clientWidth || 1200
+    const height = container.clientHeight || 700
+
+    svg.selectAll('*').remove()
+
+    // Filter nodes
+    let nodes = data.nodes || []
+    if (filterType !== 'All') {
+      nodes = nodes.filter(n => n.type === filterType)
+    }
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase()
+      nodes = nodes.filter(n => (n.label || '').toLowerCase().includes(term))
+    }
+
+    const nodeIds = new Set(nodes.map(n => n.id))
+    
+    // Map edges from -> source, to -> target and filter
+    const links = (data.links || data.edges || [])
+      .map(l => ({
+        ...l,
+        source: l.from || l.source,
+        target: l.to || l.target
+      }))
+      .filter(l => nodeIds.has(l.source) && nodeIds.has(l.target))
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.05, 5])
+      .on('zoom', (event) => g.attr('transform', event.transform))
+
+    svg.call(zoom)
+
+    const g = svg.append('g')
+
+    // Force simulation
+    simulationRef.current = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links)
+        .id(d => d.id)
+        .distance(120)
+        .strength(0.4))
+      .force('charge', d3.forceManyBody().strength(-280))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide(32))
+
+    // Draw links
+    const link = g.append('g')
+      .selectAll('line')
+      .data(links)
+      .enter().append('line')
+      .attr('stroke', '#22223b')
+      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', 0.6)
+
+    // Draw node groups
+    const node = g.append('g')
+      .selectAll('g')
+      .data(nodes)
+      .enter().append('g')
+      .call(d3.drag()
+        .on('start', (event, d) => {
+          if (!event.active) simulationRef.current.alphaTarget(0.3).restart()
+          d.fx = d.x
+          d.fy = d.y
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x
+          d.fy = event.y
+        })
+        .on('end', (event, d) => {
+          if (!event.active) simulationRef.current.alphaTarget(0)
+          d.fx = null
+          d.fy = null
+        })
+      )
+      .on('click', (event, d) => {
+        event.stopPropagation()
+        setSelectedNode(d)
+        // Highlight links
+        link.attr('stroke', l =>
+          l.source.id === d.id || l.target.id === d.id ? '#c8814a' : '#22223b'
+        ).attr('stroke-width', l =>
+          l.source.id === d.id || l.target.id === d.id ? 2.5 : 1.5
+        )
+      })
+      .style('cursor', 'pointer')
+
+    // Draw node circles
+    node.append('circle')
+      .attr('r', d => {
+        // Calculate size based on link connections
+        const connections = links.filter(l =>
+          (l.source.id || l.source) === d.id ||
+          (l.target.id || l.target) === d.id
+        ).length
+        return Math.max(8, Math.min(24, 8 + connections * 1.2))
+      })
+      .attr('fill', d => NODE_COLORS[d.type] || '#888')
+      .attr('fill-opacity', 0.85)
+      .attr('stroke', '#040408')
+      .attr('stroke-width', 2)
+
+    // Add labels
+    node.append('text')
+      .text(d => (d.label || d.id || '').slice(0, 24))
+      .attr('x', 0)
+      .attr('y', d => {
+        const connections = links.filter(l =>
+          (l.source.id || l.source) === d.id ||
+          (l.target.id || l.target) === d.id
+        ).length
+        return Math.max(8, Math.min(24, 8 + connections * 1.2)) + 14
+      })
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 10)
+      .attr('font-family', 'var(--font-mono)')
+      .attr('fill', '#aaa')
+      .attr('pointer-events', 'none')
+
+    simulationRef.current.on('tick', () => {
+      link
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y)
+      node.attr('transform', d => `translate(${d.x},${d.y})`)
+    })
+
+    svg.on('click', () => {
+      setSelectedNode(null)
+      link.attr('stroke', '#22223b').attr('stroke-width', 1.5)
+    })
+  }
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: 'calc(100vh - var(--topbar-height) - 32px)', background: '#07070a' }}>
-      
-      {/* ThreeJS container */}
-      <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
-
-      {loading && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(7,7,10,0.85)' }}>
-          <LoadingPulse text="Compiling WebGL Force Simulation..." />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column',
+                  background: '#040408', color: 'var(--text-primary)' }}>
+      {/* Toolbar */}
+      <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-subtle)',
+                    background: 'var(--bg-secondary)', display: 'flex',
+                    gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)',
+                      fontFamily: 'var(--font-mono)' }}>
+          CRIMINAL ASSOCIATION NETWORK
         </div>
-      )}
-
-      {/* Network Stats Overlay */}
-      <div style={{
-        position: 'absolute', top: 16, left: 16,
-        background: 'rgba(7,7,10,0.85)', border: '1px solid var(--border-default)',
-        borderRadius: 8, padding: '10px 14px', color: 'var(--text-secondary)', fontSize: 11,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 100
-      }}>
-        <div className="mono" style={{ color: 'var(--copper-400)', fontWeight: 700 }}>
-          {stats.nodes} SPHERES · {stats.edges} VECTOR CONNECTIONS
+        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          {graphData.nodes?.length || 0} entities · {graphData.links?.length || 0} connections
         </div>
-        
-        <div style={{ marginTop: 6, display: 'flex', gap: 10 }}>
-          {[
-            { label: 'Person', color: '#7f77dd' },
-            { label: 'Case', color: '#e05252' },
-            { label: 'Phone', color: '#4a9ede' },
-            { label: 'Bank', color: '#52b788' },
-            { label: 'Vehicle', color: '#e0a832' }
-          ].map(({ label, color }) => (
-            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block' }} />
-              <span style={{ fontSize: 9 }}>{label}</span>
-            </span>
-          ))}
-        </div>
-        
-        <div style={{ marginTop: 8, fontSize: 9, color: 'var(--text-muted)' }}>
-          Left-drag to rotate · Scroll wheel to zoom · Right-drag to pan · Click node to inspect
+        <input
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          placeholder="Search name/ID..."
+          style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
+                   borderRadius: 4, color: 'var(--text-primary)', fontSize: 11,
+                   padding: '4px 10px', width: 160 }}
+        />
+        {['All', 'person', 'case', 'phone', 'bank', 'vehicle', 'location'].map(type => (
+          <button key={type} onClick={() => setFilterType(type)}
+            style={{
+              padding: '3px 10px', borderRadius: 4, fontSize: 10,
+              cursor: 'pointer', fontWeight: filterType === type ? 700 : 400,
+              background: filterType === type ? 'rgba(200,129,74,0.2)' : 'transparent',
+              border: `1px solid ${filterType === type ? 'var(--copper-400)' : 'var(--border-subtle)'}`,
+              color: filterType === type ? 'var(--copper-400)' : 'var(--text-muted)',
+            }}>
+            {NODE_LABELS[type] || 'All'}
+          </button>
+        ))}
+        <div style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>
+          Scroll to zoom · Drag nodes · Click to inspect
         </div>
       </div>
 
-      {/* Inspection Sidebar Drawer */}
-      {selectedNode && (
-        <div style={{
-          position: 'absolute', top: 16, right: 16, width: 280,
-          background: 'var(--bg-card)', border: '1px solid var(--border-strong)',
-          borderRadius: 8, padding: 14, boxShadow: '0 10px 30px rgba(0,0,0,0.8)', zIndex: 100
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', textTransform: 'uppercase' }}>
-              Inspected Node
-            </span>
-            <button onClick={() => setSelectedNode(null)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}>
-              ×
-            </button>
+      <div style={{ flex: 1, position: 'relative' }}>
+        {loading && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--text-muted)', fontSize: 13 }}>
+            Computing force simulation...
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {selectedNode.label}
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-            Type: {selectedNode.type?.toUpperCase()}
-          </div>
-          
-          <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 10, paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              Entity matches database records. Connection weight active.
+        )}
+
+        <svg ref={svgRef} style={{ width: '100%', height: '100%' }} />
+
+        {/* Legend */}
+        <div style={{ position: 'absolute', bottom: 16, left: 16,
+                      background: 'rgba(4,4,8,0.9)', border: '1px solid var(--border-subtle)',
+                      borderRadius: 6, padding: '10px 14px' }}>
+          {Object.entries(NODE_COLORS).map(([type, color]) => (
+            <div key={type} style={{ display: 'flex', alignItems: 'center',
+                                     gap: 6, marginBottom: 4 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%',
+                            background: color }} />
+              <span style={{ fontSize: 10, color: '#888' }}>{NODE_LABELS[type]}</span>
             </div>
-            {selectedNode.type === 'person' && (
-              <button
-                className="btn btn-xs btn-copper"
-                style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => {
-                  const pid = selectedNode.id.replace('p_', '');
-                  navigate(`/accused/${pid}`);
-                }}
-              >
-                📁 Open Criminal Dossier
-              </button>
-            )}
-            {selectedNode.type === 'case' && (
-              <button
-                className="btn btn-xs btn-copper"
-                style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => {
-                  const cid = selectedNode.id.replace('c_', '');
-                  navigate(`/timeline/${cid}`);
-                }}
-              >
-                📂 Open Case File
-              </button>
-            )}
-            {!['person', 'case'].includes(selectedNode.type) && (
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '4px 0' }}>
-                Inspect mode active
-              </div>
-            )}
-          </div>
+          ))}
         </div>
-      )}
+
+        {/* Node Inspector Panel */}
+        {selectedNode && (
+          <div style={{
+            position: 'absolute', top: 16, right: 16, width: 280,
+            background: 'var(--bg-card)', border: '1px solid var(--border-strong)',
+            borderRadius: 8, padding: 14, boxShadow: '0 10px 30px rgba(0,0,0,0.8)', zIndex: 100
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', textTransform: 'uppercase' }}>
+                Inspected Node
+              </span>
+              <button onClick={() => setSelectedNode(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}>
+                ×
+              </button>
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+              {selectedNode.label}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+              Type: {selectedNode.type?.toUpperCase()}
+            </div>
+            
+            <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 10, paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                Entity matches database records. Connection weight active.
+              </div>
+              {selectedNode.type === 'person' && (
+                <button
+                  className="btn btn-xs btn-copper"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => {
+                    const pid = selectedNode.id.replace('p_', '')
+                    navigate(`/accused/${pid}`)
+                  }}
+                >
+                  📁 Open Criminal Dossier
+                </button>
+              )}
+              {selectedNode.type === 'case' && (
+                <button
+                  className="btn btn-xs btn-copper"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => {
+                    const cid = selectedNode.id.replace('c_', '')
+                    navigate(`/timeline/${cid}`)
+                  }}
+                >
+                  📂 Open Case File
+                </button>
+              )}
+              {!['person', 'case'].includes(selectedNode.type) && (
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '4px 0' }}>
+                  Inspect mode active
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

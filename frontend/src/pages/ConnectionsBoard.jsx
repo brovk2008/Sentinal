@@ -46,85 +46,94 @@ const NODE_TYPES = {
 
 // ── Custom Node renderer ─────────────────────────────────────────────
 function SentinalNode({ data, selected }) {
-  const cfg = NODE_TYPES[data.type] || NODE_TYPES.evidence
+  const colors = {
+    person:    { border: '#e05252', bg: 'rgba(224,82,82,0.08)',   icon: '👤' },
+    case:      { border: 'var(--copper-500,#c8814a)', bg: 'rgba(200,129,74,0.08)',  icon: '📁' },
+    location:  { border: '#52b0e0', bg: 'rgba(82,176,224,0.08)',  icon: '📍' },
+    phone:     { border: '#52e07a', bg: 'rgba(82,224,122,0.08)',  icon: '📱' },
+    vehicle:   { border: '#b452e0', bg: 'rgba(180,82,224,0.08)',  icon: '🚗' },
+    evidence:  { border: '#e0c852', bg: 'rgba(224,200,82,0.08)',  icon: '🔬' },
+    financial: { border: '#52e0cc', bg: 'rgba(82,224,204,0.08)',  icon: '💰' },
+  };
+  const c = colors[data.type] || colors.evidence;
+
   return (
-    <>
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{
-          background: cfg.color,
-          border: '2px solid #0a0a16',
-          width: 8,
-          height: 8,
-        }}
-      />
-      <div style={{
-        minWidth: 160, maxWidth: 220,
-        background: selected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
-        border: `2px solid ${selected ? cfg.color : 'rgba(255,255,255,0.15)'}`,
-        borderRadius: 12, padding: '10px 14px',
-        boxShadow: selected
-          ? `0 0 18px ${cfg.color}55`
-          : '0 4px 16px rgba(0,0,0,0.4)',
-        cursor: 'grab',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-      }}>
-        {data.imageUrl && (
-          <img
-            src={data.imageUrl}
-            alt={data.label}
-            style={{
-              width: '100%',
-              maxHeight: 90,
-              objectFit: 'cover',
-              borderRadius: 6,
-              marginBottom: 8,
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}
-          />
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-          <span style={{ display: 'flex', alignItems: 'center' }}>{cfg.icon}</span>
-          <span style={{
-            fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-            color: cfg.color, letterSpacing: '0.08em',
-          }}>{data.type}</span>
-        </div>
-        <div style={{
-          fontSize: 13, fontWeight: 600, color: '#fff',
-          lineHeight: 1.3, marginBottom: 3,
-          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-        }}>{data.label}</div>
-        {data.subtitle && (
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.3 }}>
-            {data.subtitle}
-          </div>
-        )}
-        {data.tags?.length > 0 && (
-          <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-            {data.tags.slice(0, 3).map(tag => (
-              <span key={tag} style={{
-                fontSize: 8, padding: '2px 5px', borderRadius: 4,
-                background: `${cfg.color}22`, color: cfg.color,
-                border: `1px solid ${cfg.color}44`,
-              }}>{tag}</span>
-            ))}
-          </div>
-        )}
-      </div>
+    <div style={{
+      background: 'rgba(12,12,24,0.95)',
+      border: `2px solid ${selected ? '#fff' : c.border}`,
+      borderRadius: 8, padding: '10px 14px',
+      minWidth: 140, maxWidth: 200,
+      fontFamily: 'var(--font-sans)',
+      boxShadow: selected ? `0 0 16px ${c.border}` : '0 4px 16px rgba(0,0,0,0.5)',
+      position: 'relative',
+    }}>
+      {/* SOURCE handle — right center — drag FROM here */}
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         style={{
-          background: cfg.color,
-          border: '2px solid #0a0a16',
-          width: 8,
-          height: 8,
+          background: c.border, width: 12, height: 12,
+          border: '2px solid #0a0a0f', right: -6,
+          cursor: 'crosshair', zIndex: 10
         }}
       />
-    </>
-  )
+
+      {/* TARGET handle — left center — edges connect TO here */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{
+          background: '#4a9eff', width: 12, height: 12,
+          border: '2px solid #0a0a0f', left: -6,
+          zIndex: 10
+        }}
+      />
+
+      {/* Image preview if photo node */}
+      {data.imageUrl && (
+        <img src={data.imageUrl} alt={data.label}
+          style={{ width: '100%', maxHeight: 90, objectFit: 'cover',
+                   borderRadius: 4, marginBottom: 6,
+                   border: '1px solid var(--border-subtle)' }} />
+      )}
+
+      <div style={{ fontSize: 10, color: c.border, fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: '0.1em',
+                    marginBottom: 4, display: 'flex', gap: 4, alignItems: 'center' }}>
+        <span>{c.icon}</span><span>{data.type}</span>
+      </div>
+      <div style={{ fontSize: 13, color: '#fff', fontWeight: 600,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {data.label}
+      </div>
+      {data.subtitle && (
+        <div style={{ fontSize: 10, color: '#888', marginTop: 2,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {data.subtitle}
+        </div>
+      )}
+      {data.tags?.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 6 }}>
+          {data.tags.slice(0, 2).map(tag => (
+            <span key={tag} style={{
+              fontSize: 8, padding: '1px 4px', borderRadius: 3,
+              background: `${c.border}22`, color: c.border,
+              border: `1px solid ${c.border}44`
+            }}>{tag}</span>
+          ))}
+        </div>
+      )}
+      {data.risk && (
+        <div style={{ fontSize: 9, marginTop: 6, padding: '2px 6px',
+                      borderRadius: 3, display: 'inline-block', fontWeight: 700,
+                      background: data.risk === 'HIGH' ? 'rgba(224,82,82,0.2)'
+                                                       : 'rgba(224,168,50,0.2)',
+                      color: data.risk === 'HIGH' ? '#e05252' : '#e0a832' }}>
+          {data.risk} RISK
+        </div>
+      )}
+    </div>
+  );
 }
 
 const nodeTypes = { sentinalNode: SentinalNode }
@@ -446,6 +455,23 @@ export default function ConnectionsBoard() {
         </div>
         <div style={{ flex: 1 }} />
 
+        <button
+          onClick={async () => {
+            const res  = await fetch(`${BASE_URL}/api/v1/board/demo`);
+            const data = await res.json();
+            setNodes(data.nodes);
+            setEdges(data.edges);
+          }}
+          style={{
+            ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
+            background: 'rgba(74,158,255,0.1)',
+            borderColor: 'rgba(74,158,255,0.4)',
+            color: '#4a9eff',
+          }}
+        >
+          📂 Load Demo Case
+        </button>
+
         <button onClick={() => setShowAddModal(true)} style={{
           ...btnPrimary, flex: 'none', padding: '7px 14px', fontSize: 11,
         }}>+ {t('canvas.addNode')}</button>
@@ -476,6 +502,16 @@ export default function ConnectionsBoard() {
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginLeft: 4 }}>
           {nodes.length} nodes · {edges.length} edges
         </span>
+      </div>
+
+      <div style={{
+        padding: '6px 16px', background: 'rgba(74,158,255,0.06)',
+        borderBottom: '1px solid rgba(74,158,255,0.15)',
+        fontSize: 11, color: 'var(--text-muted)',
+      }}>
+        💡 Drag from the <span style={{ color: '#e05252' }}>red/orange dot</span> (right side of node)
+        to the <span style={{ color: '#4a9eff' }}>blue dot</span> (left side) to connect two nodes.
+        Press Backspace or Delete to remove a selected node/edge.
       </div>
 
       {/* Attach Evidence Files Collapsible */}
@@ -521,9 +557,10 @@ export default function ConnectionsBoard() {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
+          connectionMode="loose"
           minZoom={0.1}
-          maxZoom={3}
-          deleteKeyCode="Delete"
+          maxZoom={4}
+          deleteKeyCode={['Backspace', 'Delete']}
           style={{ background: 'transparent' }}
         >
           <Background color="rgba(255,255,255,0.04)" gap={28} />

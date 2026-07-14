@@ -174,6 +174,22 @@ class RAGService:
                 "type": "Uploaded Intel File"
             })
 
+        # Persist to disk
+        try:
+            import gzip
+            meta_path = config.CHUNK_METADATA_PATH
+            meta_path_gz = str(meta_path) + ".gz"
+            with gzip.open(meta_path_gz, "wt", encoding="utf-8") as f:
+                json.dump(self.metadata, f)
+
+            emb_path = config.EMBEDDINGS_PATH
+            emb_path_gz = str(emb_path) + ".gz"
+            with gzip.open(emb_path_gz, "wb") as f:
+                np.save(f, self.embeddings)
+            print(f"[RAG] Persisted updated metadata and embeddings to disk.")
+        except Exception as e:
+            print(f"[RAG] Error persisting updated chunks to disk: {e}")
+
         print(f"[RAG] Added {len(chunks)} chunks dynamically from {source_title}.")
         return len(chunks)
 
