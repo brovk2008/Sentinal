@@ -10,6 +10,15 @@ import re
 import logging
 import base64
 
+import site
+user_site = site.getusersitepackages()
+if user_site and user_site not in sys.path:
+    sys.path.insert(0, user_site)
+
+for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
+    if os.path.exists(extra_path) and extra_path not in sys.path:
+        sys.path.insert(0, extra_path)
+
 try:
     from bs4 import BeautifulSoup
     from selenium import webdriver
@@ -18,8 +27,14 @@ try:
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.chrome.options import Options
 except ImportError:
-    import sys, subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
+    user_site = site.getusersitepackages()
+    if user_site and user_site not in sys.path:
+        sys.path.insert(0, user_site)
+    for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
+        if os.path.exists(extra_path) and extra_path not in sys.path:
+            sys.path.insert(0, extra_path)
     from bs4 import BeautifulSoup
     from selenium import webdriver
     from selenium.webdriver.common.by import By
