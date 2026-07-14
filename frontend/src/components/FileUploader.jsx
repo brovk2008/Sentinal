@@ -41,6 +41,13 @@ export default function FileUploader({ caseId, onUploadComplete }) {
 
     for (const file of files) {
       setProgress(`Uploading ${file.name}...`);
+      
+      // Create a local preview URL immediately for images
+      let localPreviewUrl = null;
+      if (file.type.startsWith('image/')) {
+        localPreviewUrl = URL.createObjectURL(file);
+      }
+      
       const fd = new FormData();
       fd.append('file', file);
       if (caseId)    fd.append('case_id', caseId);
@@ -50,12 +57,21 @@ export default function FileUploader({ caseId, onUploadComplete }) {
       try {
         const data = await uploadFile(fd);
         if (data.success) {
-          newResults.push(data);
-          onUploadComplete?.(data);
+          // Merge local preview URL into result
+          const enriched = {
+            ...data,
+            localPreviewUrl,
+            // Use localPreviewUrl as imageUrl fallback when Stratus URL unavailable
+            imageUrl: data.stratus_url || localPreviewUrl,
+          };
+          newResults.push(enriched);
+          onUploadComplete?.(enriched);
         } else {
+          if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
           setError(data.detail || data.error || 'Upload failed');
         }
       } catch (err) {
+        if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
         setError(`Upload failed: ${err.message}`);
       }
     }
@@ -65,6 +81,7 @@ export default function FileUploader({ caseId, onUploadComplete }) {
     setProgress('');
     setLabel('');
   }, [caseId, label, entityType, onUploadComplete]);
+
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
@@ -188,9 +205,9 @@ export default function FileUploader({ caseId, onUploadComplete }) {
               ))}
             </div>
           )}
-          {r.file_type === 'image' && r.stratus_url && (
+          {r.file_type === 'image' && (r.stratus_url || r.localPreviewUrl) && (
             <img
-              src={r.stratus_url}
+              src={r.stratus_url || r.localPreviewUrl}
               alt={r.label}
               style={{ marginTop: 8, maxWidth: '100%', maxHeight: 200,
                        borderRadius: 4, border: '1px solid var(--border-subtle)' }}

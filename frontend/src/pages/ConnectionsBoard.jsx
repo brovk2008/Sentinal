@@ -535,10 +535,25 @@ export default function ConnectionsBoard() {
                   position: { x: 150 + Math.random() * 300, y: 150 + Math.random() * 200 },
                   data: {
                     type: 'evidence',
-                    label: file.label || 'Uploaded File',
-                    subtitle: file.ai_summary ? (file.ai_summary.slice(0, 60) + '...') : '',
+                    label: file.label || 'Uploaded Image',
+                    subtitle: file.ai_summary ? (file.ai_summary.slice(0, 60) + '...') : 'AI Evidence Analysis',
                     tags: file.ai_tags || [],
-                    imageUrl: file.stratus_url || null,
+                    // Use imageUrl (includes localPreviewUrl fallback) so image shows immediately
+                    imageUrl: file.imageUrl || file.stratus_url || file.localPreviewUrl || null,
+                  },
+                }]);
+              } else if (file.ai_summary) {
+                // Add non-image files as evidence nodes too
+                setNodes(ns => [...ns, {
+                  id: `file-${file.file_id || Date.now()}`,
+                  type: 'sentinalNode',
+                  position: { x: 150 + Math.random() * 300, y: 150 + Math.random() * 200 },
+                  data: {
+                    type: 'evidence',
+                    label: file.label || file.file_type || 'Uploaded File',
+                    subtitle: file.ai_summary ? file.ai_summary.slice(0, 60) + '...' : '',
+                    tags: file.ai_tags || [],
+                    imageUrl: null,
                   },
                 }]);
               }

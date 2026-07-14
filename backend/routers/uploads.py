@@ -11,8 +11,11 @@ import sqlite3
 import base64
 import json
 import io
+import logging
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, Request
 from typing import Optional
+
+log = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -158,22 +161,41 @@ Respond ONLY as a JSON object with keys: persons, objects, location, text_visibl
                     "max_tokens": 800,
                 }
             )
-        data = res.json()
+        if res.status_code != 200:
+            log.warning(f"Vision API returned {res.status_code}: {res.text[:200]}")
+            return (
+                f"Image uploaded successfully. Vision analysis unavailable (API status {res.status_code}).",
+                ["Evidence", "Uploaded Image"]
+            )
+
+        try:
+            data = res.json()
+        except Exception:
+            return "Image uploaded. Vision API returned non-JSON response.", []
+
         text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        if not text:
+            return "Image uploaded. Vision API returned empty response.", []
+
         match = re.search(r'\{.*\}', text, re.DOTALL)
         if match:
-            parsed = json.loads(match.group())
-            tags   = parsed.get("tags", [])
-            summary = (
-                f"Persons: {parsed.get('persons', 'N/A')} | "
-                f"Objects: {parsed.get('objects', 'N/A')} | "
-                f"Location: {parsed.get('location', 'N/A')} | "
-                f"Text: {parsed.get('text_visible', 'None')}"
-            )
-            return summary, tags
-        return text[:500], []
+            try:
+                parsed = json.loads(match.group())
+                tags   = parsed.get("tags", [])
+                summary = (
+                    f"Persons: {parsed.get('persons', 'N/A')} | "
+                    f"Objects: {parsed.get('objects', 'N/A')} | "
+                    f"Location: {parsed.get('location', 'N/A')} | "
+                    f"Text: {parsed.get('text_visible', 'None')}"
+                )
+                return summary, tags
+            except json.JSONDecodeError:
+                pass
+        return text[:500] if text else "Image analyzed. No structured data extracted.", []
     except Exception as e:
-        return f"Vision analysis failed: {e}", []
+        log.error(f"Vision analysis exception: {e}")
+        return "Image uploaded successfully. Vision analysis temporarily unavailable.", []
+
 
 
 async def _extract_pdf_text(content: bytes) -> str:

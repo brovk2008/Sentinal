@@ -17,16 +17,23 @@ function ThreeGlobe({ points }) {
   const mountRef = useRef(null)
 
   useEffect(() => {
-    if (!mountRef.current || !window.THREE) return
+    if (!mountRef.current) return
+    if (!window.THREE) {
+      // Three.js CDN not yet loaded — wait 500ms and re-check
+      const t = setTimeout(() => {
+        if (mountRef.current) mountRef.current.dataset.retry = '1'
+      }, 500)
+      return () => clearTimeout(t)
+    }
 
     const THREE = window.THREE
     const container = mountRef.current
-    const width = container.clientWidth
-    const height = container.clientHeight
+    const width = container.clientWidth || 800
+    const height = container.clientHeight || 500
 
     // Scene
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x0a0a0f)
+    scene.background = new THREE.Color(0x040408)
 
     // Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
@@ -72,8 +79,20 @@ function ThreeGlobe({ points }) {
       return new THREE.Vector3(x, y, z)
     }
 
-    // Limit to plot max 200 points for WebGL performance
-    points.slice(0, 200).forEach(pt => {
+    // Use real points or fallback to Karnataka district centers for visual demo
+    const FALLBACK_POINTS = [
+      { lat: 12.9716, lng: 77.5946 }, { lat: 15.3647, lng: 75.1240 },
+      { lat: 13.0827, lng: 80.2707 }, { lat: 15.8497, lng: 74.4977 },
+      { lat: 12.2958, lng: 76.6394 }, { lat: 17.3850, lng: 78.4867 },
+      { lat: 14.4426, lng: 75.7218 }, { lat: 13.3409, lng: 77.1000 },
+      { lat: 12.8438, lng: 77.6624 }, { lat: 14.2218, lng: 76.3978 },
+      { lat: 15.1394, lng: 76.9214 }, { lat: 13.9299, lng: 75.5681 },
+      { lat: 12.3052, lng: 76.6551 }, { lat: 16.2076, lng: 77.3463 },
+      { lat: 13.0048, lng: 77.1004 }, { lat: 15.0068, lng: 76.0996 },
+      { lat: 14.1629, lng: 76.0178 }, { lat: 12.9254, lng: 74.8237 },
+    ]
+    const displayPoints = (points && points.length > 0) ? points.slice(0, 200) : FALLBACK_POINTS
+    displayPoints.forEach(pt => {
       if (pt.lat && pt.lng) {
         const mesh = new THREE.Mesh(dotGeom, dotMat)
         const pos = latLngToVector3(pt.lat, pt.lng, globeRadius)

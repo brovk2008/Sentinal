@@ -272,21 +272,53 @@ async def generate_case_report(case_id: int):
     if REPORTLAB_AVAILABLE:
         try:
             pdf_bytes = generate_reportlab_pdf(case, accused, victims, sections)
-            return Response(content=pdf_bytes, media_type="application/pdf")
+            return Response(content=pdf_bytes, media_type="application/pdf",
+                            headers={"Content-Disposition": f"attachment; filename=Sentinal_Case_{case['CrimeNo'].replace('/', '-')}.pdf"})
         except Exception as e:
             print(f"[ReportLab Report] Failed compiling PDF with reportlab: {e}")
 
-    # 4. Final text fallback if no libraries work
-    plain_text_report = f"CONFIDENTIAL CASE REPORT: {case['CrimeNo']}\n\n"
-    plain_text_report += f"Station: {case['StationName']}, {case['DistrictName']}\n"
-    plain_text_report += f"Officer: {case['OfficerName']}\n"
-    plain_text_report += f"Brief Facts: {case['BriefFacts']}\n"
-    
+    # 4. Final fallback — generate a minimal valid PDF manually (without any library)
+    #    Uses the most basic PDF structure that Acrobat can open.
+    crime_no  = str(case.get('CrimeNo', 'UNKNOWN')).replace('/', '-')
+    station   = str(case.get('StationName', 'N/A'))
+    district  = str(case.get('DistrictName', 'N/A'))
+    officer   = str(case.get('OfficerName', 'N/A'))
+    facts     = str(case.get('BriefFacts', 'No facts available.'))[:400]
+    from datetime import datetime
+    report_date = datetime.now().strftime('%d %b %Y')
+
+    # Minimal but valid PDF blob
+    pdf_content = f"""%PDF-1.4
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
+3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj
+4 0 obj<</Length 500>>
+stream
+BT /F1 18 Tf 50 740 Td (SENTINAL v2 - CASE REPORT) Tj
+0 -30 Td /F1 12 Tf (Crime No: {crime_no}) Tj
+0 -20 Td (Date: {report_date}) Tj
+0 -20 Td (Station: {station}, {district}) Tj
+0 -20 Td (Officer: {officer}) Tj
+0 -30 Td /F1 10 Tf (Brief Facts:) Tj
+0 -15 Td ({facts[:100]}) Tj
+0 -15 Td ({facts[100:200] if len(facts)>100 else ''}) Tj
+0 -15 Td ({facts[200:300] if len(facts)>200 else ''}) Tj
+ET
+endstream
+endobj
+5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj
+xref
+0 6
+0000000000 65535 f
+trailer<</Size 6/Root 1 0 R>>
+startxref 0
+%%EOF"""
     return Response(
-        content=plain_text_report.encode("utf-8"),
+        content=pdf_content.encode("latin-1"),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=Sentinal_Report_{case['CrimeNo']}.txt"}
+        headers={"Content-Disposition": f"attachment; filename=Sentinal_Report_{crime_no}.pdf"}
     )
+
 
 
 @router.get("/district/{district_name}")

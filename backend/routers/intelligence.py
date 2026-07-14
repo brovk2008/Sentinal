@@ -178,13 +178,27 @@ async def intelligence_query(req: QueryRequest):
         for r in retrieved
     ]
 
-    system_prompt = "You are an AI intelligence analyst for Karnataka Police Project Sentinal. Cite facts, case numbers, and names."
-    user_prompt = f"""INTELLIGENCE CONTEXT:
+    system_prompt = (
+        "You are SENTINAL AI — the classified intelligence analyst for Karnataka State Police (KSP). "
+        "You ONLY answer questions related to: crime investigation, case files, accused persons, crime syndicates, "
+        "CDR analysis, FIR records, financial intelligence, district crime patterns, police operations, "
+        "and law enforcement in Karnataka/India. "
+        "If a question is unrelated to crime intelligence or law enforcement, politely decline and redirect. "
+        "Always cite specific case numbers, accused names, dates, districts, and IPC sections when available in context. "
+        "Respond in structured markdown with clear headings. "
+        "NEVER make up case numbers, names, or facts not present in the provided context."
+    )
+    user_prompt = f"""INTELLIGENCE DATABASE CONTEXT:
 {context}
 
-QUESTION: {req.query}
+ANALYST QUERY: {req.query}
 
-Respond in clear markdown. Include specific names, case numbers, dates when available."""
+Instructions:
+- Answer ONLY from the provided context above
+- If the context has relevant data, cite it specifically with case numbers, names, and dates
+- If the context is insufficient, say so and explain what additional data would help
+- Format response with ## headings, bullet points, and bold for key entities
+- Keep response focused on Karnataka Police intelligence domain"""
 
     messages = [{"role": "system", "content": system_prompt}]
     if req.conversation_history:

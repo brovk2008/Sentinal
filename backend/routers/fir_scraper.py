@@ -115,7 +115,13 @@ async def get_stations(district_id: str):
 async def fetch_fir(req: FIRRequest):
     fetch_single, _ = _get_scraper()
     if fetch_single is None:
-        raise HTTPException(status_code=503, detail="Scraper not available (Selenium not installed)")
+        # Scraper not available — return a structured error the frontend can display
+        return {
+            "status": "error",
+            "message": "Scraper not available (Selenium/SmartBrowz not configured on this server). "
+                       "This feature requires the Catalyst SmartBrowz browser automation service. "
+                       "Please verify SMARTBROWZ_WEBDRIVER_URL environment variable is set."
+        }
     loop = asyncio.get_event_loop()
     try:
         result = await loop.run_in_executor(
@@ -123,13 +129,13 @@ async def fetch_fir(req: FIRRequest):
         )
     except Exception as e:
         log.error(f"fetch_fir error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"status": "error", "message": f"Scraper execution failed: {e}"}
 
     if result["status"] == "not_found":
         raise HTTPException(status_code=404, detail="FIR not found in KSP records")
-    if result["status"] == "error":
-        raise HTTPException(status_code=500, detail=result.get("message", "Scraper error"))
+    # Return result directly (including error status with message)
     return result
+
 
 
 @router.post("/mock-ocr")
