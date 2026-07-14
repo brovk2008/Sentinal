@@ -26,8 +26,8 @@
 | Field | Value |
 |---|---|
 | **URL** | https://sentinal-peak.onslate.in |
-| **Email** | `demo@sentinal.ksp` |
-| **Password** | `Sentinal@2024` |
+| **Email** | `brovaibhavkr2008@gmail.com` |
+| **Password** | `1Davps@10` |
 
 > **Note for judges**: The platform uses Catalyst Authentication. If the demo account doesn't log in on the live Slate URL, use the sign-up page to create a free account — it takes 10 seconds. All features are accessible to any registered user.
 
