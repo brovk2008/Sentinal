@@ -30,7 +30,7 @@ if user_site and user_site not in sys.path:
 for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
     if os.path.exists(extra_path) and extra_path not in sys.path:
         sys.path.insert(0, extra_path)
-
+'''
 # Auto-verify and install selenium / bs4 if missing in AppSail environment
 try:
     import selenium
@@ -48,7 +48,7 @@ except ImportError:
         print("[Startup] selenium and beautifulsoup4 installed and loaded successfully!")
     except Exception as ie:
         print(f"[Startup] Error auto-installing dependencies: {ie}")
-
+'''
 # Detect if running inside Zoho Catalyst AppSail production environment
 IS_CATALYST = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV"))
 
