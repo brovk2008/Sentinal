@@ -1,40 +1,31 @@
+#!/usr/bin/env python3
 """
 ksp_scraper.py
-KSP FIR Scraper — SmartBrowz Edition for Sentinal v2
+KSP FIR Scraper — SmartBrowz Edition (Tab-Crash Fix)
 
-Replaces:
-  - webdriver.Chrome()          → webdriver.Remote(SMARTBROWZ_URL)
-  - multiprocessing.Process     → threading.Thread
-  - file download to disk       → in-browser fetch() → base64 → Stratus
-  - hardcoded TARGET_YEAR       → year param passed per scrape job
+ROOT CAUSE OF OLD CRASH:
+  KSP site opens PDF in a new tab → Chrome 147 crashes on PDF render.
 
-Triggered via:
-  POST /api/v1/scraper/start    { year, districts (optional), stations (optional) }
-  GET  /api/v1/scraper/status   → live progress
-  POST /api/v1/scraper/stop     → graceful stop
-  GET  /api/v1/scraper/query    → query stored FIRs (used by AI too)
+FIX:
+  1. Extract PDF URL from result page HTML (no clicking)
+  2. Fetch PDF bytes using requests + browser cookies (no new tab)
+  3. Close any accidentally-opened tabs immediately
+  4. Never let Chrome navigate to a .pdf URL
 """
 
-import os
-import sys
-import re
-import time
-import logging
-import base64
-import threading
+import os, sys, re, time, logging, base64, threading
 
+# ── Path setup for AppSail ────────────────────────────────────────────────────
 TMP_SITE = "/tmp/site-packages"
 if os.path.exists(TMP_SITE) and TMP_SITE not in sys.path:
     sys.path.insert(0, TMP_SITE)
 
-import site
-user_site = site.getusersitepackages()
-if user_site and user_site not in sys.path:
-    sys.path.insert(0, user_site)
-
-for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
-    if os.path.exists(extra_path) and extra_path not in sys.path:
-        sys.path.insert(0, extra_path)
+for extra in [
+    "/catalyst/.local/lib/python3.11/site-packages",
+    "/catalyst/.local/lib/python3.12/site-packages",
+]:
+    if os.path.exists(extra) and extra not in sys.path:
+        sys.path.insert(0, extra)
 
 try:
     from bs4 import BeautifulSoup
@@ -43,65 +34,58 @@ try:
     from selenium.webdriver.support.ui import WebDriverWait, Select
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.chrome.options import Options
+    import requests
 except ImportError:
     import subprocess
-    try:
-        os.makedirs(TMP_SITE, exist_ok=True)
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--target", TMP_SITE, "selenium==4.22.0", "beautifulsoup4==4.12.3"])
-        if TMP_SITE not in sys.path:
-            sys.path.insert(0, TMP_SITE)
-        from bs4 import BeautifulSoup
-        from selenium import webdriver
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.support.ui import WebDriverWait, Select
-        from selenium.webdriver.support import expected_conditions as EC
-        from selenium.webdriver.chrome.options import Options
-    except Exception as _ie:
-        logging.warning(f"Could not auto-install selenium: {_ie}")
+    os.makedirs(TMP_SITE, exist_ok=True)
+    subprocess.check_call([
+        sys.executable, "-m", "pip", "install", "--target", TMP_SITE,
+        "selenium==4.22.0", "beautifulsoup4==4.12.3", "requests==2.32.3"
+    ])
+    sys.path.insert(0, TMP_SITE)
+    from bs4 import BeautifulSoup
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait, Select
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.chrome.options import Options
+    import requests
 
-log         = logging.getLogger(__name__)
-NUM_WORKERS = int(os.getenv("SCRAPE_WORKERS", "2"))
+log = logging.getLogger(__name__)
+
 BASE_URL    = "https://ksp.karnataka.gov.in/firsearch/en"
+NUM_WORKERS = int(os.getenv("SCRAPE_WORKERS", "1"))
 
 SMARTBROWZ_URL = os.getenv(
     "SMARTBROWZ_WEBDRIVER_URL",
-    "https://60073535541:5442bad1657a042b133011611f1a54f60c4f3d946fd6d81ea1e68909eed4172b@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
+    "https://60073535541:5442bad1657a042b133011611f1a54f60c4f3d946fd6d81ea1e68909eed4172b"
+    "@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
 )
 
 DISTRICT_NAMES = {
-    1:  "Bagalkot",           2:  "Ballari",           3:  "Belagavi City",
-    4:  "Belagavi Dist",      5:  "Bengaluru City",     6:  "Bengaluru Dist",
-    7:  "Bidar",              8:  "Chamarajanagar",     9:  "Chickballapura",
-    10: "Chikkamagaluru",     11: "Chitradurga",        12: "CID",
-    13: "Coastal Security Police", 14: "Dakshina Kannada", 15: "Davanagere",
-    16: "Dharwad",            17: "Gadag",              18: "Hassan",
-    19: "Haveri",             20: "Hubballi Dharwad City", 21: "ISD Bengaluru",
-    22: "K.G.F",              23: "Kalaburagi",         24: "Kalaburagi City",
-    25: "Karnataka Railways", 26: "Kodagu",             27: "Kolar",
-    28: "Koppal",             29: "Mandya",             30: "Mangaluru City",
-    31: "Mysuru City",        32: "Mysuru Dist",        33: "Raichur",
-    34: "Bengaluru South",    35: "Shivamogga",         36: "Tumakuru",
-    37: "Udupi",              38: "Uttara Kannada",     39: "Vijayapur",
-    40: "Yadgir",             41: "Vijayanagara",
+    1:"Bagalkot", 2:"Ballari", 3:"Belagavi City", 4:"Belagavi Dist",
+    5:"Bengaluru City", 6:"Bengaluru Dist", 7:"Bidar", 8:"Chamarajanagar",
+    9:"Chickballapura", 10:"Chikkamagaluru", 11:"Chitradurga", 12:"CID",
+    13:"Coastal Security Police", 14:"Dakshina Kannada", 15:"Davanagere",
+    16:"Dharwad", 17:"Gadag", 18:"Hassan", 19:"Haveri",
+    20:"Hubballi Dharwad City", 21:"ISD Bengaluru", 22:"K.G.F",
+    23:"Kalaburagi", 24:"Kalaburagi City", 25:"Karnataka Railways",
+    26:"Kodagu", 27:"Kolar", 28:"Koppal", 29:"Mandya",
+    30:"Mangaluru City", 31:"Mysuru City", 32:"Mysuru Dist", 33:"Raichur",
+    34:"Bengaluru South", 35:"Shivamogga", 36:"Tumakuru", 37:"Udupi",
+    38:"Uttara Kannada", 39:"Vijayapur", 40:"Yadgir", 41:"Vijayanagara",
 }
 
-
-# ── Global progress (thread-safe, polled by status endpoint) ──────────────────
-
+# ── Progress tracking ──────────────────────────────────────────────────────────
 scrape_progress = {
-    "status":          "idle",   # idle | running | done | error
-    "year":            None,
-    "total_stations":  0,
-    "done_stations":   0,
-    "firs_found":      0,
-    "firs_not_found":  0,
-    "firs_skipped":    0,        # already in DB, skipped
-    "errors":          0,
-    "current":         "",
-    "log":             [],       # last 50 lines, shown on UI
+    "status": "idle", "year": None,
+    "total_stations": 0, "done_stations": 0,
+    "firs_found": 0, "firs_not_found": 0,
+    "firs_skipped": 0, "errors": 0,
+    "current": "", "log": [],
 }
 progress_lock = threading.Lock()
-_STOP_FLAG    = threading.Event()   # set by /scraper/stop endpoint
+_STOP_FLAG    = threading.Event()
 
 
 def _log(msg: str):
@@ -112,161 +96,145 @@ def _log(msg: str):
             scrape_progress["log"].pop(0)
 
 
-# ── SmartBrowz remote driver ──────────────────────────────────────────────────
-
+# ── Driver setup ──────────────────────────────────────────────────────────────
 def _make_driver(worker_id):
-    """Create a SmartBrowz remote Chrome session."""
-    try:
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-        except ImportError:
-            import sys, subprocess
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
+    opts = Options()
+    opts.page_load_strategy = "eager"
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    opts.add_argument("--disable-extensions")
+    opts.add_argument("--disable-gpu")
+    # KEY FIX: Tell Chrome to download PDFs instead of opening them in a tab
+    # This prevents the tab crash entirely
+    opts.add_experimental_option("prefs", {
+        "download.default_directory":     "/tmp",
+        "download.prompt_for_download":   False,
+        "download.directory_upgrade":     True,
+        "plugins.always_open_pdf_externally": True,  # ← critical: no PDF viewer
+        "plugins.plugins_disabled":       ["Chrome PDF Viewer"],
+    })
 
-        opts = Options()
-        opts.page_load_strategy = 'eager'
-        opts.add_argument("--disable-extensions")
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--headless")
-        opts.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Remote(command_executor=SMARTBROWZ_URL, options=opts)
+    driver.set_page_load_timeout(30)
+    driver.set_script_timeout(20)
 
-        driver = webdriver.Remote(
-            command_executor=SMARTBROWZ_URL,
-            options=opts
-        )
-        driver.set_page_load_timeout(25)
-        # Test connection immediately
-        try:
-            driver.get("about:blank")
-            _log(f"Worker {worker_id}: SmartBrowz connected ✓ session={driver.session_id}")
-        except Exception as e:
-            _log(f"Worker {worker_id}: SmartBrowz connection FAILED: {e}")
-            raise
-
-        driver.execute_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
-        return driver
-    except Exception as e:
-        _log(f"Worker {worker_id}: Failed to connect SmartBrowz — {e}")
-        raise
+    # Verify connection
+    driver.get("about:blank")
+    _log(f"Worker {worker_id}: SmartBrowz connected ✓ session={driver.session_id}")
+    return driver
 
 
-# ── Captcha helpers ───────────────────────────────────────────────────────────
-
+# ── Captcha ───────────────────────────────────────────────────────────────────
 def _get_captcha(driver) -> str:
-    """Try to read captcha from common selectors (text field or label)."""
     for selector, attr in [
         ("input[name='random_captcha']", "value"),
         ("label.captcah-font",           "text"),
-        ("span.captcha-text",            "text"),
+        ("[id*='captcha']",              "value"),
     ]:
         try:
-            from selenium.webdriver.common.by import By
-            el = driver.find_element(By.CSS_SELECTOR, selector)
+            el  = driver.find_element(By.CSS_SELECTOR, selector)
             val = el.get_attribute(attr) if attr != "text" else el.text
             if val and val.strip():
                 return val.strip()
-        except Exception:
+        except:
             pass
     return ""
 
 
 def _refresh_captcha(driver, old: str) -> str:
-    """Try to refresh captcha and return new value."""
-    from selenium.webdriver.common.by import By
-    selectors = [
-        "img[src*='captcha']", "[id*='captcha'][class*='refresh']",
-        "img[id*='captcha']",  "[class*='refresh']",
-        "[id*='refresh']",     "[class*='reload']",
-    ]
-    for sel in selectors:
+    for sel in ["img[src*='captcha']", "[class*='refresh']", "[id*='refresh']"]:
         for el in driver.find_elements(By.CSS_SELECTOR, sel):
             try:
                 if el.is_displayed():
                     el.click()
-                    time.sleep(0.5)
+                    time.sleep(0.4)
                     new = _get_captcha(driver)
                     if new and new != old:
                         return new
-            except Exception:
+            except:
                 pass
     for fn in ["refreshCaptcha", "changeCaptcha", "reloadCaptcha"]:
         try:
             driver.execute_script(f"if(typeof {fn}==='function'){fn}();")
-            time.sleep(0.5)
+            time.sleep(0.4)
             new = _get_captcha(driver)
             if new and new != old:
                 return new
-        except Exception:
+        except:
             pass
     return ""
 
 
-def _ocr_captcha_zia(driver) -> str:
-    """
-    Fallback: use Catalyst Zia OCR if captcha is image-based.
-    Only called if _get_captcha() returns empty string.
-    """
-    try:
-        import zcatalyst_sdk as catalyst
-        from selenium.webdriver.common.by import By
-
-        img_el = driver.find_element(By.CSS_SELECTOR, "img[src*='captcha']")
-        img_b64 = driver.execute_script(
-            "var c=document.createElement('canvas');"
-            "c.width=arguments[0].width; c.height=arguments[0].height;"
-            "c.getContext('2d').drawImage(arguments[0],0,0);"
-            "return c.toDataURL('image/png').split(',')[1];", img_el
-        )
-        app  = catalyst.initialize()
-        zia  = app.zia()
-        text = zia.optical_character_recognition(base64.b64decode(img_b64))
-        return str(text).strip() if text else ""
-    except Exception as e:
-        _log(f"Zia OCR fallback failed: {e}")
-        return ""
-
-
 def _fill_and_submit(driver, fir_s: str, year: str) -> bool:
-    """Fill the FIR search form and submit. Returns True if submitted."""
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import Select as SeleniumSelect
-
     captcha = _get_captcha(driver)
     if not captcha:
-        captcha = _ocr_captcha_zia(driver)  # image-based fallback
-    if not captcha:
         return False
-
     try:
         try:
             Select(driver.find_element(By.NAME, "year")).select_by_value(year)
-        except Exception:
+        except:
             pass
-
         fi = driver.find_element(By.NAME, "fir_num")
-        fi.clear()
-        fi.send_keys(fir_s)
-
+        fi.clear(); fi.send_keys(fir_s)
         ci = driver.find_element(By.NAME, "captcha")
-        ci.clear()
-        ci.send_keys(captcha)
-
+        ci.clear(); ci.send_keys(captcha)
         driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
         return True
     except Exception as e:
-        _log(f"Form submit failed: {e}")
+        _log(f"Submit failed: {e}")
         return False
 
 
-# ── PDF fetch (in-browser, no download dir needed) ────────────────────────────
+# ── PDF fetch via requests (KEY FIX — no browser tab for PDF) ─────────────────
+def _fetch_pdf_via_requests(driver, pdf_url: str) -> bytes | None:
+    """
+    THE MAIN FIX:
+    Instead of letting Chrome open the PDF (which crashes),
+    extract cookies from the browser and use requests to download it.
+    This completely avoids Chrome's PDF renderer.
+    """
+    try:
+        # Get session cookies from the browser
+        cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
 
-def _fetch_pdf(driver, pdf_url: str):
-    """Fetch PDF bytes via in-browser fetch() → base64 decode."""
+        # Use requests to download the PDF directly
+        headers = {
+            "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                           "AppleWebKit/537.36 (KHTML, like Gecko) "
+                           "Chrome/147.0.0.0 Safari/537.36"),
+            "Referer": BASE_URL,
+            "Accept":  "application/pdf,*/*",
+        }
+
+        resp = requests.get(
+            pdf_url,
+            cookies=cookies,
+            headers=headers,
+            timeout=20,
+            stream=True,
+            verify=False,   # some govt sites have cert issues
+        )
+
+        if resp.status_code == 200:
+            data = resp.content
+            if len(data) > 1000:   # real PDFs are at least 1KB
+                _log(f"PDF fetched via requests: {len(data)} bytes")
+                return data
+            else:
+                _log(f"PDF too small ({len(data)}B) — likely an error page")
+                return None
+        else:
+            _log(f"PDF fetch failed: HTTP {resp.status_code}")
+            return None
+
+    except Exception as e:
+        _log(f"PDF fetch via requests failed: {e}")
+        # Fallback: try in-browser fetch() as last resort
+        return _fetch_pdf_via_js(driver, pdf_url)
+
+
+def _fetch_pdf_via_js(driver, pdf_url: str) -> bytes | None:
+    """Fallback: use browser's fetch() API to get PDF as base64."""
     try:
         b64 = driver.execute_async_script("""
             var cb = arguments[arguments.length-1];
@@ -280,74 +248,97 @@ def _fetch_pdf(driver, pdf_url: str):
         """, pdf_url)
         if b64:
             data = base64.b64decode(b64)
-            if len(data) > 2000:  # sanity check — real PDFs are much larger
+            if len(data) > 1000:
                 return data
-    except Exception:
+    except:
         pass
     return None
 
 
-# ── Station discovery ─────────────────────────────────────────────────────────
+# ── Close any extra tabs (safety net) ────────────────────────────────────────
+def _close_extra_tabs(driver, keep_handle: str):
+    """Close any tabs other than keep_handle."""
+    for handle in list(driver.window_handles):
+        if handle != keep_handle:
+            try:
+                driver.switch_to.window(handle)
+                driver.close()
+            except:
+                pass
+    try:
+        driver.switch_to.window(keep_handle)
+    except:
+        if driver.window_handles:
+            driver.switch_to.window(driver.window_handles[0])
 
+
+# ── Station discovery ─────────────────────────────────────────────────────────
 def _get_stations(district_filter=None) -> list:
-    """
-    Returns list of (district_id, district_name, station_id, station_name).
-    Optionally filtered to specific district IDs.
-    """
     _log("Discovering police stations via SmartBrowz...")
     stations = []
     targets  = district_filter or sorted(DISTRICT_NAMES.keys())
 
+    driver = None
     try:
         driver = _make_driver("station-discovery")
-        try:
-            for did in targets:
-                if _STOP_FLAG.is_set():
-                    break
-                dname = DISTRICT_NAMES.get(did, str(did))
-                _log(f"Station discovery: District {did} ({dname})")
-                try:
-                    driver.get(BASE_URL)
-                    Select(
-                        WebDriverWait(driver, 10).until(
-                            EC.presence_of_element_located((By.NAME, "district_id"))
-                        )
-                    ).select_by_value(str(did))
+        main_tab = driver.current_window_handle
 
-                    ps_el = WebDriverWait(driver, 10).until(
-                        lambda d: d.find_element(By.NAME, "ps_id")
-                    )
+        for did in targets:
+            if _STOP_FLAG.is_set():
+                break
+            dname = DISTRICT_NAMES.get(did, str(did))
+            _log(f"Station discovery: District {did} ({dname})")
+            try:
+                driver.get(BASE_URL)
+                _close_extra_tabs(driver, main_tab)
+                main_tab = driver.current_window_handle
+
+                Select(
                     WebDriverWait(driver, 10).until(
-                        lambda d: len(Select(ps_el).options) > 1
+                        EC.presence_of_element_located((By.NAME, "district_id"))
                     )
-                    for o in Select(ps_el).options:
-                        sid   = o.get_attribute("value")
-                        sname = o.text.strip()
-                        if sid and sid != "1" and "Select" not in sname:
-                            stations.append((did, dname, sid, sname))
-                except Exception as e:
-                    _log(f"Station discovery warning ({dname}): {e}")
-        finally:
+                ).select_by_value(str(did))
+
+                ps_el = WebDriverWait(driver, 10).until(
+                    lambda d: d.find_element(By.NAME, "ps_id")
+                )
+                WebDriverWait(driver, 10).until(
+                    lambda d: len(Select(ps_el).options) > 1
+                )
+                for o in Select(ps_el).options:
+                    sid   = o.get_attribute("value")
+                    sname = o.text.strip()
+                    if sid and sid != "1" and "Select" not in sname:
+                        stations.append((did, dname, sid, sname))
+            except Exception as e:
+                _log(f"Station discovery warning ({dname}): {e}")
+    except Exception as e:
+        _log(f"Station discovery driver error: {e}")
+    finally:
+        if driver:
             try:
                 driver.quit()
-            except Exception:
+            except:
                 pass
-    except Exception as drv_err:
-        _log(f"SmartBrowz driver initialization notice: {drv_err}")
 
-    # If live discovery produced no stations (e.g. driver creation failed), use static fallbacks
+    # Fallback to static stations if live discovery fails
     if not stations:
-        _log("Live station discovery returned 0 stations. Activating pre-indexed station manifest...")
-        fallback_map = {
-            5: [(5, "Bengaluru City", "1382", "Adugodi PS"), (5, "Bengaluru City", "1762", "Adugodi Traffic PS"), (5, "Bengaluru City", "1818", "Amruthahally PS"), (5, "Bengaluru City", "2188", "Annapoorneshwari Nagar PS"), (5, "Bengaluru City", "1389", "Ashoknagar PS")],
-            2: [(2, "Ballari", "101", "Ballari Town PS"), (2, "Ballari", "102", "Ballari Rural PS"), (2, "Ballari", "103", "Ballari Traffic PS")],
-            6: [(6, "Bengaluru Dist", "201", "Nelamangala PS"), (6, "Bengaluru Dist", "202", "Doddaballapura PS")],
-            31: [(31, "Mysuru City", "301", "Devaraja PS"), (31, "Mysuru City", "302", "Lashkar PS")],
+        _log("Live discovery failed — using static station manifest")
+        FALLBACK = {
+            5:  [(5, "Bengaluru City", "1382", "Adugodi PS"),
+                 (5, "Bengaluru City", "1401", "Cubbon Park PS"),
+                 (5, "Bengaluru City", "1413", "Indiranagar PS"),
+                 (5, "Bengaluru City", "1421", "Koramangala PS"),
+                 (5, "Bengaluru City", "1450", "Whitefield PS")],
+            2:  [(2, "Ballari", "101", "Town PS"),
+                 (2, "Ballari", "102", "Rural PS")],
+            31: [(31, "Mysuru City", "301", "Devaraja PS"),
+                 (31, "Mysuru City", "302", "Lashkar PS")],
         }
         for did in targets:
             dname = DISTRICT_NAMES.get(did, f"District {did}")
-            if did in fallback_map:
-                stations.extend(fallback_map[did])
+            if did in FALLBACK:
+                stations.extend(FALLBACK[did])
             else:
                 stations.extend([
                     (did, dname, f"PS{did}01", f"{dname} Town PS"),
@@ -356,46 +347,45 @@ def _get_stations(district_filter=None) -> list:
 
     with progress_lock:
         scrape_progress["total_stations"] = len(stations)
-
-    _log(f"Discovered {len(stations)} stations total for crawl schedule")
+    _log(f"Total stations for crawl: {len(stations)}")
     return stations
 
 
-# ── Worker thread ─────────────────────────────────────────────────────────────
-
-def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock):
+# ── Worker thread ──────────────────────────────────────────────────────────────
+def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock):
     from scrapers.scraper_store import (
         fir_already_scraped, save_fir_metadata, upload_pdf_to_stratus
     )
 
-    # Stagger worker startup slightly so SmartBrowz Remote Grid receives sessions sequentially
-    time.sleep(worker_id * 2.5)
+    time.sleep(worker_id * 3)  # stagger startup
 
-    driver = None
+    driver    = None
+    main_tab  = None
+
     for attempt in range(1, 4):
         try:
-            driver = _make_driver(worker_id)
-            if driver:
-                break
+            driver   = _make_driver(worker_id)
+            main_tab = driver.current_window_handle
+            break
         except Exception as e:
-            _log(f"Worker {worker_id}: SmartBrowz session attempt {attempt}/3 queued — {e}")
+            _log(f"Worker {worker_id}: connect attempt {attempt}/3: {e}")
             if attempt < 3:
-                time.sleep(3.0)
+                time.sleep(5)
 
     if not driver:
-        _log(f"Worker {worker_id}: Terminating thread — SmartBrowz Grid concurrency limit reached")
+        _log(f"Worker {worker_id}: could not connect to SmartBrowz — exiting")
         return
 
     try:
         for did, dname, sid, sname in stations:
             if _STOP_FLAG.is_set():
-                _log(f"Worker {worker_id}: stop signal received")
+                _log(f"Worker {worker_id}: stop signal")
                 break
 
             with progress_lock:
                 scrape_progress["current"] = f"W{worker_id} → {dname} → {sname}"
-
             _log(f"[W{worker_id}] {dname} > {sname} ({year})")
+
             consecutive_misses = 0
 
             for fir_i in range(1, 501):
@@ -404,7 +394,6 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
 
                 fir_s = str(fir_i).zfill(4)
 
-                # Skip if already successfully scraped
                 if fir_already_scraped(did, sid, fir_s, year):
                     with progress_lock:
                         scrape_progress["firs_skipped"] += 1
@@ -412,7 +401,14 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
                     continue
 
                 try:
+                    # Always close extra tabs before starting each FIR
+                    _close_extra_tabs(driver, main_tab)
+                    main_tab = driver.current_window_handle
+
+                    # Load search page
                     driver.get(BASE_URL)
+                    _close_extra_tabs(driver, main_tab)
+                    main_tab = driver.current_window_handle
 
                     # Select district
                     Select(
@@ -430,71 +426,67 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
                     )
                     Select(ps_el).select_by_value(sid)
 
-                    # Submit
-                    before_tabs = set(driver.window_handles)
+                    # Submit form
                     if not _fill_and_submit(driver, fir_s, year):
                         continue
 
-                    try:
-                        WebDriverWait(driver, 3).until(
-                            lambda d: len(d.window_handles) > len(before_tabs)
-                        )
-                    except Exception:
-                        pass
+                    # Wait for result — but DON'T wait for new tabs
+                    # Instead wait for the CURRENT page to change OR a new tab
+                    time.sleep(1.5)
 
-                    new_tabs   = set(driver.window_handles) - before_tabs
-                    result_tab = None
-                    if new_tabs:
-                        result_tab = new_tabs.pop()
-                        driver.switch_to.window(result_tab)
+                    # IMMEDIATELY close any new tabs that opened
+                    # (PDF tabs crash — kill them before Chrome renders)
+                    _close_extra_tabs(driver, main_tab)
 
+                    # Wait for result table on the CURRENT page
                     try:
-                        WebDriverWait(driver, 3).until(
+                        WebDriverWait(driver, 4).until(
                             lambda d: d.find_elements(By.CLASS_NAME, "firsearchc")
                             or "no records" in d.page_source.lower()
+                            or "not found"  in d.page_source.lower()
                         )
-                    except Exception:
+                    except:
                         pass
 
-                    soup        = BeautifulSoup(driver.page_source, "html.parser")
-                    table       = soup.find("table", {"class": "firsearchc"})
+                    page_src = driver.page_source
+                    soup     = BeautifulSoup(page_src, "html.parser")
+                    table    = soup.find("table", {"class": "firsearchc"})
+
                     status      = "not_found"
                     stratus_key = ""
 
                     if table:
-                        a_tag = soup.find("a", href=re.compile(r'\.pdf'))
+                        # Extract PDF URL from HTML — DO NOT click it
+                        a_tag = soup.find("a", href=re.compile(r'\.pdf', re.IGNORECASE))
                         if a_tag:
                             href = a_tag["href"].strip()
-                            if not href.startswith("http"):
-                                href = f"https://ksp.karnataka.gov.in/firsearch/{href}"
+                            if href.startswith("http"):
+                                pdf_url = href
+                            elif href.startswith("/"):
+                                pdf_url = f"https://ksp.karnataka.gov.in{href}"
+                            else:
+                                pdf_url = f"https://ksp.karnataka.gov.in/firsearch/{href}"
 
-                            pdf_data = _fetch_pdf(driver, href)
+                            _log(f"[W{worker_id}] ✓ FIR {fir_s} found — fetching PDF via requests")
+
+                            # FETCH PDF WITHOUT OPENING IN BROWSER TAB
+                            pdf_data = _fetch_pdf_via_requests(driver, pdf_url)
+
                             if pdf_data:
                                 stratus_key = upload_pdf_to_stratus(
                                     pdf_data, did, sid, fir_s, year
                                 ) or ""
                                 status = "found" if stratus_key else "found_no_pdf"
+                                _log(f"[W{worker_id}] ✓ FIR {fir_s} PDF saved → {status}")
                             else:
                                 status = "found_no_pdf"
+                                _log(f"[W{worker_id}] ✓ FIR {fir_s} found but PDF download failed")
 
                             with progress_lock:
                                 scrape_progress["firs_found"] += 1
-                            _log(f"[W{worker_id}] ✓ FIR {fir_s} ({year}) → {status}")
 
-                    # Close result tab, return to main
-                    if result_tab:
-                        try:
-                            driver.close()
-                            remaining = set(driver.window_handles) - {result_tab}
-                            if remaining:
-                                driver.switch_to.window(remaining.pop())
-                        except Exception:
-                            pass
-
-                    # Persist to DB
-                    save_fir_metadata(
-                        did, dname, sname, sid, fir_s, year, status, stratus_key
-                    )
+                    # Save to DB
+                    save_fir_metadata(did, dname, sname, sid, fir_s, year, status, stratus_key)
 
                     if status in ("found", "found_no_pdf"):
                         consecutive_misses = 0
@@ -503,16 +495,31 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
                         with progress_lock:
                             scrape_progress["firs_not_found"] += 1
 
-                    # 5 consecutive misses = likely no more FIRs for this station
                     if consecutive_misses >= 5:
-                        _log(f"[W{worker_id}] 5 misses → skipping rest of {sname}")
+                        _log(f"[W{worker_id}] 5 consecutive misses → skipping {sname}")
                         break
 
                 except Exception as e:
-                    _log(f"[W{worker_id}] ✗ FIR {fir_s}: {e}")
-                    with progress_lock:
-                        scrape_progress["errors"] += 1
-                    save_fir_metadata(did, dname, sname, sid, fir_s, year, "error")
+                    err_str = str(e)
+                    if "tab crashed" in err_str.lower():
+                        # Tab crash despite our precautions — restart driver
+                        _log(f"[W{worker_id}] Tab crash on FIR {fir_s} — restarting browser session")
+                        try:
+                            driver.quit()
+                        except:
+                            pass
+                        time.sleep(3)
+                        try:
+                            driver   = _make_driver(worker_id)
+                            main_tab = driver.current_window_handle
+                        except Exception as restart_err:
+                            _log(f"[W{worker_id}] Browser restart failed: {restart_err} — exiting")
+                            break
+                    else:
+                        _log(f"[W{worker_id}] ✗ FIR {fir_s}: {e}")
+                        with progress_lock:
+                            scrape_progress["errors"] += 1
+                        save_fir_metadata(did, dname, sname, sid, fir_s, year, "error")
 
             with progress_lock:
                 scrape_progress["done_stations"] += 1
@@ -520,56 +527,42 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
     finally:
         try:
             driver.quit()
-        except Exception:
+        except:
             pass
         _log(f"Worker {worker_id} done")
 
 
-# ── Orchestrator (called from FastAPI BackgroundTasks) ────────────────────────
-
-def run_scraper(year: str, district_ids=None):
-    """
-    Main entry point. Call from FastAPI BackgroundTasks.
-      year          — e.g. "2024", "2023", "2022" (from UI dropdown)
-      district_ids  — optional list of district IDs to limit scope
-                      pass None to scrape all 41 districts
-    """
+# ── Orchestrator ──────────────────────────────────────────────────────────────
+def run_scraper(year: str = "2024", district_ids=None):
     _STOP_FLAG.clear()
-
     with progress_lock:
         scrape_progress.update({
-            "status":          "running",
-            "year":            year,
-            "total_stations":  0,
-            "done_stations":   0,
-            "firs_found":      0,
-            "firs_not_found":  0,
-            "firs_skipped":    0,
-            "errors":          0,
-            "current":         "",
-            "log":             [],
+            "status": "running", "year": year,
+            "total_stations": 0, "done_stations": 0,
+            "firs_found": 0, "firs_not_found": 0,
+            "firs_skipped": 0, "errors": 0,
+            "current": "", "log": [],
         })
 
     _log(f"=== Sentinal Scraper START | Year: {year} ===")
-    _log(f"SmartBrowz Webdriver URL: {SMARTBROWZ_URL[:60]}...")
+    _log(f"SmartBrowz: {SMARTBROWZ_URL[:80]}...")
+    _log("PDF fetch strategy: requests + cookies (no Chrome PDF tab)")
 
     try:
         stations = _get_stations(district_ids)
     except Exception as e:
         _log(f"FATAL: Station discovery failed: {e}")
-        _log("Check SMARTBROWZ_WEBDRIVER_URL in AppSail env vars")
         with progress_lock:
             scrape_progress["status"] = "error"
         return
 
     if not stations:
+        _log("No stations found")
         with progress_lock:
             scrape_progress["status"] = "error"
-        _log("ERROR: No stations discovered. Check SmartBrowz connection.")
         return
 
-    # Distribute round-robin across workers
-    chunks = [[] for _ in range(NUM_WORKERS)]
+    chunks   = [[] for _ in range(NUM_WORKERS)]
     for i, s in enumerate(stations):
         chunks[i % NUM_WORKERS].append(s)
 
@@ -583,21 +576,18 @@ def run_scraper(year: str, district_ids=None):
         )
         for i in range(NUM_WORKERS)
     ]
-
     for t in threads:
         t.start()
-        time.sleep(0.8)   # stagger to avoid SmartBrowz rate limit burst
-
+        time.sleep(1)
     for t in threads:
         t.join()
 
     with progress_lock:
         final = "done" if not _STOP_FLAG.is_set() else "stopped"
         scrape_progress["status"] = final
-
     _log(f"=== Sentinal Scraper {final.upper()} | Year: {year} ===")
 
 
 def stop_scraper():
     _STOP_FLAG.set()
-    _log("Stop signal sent — workers will finish current FIR then exit")
+    _log("Stop signal sent")

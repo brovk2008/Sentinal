@@ -1,27 +1,19 @@
 """
 scraper_store.py
 Storage layer for scraped FIR data.
-  - Metadata → sentinal.db (SQLite) via fir_scrape_index table
-  - PDFs     → Catalyst Stratus (S3-style blob storage)
+  - Metadata → sentinal.db (fir_scrape_index table)
+  - PDFs     → Catalyst Stratus
 """
 
-import os
-import sqlite3
-import logging
+import os, sqlite3, logging
 
-log = logging.getLogger(__name__)
-
+log            = logging.getLogger(__name__)
 DB_PATH        = os.getenv("DB_PATH", "data/sentinal.db")
 STRATUS_BUCKET = os.getenv("STRATUS_BUCKET", "sentinal-fir-pdfs")
 
 
-# ── DB init ───────────────────────────────────────────────────────────────────
-
 def init_scrape_table():
-    """
-    Creates fir_scrape_index table if it doesn't exist.
-    Call once at startup from main.py lifespan.
-    """
+    """Create fir_scrape_index if it doesn't exist. Call at startup."""
     con = sqlite3.connect(DB_PATH)
     con.execute("""
         CREATE TABLE IF NOT EXISTS fir_scrape_index (
@@ -32,8 +24,8 @@ def init_scrape_table():
             station_id      TEXT,
             fir_number      TEXT,
             year            TEXT,
-            status          TEXT,           -- found | found_no_pdf | not_found | error
-            pdf_stratus_key TEXT,           -- e.g. "2024/5/PS001/0023.pdf"
+            status          TEXT,
+            pdf_stratus_key TEXT DEFAULT '',
             scraped_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -43,65 +35,64 @@ def init_scrape_table():
     """)
     con.commit()
     con.close()
-    log.info("fir_scrape_index table initialised")
+    log.info("fir_scrape_index ready")
 
 
 def fir_already_scraped(district_id, station_id, fir_number, year) -> bool:
-    con = sqlite3.connect(DB_PATH)
-    row = con.execute(
-        "SELECT status FROM fir_scrape_index "
-        "WHERE district_id=? AND station_id=? AND fir_number=? AND year=?",
-        (district_id, station_id, fir_number, year)
-    ).fetchone()
-    con.close()
-    return row is not None and row[0] != "error"
+    try:
+        con = sqlite3.connect(DB_PATH)
+        row = con.execute(
+            "SELECT status FROM fir_scrape_index "
+            "WHERE district_id=? AND station_id=? AND fir_number=? AND year=?",
+            (district_id, station_id, fir_number, year)
+        ).fetchone()
+        con.close()
+        return row is not None and row[0] != "error"
+    except:
+        return False
 
 
 def save_fir_metadata(district_id, district, police_station, station_id,
                       fir_number, year, status, pdf_stratus_key=""):
-    con = sqlite3.connect(DB_PATH)
-    con.execute("""
-        INSERT OR REPLACE INTO fir_scrape_index
-        (district_id, district, police_station, station_id,
-         fir_number, year, status, pdf_stratus_key)
-        VALUES (?,?,?,?,?,?,?,?)
-    """, (district_id, district, police_station, station_id,
-          fir_number, year, status, pdf_stratus_key))
-    con.commit()
-    con.close()
+    try:
+        con = sqlite3.connect(DB_PATH)
+        con.execute("""
+            INSERT OR REPLACE INTO fir_scrape_index
+            (district_id, district, police_station, station_id,
+             fir_number, year, status, pdf_stratus_key)
+            VALUES (?,?,?,?,?,?,?,?)
+        """, (district_id, district, police_station, station_id,
+              fir_number, year, status, pdf_stratus_key or ""))
+        con.commit()
+        con.close()
+    except Exception as e:
+        log.error(f"save_fir_metadata failed: {e}")
 
 
 def query_firs(year=None, district=None, station=None,
                status=None, limit=100) -> list:
-    """
-    Flexible query used by AI agent and UI search.
-    All params optional — pass what you have.
-    """
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
-    sql  = "SELECT * FROM fir_scrape_index WHERE 1=1"
-    args = []
-    if year:     sql += " AND year=?";                  args.append(year)
-    if district: sql += " AND district LIKE ?";         args.append(f"%{district}%")
-    if station:  sql += " AND police_station LIKE ?";   args.append(f"%{station}%")
-    if status:   sql += " AND status=?";                args.append(status)
-    sql += " ORDER BY scraped_at DESC LIMIT ?"
-    args.append(limit)
-    rows = [dict(r) for r in con.execute(sql, args).fetchall()]
-    con.close()
-    return rows
+    try:
+        con = sqlite3.connect(DB_PATH)
+        con.row_factory = sqlite3.Row
+        sql  = "SELECT * FROM fir_scrape_index WHERE 1=1"
+        args = []
+        if year:     sql += " AND year=?";                args.append(year)
+        if district: sql += " AND district LIKE ?";       args.append(f"%{district}%")
+        if station:  sql += " AND police_station LIKE ?"; args.append(f"%{station}%")
+        if status:   sql += " AND status=?";              args.append(status)
+        sql += " ORDER BY scraped_at DESC LIMIT ?"
+        args.append(limit)
+        rows = [dict(r) for r in con.execute(sql, args).fetchall()]
+        con.close()
+        return rows
+    except Exception as e:
+        log.error(f"query_firs failed: {e}")
+        return []
 
 
-# ── Stratus (PDF storage) ─────────────────────────────────────────────────────
-
-def upload_pdf_to_stratus(pdf_bytes: bytes, district_id, station_id,
-                           fir_number, year):
-    """
-    Uploads PDF bytes to Catalyst Stratus.
-    Returns the object key on success, None on failure.
-    Object key format: "YEAR/DISTRICT_ID/STATION_ID/FIRNUMBER.pdf"
-    e.g. "2024/5/PS001/0023.pdf"
-    """
+def upload_pdf_to_stratus(pdf_bytes: bytes, district_id,
+                           station_id, fir_number, year) -> str | None:
+    """Upload PDF to Catalyst Stratus. Returns object key or None."""
     key = f"{year}/{district_id}/{station_id}/{fir_number}.pdf"
     try:
         import zcatalyst_sdk as catalyst
@@ -112,21 +103,25 @@ def upload_pdf_to_stratus(pdf_bytes: bytes, district_id, station_id,
         log.info(f"Stratus upload OK: {key}")
         return key
     except Exception as e:
-        log.error(f"Stratus upload failed for {key}: {e}")
+        log.error(f"Stratus upload failed ({key}): {e}")
+        # Save to /tmp as fallback so we don't lose the PDF
+        try:
+            tmp_path = f"/tmp/fir_{district_id}_{station_id}_{fir_number}_{year}.pdf"
+            with open(tmp_path, "wb") as f:
+                f.write(pdf_bytes)
+            log.info(f"PDF saved to /tmp fallback: {tmp_path}")
+        except:
+            pass
         return None
 
 
-def get_pdf_download_url(stratus_key: str):
-    """
-    Returns a signed/direct URL to a stored FIR PDF from Stratus.
-    """
+def get_pdf_download_url(stratus_key: str) -> str | None:
     try:
         import zcatalyst_sdk as catalyst
         app     = catalyst.initialize()
         stratus = app.stratus()
         bucket  = stratus.bucket(STRATUS_BUCKET)
-        url     = bucket.get_object_url(stratus_key)
-        return url
+        return bucket.get_object_url(stratus_key)
     except Exception as e:
-        log.error(f"Failed to get Stratus URL for {stratus_key}: {e}")
+        log.error(f"Stratus URL failed ({stratus_key}): {e}")
         return None
