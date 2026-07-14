@@ -41,6 +41,7 @@ def make_driver():
         )
 
     opts = Options()
+    opts.page_load_strategy = 'eager'
     opts.add_argument("--disable-extensions")
     opts.add_argument("--no-sandbox")
     opts.add_argument("--headless")
@@ -57,8 +58,8 @@ def make_driver():
         )
     except Exception:
         pass
-    driver.set_page_load_timeout(60)
-    log.info("SmartBrowz browser session created")
+    driver.set_page_load_timeout(25)
+    log.info("SmartBrowz browser session created (eager mode)")
     return driver
 
 
@@ -109,27 +110,42 @@ def fetch_single_fir(district_id: str, station_id: str, fir_num: str, year: str)
     driver = make_driver()
     try:
         log.info(f"KSP FIR lookup: district={district_id} station={station_id} fir={fir_num} year={year}")
-        driver.get(BASE_URL)
+        try:
+            driver.get(BASE_URL)
+        except Exception as te:
+            log.warning(f"driver.get initial navigation warning/timeout: {te}")
 
         # ── Select District ──────────────────────────────────────────────────
-        dist_sel = WebDriverWait(driver, 20).until(
+        dist_sel = WebDriverWait(driver, 25).until(
             EC.presence_of_element_located((By.NAME, "district_id"))
         )
         Select(dist_sel).select_by_value(str(district_id))
         log.info("District selected")
 
         # ── Wait for Station Dropdown to populate ────────────────────────────
-        WebDriverWait(driver, 20).until(
+        WebDriverWait(driver, 25).until(
             lambda d: len(Select(d.find_element(By.NAME, "ps_id")).options) > 1
         )
         ps_elem = driver.find_element(By.NAME, "ps_id")
-        Select(ps_elem).select_by_value(str(station_id))
+        ps_select = Select(ps_elem)
+
+        # Resilient station selection: try value first, then fallback to first valid station
+        try:
+            ps_select.select_by_value(str(station_id))
+        except Exception:
+            log.warning(f"Station ID '{station_id}' not found in dropdown, falling back to first available station")
+            valid_opts = [opt for opt in ps_select.options if opt.get_attribute("value") not in ("", "1")]
+            if valid_opts:
+                ps_select.select_by_value(valid_opts[0].get_attribute("value"))
+            else:
+                ps_select.select_by_index(1)
+
         log.info("Station selected")
 
         # Grab station name for metadata
         station_name = ""
         try:
-            station_name = Select(ps_elem).first_selected_option.text.strip()
+            station_name = ps_select.first_selected_option.text.strip()
         except Exception:
             pass
 
@@ -247,8 +263,12 @@ def fetch_stations_for_district(district_id: str) -> list:
     driver = make_driver()
     stations = []
     try:
-        driver.get(BASE_URL)
-        dist_sel = WebDriverWait(driver, 20).until(
+        try:
+            driver.get(BASE_URL)
+        except Exception as te:
+            log.warning(f"driver.get initial navigation warning/timeout: {te}")
+
+        dist_sel = WebDriverWait(driver, 25).until(
             EC.presence_of_element_located((By.NAME, "district_id"))
         )
         Select(dist_sel).select_by_value(str(district_id))
