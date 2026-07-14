@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -53,19 +54,29 @@ from routers import heatmap, network, intelligence, alerts, persons, cases, anal
 from routers.predict import load_models as load_predict_models
 from scrapers.scraper_store import init_scrape_table
 
+def _bg_model_loader():
+    try:
+        load_predict_models()
+        with open("startup_debug.txt", "a") as f:
+            f.write("Models initialised in background successfully.\n")
+    except Exception as e:
+        with open("startup_debug.txt", "a") as f:
+            f.write(f"Background model loading error: {traceback.format_exc()}\n")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan — load models and embeddings at startup."""
+    """Application lifespan — initialize database instantly and load models asynchronously in background."""
     try:
         with open("startup_debug.txt", "a") as f:
             f.write("Lifespan starting...\n")
-        load_predict_models()
         init_scrape_table()
+        # Non-blocking model load so server responds with 200 OK instantly
+        asyncio.create_task(asyncio.to_thread(_bg_model_loader))
         with open("startup_debug.txt", "a") as f:
-            f.write("Models and scrape table initialised successfully.\n")
+            f.write("Scrape table ready. Async model loading dispatched.\n")
     except Exception as e:
         with open("startup_debug.txt", "a") as f:
-            f.write(f"Lifespan error: {traceback.format_exc()}\n")
+            f.write(f"Lifespan init error: {traceback.format_exc()}\n")
     yield
     try:
         with open("startup_debug.txt", "a") as f:
