@@ -4,9 +4,7 @@
   "build_path": "backend",
   "stack": "python_3_11",
   "memory": 2048,
-  "port": {
-    "http": 9000
-  },
+  "port": 9000,
   "env_variables": {
     "SENTINAL_PROJECT_ID":        "50170000000065001",
     "SENTINAL_QUICKML_KEY":       "${SENTINAL_QUICKML_KEY}",
