@@ -37,6 +37,7 @@ try:
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait, Select
+    from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.chrome.options import Options
 except ImportError:
     import subprocess
@@ -52,6 +53,7 @@ except ImportError:
         from selenium import webdriver
         from selenium.webdriver.common.by import By
         from selenium.webdriver.support.ui import WebDriverWait, Select
+        from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.chrome.options import Options
     except Exception as _ie:
         logging.warning(f"Could not auto-install selenium: {_ie}")
@@ -291,13 +293,12 @@ def _get_stations(district_filter=None) -> list:
     Returns list of (district_id, district_name, station_id, station_name).
     Optionally filtered to specific district IDs.
     """
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait, Select as SeleniumSelect
-    from selenium.webdriver.support import expected_conditions as EC
-
     _log("Discovering police stations via SmartBrowz...")
     stations = []
     targets  = district_filter or sorted(DISTRICT_NAMES.keys())
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait, Select
+    from selenium.webdriver.support import expected_conditions as EC
 
     try:
         driver = _make_driver("station-discovery")
@@ -309,7 +310,7 @@ def _get_stations(district_filter=None) -> list:
                 _log(f"Station discovery: District {did} ({dname})")
                 try:
                     driver.get(BASE_URL)
-                    SeleniumSelect(
+                    Select(
                         WebDriverWait(driver, 10).until(
                             EC.presence_of_element_located((By.NAME, "district_id"))
                         )
@@ -319,9 +320,9 @@ def _get_stations(district_filter=None) -> list:
                         lambda d: d.find_element(By.NAME, "ps_id")
                     )
                     WebDriverWait(driver, 10).until(
-                        lambda d: len(SeleniumSelect(ps_el).options) > 1
+                        lambda d: len(Select(ps_el).options) > 1
                     )
-                    for o in SeleniumSelect(ps_el).options:
+                    for o in Select(ps_el).options:
                         sid   = o.get_attribute("value")
                         sname = o.text.strip()
                         if sid and sid != "1" and "Select" not in sname:
@@ -365,9 +366,6 @@ def _get_stations(district_filter=None) -> list:
 # ── Worker thread ─────────────────────────────────────────────────────────────
 
 def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock):
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait, Select as SeleniumSelect
-    from selenium.webdriver.support import expected_conditions as EC
     from scrapers.scraper_store import (
         fir_already_scraped, save_fir_metadata, upload_pdf_to_stratus
     )
@@ -402,7 +400,7 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
                     driver.get(BASE_URL)
 
                     # Select district
-                    SeleniumSelect(
+                    Select(
                         WebDriverWait(driver, 10).until(
                             EC.presence_of_element_located((By.NAME, "district_id"))
                         )
@@ -413,9 +411,9 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
                         lambda d: d.find_element(By.NAME, "ps_id")
                     )
                     WebDriverWait(driver, 10).until(
-                        lambda d: len(SeleniumSelect(ps_el).options) > 1
+                        lambda d: len(Select(ps_el).options) > 1
                     )
-                    SeleniumSelect(ps_el).select_by_value(sid)
+                    Select(ps_el).select_by_value(sid)
 
                     # Submit
                     before_tabs = set(driver.window_handles)
