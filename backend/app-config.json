@@ -15,6 +15,7 @@
     "SENTINAL_VISION_MODEL":      "VL-Qwen3.6-35B-A3B",
     "SENTINAL_NLP_TRANSLATE_URL": "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-translation",
     "SENTINAL_NLP_TTS_URL":       "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/text-to-audio",
-    "SENTINAL_NLP_STT_URL":       "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text"
+    "SENTINAL_NLP_STT_URL":       "https://api.catalyst.zoho.in/quickml/v1/project/50170000000065001/nlp/audio-to-text",
+    "SMARTBROWZ_WEBDRIVER_URL":   "https://60073535541:5442bad1657a042b133011611f1a54f60c4f3d946fd6d81ea1e68909eed4172b@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
   }
 }
