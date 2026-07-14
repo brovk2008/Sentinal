@@ -62,7 +62,7 @@ async def start_scraper_endpoint(payload: dict, background_tasks: BackgroundTask
         "message":      f"Scraper started for year {year}",
         "year":         year,
         "district_ids": district_ids or "all",
-        "workers":      8,
+        "workers":      2,
     }
 
 

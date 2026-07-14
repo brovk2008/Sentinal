@@ -60,7 +60,7 @@ except ImportError:
         logging.warning(f"Could not auto-install selenium: {_ie}")
 
 log         = logging.getLogger(__name__)
-NUM_WORKERS = int(os.getenv("SCRAPE_WORKERS", "8"))
+NUM_WORKERS = int(os.getenv("SCRAPE_WORKERS", "2"))
 BASE_URL    = "https://ksp.karnataka.gov.in/firsearch/en"
 
 SMARTBROWZ_URL = os.getenv(
@@ -368,7 +368,24 @@ def _worker(worker_id: int, stations: list, year: str, csv_lock: threading.Lock)
         fir_already_scraped, save_fir_metadata, upload_pdf_to_stratus
     )
 
-    driver = _make_driver(worker_id)
+    # Stagger worker startup slightly so SmartBrowz Remote Grid receives sessions sequentially
+    time.sleep(worker_id * 2.5)
+
+    driver = None
+    for attempt in range(1, 4):
+        try:
+            driver = _make_driver(worker_id)
+            if driver:
+                break
+        except Exception as e:
+            _log(f"Worker {worker_id}: SmartBrowz session attempt {attempt}/3 queued — {e}")
+            if attempt < 3:
+                time.sleep(3.0)
+
+    if not driver:
+        _log(f"Worker {worker_id}: Terminating thread — SmartBrowz Grid concurrency limit reached")
+        return
+
     try:
         for did, dname, sid, sname in stations:
             if _STOP_FLAG.is_set():
