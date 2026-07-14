@@ -404,14 +404,40 @@ async def generate_district_report(district_name: str):
         except Exception as e:
             print(f"[Weasyprint District] Failed: {e}")
 
-    # 3. Fallback text file
-    plain_text = f"CONFIDENTIAL DISTRICT REPORT: {district_name}\n"
-    plain_text += f"Total recent cases analyzed: {len(cases)}\n\n"
-    for c in cases[:10]:
-         plain_text += f"{c['CrimeNo']} | {c['CrimeRegisteredDate']} | {c['CrimeGroupName']} | {c['CaseStatusName']}\n"
-         
+    # 3. Fallback — generate a minimal valid PDF
+    from datetime import datetime as _dt
+    safe_name = district_name.replace(' ', '_').replace('/', '-')
+    report_date = _dt.now().strftime('%d %b %Y')
+    case_lines = ""
+    for c in cases[:15]:
+        crime_no = str(c.get('CrimeNo', '')).replace('(', '').replace(')', '')
+        date_str = str(c.get('CrimeRegisteredDate', ''))[:10]
+        crime_type = str(c.get('CrimeGroupName', ''))[:30]
+        case_lines += f"0 -14 Td ({crime_no}  {date_str}  {crime_type}) Tj\n"
+
+    pdf_content = f"""%PDF-1.4
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
+3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj
+4 0 obj<</Length 600>>
+stream
+BT /F1 16 Tf 50 760 Td (SENTINAL v2 - DISTRICT INTELLIGENCE REPORT) Tj
+0 -24 Td /F1 12 Tf (District: {district_name}) Tj
+0 -18 Td (Date: {report_date}) Tj
+0 -18 Td (Total Recent Cases: {len(cases)}) Tj
+0 -28 Td /F1 10 Tf (CRIME NO         DATE         TYPE) Tj
+{case_lines}ET
+endstream
+endobj
+5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj
+xref
+0 6
+0000000000 65535 f
+trailer<</Size 6/Root 1 0 R>>
+startxref 0
+%%EOF"""
     return Response(
-        content=plain_text.encode("utf-8"),
+        content=pdf_content.encode("latin-1"),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=District_Report_{district_name}.txt"}
+        headers={"Content-Disposition": f"attachment; filename=District_Report_{safe_name}_{report_date.replace(' ', '_')}.pdf"}
     )

@@ -95,7 +95,7 @@ export default function FIRSearch() {
     setPageNum(1)
     setParsedData(null)
     setSaved(false)
-    setMsg('🔗 Connecting to KSP portal...', 'info')
+    setMsg('🔗 Connecting to KSP portal via SmartBrowz...', 'info')
 
     try {
       const res = await fetch(`${SCRAPER_URL}/fetch`, {
@@ -105,24 +105,39 @@ export default function FIRSearch() {
       })
 
       if (res.status === 404) {
-        setMsg('❌ FIR not found in KSP records.', 'error')
+        setMsg('❌ FIR not found in KSP records. Verify FIR number and year.', 'error')
         setSearching(false)
         return
       }
 
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch {
+        setMsg('❌ Server returned invalid response. Backend may be restarting.', 'error')
+        setSearching(false)
+        return
+      }
+
       if (data.status === 'found') {
         setPdfB64(data.pdf_b64)
         setPdfMeta(data.fir_metadata)
         setMsg('✅ FIR fetched. View PDF or click OCR & Save.', 'success')
+      } else if (data.status === 'error') {
+        // Show the actual error from the scraper
+        setMsg(`⚠️ ${data.message || data.detail || 'Scraper error — check configuration'}`, 'warn')
+      } else if (data.detail) {
+        // FastAPI HTTPException format
+        setMsg(`⚠️ ${data.detail}`, 'warn')
       } else {
-        setMsg(`⚠️ ${data.message || 'Unknown error from scraper'}`, 'warn')
+        setMsg(`⚠️ ${data.message || 'Unknown response from scraper'}`, 'warn')
       }
     } catch (err) {
-      setMsg(`❌ Scraper error: ${err.message}`, 'error')
+      setMsg(`❌ Network error: ${err.message}`, 'error')
     }
     setSearching(false)
   }
+
 
   const runOCR = async () => {
     if (!pdfB64) return
