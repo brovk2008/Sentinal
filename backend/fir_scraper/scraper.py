@@ -6,6 +6,7 @@ Set env var:
   SMARTBROWZ_WEBDRIVER_URL = https://<projectId>:<apiKey>@webdriver.catalystsmartbrowz.in/browser360/webdriver/<projectId>
 """
 import os
+import sys
 import re
 import logging
 import base64
