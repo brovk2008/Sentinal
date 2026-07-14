@@ -11,6 +11,10 @@ import re
 import logging
 import base64
 
+TMP_SITE = "/tmp/site-packages"
+if os.path.exists(TMP_SITE) and TMP_SITE not in sys.path:
+    sys.path.insert(0, TMP_SITE)
+
 import site
 user_site = site.getusersitepackages()
 if user_site and user_site not in sys.path:
@@ -29,13 +33,10 @@ try:
     from selenium.webdriver.chrome.options import Options
 except ImportError:
     import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
-    user_site = site.getusersitepackages()
-    if user_site and user_site not in sys.path:
-        sys.path.insert(0, user_site)
-    for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
-        if os.path.exists(extra_path) and extra_path not in sys.path:
-            sys.path.insert(0, extra_path)
+    os.makedirs(TMP_SITE, exist_ok=True)
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--target", TMP_SITE, "selenium==4.22.0", "beautifulsoup4==4.12.3"])
+    if TMP_SITE not in sys.path:
+        sys.path.insert(0, TMP_SITE)
     from bs4 import BeautifulSoup
     from selenium import webdriver
     from selenium.webdriver.common.by import By

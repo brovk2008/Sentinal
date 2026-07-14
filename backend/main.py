@@ -17,7 +17,11 @@ try:
 except Exception as e:
     pass
 
-# Ensure Catalyst AppSail user site packages directory is in sys.path
+# Ensure /tmp/site-packages is in sys.path
+TMP_SITE = "/tmp/site-packages"
+if os.path.exists(TMP_SITE) and TMP_SITE not in sys.path:
+    sys.path.insert(0, TMP_SITE)
+
 import site
 user_site = site.getusersitepackages()
 if user_site and user_site not in sys.path:
@@ -33,17 +37,15 @@ try:
     import bs4
 except ImportError:
     import subprocess
-    print("[Startup] Missing runtime dependency 'selenium' or 'beautifulsoup4'. Installing now...")
+    print("[Startup] Missing runtime dependency 'selenium' or 'beautifulsoup4'. Installing to /tmp/site-packages...")
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
-        user_site = site.getusersitepackages()
-        if user_site and user_site not in sys.path:
-            sys.path.insert(0, user_site)
-        for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
-            if os.path.exists(extra_path) and extra_path not in sys.path:
-                sys.path.insert(0, extra_path)
+        os.makedirs(TMP_SITE, exist_ok=True)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--target", TMP_SITE, "selenium==4.22.0", "beautifulsoup4==4.12.3"])
+        if TMP_SITE not in sys.path:
+            sys.path.insert(0, TMP_SITE)
         import selenium
         import bs4
+        print("[Startup] selenium and beautifulsoup4 installed and loaded successfully!")
     except Exception as ie:
         print(f"[Startup] Error auto-installing dependencies: {ie}")
 
