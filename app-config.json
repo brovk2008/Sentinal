@@ -1,7 +1,7 @@
 {
   "name": "sentinal-backend",
   "command": "python3 main.py",
-  "build_path": "backend",
+  "buildPath": "backend",
   "stack": "python_3_11",
   "memory": 2048,
   "port": 9000,

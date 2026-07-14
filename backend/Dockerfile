@@ -50,5 +50,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import os, urllib.request; port = os.environ.get('X_ZOHO_CATALYST_LISTEN_PORT', '9000'); urllib.request.urlopen(f'http://localhost:{port}/health')"
 
 # Start command
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${X_ZOHO_CATALYST_LISTEN_PORT:-9000} --workers 1 --timeout-keep-alive 30"]
+CMD ["sh", "-c", "python3 main.py"]
 
