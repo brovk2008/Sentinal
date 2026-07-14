@@ -243,7 +243,7 @@ def _fill_and_submit(driver, fir_s: str, year: str) -> bool:
 
     try:
         try:
-            SeleniumSelect(driver.find_element(By.NAME, "year")).select_by_value(year)
+            Select(driver.find_element(By.NAME, "year")).select_by_value(year)
         except Exception:
             pass
 

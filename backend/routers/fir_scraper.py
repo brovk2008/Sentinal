@@ -2,6 +2,7 @@
 FIR Scraper Router — mounts at /api/v1/fir
 Wraps the KSP Selenium scraper as FastAPI endpoints within the main Sentinal backend.
 """
+
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
