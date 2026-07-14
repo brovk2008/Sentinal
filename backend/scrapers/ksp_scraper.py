@@ -82,8 +82,14 @@ def _log(msg: str):
 def _make_driver(worker_id):
     """Create a SmartBrowz remote Chrome session."""
     try:
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
+        try:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+        except ImportError:
+            import sys, subprocess
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
 
         opts = Options()
         opts.page_load_strategy = 'eager'

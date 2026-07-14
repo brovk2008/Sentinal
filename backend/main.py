@@ -16,6 +16,18 @@ try:
 except Exception as e:
     pass
 
+# Auto-verify and install selenium / bs4 if missing in AppSail environment
+try:
+    import selenium
+    import bs4
+except ImportError:
+    import subprocess
+    print("[Startup] Missing runtime dependency 'selenium' or 'beautifulsoup4'. Installing now...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium==4.22.0", "beautifulsoup4==4.12.3"])
+    except Exception as ie:
+        print(f"[Startup] Error auto-installing dependencies: {ie}")
+
 # Detect if running inside Zoho Catalyst AppSail production environment
 IS_CATALYST = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV"))
 
