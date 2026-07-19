@@ -14,7 +14,6 @@ import 'reactflow/dist/style.css'
 import { useTranslation } from 'react-i18next'
 import { connectDots, analyzeBoard, queryIntelligence } from '../api'
 import FileUploader from '../components/FileUploader'
-import Icon from '../components/Icons'
 
 // ── API helpers ─────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -35,13 +34,13 @@ async function saveCanvas(caseId, nodes, edges) {
 
 // ── Node type colours ───────────────────────────────────────────────
 const NODE_TYPES = {
-  person:    { color: '#e05252', icon: <Icon name="person" size={13} />, label: 'Person' },
-  case:      { color: 'var(--copper-500,#c8814a)', icon: <Icon name="cases" size={13} />, label: 'Case' },
-  location:  { color: '#52b0e0', icon: <Icon name="map" size={13} />, label: 'Location' },
-  phone:     { color: '#52e07a', icon: <Icon name="cdr" size={13} />, label: 'Phone' },
-  vehicle:   { color: '#b452e0', icon: <Icon name="predict" size={13} />, label: 'Vehicle' },
-  evidence:  { color: '#e0c852', icon: <Icon name="search" size={13} />, label: 'Evidence' },
-  financial: { color: '#52e0cc', icon: <Icon name="financial" size={13} />, label: 'Financial' },
+  person:    { color: '#e05252', icon: '👤', label: 'Person' },
+  case:      { color: 'var(--copper-500,#c8814a)', icon: '📁', label: 'Case' },
+  location:  { color: '#52b0e0', icon: '📍', label: 'Location' },
+  phone:     { color: '#52e07a', icon: '📱', label: 'Phone' },
+  vehicle:   { color: '#b452e0', icon: '🚗', label: 'Vehicle' },
+  evidence:  { color: '#e0c852', icon: '🔬', label: 'Evidence' },
+  financial: { color: '#52e0cc', icon: '💰', label: 'Financial' },
 }
 
 // ── Custom Node renderer ─────────────────────────────────────────────
@@ -457,10 +456,16 @@ export default function ConnectionsBoard() {
 
         <button
           onClick={async () => {
-            const res  = await fetch(`${BASE_URL}/api/v1/board/demo`);
-            const data = await res.json();
-            setNodes(data.nodes);
-            setEdges(data.edges);
+            try {
+              const res = await fetch(`${BASE_URL}/api/v1/board/demo`);
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const data = await res.json();
+              setNodes(data.nodes || []);
+              setEdges(data.edges || []);
+            } catch (e) {
+              setSaveStatus(`Load failed: ${e.message}`);
+              setTimeout(() => setSaveStatus(''), 3000);
+            }
           }}
           style={{
             ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,

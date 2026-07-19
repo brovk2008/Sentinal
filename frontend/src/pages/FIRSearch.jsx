@@ -7,8 +7,9 @@ import 'react-pdf/dist/Page/TextLayer.css'
 pdfjs.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
-const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || 'http://localhost:8000/api/v1/fir').replace(/\/$/, '')
-const OCR_FUNC_URL = import.meta.env.VITE_CATALYST_OCR_FUNC_URL || ''
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || `${BASE_URL}/api/v1/fir`).replace(/\/$/, '');
+const OCR_FUNC_URL = import.meta.env.VITE_CATALYST_OCR_FUNC_URL || '';
 
 // ── Karnataka Districts ──────────────────────────────────────────────────────
 const DISTRICTS = [

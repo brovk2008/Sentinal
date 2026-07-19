@@ -26,6 +26,9 @@ import PatternIntel from './pages/PatternIntel'
 import Profile from './pages/Profile'
 import DataUploadIntel from './pages/DataUploadIntel'
 import AuthGuard from './components/AuthGuard'
+import BackendWakeup from './components/layout/BackendWakeup'
+import ErrorBoundary from './components/ErrorBoundary'
+import useBackendKeepAlive from './hooks/useBackendKeepAlive'
 
 // ─── Routing strategy ────────────────────────────────────────────────────────
 // We use HashRouter (#/dashboard, #/map, etc.) because:
@@ -58,16 +61,23 @@ function Layout() {
         background: 'var(--bg-primary)',
         gridColumn: '2',
         gridRow: '2',
+        display: 'flex',
+        flexDirection: 'column',
       }}>
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
       <LiveFeed />
       <DemoOverlay />
+      <BackendWakeup />
     </div>
   )
 }
 
 export default function App() {
+  useBackendKeepAlive() // Keep AppSail warm — ping every 4 minutes
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Toggle demo mode via Ctrl+D

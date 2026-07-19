@@ -5,7 +5,20 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export async function request(endpoint, options = {}) {
+// ── Backend warm-up state ──────────────────────────────────────────────
+// AppSail dev tier sleeps after inactivity. We detect 503s and show a
+// "Backend warming up..." notice instead of an infinite spinner.
+let _warmingUp = false;
+export function isWarmingUp() { return _warmingUp; }
+
+function _setWarmingUp(v) {
+  if (_warmingUp === v) return;
+  _warmingUp = v;
+  window.dispatchEvent(new CustomEvent('backend-wakeup', { detail: { warming: v } }));
+}
+
+// ── request() with 503 retry ───────────────────────────────────────────
+export async function request(endpoint, options = {}, _retries = 5) {
   const url = `${BASE_URL}${endpoint}`;
   const config = {
     headers: { 'Content-Type': 'application/json', ...options.headers },
@@ -14,13 +27,29 @@ export async function request(endpoint, options = {}) {
 
   try {
     const res = await fetch(url, config);
+    if (res.status === 503 && _retries > 0) {
+      _setWarmingUp(true);
+      // Exponential backoff: 2s, 4s, 6s, 8s, 10s
+      const delay = (6 - _retries) * 2000;
+      await new Promise(r => setTimeout(r, delay));
+      return request(endpoint, options, _retries - 1);
+    }
     if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    _setWarmingUp(false);
     return await res.json();
   } catch (err) {
+    if (_retries > 0 && (err.message?.includes('Failed to fetch') || err.message?.includes('503'))) {
+      _setWarmingUp(true);
+      const delay = (6 - _retries) * 2000;
+      await new Promise(r => setTimeout(r, delay));
+      return request(endpoint, options, _retries - 1);
+    }
+    _setWarmingUp(false);
     console.error(`[API] ${endpoint}:`, err);
     throw err;
   }
 }
+
 
 // ── Analytics ──
 export const fetchKpis = () => request('/api/v1/analytics/kpis');
