@@ -54,7 +54,7 @@ IS_CATALYST = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.g
 
 from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp, scraper, uploads, auth
 from routers.predict import load_models as load_predict_models
-from scrapers.scraper_store import init_scrape_table
+from init_db import init_all_tables
 
 def _bg_model_loader():
     try:
@@ -71,11 +71,11 @@ async def lifespan(app: FastAPI):
     try:
         with open("startup_debug.txt", "a") as f:
             f.write("Lifespan starting...\n")
-        init_scrape_table()
+        init_all_tables()  # Creates all missing tables + seeds synthetic data
         # Non-blocking model load so server responds with 200 OK instantly
         asyncio.create_task(asyncio.to_thread(_bg_model_loader))
         with open("startup_debug.txt", "a") as f:
-            f.write("Scrape table ready. Async model loading dispatched.\n")
+            f.write("All tables ready. Async model loading dispatched.\n")
     except Exception as e:
         with open("startup_debug.txt", "a") as f:
             f.write(f"Lifespan init error: {traceback.format_exc()}\n")

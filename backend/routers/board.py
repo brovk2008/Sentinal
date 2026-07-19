@@ -9,86 +9,9 @@ from services.quickml_service import call_ai
 
 router = APIRouter()
 
-# ─── Initialize board database table ──────────────────────────────────
-def init_board_db():
-    try:
-        execute("""
-            CREATE TABLE IF NOT EXISTS evidence_boards (
-                board_id TEXT PRIMARY KEY,
-                name TEXT,
-                data TEXT,
-                created_at TEXT,
-                updated_at TEXT
-            )
-        """)
-        # Seed board_shadow_net if not exists
-        exists = query_one("SELECT board_id FROM evidence_boards WHERE board_id = 'board_shadow_net'")
-        if not exists:
-            import json
-            from datetime import datetime
-            now = datetime.now().isoformat()
-            seed_data = {
-                "nodes": [
-                    {
-                        "id": "node_1",
-                        "type": "case",
-                        "x": 200, "y": 150,
-                        "title": "Case #456 — UPI Cyber Fraud",
-                        "subtitle": "Bengaluru Urban · Under Investigation",
-                        "imageUrl": None,
-                        "content": "Cyber crime cells reported 8 suspicious transactions from account 90812328.",
-                        "caseId": 456,
-                        "color": "var(--copper-500)",
-                        "tags": ["UPI Fraud", "High Gravity"]
-                    },
-                    {
-                        "id": "node_2",
-                        "type": "person",
-                        "x": 550, "y": 220,
-                        "title": "Ashok Kumar",
-                        "subtitle": "Suspected Syndicate Coordinator",
-                        "imageUrl": None,
-                        "content": "Priors listed under cheating & narcotics. Active location in Hebbal.",
-                        "accusedId": 5,
-                        "color": "#e05252",
-                        "tags": ["Main Actor", "Repeat Offender"]
-                    }
-                ],
-                "connections": [
-                    {
-                        "id": "conn_1",
-                        "fromNodeId": "node_1",
-                        "toNodeId": "node_2",
-                        "label": "Primary Beneficiary",
-                        "color": "#e05252",
-                        "thickness": 2
-                    }
-                ]
-            }
-            execute(
-                "INSERT INTO evidence_boards (board_id, name, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-                ("board_shadow_net", "Operation Shadow Net", json.dumps(seed_data), now, now)
-            )
-            print("[Board Router] Seeded board_shadow_net into evidence_boards.")
-        print("[Board Router] SQLite table evidence_boards verified.")
-    except Exception as e:
-        print(f"[Board Router] Error initializing table: {e}")
+# ── Board DB initialization is handled centrally by init_db.init_all_tables() in main.py
+# Tables: evidence_boards, board_state are created at startup.
 
-    # ── Canvas board_state table (for ReactFlow ConnectionsBoard) ─────
-    try:
-        execute("""
-            CREATE TABLE IF NOT EXISTS board_state (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                case_id    TEXT NOT NULL UNIQUE,
-                nodes_json TEXT DEFAULT '[]',
-                edges_json TEXT DEFAULT '[]',
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-    except Exception as e:
-        print(f"[Board Router] Error creating board_state table: {e}")
-
-init_board_db()
 
 # ─── Canvas Board (ReactFlow) schemas ────────────────────────────────
 

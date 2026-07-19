@@ -147,24 +147,10 @@ _COLUMN_MAPS = [
 ]
 
 def _ensure_cdr_upload_columns():
-    """Add upload-specific columns to cdr_records if they don't exist."""
-    con = sqlite3.connect(_DB_PATH)
-    for col, dtype in [
-        ('phone', 'TEXT'), ('called', 'TEXT'), ('call_type_raw', 'TEXT'),
-        ('date', 'DATE'), ('time', 'TIME'), ('duration_sec', 'INTEGER'),
-        ('tower_id', 'TEXT'), ('lat', 'REAL'), ('lng', 'REAL'), ('imei', 'TEXT'),
-        ('uploaded_at', 'TIMESTAMP'),
-    ]:
-        try:
-            con.execute(f"ALTER TABLE cdr_records ADD COLUMN {col} {dtype}")
-        except:
-            pass  # column already exists
-    con.execute("CREATE INDEX IF NOT EXISTS idx_cdr_phone   ON cdr_records(phone)")
-    con.execute("CREATE INDEX IF NOT EXISTS idx_cdr_tower   ON cdr_records(tower_id)")
-    con.execute("CREATE INDEX IF NOT EXISTS idx_cdr_imei    ON cdr_records(imei)")
-    con.commit()
-    con.close()
+    """No-op: cdr_records columns are created by init_db.init_all_tables() at startup."""
+    pass
 
+# Called at module import — safe no-op now that init_db handles DDL
 _ensure_cdr_upload_columns()
 
 
