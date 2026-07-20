@@ -10,7 +10,10 @@ import {
 } from '../api';
 import FileUploader from '../components/FileUploader';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 // ── Rich Default Seed Scraped FIR Data ──────────────────────────────────────
 const DEFAULT_SCRAPED_FIRS = [
@@ -167,22 +170,32 @@ export default function DataIngestion() {
       .finally(() => setSearchLoading(false));
   };
 
-  const [pdfModal, setPdfModal]   = useState(null); // { b64, title }
-  const [pdfPage, setPdfPage]     = useState(1);
-  const [pdfPages, setPdfPages]   = useState(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const DISTRICT_NAME_TO_ID = {
+    'Bagalkot': '1', 'Ballari': '2', 'Belagavi City': '3', 'Belagavi Dist': '4',
+    'Bengaluru City': '5', 'Bengaluru Dist': '6', 'Bidar': '7', 'Chamarajanagar': '8',
+    'Chickballapura': '9', 'Chikkamagaluru': '10', 'Chitradurga': '11',
+    'Dakshina Kannada': '14', 'Davanagere': '15', 'Dharwad': '16',
+    'Hubballi Dharwad City': '20', 'Kalaburagi': '23', 'Kodagu': '26',
+    'Kolar': '27', 'Mandya': '29', 'Mangaluru City': '30', 'Mysuru City': '31',
+    'Mysuru Dist': '32', 'Raichur': '33', 'Bengaluru South': '34',
+    'Shivamogga': '35', 'Tumakuru': '36', 'Udupi': '37',
+    'Uttara Kannada': '38', 'Vijayapur': '39', 'Yadgir': '40', 'Vijayanagara': '41',
+  };
 
   const handleViewPdf = (row) => {
-    // Extract district_id, station_id, fir_num, year from the row
-    const districtId = row.district_id   || String(row.district || '2');
-    const stationId  = row.station_id    || String(row.police_station || '101');
-    const firNum     = row.fir_number    || row.fir_no || '1';
-    const yr         = row.year          || year || '2024';
+    // Resolve district name → id, fall back to '2' (Ballari) for demo
+    const districtId = row.district_id
+      || DISTRICT_NAME_TO_ID[row.district]
+      || '2';
+    // station_id from row, or first 3 digits of fir_number, or default
+    const stationId  = row.station_id || '101';
+    const firNum     = String(row.fir_number || row.fir_no || '1').replace(/\D/g, '') || '1';
+    const yr         = String(row.year || year || '2024');
 
     setPdfLoading(true);
-    setPdfModal({ b64: null, title: `FIR ${firNum}/${yr} — ${row.district || row.police_station || ''}` });
+    setPdfModal({ b64: null, title: `FIR ${firNum}/${yr} — ${row.district || ''} · ${row.police_station || ''}` });
 
-    fetchFir({ district_id: districtId, station_id: stationId, fir_num: firNum, year: String(yr) })
+    fetchFir({ district_id: districtId, station_id: stationId, fir_num: firNum, year: yr })
       .then(res => {
         if (res.pdf_b64) {
           setPdfModal({ b64: res.pdf_b64, title: `FIR ${firNum}/${yr} — ${res.fir_metadata?.station_name || row.police_station || ''}` });

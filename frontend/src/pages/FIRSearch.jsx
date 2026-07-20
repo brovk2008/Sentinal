@@ -4,8 +4,11 @@ import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
 // Worker URL must match installed pdfjs-dist version (react-pdf v10 = pdfjs v5)
-pdfjs.GlobalWorkerOptions.workerSrc =
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+// Use Vite's new URL() so the worker is bundled as a static asset (no CDN/CORS issues)
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString()
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || `${BASE_URL}/api/v1/fir`).replace(/\/$/, '');
