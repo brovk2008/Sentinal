@@ -144,8 +144,12 @@ export const listUploads = (params = {}) => {
 export const getUploadedFile = (fileId) => request(`/api/v1/uploads/file/${fileId}`);
 export const deleteUploadedFile = (fileId) => request(`/api/v1/uploads/file/${fileId}`, { method: 'DELETE' });
 
-// ── Pattern Intelligence ──
+// ── Pattern Intelligence & Criminology ──
 export const fetchPatterns = () => request('/api/v1/intelligence/patterns');
+export const fetchMoClusters = () => request('/api/v1/criminology/mo-clusters');
+export const fetchNearRepeatRisk = () => request('/api/v1/criminology/near-repeat-risk');
+export const fetchSyndicateGraph = () => request('/api/v1/criminology/syndicate-graph');
+export const fetchSpreeAlerts = () => request('/api/v1/criminology/spree-alerts');
 
 
 // ── Intelligence ──

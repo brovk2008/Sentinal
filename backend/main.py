@@ -76,6 +76,7 @@ ALL_ROUTERS = [
     ("scraper",      "/api/v1/scraper",      "KSP FIR Scraper (SmartBrowz)"),
     ("nlp",          "/api/v1/nlp",          "Catalyst NLP"),
     ("uploads",      "/api/v1/uploads",      "File Uploads"),
+    ("criminology",  "/api/v1/criminology",  "Criminology & Crime Pattern AI"),
     ("auth",         "/api/v1/auth",         "Auth"),
 ]
 
