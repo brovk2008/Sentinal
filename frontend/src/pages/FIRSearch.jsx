@@ -267,10 +267,27 @@ export default function FIRSearch() {
   }
 
   const downloadPDF = () => {
-    if (!iframeRef.current) return
-    // Print the iframe content — browser converts to PDF
-    iframeRef.current.contentWindow.print()
+    if (!pdfB64) return
+    try {
+      const binaryStr = atob(pdfB64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+      const blob = new Blob([bytes], { type: 'application/pdf' })
+      const url  = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href  = url
+      const dist = (pdfMeta?.district_name || districtId).replace(/[^a-zA-Z0-9]/g, '_')
+      const stn  = (pdfMeta?.station_name  || stationId).replace(/[^a-zA-Z0-9]/g, '_')
+      link.download = `FIR_${dist}_${stn}_${firNum}_${year}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      setTimeout(() => URL.revokeObjectURL(url), 5000)
+    } catch (e) {
+      console.error('PDF download failed', e)
+    }
   }
+
 
 
   // ── Status color ─────────────────────────────────────────────────────────
@@ -425,8 +442,8 @@ export default function FIRSearch() {
               : 'PDF Viewer'}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {firHtml && (
-              <button onClick={downloadPDF} style={btn_s}>🖨 Print / Save PDF</button>
+            {pdfB64 && (
+              <button onClick={downloadPDF} style={btn_s}>⬇ Download PDF</button>
             )}
           </div>
         </div>

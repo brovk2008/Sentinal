@@ -48,6 +48,9 @@ export default function DataIngestion() {
     status: ''
   });
   const [searchLoading, setSearchLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfModal, setPdfModal] = useState(null);
+
 
   const consoleEndRef = useRef(null);
   const intervalRef = useRef(null);
