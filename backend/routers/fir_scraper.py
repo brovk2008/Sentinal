@@ -315,9 +315,18 @@ def _generate_synthetic_fir_pdf(req: FIRRequest) -> dict:
     import io, base64
     from database import query_one
 
-    district_name = "Ballari"
-    station_name  = "Ballari Town PS"
-    crime_group   = "Financial Fraud & Theft"
+    # Resolve district and station names dynamically from maps
+    dist_obj = next((d for d in DISTRICTS if d["id"] == str(req.district_id)), None)
+    district_name = dist_obj["name"] if dist_obj else f"District {req.district_id}"
+
+    station_list = STATION_FALLBACKS.get(str(req.district_id), [])
+    stn_obj = next((s for s in station_list if s["id"] == str(req.station_id)), None)
+    if stn_obj:
+        station_name = stn_obj["name"]
+    else:
+        station_name = f"{district_name} Police Station"
+
+    crime_group = "Financial Fraud & Theft"
 
     try:
         db_case = query_one("""
@@ -337,7 +346,7 @@ def _generate_synthetic_fir_pdf(req: FIRRequest) -> dict:
     except Exception as dbe:
         log.warning(f"DB lookup warning in synthetic FIR pdf: {dbe}")
 
-    fir_no_str = f"{req.fir_num.zfill(4)}/{req.year}"
+    fir_no_str = f"{str(req.fir_num).zfill(4)}/{req.year}"
     pdf_b64    = ""
 
     # ── Attempt 1: reportlab (pre-bundled in backend/lib) ──────────────────

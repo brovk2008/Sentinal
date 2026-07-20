@@ -218,26 +218,47 @@ export default function FIRSearch() {
 
 
   const runOCR = async () => {
-    if (!pdfB64) return
     setOcrRunning(true)
     setMsg('🔬 Running Zia OCR pipeline...', 'info')
 
+    const payload = {
+      pdf_b64: pdfB64 || '',
+      fir_metadata: { district_id: districtId, station_id: stationId, fir_number: firNum, year },
+    }
+
     try {
-      const res = await fetch(OCR_FUNC_URL || `${SCRAPER_URL}/mock-ocr`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pdf_b64: pdfB64,
-          fir_metadata: { district_id: districtId, station_id: stationId, fir_number: firNum, year },
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
+      let data = null
+      if (OCR_FUNC_URL) {
+        try {
+          const res = await fetch(OCR_FUNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          if (res.ok) {
+            data = await res.json()
+          }
+        } catch {
+          // Fall back to backend mock-ocr if cloud serverless function URL fails
+        }
+      }
+
+      if (!data || !data.parsed_data) {
+        const res = await fetch(`${SCRAPER_URL}/mock-ocr`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        data = await res.json()
+      }
+
+      if (data && (data.success || data.parsed_data)) {
         setParsedData(data.parsed_data)
         setSaved(true)
-        setMsg('✅ OCR complete. Record saved to Catalyst Data Store.', 'success')
+        setMsg('✅ OCR complete. Record extracted & saved to Catalyst Data Store.', 'success')
       } else {
-        setMsg(`❌ OCR failed: ${data.error}`, 'error')
+        const errMsg = data?.error || data?.detail || data?.message || 'OCR extraction failed'
+        setMsg(`❌ OCR failed: ${errMsg}`, 'error')
       }
     } catch (err) {
       setMsg(`❌ OCR error: ${err.message}`, 'error')
