@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   startScraper,
   fetchScraperStatus,
@@ -10,19 +9,14 @@ import {
 } from '../api';
 import FileUploader from '../components/FileUploader';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
-
 // ── Rich Default Seed Scraped FIR Data ──────────────────────────────────────
 const DEFAULT_SCRAPED_FIRS = [
-  { id: 1, fir_no: 'CR/2024/0102', year: 2024, district: 'Bengaluru City', station: 'Hebbal PS', crime_type: 'Cyber Crime & UPI Fraud', status: 'Ingested & Parsed', scraped_at: '2024-07-19 14:20' },
-  { id: 2, fir_no: 'CR/2024/0103', year: 2024, district: 'Bengaluru City', station: 'Indiranagar PS', crime_type: 'Cheating & Financial Fraud', status: 'Ingested & Parsed', scraped_at: '2024-07-19 14:22' },
-  { id: 3, fir_no: 'CR/2024/0215', year: 2024, district: 'Mysuru City', station: 'Devaraja PS', crime_type: 'Narcotics & NDPS', status: 'Parsed & Indexed', scraped_at: '2024-07-19 14:35' },
-  { id: 4, fir_no: 'CR/2024/0341', year: 2024, district: 'Hubballi Dharwad', station: 'Suburban PS', crime_type: 'Vehicle Theft Ring', status: 'Ingested & Parsed', scraped_at: '2024-07-19 14:40' },
-  { id: 5, fir_no: 'CR/2024/0412', year: 2024, district: 'Mangaluru City', station: 'Kadri PS', crime_type: 'Extortion & Smuggling', status: 'Parsed & Indexed', scraped_at: '2024-07-19 14:50' },
-  { id: 6, fir_no: 'CR/2024/0520', year: 2024, district: 'Belagavi City', station: 'APMC PS', crime_type: 'Land Grabbing & Fraud', status: 'Ingested & Parsed', scraped_at: '2024-07-19 15:05' },
+  { id: 1, fir_number: '0102', fir_no: 'CR/2024/0102', year: '2024', district: 'Bengaluru City', police_station: 'Hebbal PS', station: 'Hebbal PS', district_id: '5', station_id: '1382', crime_type: 'Cyber Crime & UPI Fraud', status: 'found', pdf_stratus_key: 'sim_1', scraped_at: '2024-07-19 14:20' },
+  { id: 2, fir_number: '0103', fir_no: 'CR/2024/0103', year: '2024', district: 'Bengaluru City', police_station: 'Indiranagar PS', station: 'Indiranagar PS', district_id: '5', station_id: '1413', crime_type: 'Cheating & Financial Fraud', status: 'found', pdf_stratus_key: 'sim_2', scraped_at: '2024-07-19 14:22' },
+  { id: 3, fir_number: '0215', fir_no: 'CR/2024/0215', year: '2024', district: 'Mysuru City', police_station: 'Devaraja PS', station: 'Devaraja PS', district_id: '31', station_id: '301', crime_type: 'Narcotics & NDPS', status: 'found', pdf_stratus_key: 'sim_3', scraped_at: '2024-07-19 14:35' },
+  { id: 4, fir_number: '0341', fir_no: 'CR/2024/0341', year: '2024', district: 'Hubballi Dharwad City', police_station: 'Hubballi Town PS', station: 'Hubballi Town PS', district_id: '20', station_id: '2001', crime_type: 'Vehicle Theft Ring', status: 'found', pdf_stratus_key: 'sim_4', scraped_at: '2024-07-19 14:40' },
+  { id: 5, fir_number: '0412', fir_no: 'CR/2024/0412', year: '2024', district: 'Mangaluru City', police_station: 'Kadri PS', station: 'Kadri PS', district_id: '30', station_id: '404', crime_type: 'Extortion & Smuggling', status: 'found', pdf_stratus_key: 'sim_5', scraped_at: '2024-07-19 14:50' },
+  { id: 6, fir_number: '0520', fir_no: 'CR/2024/0520', year: '2024', district: 'Belagavi City', police_station: 'Belagavi City PS', station: 'Belagavi City PS', district_id: '3', station_id: '301', crime_type: 'Land Grabbing & Fraud', status: 'found', pdf_stratus_key: 'sim_6', scraped_at: '2024-07-19 15:05' },
 ];
 
 export default function DataIngestion() {
@@ -182,51 +176,67 @@ export default function DataIngestion() {
     'Uttara Kannada': '38', 'Vijayapur': '39', 'Yadgir': '40', 'Vijayanagara': '41',
   };
 
-  const handleViewPdf = (row) => {
-    const districtId = row.district_id
-      || DISTRICT_NAME_TO_ID[row.district]
-      || '2';
-    const stationId  = row.station_id || '101';
-    const firNum     = String(row.fir_number || row.fir_no || '1').replace(/\D/g, '') || '1';
-    const yr         = String(row.year || year || '2024');
+  const handleViewPdf = async (row) => {
+    try {
+      const distStr = row.district || row.district_name || 'Ballari';
+      const districtId = String(
+        row.district_id || DISTRICT_NAME_TO_ID[distStr] || '2'
+      );
+      const stationId  = String(row.station_id || '101');
 
-    setPdfLoading(true);
+      let rawFir = String(row.fir_number || row.fir_no || '1');
+      if (rawFir.includes('/')) {
+        const parts = rawFir.split('/');
+        rawFir = parts[parts.length - 1];
+      }
+      const firNum = rawFir.replace(/\D/g, '').replace(/^0+/, '') || '1';
+      const yr     = String(row.year || year || '2024');
 
-    fetchFir({ district_id: districtId, station_id: stationId, fir_num: firNum, year: yr })
-      .then(res => {
-        if (res.pdf_b64) {
-          // Convert Base64 to Uint8Array & trigger direct PDF download
-          const binaryStr = atob(res.pdf_b64);
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let i = 0; i < binaryStr.length; i++) {
-            bytes[i] = binaryStr.charCodeAt(i);
-          }
-          const blob = new Blob([bytes], { type: 'application/pdf' });
-          const url  = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href  = url;
-          const safeDist = (row.district || 'District').replace(/[^a-zA-Z0-9]/g, '_');
-          const safeStn  = (row.police_station || 'PS').replace(/[^a-zA-Z0-9]/g, '_');
-          link.download  = `FIR_${safeDist}_${safeStn}_${firNum}_${yr}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setPdfLoading(true);
 
-          // Also set modal in case user wants to view inline
-          setPdfModal({ b64: res.pdf_b64, title: `FIR ${firNum}/${yr} — ${res.fir_metadata?.station_name || row.police_station || ''}` });
-          setPdfPage(1);
-        } else {
-          alert('FIR found but no PDF available.');
-          setPdfModal(null);
+      const res = await fetchFir({
+        district_id: districtId,
+        station_id: stationId,
+        fir_num: firNum,
+        year: yr,
+      });
+
+      if (res && res.pdf_b64) {
+        // Create binary Blob
+        const binaryStr = atob(res.pdf_b64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
         }
-      })
-      .catch(err => {
-        console.error(err);
-        alert('Failed to load FIR PDF.');
-        setPdfModal(null);
-      })
-      .finally(() => setPdfLoading(false));
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url  = URL.createObjectURL(blob);
+
+        // Trigger direct browser download
+        const link = document.createElement('a');
+        link.href  = url;
+        const safeDist = distStr.replace(/[^a-zA-Z0-9]/g, '_');
+        const stnStr   = row.police_station || row.station || 'PS';
+        const safeStn  = stnStr.replace(/[^a-zA-Z0-9]/g, '_');
+        link.download  = `FIR_${safeDist}_${safeStn}_${firNum}_${yr}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Set modal with iframe blobUrl
+        setPdfModal({
+          b64: res.pdf_b64,
+          blobUrl: url,
+          title: `FIR ${firNum}/${yr} — ${res.fir_metadata?.station_name || stnStr}`
+        });
+      } else {
+        alert('FIR found but no PDF available.');
+      }
+    } catch (err) {
+      console.error('Download PDF error:', err);
+      alert(`Failed to load FIR PDF: ${err.message || err}`);
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const pct = status.total_stations > 0 
@@ -602,8 +612,8 @@ export default function DataIngestion() {
                 searchResults.map(row => (
                   <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                     <td style={{ padding: '10px 12px', fontWeight: 500 }}>{row.district}</td>
-                    <td style={{ padding: '10px 12px' }}>{row.police_station}</td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)' }}>{row.fir_number}</td>
+                    <td style={{ padding: '10px 12px' }}>{row.police_station || row.station}</td>
+                    <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)' }}>{row.fir_number || row.fir_no}</td>
                     <td style={{ padding: '10px 12px' }}>{row.year}</td>
                     <td style={{ padding: '10px 12px' }}>
                       <span style={{
@@ -681,41 +691,47 @@ export default function DataIngestion() {
             border: '1px solid var(--copper-500)',
             borderRadius: 8,
             padding: 16,
-            maxWidth: 700,
-            width: '90vw',
-            maxHeight: '90vh',
-            overflow: 'auto',
+            maxWidth: 800,
+            width: '92vw',
+            height: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
             position: 'relative'
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontWeight: 700, color: 'var(--copper-400)', fontSize: 13 }}>{pdfModal.title}</span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {pdfPages > 1 && (
-                  <>
-                    <button onClick={() => setPdfPage(p => Math.max(1, p - 1))} disabled={pdfPage <= 1}
-                      style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '2px 8px', cursor: 'pointer', borderRadius: 3 }}>‹</button>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{pdfPage} / {pdfPages}</span>
-                    <button onClick={() => setPdfPage(p => Math.min(pdfPages, p + 1))} disabled={pdfPage >= pdfPages}
-                      style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '2px 8px', cursor: 'pointer', borderRadius: 3 }}>›</button>
-                  </>
+              <span style={{ fontWeight: 700, color: 'var(--copper-400)', fontSize: 14 }}>{pdfModal.title}</span>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                {pdfModal.blobUrl && (
+                  <a
+                    href={pdfModal.blobUrl}
+                    download="FIR_Document.pdf"
+                    style={{
+                      background: 'var(--copper-500)',
+                      color: '#000',
+                      padding: '4px 12px',
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    ↓ Download File
+                  </a>
                 )}
                 <button onClick={() => setPdfModal(null)}
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '2px 10px', borderRadius: 3, cursor: 'pointer' }}>✕ Close</button>
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>✕ Close</button>
               </div>
             </div>
             {pdfLoading ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading FIR PDF...</div>
-            ) : pdfModal.b64 ? (
-              <Document
-                file={`data:application/pdf;base64,${pdfModal.b64}`}
-                onLoadSuccess={({ numPages }) => { setPdfPages(numPages); setPdfPage(1); }}
-                loading={<div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Rendering PDF...</div>}
-                error={<div style={{ textAlign: 'center', padding: 40, color: '#ef4444' }}>Failed to load PDF.</div>}
-              >
-                <Page pageNumber={pdfPage} width={640} renderTextLayer={true} renderAnnotationLayer={true} />
-              </Document>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Loading FIR PDF...</div>
+            ) : pdfModal.blobUrl ? (
+              <iframe
+                src={pdfModal.blobUrl}
+                title="FIR PDF Viewer"
+                style={{ flex: 1, width: '100%', border: 'none', borderRadius: 4 }}
+              />
             ) : (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No PDF content available.</div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No PDF content available.</div>
             )}
           </div>
         </div>
