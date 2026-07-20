@@ -15,14 +15,12 @@ const CRIME_TYPES = ['All', 'Murder & Culpable Homicide', 'Theft & Burglary', 'C
 // ── Three.js 3D Globe Component (7E) ──
 function ThreeGlobe({ points }) {
   const mountRef = useRef(null)
+  const [retry, setRetry] = useState(0)
 
   useEffect(() => {
     if (!mountRef.current) return
     if (!window.THREE) {
-      // Three.js CDN not yet loaded — wait 500ms and re-check
-      const t = setTimeout(() => {
-        if (mountRef.current) mountRef.current.dataset.retry = '1'
-      }, 500)
+      const t = setTimeout(() => setRetry(r => r + 1), 300)
       return () => clearTimeout(t)
     }
 
@@ -33,41 +31,76 @@ function ThreeGlobe({ points }) {
 
     // Scene
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x040408)
+    scene.background = new THREE.Color(0x060812)
 
     // Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-    camera.position.z = 250
+    camera.position.z = 240
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(width, height)
+    container.innerHTML = ''
     container.appendChild(renderer.domElement)
 
-    // Globe Sphere
-    const globeRadius = 80
-    const geometry = new THREE.SphereGeometry(globeRadius, 32, 32)
-    const material = new THREE.MeshBasicMaterial({
-      color: 0x0f0f1a,
+    // Main Globe Group
+    const globeGroup = new THREE.Group()
+    scene.add(globeGroup)
+
+    const globeRadius = 75
+
+    // 1. Inner Solid Globe (Dark Ocean Core)
+    const oceanGeom = new THREE.SphereGeometry(globeRadius - 0.2, 64, 64)
+    const oceanMat = new THREE.MeshPhongMaterial({
+      color: 0x09101d,
+      emissive: 0x030712,
+      specular: 0x1e293b,
+      shininess: 15,
+      transparent: true,
+      opacity: 0.95
+    })
+    const oceanSphere = new THREE.Mesh(oceanGeom, oceanMat)
+    globeGroup.add(oceanSphere)
+
+    // 2. Tech Wireframe Grid
+    const wireGeom = new THREE.SphereGeometry(globeRadius, 36, 18)
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: 0x00d2ff,
       wireframe: true,
       transparent: true,
       opacity: 0.15
     })
-    const globe = new THREE.Mesh(geometry, material)
-    scene.add(globe)
+    const wireSphere = new THREE.Mesh(wireGeom, wireMat)
+    globeGroup.add(wireSphere)
 
-    // Solid outline globe
-    const outlineMat = new THREE.MeshBasicMaterial({
-      color: 0x0a0a0f,
+    // 3. Equator & Major Lat/Lng Accent Rings
+    const createRing = (radius, color, rotX = 0, rotY = 0, opacity = 0.4) => {
+      const ringGeom = new THREE.RingGeometry(radius - 0.3, radius + 0.3, 64)
+      const ringMat = new THREE.MeshBasicMaterial({
+        color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity
+      })
+      const ring = new THREE.Mesh(ringGeom, ringMat)
+      ring.rotation.x = rotX
+      ring.rotation.y = rotY
+      return ring
+    }
+    globeGroup.add(createRing(globeRadius + 0.1, 0xd97706, Math.PI / 2, 0, 0.5)) // Equator (Amber)
+    globeGroup.add(createRing(globeRadius + 0.1, 0x00f0ff, 0, 0, 0.3)) // Prime Meridian (Cyan)
+
+    // 4. Outer Atmosphere Glow Halo
+    const atmoGeom = new THREE.SphereGeometry(globeRadius + 4, 32, 32)
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x00d2ff,
+      side: THREE.BackSide,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.12
     })
-    const outlineGlobe = new THREE.Mesh(geometry, outlineMat)
-    globe.add(outlineGlobe)
-
-    // Add glowing amber dots representing crime locations
-    const dotGeom = new THREE.SphereGeometry(1.2, 8, 8)
-    const dotMat = new THREE.MeshBasicMaterial({ color: 0xc8814a })
+    const atmoSphere = new THREE.Mesh(atmoGeom, atmoMat)
+    scene.add(atmoSphere)
 
     // Helper: convert lat/lng to 3D Cartesian coordinates
     const latLngToVector3 = (lat, lng, r) => {
@@ -79,62 +112,132 @@ function ThreeGlobe({ points }) {
       return new THREE.Vector3(x, y, z)
     }
 
-    // Use real points or fallback to Karnataka district centers for visual demo
+    // Default Karnataka / India crime clusters
     const FALLBACK_POINTS = [
-      { lat: 12.9716, lng: 77.5946 }, { lat: 15.3647, lng: 75.1240 },
-      { lat: 13.0827, lng: 80.2707 }, { lat: 15.8497, lng: 74.4977 },
-      { lat: 12.2958, lng: 76.6394 }, { lat: 17.3850, lng: 78.4867 },
-      { lat: 14.4426, lng: 75.7218 }, { lat: 13.3409, lng: 77.1000 },
-      { lat: 12.8438, lng: 77.6624 }, { lat: 14.2218, lng: 76.3978 },
-      { lat: 15.1394, lng: 76.9214 }, { lat: 13.9299, lng: 75.5681 },
-      { lat: 12.3052, lng: 76.6551 }, { lat: 16.2076, lng: 77.3463 },
-      { lat: 13.0048, lng: 77.1004 }, { lat: 15.0068, lng: 76.0996 },
-      { lat: 14.1629, lng: 76.0178 }, { lat: 12.9254, lng: 74.8237 },
+      { lat: 12.9716, lng: 77.5946, severity: 'high' },   // Bengaluru
+      { lat: 15.3647, lng: 75.1240, severity: 'medium' }, // Hubballi
+      { lat: 15.1394, lng: 76.9214, severity: 'critical' },// Ballari
+      { lat: 15.8497, lng: 74.4977, severity: 'medium' }, // Belagavi
+      { lat: 12.2958, lng: 76.6394, severity: 'high' },   // Mysuru
+      { lat: 17.3850, lng: 78.4867, severity: 'medium' }, // Hyderabad area
+      { lat: 14.4426, lng: 75.7218, severity: 'low' },    // Davanagere
+      { lat: 13.3409, lng: 77.1000, severity: 'high' },   // Tumakuru
+      { lat: 12.8438, lng: 77.6624, severity: 'critical' },// Electronic City
+      { lat: 14.2218, lng: 76.3978, severity: 'medium' }, // Chitradurga
+      { lat: 13.9299, lng: 75.5681, severity: 'low' },    // Shivamogga
+      { lat: 16.2076, lng: 77.3463, severity: 'medium' }, // Raichur
+      { lat: 12.9254, lng: 74.8237, severity: 'high' },   // Mangaluru
+      { lat: 13.3389, lng: 74.7451, severity: 'medium' }, // Udupi
+      { lat: 17.3297, lng: 76.8343, severity: 'high' },   // Kalaburagi
+      { lat: 16.8302, lng: 75.7100, severity: 'medium' }, // Vijayapur
     ]
-    const displayPoints = (points && points.length > 0) ? points.slice(0, 200) : FALLBACK_POINTS
+
+    const displayPoints = (points && points.length > 0) ? points.slice(0, 250) : FALLBACK_POINTS
+
+    // 5. Add 3D Glowing Beams & Markers
     displayPoints.forEach(pt => {
       if (pt.lat && pt.lng) {
-        const mesh = new THREE.Mesh(dotGeom, dotMat)
         const pos = latLngToVector3(pt.lat, pt.lng, globeRadius)
-        mesh.position.copy(pos)
-        globe.add(mesh)
+        const isCritical = pt.severity === 'critical' || pt.severity === 'high'
+        const color = isCritical ? 0xef4444 : 0xf59e0b
+
+        // Base Glowing Dot
+        const dotGeom = new THREE.SphereGeometry(1.6, 12, 12)
+        const dotMat = new THREE.MeshBasicMaterial({ color })
+        const dotMesh = new THREE.Mesh(dotGeom, dotMat)
+        dotMesh.position.copy(pos)
+        globeGroup.add(dotMesh)
+
+        // Vertical 3D Light Beam extending out from surface
+        const height = isCritical ? 18 : 10
+        const beamGeom = new THREE.CylinderGeometry(0.4, 0.8, height, 8)
+        const beamMat = new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.75
+        })
+        const beamMesh = new THREE.Mesh(beamGeom, beamMat)
+
+        // Position beam so bottom rests on globe surface and points outward
+        const normal = pos.clone().normalize()
+        beamMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(height / 2)))
+        beamMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)
+        globeGroup.add(beamMesh)
       }
     })
 
-    // Lighting (ambient/subtle)
-    const light = new THREE.AmbientLight(0xffffff, 0.5)
-    scene.add(light)
+    // 6. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+    scene.add(ambientLight)
 
-    // Drag interactions logic
+    const dirLight1 = new THREE.DirectionalLight(0x00f0ff, 1.2)
+    dirLight1.position.set(200, 150, 200)
+    scene.add(dirLight1)
+
+    const dirLight2 = new THREE.DirectionalLight(0xd97706, 0.8)
+    dirLight2.position.set(-200, -100, -100)
+    scene.add(dirLight2)
+
+    // Initial orientation: Rotate globe so India/Karnataka faces camera
+    globeGroup.rotation.y = -Math.PI / 1.35
+    globeGroup.rotation.x = 0.22
+
+    // Drag interactions
     let isDragging = false
     let prevMousePosition = { x: 0, y: 0 }
 
-    const onMouseDown = () => { isDragging = true }
-    const onMouseMove = (e) => {
-      const deltaMove = {
-        x: e.offsetX - prevMousePosition.x,
-        y: e.offsetY - prevMousePosition.y
-      }
-
-      if (isDragging) {
-        globe.rotation.y += deltaMove.x * 0.005
-        globe.rotation.x += deltaMove.y * 0.005
-      }
-
-      prevMousePosition = { x: e.offsetX, y: e.offsetY }
+    const onMouseDown = (e) => {
+      isDragging = true
+      prevMousePosition = { x: e.clientX, y: e.clientY }
     }
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return
+      const deltaMove = {
+        x: e.clientX - prevMousePosition.x,
+        y: e.clientY - prevMousePosition.y
+      }
+      globeGroup.rotation.y += deltaMove.x * 0.005
+      globeGroup.rotation.x += deltaMove.y * 0.005
+      prevMousePosition = { x: e.clientX, y: e.clientY }
+    }
+
     const onMouseUp = () => { isDragging = false }
 
-    container.addEventListener('mousedown', onMouseDown)
-    container.addEventListener('mousemove', onMouseMove)
+    const domEl = renderer.domElement
+    domEl.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
+
+    // Touch support for mobile/tablets
+    const onTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true
+        prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      }
+    }
+    const onTouchMove = (e) => {
+      if (!isDragging || e.touches.length !== 1) return
+      const deltaMove = {
+        x: e.touches[0].clientX - prevMousePosition.x,
+        y: e.touches[0].clientY - prevMousePosition.y
+      }
+      globeGroup.rotation.y += deltaMove.x * 0.005
+      globeGroup.rotation.x += deltaMove.y * 0.005
+      prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    }
+    const onTouchEnd = () => { isDragging = false }
+
+    domEl.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchend', onTouchEnd)
 
     // Animation Loop
     let reqId
     const animate = () => {
       reqId = requestAnimationFrame(animate)
       if (!isDragging) {
-        globe.rotation.y += 0.001 // Slow auto rotate
+        globeGroup.rotation.y += 0.0015 // Smooth continuous rotation
       }
       renderer.render(scene, camera)
     }
@@ -142,6 +245,7 @@ function ThreeGlobe({ points }) {
 
     // Handle resizing
     const handleResize = () => {
+      if (!container) return
       const w = container.clientWidth
       const h = container.clientHeight
       camera.aspect = w / h
@@ -152,22 +256,25 @@ function ThreeGlobe({ points }) {
 
     return () => {
       cancelAnimationFrame(reqId)
-      container.removeEventListener('mousedown', onMouseDown)
-      container.removeEventListener('mousemove', onMouseMove)
+      domEl.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
+      domEl.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('resize', handleResize)
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement)
+      if (container && container.contains(domEl)) {
+        container.removeChild(domEl)
       }
     }
-  }, [points])
+  }, [points, retry])
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#060812' }}>
       <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
-      <div style={{ position: 'absolute', bottom: 20, pointerEvents: 'none', textAlign: 'center', background: 'var(--bg-overlay)', padding: '8px 12px', borderRadius: 6 }}>
-        <div className="mono" style={{ fontSize: 10, color: 'var(--copper-400)' }}>DRAG GLOBE TO ROTATE</div>
-        <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Projecting 200 high-gravity incidents on 3D wireframe canvas</div>
+      <div style={{ position: 'absolute', bottom: 20, pointerEvents: 'none', textAlign: 'center', background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)', padding: '8px 16px', borderRadius: 8, backdropFilter: 'blur(8px)' }}>
+        <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.1em' }}>🌐 3D GEOSPATIAL INCIDENT SPHERE</div>
+        <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>Drag globe to rotate • Projecting live incident pins &amp; 3D intensity beams</div>
       </div>
     </div>
   )
