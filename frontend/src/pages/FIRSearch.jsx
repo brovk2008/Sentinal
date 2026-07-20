@@ -1,14 +1,4 @@
-import { useState, useCallback } from 'react'
-import { Document, Page, pdfjs } from 'react-pdf'
-import 'react-pdf/dist/Page/AnnotationLayer.css'
-import 'react-pdf/dist/Page/TextLayer.css'
-
-// Worker URL must match installed pdfjs-dist version (react-pdf v10 = pdfjs v5)
-// Use Vite's new URL() so the worker is bundled as a static asset (no CDN/CORS issues)
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
+import { useState, useCallback, useMemo, useEffect } from 'react'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || `${BASE_URL}/api/v1/fir`).replace(/\/$/, '');
@@ -173,13 +163,35 @@ export default function FIRSearch() {
 
   const downloadPDF = () => {
     if (!pdfB64) return
-    const link = document.createElement('a')
-    link.href = `data:application/pdf;base64,${pdfB64}`
-    link.download = `FIR_${districtId}_${stationId}_${firNum}_${year}.pdf`
-    link.click()
+    const bytes = atob(pdfB64)
+    const arr   = new Uint8Array(bytes.length)
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i)
+    const blob = new Blob([arr], { type: 'application/pdf' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `FIR_${districtId}_${stationId}_${firNum}_${year}.pdf`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
   }
 
-  const onDocLoad = useCallback(({ numPages }) => setNumPages(numPages), [])
+  // ── Blob URL for native <iframe> PDF viewer (no react-pdf needed) ─────────
+  const pdfBlobUrl = useMemo(() => {
+    if (!pdfB64) return null
+    try {
+      const bytes = atob(pdfB64)
+      const arr   = new Uint8Array(bytes.length)
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i)
+      const blob = new Blob([arr], { type: 'application/pdf' })
+      return URL.createObjectURL(blob)
+    } catch { return null }
+  }, [pdfB64])
+
+  // Clean up blob URL when PDF changes
+  useEffect(() => {
+    return () => { if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl) }
+  }, [pdfBlobUrl])
+
 
   // ── Status color ─────────────────────────────────────────────────────────
   const statusColor = {
@@ -333,52 +345,27 @@ export default function FIRSearch() {
               : 'PDF Viewer'}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {numPages && (
-              <>
-                <button
-                  onClick={() => setPageNum(p => Math.max(1, p - 1))}
-                  disabled={pageNum <= 1}
-                  style={{ ...btn_s, fontSize: 14 }}
-                >‹</button>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  {pageNum} / {numPages}
-                </span>
-                <button
-                  onClick={() => setPageNum(p => Math.min(numPages, p + 1))}
-                  disabled={pageNum >= numPages}
-                  style={{ ...btn_s, fontSize: 14 }}
-                >›</button>
-              </>
-            )}
-            {pdfB64 && (
-              <button onClick={downloadPDF} style={btn_s}>
-                ↓ Download
-              </button>
+            {pdfBlobUrl && (
+              <button onClick={downloadPDF} style={btn_s}>↓ Download</button>
             )}
           </div>
         </div>
 
-        {/* PDF Content */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: pdfB64 ? 'flex-start' : 'center', padding: 16, background: pdfB64 ? '#1a1a2e' : 'var(--bg-primary)' }}>
-          {pdfB64 ? (
-            <Document
-              file={`data:application/pdf;base64,${pdfB64}`}
-              onLoadSuccess={onDocLoad}
-              loading={<div style={{ color: 'var(--text-muted)', fontSize: 12 }}>Loading PDF...</div>}
-              error={<div style={{ color: 'var(--status-danger)', fontSize: 12 }}>Failed to load PDF.</div>}
-            >
-              <Page
-                pageNumber={pageNum}
-                width={Math.min(580, window.innerWidth * 0.35)}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-              />
-            </Document>
+        {/* PDF Content — native iframe viewer */}
+        <div style={{ flex: 1, overflow: 'hidden', background: pdfBlobUrl ? '#1a1a2e' : 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+          {pdfBlobUrl ? (
+            <iframe
+              src={pdfBlobUrl}
+              title="FIR Document"
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+            />
           ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>PDF will appear here</div>
-              <div style={{ fontSize: 11, marginTop: 4 }}>Search for a FIR to fetch its document</div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>PDF will appear here</div>
+                <div style={{ fontSize: 11, marginTop: 4 }}>Search for a FIR to fetch its document</div>
+              </div>
             </div>
           )}
         </div>
