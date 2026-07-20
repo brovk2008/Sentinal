@@ -39,6 +39,10 @@ backend/threadpoolctl.py
 backend/test_server.py
 get_appsail_logs.js
 deploy_appsail.js
+*_debug.txt
+imports.txt
+structure.txt
+project_structure.txt
 
 # Ignore large raw data files
 data_raw/
