@@ -346,7 +346,9 @@ def _get_stations(district_filter=None) -> list:
                 stations.extend([
                     (did, dname, f"PS{did}01", f"{dname} Town PS"),
                     (did, dname, f"PS{did}02", f"{dname} Rural PS"),
+                    (did, dname, f"PS{did}03", f"{dname} Traffic PS"),
                 ])
+
 
     with progress_lock:
         scrape_progress["total_stations"] = len(stations)
@@ -390,22 +392,17 @@ def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock
                 if _STOP_FLAG.is_set():
                     break
                 fir_s = str(fir_i).zfill(4)
-                time.sleep(0.2)
+                time.sleep(0.3)
                 try:
-                    save_fir_metadata({
-                        "district_id": str(did), "district_name": dname,
-                        "station_id": str(sid), "station_name": sname,
-                        "fir_num": fir_s, "year": year,
-                        "act_section": "IPC 420, IPC 34",
-                        "complainant": f"Complainant {fir_i}",
-                        "accused": f"Accused {fir_i}",
-                        "ingestion_type": "Simulated Live Scraper"
-                    }, pdf_bytes=b"%PDF-1.4 Simulated FIR Document Content")
+                    stratus_key = f"stratus_sim_{did}_{sid}_{fir_s}_{year}"
+                    save_fir_metadata(did, dname, sname, sid, fir_s, year, "found", stratus_key)
                     with progress_lock:
                         scrape_progress["firs_found"] += 1
                     _log(f"[W{worker_id}] ✓ FIR {fir_s} ({year}) → Ingested to Sentinal DB & RAG")
                 except Exception as ex:
+                    _log(f"[W{worker_id}] Ingestion save error: {ex}")
                     log.error(f"Simulated save error: {ex}")
+
 
             with progress_lock:
                 scrape_progress["done_stations"] += 1
