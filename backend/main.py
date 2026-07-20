@@ -155,17 +155,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Project Sentinal v2",
+    title="Project Sentinal",
     description="Karnataka Police Crime Intelligence Platform API",
-    version="2.0.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
 # Attempt top-level granular import of all routers
 for _mname, _prefix, _tag in ALL_ROUTERS:
     _import_and_mount_router(_mname, _prefix, _tag)
-
-
 
 # ─── Defensive Header Deduplication Middleware ───────────────────────────────
 class DeduplicateCORSMiddleware:
@@ -239,11 +237,11 @@ if not IS_CATALYST:
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "service": "Project Sentinal v2 Backend", "version": "2.0.0"}
+    return {"status": "ok", "service": "Project Sentinal Backend", "version": "1.0.0"}
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "2.0.0", "platform": "Project Sentinal v2"}
+    return {"status": "ok", "version": "1.0.0", "platform": "Project Sentinal"}
 
 @app.get("/debug-logs")
 async def debug_logs():

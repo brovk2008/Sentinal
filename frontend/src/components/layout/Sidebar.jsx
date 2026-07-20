@@ -113,7 +113,7 @@ export default function Sidebar() {
             marginTop: 2,
             textTransform: 'uppercase',
           }}>
-            v2 · KSP Intelligence
+            KSP INTELLIGENCE
           </div>
         </div>
       </div>

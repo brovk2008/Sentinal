@@ -156,7 +156,7 @@ export default function Dashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Command Center Dashboard</h1>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Project Sentinal v2 — Karnataka State Police</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Project Sentinal — Karnataka State Police</div>
         </div>
         <button
           className="btn btn-copper"

@@ -111,7 +111,7 @@ export default function AIAssistant() {
       role: 'system',
       content: `## Welcome to SENTINAL Intelligence Terminal
 
-I am the AI Intelligence Analyst for Project Sentinal v2.
+I am the AI Intelligence Analyst for Project Sentinal.
 
 I can help you with:
 - **Crime pattern analysis** across districts and time periods
