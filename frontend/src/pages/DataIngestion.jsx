@@ -1,3 +1,4 @@
+// v2.4.1 — DataIngestion: pdfLoading/pdfModal state fix, blob PDF modal
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   startScraper,
@@ -8,6 +9,7 @@ import {
   fetchFir
 } from '../api';
 import FileUploader from '../components/FileUploader';
+import { generateFirHtml } from '../utils/firHtmlGenerator';
 
 // ── Rich Default Seed Scraped FIR Data ──────────────────────────────────────
 const DEFAULT_SCRAPED_FIRS = [
@@ -179,24 +181,33 @@ export default function DataIngestion() {
     'Uttara Kannada': '38', 'Vijayapur': '39', 'Yadgir': '40', 'Vijayanagara': '41',
   };
 
-  const handleViewPdf = async (row) => {
-    try {
-      const distStr = row.district || row.district_name || 'Ballari';
-      const districtId = String(
-        row.district_id || DISTRICT_NAME_TO_ID[distStr] || '2'
-      );
-      const stationId  = String(row.station_id || '101');
+  const handleViewPdf = async (row, autoDownload = false) => {
+    const distStr = row.district || row.district_name || 'Ballari';
+    const districtId = String(
+      row.district_id || DISTRICT_NAME_TO_ID[distStr] || '2'
+    );
+    const stnStr   = row.police_station || row.station || 'PS';
+    const stationId  = String(row.station_id || '101');
 
-      let rawFir = String(row.fir_number || row.fir_no || '1');
-      if (rawFir.includes('/')) {
-        const parts = rawFir.split('/');
-        rawFir = parts[parts.length - 1];
-      }
-      const firNum = rawFir.replace(/\D/g, '').replace(/^0+/, '') || '1';
-      const yr     = String(row.year || year || '2024');
+    let rawFir = String(row.fir_number || row.fir_no || '1');
+    if (rawFir.includes('/')) {
+      const parts = rawFir.split('/');
+      rawFir = parts[parts.length - 1];
+    }
+    const firNum = rawFir.replace(/\D/g, '').replace(/^0+/, '') || '1';
+    const yr     = String(row.year || year || '2024');
 
+    // Open modal immediately with loading state if viewing
+    if (!autoDownload) {
+      setPdfModal({
+        title: `Loading FIR ${firNum}/${yr} — ${stnStr}...`,
+        loading: true
+      });
+    } else {
       setPdfLoading(true);
+    }
 
+    try {
       const res = await fetchFir({
         district_id: districtId,
         station_id: stationId,
@@ -204,39 +215,49 @@ export default function DataIngestion() {
         year: yr,
       });
 
-      if (res && res.pdf_b64) {
-        // Create binary Blob
-        const binaryStr = atob(res.pdf_b64);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
+      if (res && (res.pdf_b64 || res.fir_metadata)) {
+        const meta = res.fir_metadata || {};
+        const html = generateFirHtml(meta, firNum, yr, distStr, stnStr);
+
+        let url = null;
+        if (res.pdf_b64) {
+          const binaryStr = atob(res.pdf_b64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          url = URL.createObjectURL(blob);
         }
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const url  = URL.createObjectURL(blob);
 
-        // Trigger direct browser download
-        const link = document.createElement('a');
-        link.href  = url;
         const safeDist = distStr.replace(/[^a-zA-Z0-9]/g, '_');
-        const stnStr   = row.police_station || row.station || 'PS';
         const safeStn  = stnStr.replace(/[^a-zA-Z0-9]/g, '_');
-        link.download  = `FIR_${safeDist}_${safeStn}_${firNum}_${yr}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const filename = `FIR_${safeDist}_${safeStn}_${firNum}_${yr}.pdf`;
 
-        // Set modal with iframe blobUrl
-        setPdfModal({
-          b64: res.pdf_b64,
-          blobUrl: url,
-          title: `FIR ${firNum}/${yr} — ${res.fir_metadata?.station_name || stnStr}`
-        });
+        if (autoDownload && url) {
+          const link = document.createElement('a');
+          link.href  = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          setPdfModal({
+            title: `FIR ${firNum}/${yr} — ${meta.station_name || stnStr}`,
+            firHtml: html,
+            blobUrl: url,
+            filename,
+            loading: false
+          });
+        }
       } else {
-        alert('FIR found but no PDF available.');
+        alert('FIR record found but document unavailable.');
+        setPdfModal(null);
       }
     } catch (err) {
-      console.error('Download PDF error:', err);
+      console.error('View/Download PDF error:', err);
       alert(`Failed to load FIR PDF: ${err.message || err}`);
+      setPdfModal(null);
     } finally {
       setPdfLoading(false);
     }
@@ -637,21 +658,38 @@ export default function DataIngestion() {
                     <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 11 }}>{row.scraped_at}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                       {row.status === 'found' || row.pdf_stratus_key || true ? (
-                        <button
-                          onClick={() => handleViewPdf(row)}
-                          style={{
-                            background: 'rgba(224, 168, 50, 0.15)',
-                            border: '1px solid var(--copper-500)',
-                            borderRadius: 4,
-                            color: 'var(--copper-400)',
-                            padding: '4px 10px',
-                            fontSize: 11,
-                            fontWeight: 600,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          ↓ Download PDF
-                        </button>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleViewPdf(row, false)}
+                            style={{
+                              background: 'rgba(224, 168, 50, 0.15)',
+                              border: '1px solid var(--copper-500)',
+                              borderRadius: 4,
+                              color: 'var(--copper-400)',
+                              padding: '4px 8px',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            👁 View PDF
+                          </button>
+                          <button
+                            onClick={() => handleViewPdf(row, true)}
+                            style={{
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              border: '1px solid #10b981',
+                              borderRadius: 4,
+                              color: '#10b981',
+                              padding: '4px 8px',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ↓ Download
+                          </button>
+                        </div>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>No PDF</span>
                       )}
@@ -694,7 +732,7 @@ export default function DataIngestion() {
             border: '1px solid var(--copper-500)',
             borderRadius: 8,
             padding: 16,
-            maxWidth: 800,
+            maxWidth: 850,
             width: '92vw',
             height: '85vh',
             display: 'flex',
@@ -707,7 +745,7 @@ export default function DataIngestion() {
                 {pdfModal.blobUrl && (
                   <a
                     href={pdfModal.blobUrl}
-                    download="FIR_Document.pdf"
+                    download={pdfModal.filename || 'FIR_Document.pdf'}
                     style={{
                       background: 'var(--copper-500)',
                       color: '#000',
@@ -718,21 +756,36 @@ export default function DataIngestion() {
                       textDecoration: 'none'
                     }}
                   >
-                    ↓ Download File
+                    ↓ Download PDF File
                   </a>
                 )}
                 <button onClick={() => setPdfModal(null)}
                   style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>✕ Close</button>
               </div>
             </div>
-            {pdfLoading ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Loading FIR PDF...</div>
-            ) : pdfModal.blobUrl ? (
+            {pdfModal.loading ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--copper-400)', fontSize: 14 }}>
+                ⏳ Loading FIR PDF Document...
+              </div>
+            ) : pdfModal.firHtml ? (
               <iframe
-                src={pdfModal.blobUrl}
-                title="FIR PDF Viewer"
-                style={{ flex: 1, width: '100%', border: 'none', borderRadius: 4 }}
+                srcDoc={pdfModal.firHtml}
+                title="FIR Document Viewer"
+                sandbox="allow-same-origin allow-modals"
+                style={{ flex: 1, width: '100%', border: 'none', borderRadius: 4, background: '#fff' }}
               />
+            ) : pdfModal.blobUrl ? (
+              <object
+                data={pdfModal.blobUrl}
+                type="application/pdf"
+                style={{ flex: 1, width: '100%', border: 'none', borderRadius: 4 }}
+              >
+                <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
+                  <a href={pdfModal.blobUrl} download={pdfModal.filename || 'FIR.pdf'}
+                    style={{ color: 'var(--copper-400)', fontWeight: 600 }}>Click to download PDF File</a>
+                </div>
+              </object>
             ) : (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No PDF content available.</div>
             )}
@@ -742,3 +795,4 @@ export default function DataIngestion() {
     </div>
   );
 }
+

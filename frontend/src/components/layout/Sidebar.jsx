@@ -66,6 +66,11 @@ export default function Sidebar() {
         <img
           src={logo}
           alt="Sentinal"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.style.display = 'none';
+            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+          }}
           style={{
             height: 28,
             width: 'auto',
@@ -73,6 +78,23 @@ export default function Sidebar() {
             flexShrink: 0,
           }}
         />
+        <div
+          style={{
+            display: 'none',
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            background: 'var(--copper-500)',
+            color: '#000',
+            fontWeight: 900,
+            fontSize: 14,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          🛡️
+        </div>
         <div>
           <div style={{
             fontSize: 13,

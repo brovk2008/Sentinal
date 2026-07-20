@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { generateFirHtml } from '../utils/firHtmlGenerator'
 
 const BASE_URL    = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || `${BASE_URL}/api/v1/fir`).replace(/\/$/, '');
@@ -24,87 +25,7 @@ const DISTRICTS = [
   { id: '41', name: 'Vijayanagara' },
 ]
 
-// ── Generate KSP Form 1 HTML document ────────────────────────────────────────
-function generateFirHtml(meta, firNum, year, districtName, stationName) {
-  const m  = meta || {}
-  const dn = m.district_name  || districtName  || 'Karnataka'
-  const sn = m.station_name   || stationName   || 'Police Station'
-  const fn = m.fir_number     || firNum        || '001'
-  const yr = m.year           || year          || '2024'
-  const cg = m.crime_group    || 'Financial Fraud & Theft'
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>KSP FIR Form No. 1</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', serif; font-size: 12pt; background: #fff; color: #000; padding: 20mm 18mm; }
-  h1 { font-size: 15pt; text-align: center; font-weight: bold; margin-bottom: 2px; }
-  h2 { font-size: 12pt; text-align: center; font-weight: bold; margin-bottom: 2px; }
-  .sub { font-size: 10pt; text-align: center; margin-bottom: 6px; }
-  hr { border: 1.5px solid #000; margin: 6px 0; }
-  table { width: 100%; border-collapse: collapse; margin: 6px 0; }
-  td, th { border: 1px solid #000; padding: 5px 8px; vertical-align: top; }
-  .label { font-weight: bold; white-space: nowrap; width: 32%; background: #f5f5f5; }
-  .section { font-weight: bold; font-size: 11pt; background: #e8e8e8; padding: 4px 8px; border: 1px solid #000; margin-top: 8px; }
-  .sig-box { display: flex; justify-content: space-between; margin-top: 24px; }
-  .sig { text-align: center; border-top: 1px solid #000; padding-top: 4px; width: 200px; font-size: 10pt; }
-  @media print { body { padding: 10mm; } }
-</style>
-</head>
-<body>
-  <h1>KARNATAKA STATE POLICE</h1>
-  <h2>FIRST INFORMATION REPORT</h2>
-  <div class="sub">(Under Section 173(2) of Bharatiya Nagarik Suraksha Sanhita, 2023)</div>
-  <div class="sub" style="font-weight:bold">KSP Form No. 1</div>
-  <hr/>
-  <table>
-    <tr><td class="label">1. District</td><td>${dn}</td><td class="label">Police Station</td><td>${sn}</td></tr>
-    <tr><td class="label">2. FIR No.</td><td>${String(fn).padStart(4,'0')}/${yr}</td><td class="label">Year</td><td>${yr}</td></tr>
-    <tr><td class="label">3. Date &amp; Time of FIR</td><td>15/01/${yr} &nbsp; 10:30 Hrs</td><td class="label">Date of Occurrence</td><td>14/01/${yr}</td></tr>
-  </table>
-  <div class="section">4. Type of Information</div>
-  <table><tr><td>Written complaint received at the police station by officer on duty.</td></tr></table>
-  <div class="section">5. Act &amp; Section(s)</div>
-  <table><tr><td class="label">Act</td><td>Indian Penal Code, 1860</td></tr>
-    <tr><td class="label">Sections</td><td>Sec. 420 (Cheating), Sec. 406 (Criminal Breach of Trust)</td></tr>
-    <tr><td class="label">Crime Category</td><td>${cg}</td></tr>
-  </table>
-  <div class="section">6. Complainant / Informant</div>
-  <table>
-    <tr><td class="label">Name</td><td>K. Ramesh Naidu s/o Late V. Naidu</td></tr>
-    <tr><td class="label">Address</td><td>Door No 45/B, Station Road, ${dn}, Karnataka – 583 101</td></tr>
-    <tr><td class="label">Phone</td><td>+91 98450 12345</td><td class="label">Occupation</td><td>Merchant</td></tr>
-  </table>
-  <div class="section">7. Accused Details</div>
-  <table>
-    <tr><th>#</th><th>Name</th><th>Age</th><th>Address</th><th>Status</th></tr>
-    <tr><td>1</td><td>Suresh Kumar @ Raja</td><td>38</td><td>Bellary Road, ${dn}</td><td>Absconding</td></tr>
-    <tr><td>2</td><td>Raju alias Chotu</td><td>32</td><td>Unknown</td><td>Absconding</td></tr>
-    <tr><td>3</td><td colspan="3">Two unidentified associates</td><td>Unknown</td></tr>
-  </table>
-  <div class="section">8. Brief Facts of the Case</div>
-  <table><tr><td style="line-height:1.8">
-    The complainant reported that on 14/01/${yr}, the accused persons fraudulently induced him to transfer
-    a sum of Rs. 4,50,000/- (Rupees Four Lakhs Fifty Thousand only) through unauthorized UPI payment requests
-    by impersonating a bank official. The transaction was traced to multiple dummy accounts linked to the accused.
-    <br/><br/>
-    Evidence collected: Bank statements, UPI transaction logs, CDR records, CCTV footage from ATM premises.
-    <br/><br/>
-    FIR registered. Investigation assigned to Sub-Inspector of Police, ${sn}.
-  </td></tr></table>
-  <div class="section">9. Action Taken</div>
-  <table><tr><td>Case registered. Investigation initiated. FIR uploaded to KSP portal and Catalyst network.</td></tr></table>
-  <div class="sig-box">
-    <div class="sig">Complainant's Signature<br/><br/>K. Ramesh Naidu</div>
-    <div class="sig">Signature &amp; Seal<br/><br/>Officer In-Charge, ${sn}</div>
-  </div>
-  <div style="margin-top:16px; font-size:9pt; text-align:center; color:#666">
-    Generated by Project Sentinal v2 — Karnataka Police Intelligence Platform &nbsp;|&nbsp; FIR #${String(fn).padStart(4,'0')}/${yr}
-  </div>
-</body></html>`
-}
+
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 const sel = {
@@ -383,8 +304,8 @@ export default function FIRSearch() {
             ) : 'Search FIR →'}
           </button>
 
-          {/* OCR Button */}
-          {pdfB64 && (
+          {/* OCR Button — shown any time a FIR has been fetched */}
+          {(pdfB64 || firHtml) && (
             <button
               className="btn"
               onClick={runOCR}
@@ -448,9 +369,16 @@ export default function FIRSearch() {
           </div>
         </div>
 
-        {/* PDF Content — HTML srcdoc viewer, always renders */}
+        {/* PDF Content — HTML srcdoc viewer */}
         <div style={{ flex: 1, overflow: 'hidden', background: firHtml ? '#fff' : 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
-          {firHtml ? (
+          {searching ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--copper-400)' }}>Fetching FIR from KSP portal...</div>
+              </div>
+            </div>
+          ) : firHtml ? (
             <iframe
               ref={iframeRef}
               srcDoc={firHtml}
@@ -462,8 +390,8 @@ export default function FIRSearch() {
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>PDF will appear here</div>
-                <div style={{ fontSize: 11, marginTop: 4 }}>Search for a FIR to fetch its document</div>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>FIR Viewer</div>
+                <div style={{ fontSize: 11, marginTop: 4 }}>Select district → station → FIR number, then click Search</div>
               </div>
             </div>
           )}

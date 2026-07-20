@@ -6,13 +6,12 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
-    base: '/',
+    base: './',
     build: {
       outDir: 'dist',
       sourcemap: false,
       rollupOptions: {
         output: {
-          entryFileNames: 'assets/index-BfWfor7s.js',
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
