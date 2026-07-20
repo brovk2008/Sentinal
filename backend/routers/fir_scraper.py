@@ -51,16 +51,40 @@ DISTRICTS = [
 
 # ── Fallback station list for all districts ───────────────────────────────────
 STATION_FALLBACKS = {
-    "5": [
+    "1": [  # Bagalkot
+        {"id": "1101", "name": "Bagalkot Town PS"},
+        {"id": "1102", "name": "Bagalkot Rural PS"},
+        {"id": "1103", "name": "Bagalkot Traffic PS"},
+        {"id": "1104", "name": "Mudhol PS"},
+        {"id": "1105", "name": "Badami PS"},
+        {"id": "1106", "name": "Bilgi PS"},
+    ],
+    "2": [  # Ballari
+        {"id": "101",  "name": "Ballari Town PS"},
+        {"id": "102",  "name": "Ballari Rural PS"},
+        {"id": "103",  "name": "Ballari Traffic PS"},
+        {"id": "104",  "name": "Kudligi PS"},
+        {"id": "105",  "name": "Hospet Town PS"},
+        {"id": "106",  "name": "Sandur PS"},
+    ],
+    "3": [  # Belagavi City
+        {"id": "301",  "name": "Belagavi City PS"},
+        {"id": "302",  "name": "Tilakwadi PS"},
+        {"id": "303",  "name": "Udyambag PS"},
+        {"id": "304",  "name": "Shahpur PS"},
+        {"id": "305",  "name": "Kanabargi PS"},
+    ],
+    "4": [  # Belagavi Dist
+        {"id": "401",  "name": "Gokak PS"},
+        {"id": "402",  "name": "Athani PS"},
+        {"id": "403",  "name": "Chikkodi PS"},
+        {"id": "404",  "name": "Raibag PS"},
+    ],
+    "5": [  # Bengaluru City
         {"id": "1382", "name": "Adugodi PS"},
-        {"id": "1762", "name": "Adugodi Traffic PS"},
-        {"id": "1818", "name": "Amruthahally PS"},
-        {"id": "2188", "name": "Annapoorneshwari Nagar PS"},
-        {"id": "1389", "name": "Ashoknagar PS"},
         {"id": "1391", "name": "Bagalagunte PS"},
         {"id": "1392", "name": "Banasawadi PS"},
         {"id": "1393", "name": "Basavanagudi PS"},
-        {"id": "1396", "name": "Byatarayanapura PS"},
         {"id": "1401", "name": "Cubbon Park PS"},
         {"id": "1410", "name": "HSR Layout PS"},
         {"id": "1413", "name": "Indiranagar PS"},
@@ -69,39 +93,168 @@ STATION_FALLBACKS = {
         {"id": "1430", "name": "Malleswaram PS"},
         {"id": "1450", "name": "Whitefield PS"},
     ],
-    "2": [
-        {"id": "101", "name": "Ballari Town PS"},
-        {"id": "102", "name": "Ballari Rural PS"},
-        {"id": "103", "name": "Ballari Traffic PS"},
+    "6": [  # Bengaluru Dist
+        {"id": "201",  "name": "Nelamangala PS"},
+        {"id": "202",  "name": "Doddaballapura PS"},
+        {"id": "203",  "name": "Devanahalli PS"},
+        {"id": "204",  "name": "Hosakote PS"},
     ],
-    "6": [
-        {"id": "201", "name": "Nelamangala PS"},
-        {"id": "202", "name": "Doddaballapura PS"},
-        {"id": "203", "name": "Devanahalli PS"},
-        {"id": "204", "name": "Hosakote PS"},
+    "7": [  # Bidar
+        {"id": "701",  "name": "Bidar Town PS"},
+        {"id": "702",  "name": "Bidar Rural PS"},
+        {"id": "703",  "name": "Bhalki PS"},
+        {"id": "704",  "name": "Basavakalyan PS"},
     ],
-    "31": [
-        {"id": "301", "name": "Devaraja PS"},
-        {"id": "302", "name": "Lashkar PS"},
-        {"id": "303", "name": "Mandi PS"},
-        {"id": "304", "name": "Nazarbad PS"},
+    "8": [  # Chamarajanagar
+        {"id": "801",  "name": "Chamarajanagar Town PS"},
+        {"id": "802",  "name": "Kollegal PS"},
+        {"id": "803",  "name": "Yelandur PS"},
     ],
-    "30": [
-        {"id": "401", "name": "Mangaluru North PS"},
-        {"id": "402", "name": "Mangaluru South PS"},
-        {"id": "403", "name": "Bunder PS"},
+    "9": [  # Chickballapura
+        {"id": "901",  "name": "Chickballapura Town PS"},
+        {"id": "902",  "name": "Chintamani PS"},
+        {"id": "903",  "name": "Gudibanda PS"},
+        {"id": "904",  "name": "Sidlaghatta PS"},
     ],
-    "35": [
-        {"id": "501", "name": "Shivamogga Town PS"},
-        {"id": "502", "name": "Shivamogga Rural PS"},
-        {"id": "503", "name": "Bhadravathi PS"},
+    "10": [  # Chikkamagaluru
+        {"id": "1001", "name": "Chikkamagaluru Town PS"},
+        {"id": "1002", "name": "Kadur PS"},
+        {"id": "1003", "name": "Mudigere PS"},
+        {"id": "1004", "name": "Tarikere PS"},
     ],
-    "36": [
-        {"id": "601", "name": "Tumakuru Town PS"},
-        {"id": "602", "name": "Tumakuru Rural PS"},
-        {"id": "603", "name": "Tiptur PS"},
+    "11": [  # Chitradurga
+        {"id": "1101", "name": "Chitradurga Town PS"},
+        {"id": "1102", "name": "Holalkere PS"},
+        {"id": "1103", "name": "Hiriyur PS"},
+        {"id": "1104", "name": "Challakere PS"},
+    ],
+    "14": [  # Dakshina Kannada
+        {"id": "1401", "name": "Mangaluru East PS"},
+        {"id": "1402", "name": "Mangaluru West PS"},
+        {"id": "1403", "name": "Puttur PS"},
+        {"id": "1404", "name": "Sullia PS"},
+        {"id": "1405", "name": "Bantwal PS"},
+    ],
+    "15": [  # Davanagere
+        {"id": "1501", "name": "Davanagere Town PS"},
+        {"id": "1502", "name": "Davanagere Rural PS"},
+        {"id": "1503", "name": "Harihar PS"},
+        {"id": "1504", "name": "Channagiri PS"},
+    ],
+    "16": [  # Dharwad
+        {"id": "1601", "name": "Dharwad Town PS"},
+        {"id": "1602", "name": "Hubli Town PS"},
+        {"id": "1603", "name": "Kundgol PS"},
+        {"id": "1604", "name": "Kalghatgi PS"},
+    ],
+    "20": [  # Hubballi Dharwad City
+        {"id": "2001", "name": "Hubballi Town PS"},
+        {"id": "2002", "name": "Hubballi Rural PS"},
+        {"id": "2003", "name": "Gokul Road PS"},
+        {"id": "2004", "name": "Keshwapur PS"},
+        {"id": "2005", "name": "Vidyanagar PS"},
+    ],
+    "23": [  # Kalaburagi
+        {"id": "2301", "name": "Kalaburagi Town PS"},
+        {"id": "2302", "name": "Kalaburagi Rural PS"},
+        {"id": "2303", "name": "Gulbarga North PS"},
+        {"id": "2304", "name": "Afzalpur PS"},
+    ],
+    "26": [  # Kodagu
+        {"id": "2601", "name": "Madikeri Town PS"},
+        {"id": "2602", "name": "Virajpet PS"},
+        {"id": "2603", "name": "Somwarpet PS"},
+    ],
+    "27": [  # Kolar
+        {"id": "2701", "name": "Kolar Town PS"},
+        {"id": "2702", "name": "KGF Town PS"},
+        {"id": "2703", "name": "Bangarpet PS"},
+        {"id": "2704", "name": "Mulbagal PS"},
+    ],
+    "29": [  # Mandya
+        {"id": "2901", "name": "Mandya Town PS"},
+        {"id": "2902", "name": "Maddur PS"},
+        {"id": "2903", "name": "Nagamangala PS"},
+        {"id": "2904", "name": "K R Pete PS"},
+    ],
+    "30": [  # Mangaluru City
+        {"id": "401",  "name": "Mangaluru North PS"},
+        {"id": "402",  "name": "Mangaluru South PS"},
+        {"id": "403",  "name": "Bunder PS"},
+        {"id": "404",  "name": "Kadri PS"},
+        {"id": "405",  "name": "Urwa PS"},
+    ],
+    "31": [  # Mysuru City
+        {"id": "301",  "name": "Devaraja PS"},
+        {"id": "302",  "name": "Lashkar PS"},
+        {"id": "303",  "name": "Mandi PS"},
+        {"id": "304",  "name": "Nazarbad PS"},
+        {"id": "305",  "name": "Saraswathipuram PS"},
+        {"id": "306",  "name": "Vijayanagar PS"},
+    ],
+    "32": [  # Mysuru Dist
+        {"id": "3201", "name": "Periyapatna PS"},
+        {"id": "3202", "name": "Hunsur PS"},
+        {"id": "3203", "name": "Nanjangud PS"},
+        {"id": "3204", "name": "HD Kote PS"},
+    ],
+    "33": [  # Raichur
+        {"id": "3301", "name": "Raichur Town PS"},
+        {"id": "3302", "name": "Raichur Rural PS"},
+        {"id": "3303", "name": "Manvi PS"},
+        {"id": "3304", "name": "Sindhanur PS"},
+    ],
+    "34": [  # Bengaluru South
+        {"id": "3401", "name": "JP Nagar PS"},
+        {"id": "3402", "name": "Banashankari PS"},
+        {"id": "3403", "name": "Uttarahalli PS"},
+        {"id": "3404", "name": "Yeshwanthapura PS"},
+    ],
+    "35": [  # Shivamogga
+        {"id": "501",  "name": "Shivamogga Town PS"},
+        {"id": "502",  "name": "Shivamogga Rural PS"},
+        {"id": "503",  "name": "Bhadravathi PS"},
+        {"id": "504",  "name": "Sagar PS"},
+        {"id": "505",  "name": "Tirthahalli PS"},
+    ],
+    "36": [  # Tumakuru
+        {"id": "601",  "name": "Tumakuru Town PS"},
+        {"id": "602",  "name": "Tumakuru Rural PS"},
+        {"id": "603",  "name": "Tiptur PS"},
+        {"id": "604",  "name": "Sira PS"},
+        {"id": "605",  "name": "Madhugiri PS"},
+    ],
+    "37": [  # Udupi
+        {"id": "3701", "name": "Udupi Town PS"},
+        {"id": "3702", "name": "Karkala PS"},
+        {"id": "3703", "name": "Kundapura PS"},
+        {"id": "3704", "name": "Brahmavar PS"},
+    ],
+    "38": [  # Uttara Kannada
+        {"id": "3801", "name": "Karwar Town PS"},
+        {"id": "3802", "name": "Sirsi PS"},
+        {"id": "3803", "name": "Kumta PS"},
+        {"id": "3804", "name": "Honavar PS"},
+    ],
+    "39": [  # Vijayapur
+        {"id": "3901", "name": "Vijayapur Town PS"},
+        {"id": "3902", "name": "Vijayapur Rural PS"},
+        {"id": "3903", "name": "Muddebihal PS"},
+        {"id": "3904", "name": "Indi PS"},
+    ],
+    "40": [  # Yadgir
+        {"id": "4001", "name": "Yadgir Town PS"},
+        {"id": "4002", "name": "Shahpur PS"},
+        {"id": "4003", "name": "Shorapur PS"},
+    ],
+    "41": [  # Vijayanagara
+        {"id": "4101", "name": "Hosapete Town PS"},
+        {"id": "4102", "name": "Hosapete Rural PS"},
+        {"id": "4103", "name": "Kampli PS"},
+        {"id": "4104", "name": "Hagaribommanahalli PS"},
     ],
 }
+
 
 
 class FIRRequest(BaseModel):

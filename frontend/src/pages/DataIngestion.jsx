@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import {
   startScraper,
   fetchScraperStatus,
   stopScraper,
   queryScrapedFirs,
   fetchScraperDistricts,
-  getScrapedFirPdfUrl
+  fetchFir
 } from '../api';
-
 import FileUploader from '../components/FileUploader';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // ── Rich Default Seed Scraped FIR Data ──────────────────────────────────────
 const DEFAULT_SCRAPED_FIRS = [
@@ -165,19 +167,37 @@ export default function DataIngestion() {
       .finally(() => setSearchLoading(false));
   };
 
-  const handleDownloadPdf = (key) => {
-    getScrapedFirPdfUrl(key)
+  const [pdfModal, setPdfModal]   = useState(null); // { b64, title }
+  const [pdfPage, setPdfPage]     = useState(1);
+  const [pdfPages, setPdfPages]   = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleViewPdf = (row) => {
+    // Extract district_id, station_id, fir_num, year from the row
+    const districtId = row.district_id   || String(row.district || '2');
+    const stationId  = row.station_id    || String(row.police_station || '101');
+    const firNum     = row.fir_number    || row.fir_no || '1';
+    const yr         = row.year          || year || '2024';
+
+    setPdfLoading(true);
+    setPdfModal({ b64: null, title: `FIR ${firNum}/${yr} — ${row.district || row.police_station || ''}` });
+
+    fetchFir({ district_id: districtId, station_id: stationId, fir_num: firNum, year: String(yr) })
       .then(res => {
-        if (res.url) {
-          window.open(res.url, '_blank');
+        if (res.pdf_b64) {
+          setPdfModal({ b64: res.pdf_b64, title: `FIR ${firNum}/${yr} — ${res.fir_metadata?.station_name || row.police_station || ''}` });
+          setPdfPage(1);
         } else {
-          alert('Could not retrieve PDF download link.');
+          alert('FIR found but no PDF available.');
+          setPdfModal(null);
         }
       })
       .catch(err => {
         console.error(err);
-        alert('Failed to download PDF');
-      });
+        alert('Failed to load FIR PDF.');
+        setPdfModal(null);
+      })
+      .finally(() => setPdfLoading(false));
   };
 
   const pct = status.total_stations > 0 
@@ -575,8 +595,8 @@ export default function DataIngestion() {
                     <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 11 }}>{row.scraped_at}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                       {row.pdf_stratus_key ? (
-                        <button 
-                          onClick={() => handleDownloadPdf(row.pdf_stratus_key)}
+                        <button
+                          onClick={() => handleViewPdf(row)}
                           style={{
                             background: 'rgba(224, 168, 50, 0.1)',
                             border: '1px solid var(--copper-500)',
@@ -618,6 +638,58 @@ export default function DataIngestion() {
         </p>
         <FileUploader onUploadComplete={(f) => console.log('Uploaded:', f)} />
       </div>
+
+      {/* ── PDF Modal ───────────────────────────────────────────────────── */}
+      {pdfModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+        }} onClick={() => setPdfModal(null)}>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--copper-500)',
+            borderRadius: 8,
+            padding: 16,
+            maxWidth: 700,
+            width: '90vw',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontWeight: 700, color: 'var(--copper-400)', fontSize: 13 }}>{pdfModal.title}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {pdfPages > 1 && (
+                  <>
+                    <button onClick={() => setPdfPage(p => Math.max(1, p - 1))} disabled={pdfPage <= 1}
+                      style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '2px 8px', cursor: 'pointer', borderRadius: 3 }}>‹</button>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{pdfPage} / {pdfPages}</span>
+                    <button onClick={() => setPdfPage(p => Math.min(pdfPages, p + 1))} disabled={pdfPage >= pdfPages}
+                      style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '2px 8px', cursor: 'pointer', borderRadius: 3 }}>›</button>
+                  </>
+                )}
+                <button onClick={() => setPdfModal(null)}
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '2px 10px', borderRadius: 3, cursor: 'pointer' }}>✕ Close</button>
+              </div>
+            </div>
+            {pdfLoading ? (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading FIR PDF...</div>
+            ) : pdfModal.b64 ? (
+              <Document
+                file={`data:application/pdf;base64,${pdfModal.b64}`}
+                onLoadSuccess={({ numPages }) => { setPdfPages(numPages); setPdfPage(1); }}
+                loading={<div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Rendering PDF...</div>}
+                error={<div style={{ textAlign: 'center', padding: 40, color: '#ef4444' }}>Failed to load PDF.</div>}
+              >
+                <Page pageNumber={pdfPage} width={640} renderTextLayer={true} renderAnnotationLayer={true} />
+              </Document>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No PDF content available.</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
