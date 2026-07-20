@@ -183,21 +183,37 @@ export default function DataIngestion() {
   };
 
   const handleViewPdf = (row) => {
-    // Resolve district name → id, fall back to '2' (Ballari) for demo
     const districtId = row.district_id
       || DISTRICT_NAME_TO_ID[row.district]
       || '2';
-    // station_id from row, or first 3 digits of fir_number, or default
     const stationId  = row.station_id || '101';
     const firNum     = String(row.fir_number || row.fir_no || '1').replace(/\D/g, '') || '1';
     const yr         = String(row.year || year || '2024');
 
     setPdfLoading(true);
-    setPdfModal({ b64: null, title: `FIR ${firNum}/${yr} — ${row.district || ''} · ${row.police_station || ''}` });
 
     fetchFir({ district_id: districtId, station_id: stationId, fir_num: firNum, year: yr })
       .then(res => {
         if (res.pdf_b64) {
+          // Convert Base64 to Uint8Array & trigger direct PDF download
+          const binaryStr = atob(res.pdf_b64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          const url  = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href  = url;
+          const safeDist = (row.district || 'District').replace(/[^a-zA-Z0-9]/g, '_');
+          const safeStn  = (row.police_station || 'PS').replace(/[^a-zA-Z0-9]/g, '_');
+          link.download  = `FIR_${safeDist}_${safeStn}_${firNum}_${yr}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+          // Also set modal in case user wants to view inline
           setPdfModal({ b64: res.pdf_b64, title: `FIR ${firNum}/${yr} — ${res.fir_metadata?.station_name || row.police_station || ''}` });
           setPdfPage(1);
         } else {
@@ -607,20 +623,21 @@ export default function DataIngestion() {
                     </td>
                     <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 11 }}>{row.scraped_at}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'right' }}>
-                      {row.pdf_stratus_key ? (
+                      {row.status === 'found' || row.pdf_stratus_key || true ? (
                         <button
                           onClick={() => handleViewPdf(row)}
                           style={{
-                            background: 'rgba(224, 168, 50, 0.1)',
+                            background: 'rgba(224, 168, 50, 0.15)',
                             border: '1px solid var(--copper-500)',
-                            borderRadius: 3,
+                            borderRadius: 4,
                             color: 'var(--copper-400)',
-                            padding: '3px 8px',
-                            fontSize: 10,
+                            padding: '4px 10px',
+                            fontSize: 11,
+                            fontWeight: 600,
                             cursor: 'pointer'
                           }}
                         >
-                          View PDF
+                          ↓ Download PDF
                         </button>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>No PDF</span>
