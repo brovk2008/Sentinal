@@ -40,9 +40,9 @@ backend/test_server.py
 get_appsail_logs.js
 deploy_appsail.js
 
-# Ignore large data files (regenerate locally via scripts/)
+# Ignore large raw data files
 data_raw/
 backend/data/*.npy
 backend/data/*.jsonl
 backend/data/chunk_metadata.json
-backend/data/sentinal.db
+!backend/data/sentinal.db

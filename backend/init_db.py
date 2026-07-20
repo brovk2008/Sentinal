@@ -7,8 +7,11 @@ Call init_all_tables() from main.py lifespan.
 import sqlite3
 import json
 import random
+import os
+import shutil
 from datetime import datetime, timedelta
 from config import config
+
 
 DB = config.DB_PATH
 
@@ -143,22 +146,31 @@ def create_crime_syndicates():
     """)
 
 
-def create_scrape_table():
-    """Mirror of scrapers/scraper_store.py init_scrape_table() — safe to call twice."""
+def create_uploaded_files_table():
     _exec("""
-        CREATE TABLE IF NOT EXISTS scraped_firs (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            year            INTEGER,
-            district_id     INTEGER,
-            station_id      INTEGER,
-            fir_no          TEXT,
-            fir_date        TEXT,
-            accused_name    TEXT,
-            crime_type      TEXT,
-            stratus_key     TEXT,
-            scraped_at      TEXT
+        CREATE TABLE IF NOT EXISTS uploaded_files (
+            id          TEXT PRIMARY KEY,
+            case_id     TEXT,
+            filename    TEXT,
+            label       TEXT,
+            entity_type TEXT,
+            file_type   TEXT,
+            mime_type   TEXT,
+            stratus_key TEXT,
+            stratus_url TEXT,
+            ai_summary  TEXT,
+            ai_tags     TEXT,
+            user_id     TEXT DEFAULT 'anonymous',
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    try:
+        con = _con()
+        con.execute("ALTER TABLE uploaded_files ADD COLUMN user_id TEXT DEFAULT 'anonymous'")
+        con.commit()
+        con.close()
+    except Exception:
+        pass
 
 
 # ─── Seed data ──────────────────────────────────────────────────────────────
@@ -337,11 +349,28 @@ def init_all_tables():
     """Call this from main.py lifespan to ensure all tables exist."""
     print("[init_db] Initializing all dynamic tables...")
     try:
+        # If in AppSail production, copy bundled sentinal.db to /tmp/sentinal.db if needed
+        if config.DB_PATH.startswith("/tmp/"):
+            need_copy = not os.path.exists(config.DB_PATH) or os.path.getsize(config.DB_PATH) < 1000000
+            if need_copy:
+                bundled_db = os.path.join(os.path.dirname(__file__), "data", "sentinal.db")
+                if os.path.exists(bundled_db):
+                    print(f"[init_db] Copying pre-populated database ({os.path.getsize(bundled_db)} bytes) from {bundled_db} to {config.DB_PATH}...")
+                    try:
+                        shutil.copyfile(bundled_db, config.DB_PATH)
+                        print("[init_db] Database copied successfully.")
+                    except Exception as ce:
+                        print(f"[init_db] Error copying database: {ce}")
+                else:
+                    print(f"[init_db] WARNING: Bundled database not found at {bundled_db}")
+
+
         create_financial_transactions()
         create_cdr_records()
         create_evidence_boards()
         create_investigation_reports()
         create_crime_syndicates()
+        create_uploaded_files_table()
         create_scrape_table()
 
         # Seed synthetic data if tables are empty

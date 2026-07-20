@@ -1,7 +1,8 @@
-"""CDR (Call Detail Records) analytics router."""
-from fastapi import APIRouter, Query
+import sqlite3, io, os
+from fastapi import APIRouter, Query, UploadFile, File, HTTPException
+from pydantic import BaseModel
+from typing import Optional, List
 from database import query
-from typing import Optional
 
 router = APIRouter()
 
@@ -119,12 +120,8 @@ async def cdr_summary():
 
 # ─── CDR Upload & Advanced Analysis ─────────────────────────────────
 
-import sqlite3, io, os
-from fastapi import UploadFile, File, HTTPException
-from pydantic import BaseModel
-from typing import List
-
-_DB_PATH = os.getenv("DB_PATH", "data/sentinal.db")
+from config import config
+_DB_PATH = config.DB_PATH
 
 # Column format maps for different Indian telcos
 _COLUMN_MAPS = [

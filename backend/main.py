@@ -1,5 +1,16 @@
-import os
-import sys
+import sys, os
+
+# MUST BE AT VERY TOP: Add bundled Linux AMD64 wheels in ./lib to sys.path
+_HERE_LIB = os.path.join(os.path.dirname(__file__), "lib")
+for _pkg_path in [_HERE_LIB, "/catalyst/lib", "/app/lib", "/tmp/sentinal-packages", "/tmp/site-packages"]:
+    if os.path.exists(_pkg_path) and _pkg_path not in sys.path:
+        sys.path.insert(0, _pkg_path)
+
+for _pp in os.environ.get("PYTHONPATH", "").split(":"):
+    if _pp and os.path.exists(_pp) and _pp not in sys.path:
+        sys.path.insert(0, _pp)
+
+print("[Sentinal Main] Python script starting...", flush=True)
 import asyncio
 import traceback
 from contextlib import asynccontextmanager
@@ -7,20 +18,27 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-# Write immediate diagnostic info at startup
-try:
-    with open("startup_debug.txt", "w") as f:
-        f.write("Sentinal Backend Startup Initiated\n")
-        f.write(f"Python path: {sys.path}\n")
-        f.write(f"Env port var: {os.environ.get('X_ZOHO_CATALYST_LISTEN_PORT')}\n")
-        f.write(f"Full Env keys: {list(os.environ.keys())}\n")
-except Exception as e:
-    pass
+DEBUG_LOG = "/tmp/startup_debug.txt"
 
-# Ensure /tmp/site-packages is in sys.path
-TMP_SITE = "/tmp/site-packages"
-if os.path.exists(TMP_SITE) and TMP_SITE not in sys.path:
-    sys.path.insert(0, TMP_SITE)
+def _log_debug(msg: str):
+    print(f"[Sentinal Backend] {msg}", flush=True)
+    try:
+        with open(DEBUG_LOG, "a") as f:
+            f.write(f"{msg}\n")
+    except Exception:
+        pass
+
+_log_debug("Sentinal Backend Startup Initiated")
+_log_debug(f"Python path: {sys.path[:3]}")
+_log_debug(f"X_ZOHO_CATALYST_LISTEN_PORT: {os.environ.get('X_ZOHO_CATALYST_LISTEN_PORT')}")
+_log_debug(f"PORT: {os.environ.get('PORT')}")
+
+
+
+# Also honour PYTHONPATH entries
+for _pp in os.environ.get("PYTHONPATH", "").split(":"):
+    if _pp and os.path.exists(_pp) and _pp not in sys.path:
+        sys.path.insert(0, _pp)
 
 import site
 user_site = site.getusersitepackages()
@@ -30,61 +48,110 @@ if user_site and user_site not in sys.path:
 for extra_path in ["/catalyst/.local/lib/python3.11/site-packages", "/catalyst/.local/lib/python3.12/site-packages"]:
     if os.path.exists(extra_path) and extra_path not in sys.path:
         sys.path.insert(0, extra_path)
-'''
-# Auto-verify and install selenium / bs4 if missing in AppSail environment
-try:
-    import selenium
-    import bs4
-except ImportError:
-    import subprocess
-    print("[Startup] Missing runtime dependency 'selenium' or 'beautifulsoup4'. Installing to /tmp/site-packages...")
-    try:
-        os.makedirs(TMP_SITE, exist_ok=True)
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--target", TMP_SITE, "selenium==4.22.0", "beautifulsoup4==4.12.3"])
-        if TMP_SITE not in sys.path:
-            sys.path.insert(0, TMP_SITE)
-        import selenium
-        import bs4
-        print("[Startup] selenium and beautifulsoup4 installed and loaded successfully!")
-    except Exception as ie:
-        print(f"[Startup] Error auto-installing dependencies: {ie}")
-'''
+
+
 # Detect if running inside Zoho Catalyst AppSail production environment
 IS_CATALYST = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV"))
 
-from routers import heatmap, network, intelligence, alerts, persons, cases, analytics, financial, cdr, ai, actions, reports, predict, board, brain, livefeed, darkweb, fir_scraper, nlp, scraper, uploads, auth
-from routers.predict import load_models as load_predict_models
+# Router definitions: (module_name, route_prefix, tag)
+ALL_ROUTERS = [
+    ("analytics",    "/api/v1/analytics",    "Analytics"),
+    ("heatmap",      "/api/v1/heatmap",      "Heatmap"),
+    ("network",      "/api/v1/network",      "Network"),
+    ("intelligence", "/api/v1/intelligence", "Intelligence"),
+    ("alerts",       "/api/v1/alerts",       "Alerts"),
+    ("persons",      "/api/v1/persons",      "Persons"),
+    ("cases",        "/api/v1/cases",        "Cases"),
+    ("financial",    "/api/v1/financial",    "Financial"),
+    ("cdr",          "/api/v1/cdr",          "CDR"),
+    ("ai",           "/api/v1/ai",           "AI"),
+    ("actions",      "/api/v1/actions",      "Actions"),
+    ("reports",      "/api/v1/reports",      "Reports"),
+    ("predict",      "/api/v1/predict",      "Prediction"),
+    ("board",        "/api/v1/board",        "Board"),
+    ("brain",        "/api/v1/brain",        "Brain"),
+    ("livefeed",     "/api/v1/livefeed",     "Live Feed"),
+    ("darkweb",      "/api/v1/darkweb",      "Dark Web Intel"),
+    ("fir_scraper",  "/api/v1/fir",          "FIR Scraper"),
+    ("scraper",      "/api/v1/scraper",      "KSP FIR Scraper (SmartBrowz)"),
+    ("nlp",          "/api/v1/nlp",          "Catalyst NLP"),
+    ("uploads",      "/api/v1/uploads",      "File Uploads"),
+    ("auth",         "/api/v1/auth",         "Auth"),
+]
+
+LOADED_ROUTERS = set()
+
+def _import_and_mount_router(mod_name: str, prefix: str, tag: str) -> bool:
+    if mod_name in LOADED_ROUTERS:
+        return True
+    try:
+        import importlib
+        mod = importlib.import_module(f"routers.{mod_name}")
+        if hasattr(mod, "router"):
+            app.include_router(mod.router, prefix=prefix, tags=[tag])
+            LOADED_ROUTERS.add(mod_name)
+            _log_debug(f"Router mounted: {mod_name} -> {prefix}")
+            return True
+    except Exception as e:
+        _log_debug(f"Router {mod_name} skipped for now: {e}")
+    return False
+
 from init_db import init_all_tables
 
 def _bg_model_loader():
     try:
-        load_predict_models()
-        with open("startup_debug.txt", "a") as f:
-            f.write("Models initialised in background successfully.\n")
+        import subprocess
+        # Check if numpy/scikit-learn are installed
+        try:
+            import numpy, sklearn
+            _log_debug("ML packages already installed.")
+        except ImportError:
+            _log_debug("Installing ML packages in background...")
+            pkg_dir = "/tmp/sentinal-packages"
+            os.makedirs(pkg_dir, exist_ok=True)
+            if pkg_dir not in sys.path:
+                sys.path.insert(0, pkg_dir)
+            
+            cmd = [
+                sys.executable, "-m", "pip", "install",
+                "--quiet", "--no-cache-dir", "--target", pkg_dir,
+                "--only-binary", ":all:",
+                "numpy==1.26.4", "scikit-learn==1.5.0", "joblib==1.4.2",
+                "pandas==2.2.2", "reportlab==4.2.0", "pdfplumber==0.11.4",
+                "beautifulsoup4==4.12.3", "zcatalyst-sdk==1.0.3"
+            ]
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            _log_debug(f"Background ML pip install finished (code {r.returncode})")
+
+        # Retry mounting any deferred routers
+        for _mname, _prefix, _tag in ALL_ROUTERS:
+            _import_and_mount_router(_mname, _prefix, _tag)
+
+        # Load prediction ML models
+        if "predict" in LOADED_ROUTERS:
+            import importlib
+            predict_mod = importlib.import_module("routers.predict")
+            if hasattr(predict_mod, "load_models"):
+                predict_mod.load_models()
+                _log_debug("ML prediction models loaded successfully.")
     except Exception as e:
-        with open("startup_debug.txt", "a") as f:
-            f.write(f"Background model loading error: {traceback.format_exc()}\n")
+        _log_debug(f"Background ML/loader error: {traceback.format_exc()}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     """Application lifespan — initialize database instantly and load models asynchronously in background."""
     try:
-        with open("startup_debug.txt", "a") as f:
-            f.write("Lifespan starting...\n")
+        _log_debug("Lifespan starting...")
         init_all_tables()  # Creates all missing tables + seeds synthetic data
         # Non-blocking model load so server responds with 200 OK instantly
         asyncio.create_task(asyncio.to_thread(_bg_model_loader))
-        with open("startup_debug.txt", "a") as f:
-            f.write("All tables ready. Async model loading dispatched.\n")
+        _log_debug("All tables ready. Async model loading dispatched.")
     except Exception as e:
-        with open("startup_debug.txt", "a") as f:
-            f.write(f"Lifespan init error: {traceback.format_exc()}\n")
+        _log_debug(f"Lifespan init error: {traceback.format_exc()}")
     yield
-    try:
-        with open("startup_debug.txt", "a") as f:
-            f.write("Lifespan shutdown.\n")
-    except:
-        pass
+    _log_debug("Lifespan shutdown.")
 
 
 app = FastAPI(
@@ -93,6 +160,11 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+# Attempt top-level granular import of all routers
+for _mname, _prefix, _tag in ALL_ROUTERS:
+    _import_and_mount_router(_mname, _prefix, _tag)
+
 
 
 # ─── Defensive Header Deduplication Middleware ───────────────────────────────
@@ -164,30 +236,10 @@ if not IS_CATALYST:
         allow_headers=["*"],
     )
 
-# Mount all routers
-app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
-app.include_router(heatmap.router, prefix="/api/v1/heatmap", tags=["Heatmap"])
-app.include_router(network.router, prefix="/api/v1/network", tags=["Network"])
-app.include_router(intelligence.router, prefix="/api/v1/intelligence", tags=["Intelligence"])
-app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["Alerts"])
-app.include_router(persons.router, prefix="/api/v1/persons", tags=["Persons"])
-app.include_router(cases.router, prefix="/api/v1/cases", tags=["Cases"])
-app.include_router(financial.router, prefix="/api/v1/financial", tags=["Financial"])
-app.include_router(cdr.router, prefix="/api/v1/cdr", tags=["CDR"])
-app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI"])
-app.include_router(actions.router, prefix="/api/v1/actions", tags=["Actions"])
-app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
-app.include_router(predict.router, prefix="/api/v1/predict", tags=["Prediction"])
-app.include_router(board.router, prefix="/api/v1/board", tags=["Board"])
-app.include_router(brain.router, prefix="/api/v1/brain", tags=["Brain"])
-app.include_router(livefeed.router, prefix="/api/v1/livefeed", tags=["Live Feed"])
-app.include_router(darkweb.router, prefix="/api/v1/darkweb", tags=["Dark Web Intel"])
-app.include_router(fir_scraper.router, prefix="/api/v1/fir", tags=["FIR Scraper"])
-app.include_router(scraper.router, prefix="/api/v1/scraper", tags=["KSP FIR Scraper (SmartBrowz)"])
-app.include_router(nlp.router, prefix="/api/v1/nlp", tags=["Catalyst NLP"])
-app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["File Uploads"])
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "Project Sentinal v2 Backend", "version": "2.0.0"}
 
 @app.get("/health")
 async def health():
@@ -196,17 +248,17 @@ async def health():
 @app.get("/debug-logs")
 async def debug_logs():
     try:
-        if os.path.exists("startup_debug.txt"):
-            with open("startup_debug.txt", "r") as f:
+        if os.path.exists(DEBUG_LOG):
+            with open(DEBUG_LOG, "r") as f:
                 content = f.read()
             return {"success": True, "logs": content}
-        return {"success": False, "error": "startup_debug.txt not found"}
+        return {"success": False, "error": "debug log not found"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT", os.environ.get("PORT", 9000)))
-    print(f"[Sentinal AppSail Engine] Listening on 0.0.0.0:{port}...")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    listen_port = int(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("PORT") or 9000)
+    print(f"[Sentinal AppSail Engine] Starting Uvicorn server on 0.0.0.0:{listen_port} (X_ZOHO_CATALYST_LISTEN_PORT={os.environ.get('X_ZOHO_CATALYST_LISTEN_PORT')})...", flush=True)
+    uvicorn.run(app, host="0.0.0.0", port=listen_port)

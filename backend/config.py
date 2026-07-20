@@ -7,8 +7,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 
+IS_CATALYST = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV"))
+
 class Config:
-    DB_PATH = str(DATA_DIR / "sentinal.db")
+    DB_PATH = "/tmp/sentinal.db" if IS_CATALYST else str(DATA_DIR / "sentinal.db")
     EMBEDDINGS_PATH = str(DATA_DIR / "embeddings.npy")
     CHUNK_METADATA_PATH = str(DATA_DIR / "chunk_metadata.json")
     NARRATIVES_PATH = str(DATA_DIR / "investigation_narratives.json")

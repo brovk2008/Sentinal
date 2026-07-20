@@ -19,7 +19,9 @@ log = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_DB_PATH     = os.getenv("DB_PATH", "data/sentinal.db")
+from config import config
+
+_DB_PATH     = config.DB_PATH
 STRATUS_BUCKET = os.getenv("STRATUS_BUCKET", "sentinal-fir-pdfs")
 VISION_URL   = os.getenv("SENTINAL_VISION_URL", "")
 VISION_MODEL = os.getenv("SENTINAL_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
@@ -44,32 +46,33 @@ SUPPORTED_TYPES = {
 
 
 def _ensure_uploads_table():
-    con = sqlite3.connect(_DB_PATH)
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS uploaded_files (
-            id          TEXT PRIMARY KEY,
-            case_id     TEXT,
-            filename    TEXT,
-            label       TEXT,
-            entity_type TEXT,
-            file_type   TEXT,
-            mime_type   TEXT,
-            stratus_key TEXT,
-            stratus_url TEXT,
-            ai_summary  TEXT,
-            ai_tags     TEXT,
-            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    # Add user_id column dynamically if not exists
     try:
-        con.execute("ALTER TABLE uploaded_files ADD COLUMN user_id TEXT DEFAULT 'anonymous'")
-    except Exception:
-        pass
-    con.commit()
-    con.close()
-
-_ensure_uploads_table()
+        con = sqlite3.connect(_DB_PATH)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS uploaded_files (
+                id          TEXT PRIMARY KEY,
+                case_id     TEXT,
+                filename    TEXT,
+                label       TEXT,
+                entity_type TEXT,
+                file_type   TEXT,
+                mime_type   TEXT,
+                stratus_key TEXT,
+                stratus_url TEXT,
+                ai_summary  TEXT,
+                ai_tags     TEXT,
+                user_id     TEXT DEFAULT 'anonymous',
+                uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        try:
+            con.execute("ALTER TABLE uploaded_files ADD COLUMN user_id TEXT DEFAULT 'anonymous'")
+            con.commit()
+        except Exception:
+            pass
+        con.close()
+    except Exception as e:
+        log.warning(f"[_ensure_uploads_table] DB warning: {e}")
 
 
 async def _get_current_user_id(request: Request) -> str:
