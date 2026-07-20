@@ -378,3 +378,11 @@ export const getScrapedFirPdfUrl = (stratusKey) =>
   request(`/api/v1/scraper/pdf/${encodeURIComponent(stratusKey)}`);
 
 export const fetchScraperDistricts = () => request('/api/v1/scraper/districts');
+
+// ── FIR fetch (used by FIRSearch and DataIngestion View PDF modal) ────────────
+export const fetchFir = (payload) =>
+  request('/api/v1/fir/fetch', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  });
