@@ -142,13 +142,13 @@ function ThreeGlobe({ points }) {
     const atmoSphere = new THREE.Mesh(atmoGeom, atmoMat)
     scene.add(atmoSphere)
 
-    // Helper: convert lat/lng to 3D Cartesian coordinates
+    // Helper: convert lat/lng to 3D Cartesian coordinates for Three.js SphereGeometry
     const latLngToVector3 = (lat, lng, r) => {
       const phi = (90 - lat) * (Math.PI / 180)
       const theta = (lng + 180) * (Math.PI / 180)
-      const x = -(r * Math.sin(phi) * Math.sin(theta))
+      const x = -(r * Math.sin(phi) * Math.cos(theta))
       const y = r * Math.cos(phi)
-      const z = r * Math.sin(phi) * Math.cos(theta)
+      const z = r * Math.sin(phi) * Math.sin(theta)
       return new THREE.Vector3(x, y, z)
     }
 
@@ -229,8 +229,8 @@ function ThreeGlobe({ points }) {
     scene.add(fillLight)
 
     // Initial orientation: Focus South India / Karnataka directly toward camera
-    globeGroup.rotation.y = -Math.PI / 1.35
-    globeGroup.rotation.x = 0.22
+    globeGroup.rotation.y = Math.PI * 0.92
+    globeGroup.rotation.x = -0.25
 
     // ── 7. Google Earth Controls: Mouse Drag & Smooth Inertia ──
     let isDragging = false
@@ -377,8 +377,8 @@ function ThreeGlobe({ points }) {
 
   const resetIndiaFocus = () => {
     if (globeGroupRef.current && cameraRef.current) {
-      globeGroupRef.current.rotation.y = -Math.PI / 1.35
-      globeGroupRef.current.rotation.x = 0.22
+      globeGroupRef.current.rotation.y = Math.PI * 0.92
+      globeGroupRef.current.rotation.x = -0.25
       cameraRef.current.position.z = 160
       setZoomLevel(160)
     }
