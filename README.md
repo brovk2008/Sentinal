@@ -4,7 +4,7 @@
 
 # 🔍 SENTINAL
 ### AI-Driven Crime Analytics & Intelligence Platform
-#### Karnataka State Police × Zoho Catalyst Hackathon 2025
+#### Karnataka State Police × Zoho Catalyst Hackathon 2026
 
 [![Live Serverless App](https://img.shields.io/badge/🚀_Primary_App-catalystserverless.in-copper?style=for-the-badge)](https://sentinal-60073535541.development.catalystserverless.in/app/index.html)
 [![Live Slate App](https://img.shields.io/badge/🌐_Slate_App-sentinal--peak.onslate.in-darkred?style=for-the-badge)](https://sentinal-peak.onslate.in)
