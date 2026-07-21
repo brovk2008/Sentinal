@@ -12,10 +12,19 @@ import 'leaflet/dist/leaflet.css'
 const KA_CENTER = [14.5, 76.0]
 const CRIME_TYPES = ['All', 'Murder & Culpable Homicide', 'Theft & Burglary', 'Cyber Crime', 'Narcotics', 'Cheating & Fraud', 'Crimes Against Women']
 
-// ── Three.js 3D Globe Component (7E) ──
+// ── Google Earth-Style 3D Globe Component ──
 function ThreeGlobe({ points }) {
   const mountRef = useRef(null)
   const [retry, setRetry] = useState(0)
+  const [autoRotate, setAutoRotate] = useState(true)
+  const [showClouds, setShowClouds] = useState(true)
+  const [zoomLevel, setZoomLevel] = useState(180) // Camera Z distance
+  const [hoveredPoint, setHoveredPoint] = useState(null)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+
+  const cameraRef = useRef(null)
+  const globeGroupRef = useRef(null)
+  const cloudsRef = useRef(null)
 
   useEffect(() => {
     if (!mountRef.current) return
@@ -31,14 +40,15 @@ function ThreeGlobe({ points }) {
 
     // Scene
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x060812)
+    scene.background = new THREE.Color(0x04050c)
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-    camera.position.z = 240
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 2000)
+    camera.position.z = zoomLevel
+    cameraRef.current = camera
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(width, height)
     container.innerHTML = ''
@@ -47,57 +57,87 @@ function ThreeGlobe({ points }) {
     // Main Globe Group
     const globeGroup = new THREE.Group()
     scene.add(globeGroup)
+    globeGroupRef.current = globeGroup
 
     const globeRadius = 75
 
-    // 1. Inner Solid Globe (Dark Ocean Core)
-    const oceanGeom = new THREE.SphereGeometry(globeRadius - 0.2, 64, 64)
-    const oceanMat = new THREE.MeshPhongMaterial({
-      color: 0x09101d,
-      emissive: 0x030712,
-      specular: 0x1e293b,
-      shininess: 15,
-      transparent: true,
-      opacity: 0.95
-    })
-    const oceanSphere = new THREE.Mesh(oceanGeom, oceanMat)
-    globeGroup.add(oceanSphere)
+    // ── 1. High-Res Satellite Earth Texture ──
+    const textureLoader = new THREE.TextureLoader()
+    
+    // Primary satellite texture + fallback procedural texture
+    const earthTexture = textureLoader.load(
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg',
+      undefined,
+      undefined,
+      () => {
+        // Fallback procedural canvas texture if offline
+        const canvas = document.createElement('canvas')
+        canvas.width = 1024
+        canvas.height = 512
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#091428'
+        ctx.fillRect(0, 0, 1024, 512)
+        ctx.fillStyle = '#1e3a8a'
+        ctx.fillRect(200, 100, 300, 200)
+        return new THREE.CanvasTexture(canvas)
+      }
+    )
 
-    // 2. Tech Wireframe Grid
-    const wireGeom = new THREE.SphereGeometry(globeRadius, 36, 18)
+    const bumpTexture = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_normal_2048.jpg')
+    const specularTexture = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_specular_2048.jpg')
+    const cloudsTexture = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_clouds_1024.png')
+
+    // Satellite Earth Sphere
+    const earthGeom = new THREE.SphereGeometry(globeRadius, 64, 64)
+    const earthMat = new THREE.MeshPhongMaterial({
+      map: earthTexture,
+      bumpMap: bumpTexture,
+      bumpScale: 0.8,
+      specularMap: specularTexture,
+      specular: new THREE.Color(0x333333),
+      shininess: 25
+    })
+    const earthMesh = new THREE.Mesh(earthGeom, earthMat)
+    globeGroup.add(earthMesh)
+
+    // ── 2. Rotatable Clouds Layer ──
+    const cloudsGeom = new THREE.SphereGeometry(globeRadius + 0.8, 48, 48)
+    const cloudsMat = new THREE.MeshPhongMaterial({
+      map: cloudsTexture,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending
+    })
+    const cloudsMesh = new THREE.Mesh(cloudsGeom, cloudsMat)
+    cloudsMesh.visible = showClouds
+    globeGroup.add(cloudsMesh)
+    cloudsRef.current = cloudsMesh
+
+    // ── 3. Tech Grid & Lat/Lng Rings ──
+    const wireGeom = new THREE.SphereGeometry(globeRadius + 0.2, 36, 18)
     const wireMat = new THREE.MeshBasicMaterial({
       color: 0x00d2ff,
       wireframe: true,
       transparent: true,
-      opacity: 0.15
+      opacity: 0.08
     })
     const wireSphere = new THREE.Mesh(wireGeom, wireMat)
     globeGroup.add(wireSphere)
 
-    // 3. Equator & Major Lat/Lng Accent Rings
-    const createRing = (radius, color, rotX = 0, rotY = 0, opacity = 0.4) => {
-      const ringGeom = new THREE.RingGeometry(radius - 0.3, radius + 0.3, 64)
-      const ringMat = new THREE.MeshBasicMaterial({
-        color,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity
-      })
-      const ring = new THREE.Mesh(ringGeom, ringMat)
-      ring.rotation.x = rotX
-      ring.rotation.y = rotY
-      return ring
-    }
-    globeGroup.add(createRing(globeRadius + 0.1, 0xd97706, Math.PI / 2, 0, 0.5)) // Equator (Amber)
-    globeGroup.add(createRing(globeRadius + 0.1, 0x00f0ff, 0, 0, 0.3)) // Prime Meridian (Cyan)
+    // Equator Ring
+    const eqGeom = new THREE.RingGeometry(globeRadius + 0.3, globeRadius + 0.7, 64)
+    const eqMat = new THREE.MeshBasicMaterial({ color: 0xc8814a, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
+    const eqRing = new THREE.Mesh(eqGeom, eqMat)
+    eqRing.rotation.x = Math.PI / 2
+    globeGroup.add(eqRing)
 
-    // 4. Outer Atmosphere Glow Halo
-    const atmoGeom = new THREE.SphereGeometry(globeRadius + 4, 32, 32)
+    // ── 4. Outer Atmosphere Glow ──
+    const atmoGeom = new THREE.SphereGeometry(globeRadius + 3.5, 32, 32)
     const atmoMat = new THREE.MeshBasicMaterial({
-      color: 0x00d2ff,
+      color: 0x3b82f6,
       side: THREE.BackSide,
       transparent: true,
-      opacity: 0.12
+      opacity: 0.15
     })
     const atmoSphere = new THREE.Mesh(atmoGeom, atmoMat)
     scene.add(atmoSphere)
@@ -114,136 +154,193 @@ function ThreeGlobe({ points }) {
 
     // Default Karnataka / India crime clusters
     const FALLBACK_POINTS = [
-      { lat: 12.9716, lng: 77.5946, severity: 'high' },   // Bengaluru
-      { lat: 15.3647, lng: 75.1240, severity: 'medium' }, // Hubballi
-      { lat: 15.1394, lng: 76.9214, severity: 'critical' },// Ballari
-      { lat: 15.8497, lng: 74.4977, severity: 'medium' }, // Belagavi
-      { lat: 12.2958, lng: 76.6394, severity: 'high' },   // Mysuru
-      { lat: 17.3850, lng: 78.4867, severity: 'medium' }, // Hyderabad area
-      { lat: 14.4426, lng: 75.7218, severity: 'low' },    // Davanagere
-      { lat: 13.3409, lng: 77.1000, severity: 'high' },   // Tumakuru
-      { lat: 12.8438, lng: 77.6624, severity: 'critical' },// Electronic City
-      { lat: 14.2218, lng: 76.3978, severity: 'medium' }, // Chitradurga
-      { lat: 13.9299, lng: 75.5681, severity: 'low' },    // Shivamogga
-      { lat: 16.2076, lng: 77.3463, severity: 'medium' }, // Raichur
-      { lat: 12.9254, lng: 74.8237, severity: 'high' },   // Mangaluru
-      { lat: 13.3389, lng: 74.7451, severity: 'medium' }, // Udupi
-      { lat: 17.3297, lng: 76.8343, severity: 'high' },   // Kalaburagi
-      { lat: 16.8302, lng: 75.7100, severity: 'medium' }, // Vijayapur
+      { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban', severity: 'high', count: 199 },
+      { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad', severity: 'medium', count: 73 },
+      { lat: 15.1394, lng: 76.9214, label: 'Ballari District', severity: 'critical', count: 114 },
+      { lat: 15.8497, lng: 74.4977, label: 'Belagavi Sector', severity: 'medium', count: 82 },
+      { lat: 12.2958, lng: 76.6394, label: 'Mysuru City', severity: 'high', count: 179 },
+      { lat: 14.4426, lng: 75.7218, label: 'Davanagere', severity: 'low', count: 47 },
+      { lat: 13.3409, lng: 77.1000, label: 'Tumakuru Hub', severity: 'high', count: 117 },
+      { lat: 12.8438, lng: 77.6624, label: 'Electronic City Cyber', severity: 'critical', count: 245 },
+      { lat: 14.2218, lng: 76.3978, label: 'Chitradurga', severity: 'medium', count: 60 },
+      { lat: 13.9299, lng: 75.5681, label: 'Shivamogga Arms', severity: 'low', count: 85 },
+      { lat: 16.2076, lng: 77.3463, label: 'Raichur Sector', severity: 'medium', count: 48 },
+      { lat: 12.9254, lng: 74.8237, label: 'Mangaluru Port', severity: 'high', count: 74 },
+      { lat: 13.3389, lng: 74.7451, label: 'Udupi Coastal', severity: 'medium', count: 95 },
+      { lat: 17.3297, lng: 76.8343, label: 'Kalaburagi Fraud', severity: 'high', count: 95 },
+      { lat: 16.8302, lng: 75.7100, label: 'Vijayapura Theft', severity: 'medium', count: 115 },
     ]
 
     const displayPoints = (points && points.length > 0) ? points.slice(0, 250) : FALLBACK_POINTS
 
-    // 5. Add 3D Glowing Beams & Markers
+    // ── 5. Add Google Earth Style 3D Pins & Pulse Rings ──
+    const pinMeshes = []
+
     displayPoints.forEach(pt => {
       if (pt.lat && pt.lng) {
         const pos = latLngToVector3(pt.lat, pt.lng, globeRadius)
         const isCritical = pt.severity === 'critical' || pt.severity === 'high'
         const color = isCritical ? 0xef4444 : 0xf59e0b
 
-        // Base Glowing Dot
-        const dotGeom = new THREE.SphereGeometry(1.6, 12, 12)
-        const dotMat = new THREE.MeshBasicMaterial({ color })
-        const dotMesh = new THREE.Mesh(dotGeom, dotMat)
-        dotMesh.position.copy(pos)
-        globeGroup.add(dotMesh)
+        // Glowing Pin Head
+        const headGeom = new THREE.SphereGeometry(1.4, 16, 16)
+        const headMat = new THREE.MeshBasicMaterial({ color })
+        const headMesh = new THREE.Mesh(headGeom, headMat)
+        
+        // Pin Stem
+        const stemHeight = isCritical ? 14 : 8
+        const stemGeom = new THREE.CylinderGeometry(0.3, 0.6, stemHeight, 8)
+        const stemMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 })
+        const stemMesh = new THREE.Mesh(stemGeom, stemMat)
 
-        // Vertical 3D Light Beam extending out from surface
-        const height = isCritical ? 18 : 10
-        const beamGeom = new THREE.CylinderGeometry(0.4, 0.8, height, 8)
-        const beamMat = new THREE.MeshBasicMaterial({
-          color,
-          transparent: true,
-          opacity: 0.75
-        })
-        const beamMesh = new THREE.Mesh(beamGeom, beamMat)
-
-        // Position beam so bottom rests on globe surface and points outward
         const normal = pos.clone().normalize()
-        beamMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(height / 2)))
-        beamMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)
-        globeGroup.add(beamMesh)
+        headMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(stemHeight)))
+        stemMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(stemHeight / 2)))
+        stemMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)
+
+        // Pulsing Surface Ring
+        const ringGeom = new THREE.RingGeometry(0.8, 2.5, 32)
+        const ringMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+        const ringMesh = new THREE.Mesh(ringGeom, ringMat)
+        ringMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.2)))
+        ringMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal)
+
+        const pinGroup = new THREE.Group()
+        pinGroup.add(headMesh)
+        pinGroup.add(stemMesh)
+        pinGroup.add(ringMesh)
+        pinGroup.userData = { ...pt, worldPos: pos }
+        
+        globeGroup.add(pinGroup)
+        pinMeshes.push(headMesh)
       }
     })
 
-    // 6. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+    // ── 6. Lighting ──
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85)
     scene.add(ambientLight)
 
-    const dirLight1 = new THREE.DirectionalLight(0x00f0ff, 1.2)
-    dirLight1.position.set(200, 150, 200)
-    scene.add(dirLight1)
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5)
+    sunLight.position.set(300, 200, 200)
+    scene.add(sunLight)
 
-    const dirLight2 = new THREE.DirectionalLight(0xd97706, 0.8)
-    dirLight2.position.set(-200, -100, -100)
-    scene.add(dirLight2)
+    const fillLight = new THREE.DirectionalLight(0x00f0ff, 0.5)
+    fillLight.position.set(-200, -100, -100)
+    scene.add(fillLight)
 
-    // Initial orientation: Rotate globe so India/Karnataka faces camera
+    // Initial orientation: Focus South India / Karnataka directly toward camera
     globeGroup.rotation.y = -Math.PI / 1.35
     globeGroup.rotation.x = 0.22
 
-    // Drag interactions
+    // ── 7. Google Earth Controls: Mouse Drag & Smooth Inertia ──
     let isDragging = false
     let prevMousePosition = { x: 0, y: 0 }
+    let velX = 0
+    let velY = 0
 
     const onMouseDown = (e) => {
+      if (e.button !== 0) return
       isDragging = true
       prevMousePosition = { x: e.clientX, y: e.clientY }
     }
 
     const onMouseMove = (e) => {
-      if (!isDragging) return
-      const deltaMove = {
-        x: e.clientX - prevMousePosition.x,
-        y: e.clientY - prevMousePosition.y
+      const rect = renderer.domElement.getBoundingClientRect()
+      setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+
+      if (isDragging) {
+        const deltaX = e.clientX - prevMousePosition.x
+        const deltaY = e.clientY - prevMousePosition.y
+        velX = deltaX * 0.004
+        velY = deltaY * 0.004
+        globeGroup.rotation.y += velX
+        globeGroup.rotation.x += velY
+        prevMousePosition = { x: e.clientX, y: e.clientY }
       }
-      globeGroup.rotation.y += deltaMove.x * 0.005
-      globeGroup.rotation.x += deltaMove.y * 0.005
-      prevMousePosition = { x: e.clientX, y: e.clientY }
     }
 
     const onMouseUp = () => { isDragging = false }
+
+    // ── 8. Smooth Mouse Wheel Zoom (Google Earth Zooming) ──
+    const onWheel = (e) => {
+      e.preventDefault()
+      const zoomFactor = e.deltaY * 0.15
+      camera.position.z = Math.min(Math.max(camera.position.z + zoomFactor, 85), 360)
+      setZoomLevel(Math.round(camera.position.z))
+    }
 
     const domEl = renderer.domElement
     domEl.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
+    domEl.addEventListener('wheel', onWheel, { passive: false })
 
-    // Touch support for mobile/tablets
+    // Touch Support for Mobile & Tablets
+    let touchStartDist = 0
     const onTouchStart = (e) => {
       if (e.touches.length === 1) {
         isDragging = true
         prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      } else if (e.touches.length === 2) {
+        isDragging = false
+        touchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
       }
     }
+
     const onTouchMove = (e) => {
-      if (!isDragging || e.touches.length !== 1) return
-      const deltaMove = {
-        x: e.touches[0].clientX - prevMousePosition.x,
-        y: e.touches[0].clientY - prevMousePosition.y
+      if (e.touches.length === 1 && isDragging) {
+        const deltaX = e.touches[0].clientX - prevMousePosition.x
+        const deltaY = e.touches[0].clientY - prevMousePosition.y
+        globeGroup.rotation.y += deltaX * 0.005
+        globeGroup.rotation.x += deltaY * 0.005
+        prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      } else if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        const deltaDist = touchStartDist - dist
+        camera.position.z = Math.min(Math.max(camera.position.z + deltaDist * 0.3, 85), 360)
+        touchStartDist = dist
+        setZoomLevel(Math.round(camera.position.z))
       }
-      globeGroup.rotation.y += deltaMove.x * 0.005
-      globeGroup.rotation.x += deltaMove.y * 0.005
-      prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
     }
+
     const onTouchEnd = () => { isDragging = false }
 
     domEl.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: true })
     window.addEventListener('touchend', onTouchEnd)
 
-    // Animation Loop
+    // Animation Loop with Smooth Inertia Coalescing
     let reqId
     const animate = () => {
       reqId = requestAnimationFrame(animate)
+      
       if (!isDragging) {
-        globeGroup.rotation.y += 0.0015 // Smooth continuous rotation
+        // Inertia damping
+        velX *= 0.92
+        velY *= 0.92
+        globeGroup.rotation.y += velX
+        globeGroup.rotation.x += velY
+
+        if (autoRotate && Math.abs(velX) < 0.0001 && Math.abs(velY) < 0.0001) {
+          globeGroup.rotation.y += 0.0012 // Continuous subtle Earth rotation
+        }
       }
+
+      if (cloudsRef.current && showClouds) {
+        cloudsRef.current.rotation.y += 0.0018 // Clouds revolve faster than surface
+      }
+
       renderer.render(scene, camera)
     }
     animate()
 
-    // Handle resizing
+    // Resizing Handler
     const handleResize = () => {
       if (!container) return
       const w = container.clientWidth
@@ -259,6 +356,7 @@ function ThreeGlobe({ points }) {
       domEl.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
+      domEl.removeEventListener('wheel', onWheel)
       domEl.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
@@ -267,17 +365,70 @@ function ThreeGlobe({ points }) {
         container.removeChild(domEl)
       }
     }
-  }, [points, retry])
+  }, [points, retry, autoRotate, showClouds])
+
+  // Quick Controls
+  const handleZoom = (delta) => {
+    if (cameraRef.current) {
+      cameraRef.current.position.z = Math.min(Math.max(cameraRef.current.position.z + delta, 85), 360)
+      setZoomLevel(Math.round(cameraRef.current.position.z))
+    }
+  }
+
+  const resetIndiaFocus = () => {
+    if (globeGroupRef.current && cameraRef.current) {
+      globeGroupRef.current.rotation.y = -Math.PI / 1.35
+      globeGroupRef.current.rotation.x = 0.22
+      cameraRef.current.position.z = 160
+      setZoomLevel(160)
+    }
+  }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#060812' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#04050c', userSelect: 'none' }}>
       <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
-      <div style={{ position: 'absolute', bottom: 20, pointerEvents: 'none', textAlign: 'center', background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)', padding: '8px 16px', borderRadius: 8, backdropFilter: 'blur(8px)' }}>
-        <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.1em' }}>🌐 3D GEOSPATIAL INCIDENT SPHERE</div>
-        <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>Drag globe to rotate • Projecting live incident pins &amp; 3D intensity beams</div>
+
+      {/* Google Earth Control Toolbar (Top Right) */}
+      <div style={{
+        position: 'absolute', right: 20, top: 20, display: 'flex', flexDirection: 'column', gap: 8,
+        background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)',
+        padding: 8, borderRadius: 10, backdropFilter: 'blur(10px)', zIndex: 10
+      }}>
+        <button onClick={() => handleZoom(-30)} title="Zoom In" style={toolBtnStyle}>➕</button>
+        <button onClick={() => handleZoom(30)} title="Zoom Out" style={toolBtnStyle}>➖</button>
+        <button onClick={resetIndiaFocus} title="Focus Karnataka / India" style={toolBtnStyle}>🎯</button>
+        <button onClick={() => setAutoRotate(!autoRotate)} title="Toggle Auto Rotation" style={{ ...toolBtnStyle, background: autoRotate ? 'rgba(200,129,74,0.3)' : 'transparent' }}>
+          {autoRotate ? '⏸️' : '▶️'}
+        </button>
+        <button onClick={() => setShowClouds(!showClouds)} title="Toggle Cloud Layer" style={{ ...toolBtnStyle, background: showClouds ? 'rgba(59,130,246,0.3)' : 'transparent' }}>
+          ☁️
+        </button>
+      </div>
+
+      {/* Earth Altitude & Info HUD (Bottom Center) */}
+      <div style={{
+        position: 'absolute', bottom: 20, pointerEvents: 'none', textAlign: 'center',
+        background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)',
+        padding: '8px 18px', borderRadius: 8, backdropFilter: 'blur(8px)', zIndex: 10
+      }}>
+        <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.1em' }}>
+          🌍 GOOGLE EARTH SATELLITE GLOBE
+        </div>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <span>Alt: <strong>{Math.round((zoomLevel - 75) * 50)} km</strong></span>
+          <span>•</span>
+          <span>Scroll wheel to zoom • Drag to orbit</span>
+        </div>
       </div>
     </div>
   )
+}
+
+const toolBtnStyle = {
+  width: 34, height: 34, borderRadius: 6, border: '1px solid var(--border-subtle)',
+  background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13,
+  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  outline: 'none', transition: 'all 0.2s'
 }
 
 function MapRefTracker({ mapRef }) {
