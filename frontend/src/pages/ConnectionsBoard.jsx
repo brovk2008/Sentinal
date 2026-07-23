@@ -327,8 +327,63 @@ export default function ConnectionsBoard() {
         handleAIAnalyze();
       }, 1000);
     };
+    const handleDemoPopulate = () => {
+      const demoNodes = [
+        {
+          id: 'sn_1',
+          type: 'sentinalNode',
+          position: { x: 120, y: 150 },
+          data: { type: 'case', label: 'Case #456 — UPI Cyber Fraud', subtitle: 'Bengaluru Urban · Under Investigation', tags: ['UPI Fraud', 'High Gravity'] }
+        },
+        {
+          id: 'sn_2',
+          type: 'sentinalNode',
+          position: { x: 450, y: 120 },
+          data: { type: 'person', label: 'Ashok Kumar', subtitle: 'Suspected Syndicate Coordinator', tags: ['Main Actor', 'Repeat Offender'], risk: 'HIGH' }
+        },
+        {
+          id: 'sn_3',
+          type: 'sentinalNode',
+          position: { x: 450, y: 350 },
+          data: { type: 'financial', label: 'Mule Account #90812328', subtitle: 'Canara Bank · Hebbal Branch', tags: ['Suspicious Activity'] }
+        },
+        {
+          id: 'sn_4',
+          type: 'sentinalNode',
+          position: { x: 120, y: 380 },
+          data: { type: 'phone', label: '+91 94808-12345', subtitle: 'SIM registered in Bidar', tags: ['Burner SIM'] }
+        }
+      ];
+      const demoEdges = [
+        {
+          id: 'e_1',
+          source: 'sn_1',
+          target: 'sn_2',
+          label: 'Primary Beneficiary',
+          animated: true,
+          style: { stroke: 'rgba(200,129,74,0.8)', strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(200,129,74,0.8)' }
+        },
+        {
+          id: 'e_2',
+          source: 'sn_2',
+          target: 'sn_3',
+          label: 'Account Signatory',
+          animated: true,
+          style: { stroke: 'rgba(200,129,74,0.8)', strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(200,129,74,0.8)' }
+        }
+      ];
+      setNodes(demoNodes);
+      setEdges(demoEdges);
+      nodeIdRef.current = 5;
+    };
     window.addEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
-    return () => window.removeEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
+    window.addEventListener('demo-trigger-canvas-populate', handleDemoPopulate);
+    return () => {
+      window.removeEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
+      window.removeEventListener('demo-trigger-canvas-populate', handleDemoPopulate);
+    };
   }, [nodes, edges]);
 
   // Auto-save on change (debounced 2s)

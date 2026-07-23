@@ -45,8 +45,9 @@ export const DEMO_STEPS = [
     step: 6,
     title: "Investigation Canvas",
     narrative: "Here is our Palantir-inspired canvas. We map out Ramesh K. alongside associated phone IMEIs, locations, and bank accounts.",
-    action: "navigate",
+    action: "custom_event",
     target: "/connections",
+    event: "demo-trigger-canvas-populate",
     highlight: null
   },
   {
@@ -90,7 +91,7 @@ export const DEMO_STEPS = [
   },
   {
     step: 11,
-    title: "RAG AI Intelligence assistant",
+    title: "RAG AI Assistant Query",
     narrative: "Finally, investigators can query 10,000+ case records using natural language. Watch the AI auto-type and submit.",
     action: "navigate_and_type",
     target: "/assistant",
