@@ -12,6 +12,17 @@
     "system": true
   },
   {
+    "name": "Catalyst Auth Logo Interceptor",
+    "source_endpoint": "/__catalyst/auth/logo",
+    "target_endpoint": "/app/logo.png",
+    "target": "client",
+    "method": "GET",
+    "throttling": {
+      "overall": {},
+      "ip": {}
+    }
+  },
+  {
     "name": "Root Logo Rewrite",
     "source_endpoint": "/logo.png",
     "target_endpoint": "/app/logo.png",
