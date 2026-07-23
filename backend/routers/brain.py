@@ -28,11 +28,11 @@ except ImportError:
 
 # Schemas
 class AnalyzeBoardRequest(BaseModel):
-    board_id: str
+    board_id: Optional[str] = "default"
     nodes: Optional[list] = []
     connections: Optional[list] = []
     board_data: Optional[dict] = None
-    case_ids: List[int] = []
+    case_ids: Optional[List[int]] = []
 
 class PredictNextCrimeRequest(BaseModel):
     suspect_name: str
