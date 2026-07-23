@@ -95,17 +95,17 @@ async def district_centers():
 
 
 MONTH_LABELS = {
-    "2023-01": "Jan 2023", "2023-02": "Feb 2023", "2023-03": "Mar 2023", "2023-04": "Apr 2023",
-    "2023-05": "May 2023", "2023-06": "Jun 2023", "2023-07": "Jul 2023", "2023-08": "Aug 2023",
-    "2023-09": "Sep 2023", "2023-10": "Oct 2023", "2023-11": "Nov 2023", "2023-12": "Dec 2023",
-    "2024-01": "Jan 2024", "2024-02": "Feb 2024", "2024-03": "Mar 2024", "2024-04": "Apr 2024",
-    "2024-05": "May 2024", "2024-06": "Jun 2024", "2024-07": "Jul 2024", "2024-08": "Aug 2024",
-    "2024-09": "Sep 2024", "2024-10": "Oct 2024", "2024-11": "Nov 2024", "2024-12": "Dec 2024",
+    "2025-01": "Jan 2025", "2025-02": "Feb 2025", "2025-03": "Mar 2025", "2025-04": "Apr 2025",
+    "2025-05": "May 2025", "2025-06": "Jun 2025", "2025-07": "Jul 2025", "2025-08": "Aug 2025",
+    "2025-09": "Sep 2025", "2025-10": "Oct 2025", "2025-11": "Nov 2025", "2025-12": "Dec 2025",
+    "2026-01": "Jan 2026", "2026-02": "Feb 2026", "2026-03": "Mar 2026", "2026-04": "Apr 2026",
+    "2026-05": "May 2026", "2026-06": "Jun 2026", "2026-07": "Jul 2026", "2026-08": "Aug 2026",
+    "2026-09": "Sep 2026", "2026-10": "Oct 2026", "2026-11": "Nov 2026", "2026-12": "Dec 2026",
 }
 
 @router.get("/timelapse")
 async def heatmap_timelapse():
-    """Return monthly heatmap data for all 24 months in 2023-2024."""
+    """Return monthly heatmap data for all 24 months in 2025-2026."""
     rows = query("""
         SELECT strftime('%Y-%m', cm.CrimeRegisteredDate) as month,
                ROUND(cm.latitude, 2) as lat,
@@ -113,7 +113,7 @@ async def heatmap_timelapse():
                AVG(CASE WHEN cm.GravityOffenceID = 1 THEN 1.0 ELSE 0.5 END) as intensity
         FROM CaseMaster cm
         WHERE cm.latitude IS NOT NULL AND cm.longitude IS NOT NULL
-          AND cm.CrimeRegisteredDate BETWEEN '2023-01-01' AND '2024-12-31 23:59:59'
+          AND cm.CrimeRegisteredDate BETWEEN '2025-01-01' AND '2026-12-31 23:59:59'
         GROUP BY month, ROUND(cm.latitude, 2), ROUND(cm.longitude, 2)
     """)
     

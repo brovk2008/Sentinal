@@ -56,7 +56,7 @@ export const fetchKpis = () => request('/api/v1/analytics/kpis');
 export const fetchKpiSparklines = () => request('/api/v1/analytics/kpi-sparklines');
 export const fetchCrimeDistribution = () => request('/api/v1/analytics/crime-distribution');
 export const fetchTopOffenders = (limit = 5) => request(`/api/v1/analytics/top-offenders?limit=${limit}`);
-export const fetchDistrictComparison = (y1 = 2023, y2 = 2024) =>
+export const fetchDistrictComparison = (y1 = 2025, y2 = 2026) =>
   request(`/api/v1/analytics/district-comparison?year1=${y1}&year2=${y2}`);
 export const fetchMonthlyTrend = () => request('/api/v1/analytics/monthly-trend');
 export const fetchStatusBreakdown = () => request('/api/v1/analytics/status-breakdown');

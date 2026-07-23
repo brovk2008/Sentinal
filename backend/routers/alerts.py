@@ -43,7 +43,7 @@ def _generate_initial_alerts():
         FROM CaseMaster cm
         JOIN Unit u ON cm.PoliceStationID = u.UnitID
         JOIN District d ON u.DistrictID = d.DistrictID
-        WHERE cm.CrimeRegisteredDate >= '2024-10-01'
+        WHERE cm.CrimeRegisteredDate >= '2026-01-01'
         GROUP BY d.DistrictName
         ORDER BY cnt DESC
         LIMIT 5
@@ -54,10 +54,10 @@ def _generate_initial_alerts():
             "id": _alert_id,
             "type": "CRIME_SPIKE",
             "title": f"Crime Spike: {spike['DistrictName']}",
-            "description": f"{spike['cnt']} cases registered in Q4 2024",
+            "description": f"{spike['cnt']} cases registered in Q1/Q2 2026",
             "case_id": None,
             "severity": "medium",
-            "timestamp": "2024-12-01",
+            "timestamp": "2026-05-01",
         })
 
     # Syndicate activity alerts
@@ -76,7 +76,7 @@ def _generate_initial_alerts():
             "description": f"{s['total_cases']} linked cases — {s['crime_speciality']}",
             "case_id": None,
             "severity": "critical",
-            "timestamp": "2024-11-15",
+            "timestamp": "2026-06-15",
         })
 
     _alerts.sort(key=lambda x: x["id"], reverse=True)

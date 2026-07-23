@@ -75,7 +75,7 @@ async def top_offenders(limit: int = Query(5, ge=1, le=50)):
 
 @router.get("/district-comparison")
 async def district_comparison(
-    year1: int = Query(2023), year2: int = Query(2024)
+    year1: int = Query(2025), year2: int = Query(2026)
 ):
     """Compare case counts per district across two years."""
     rows = query("""
@@ -123,7 +123,7 @@ async def kpi_sparklines():
     cases_by_month = query("""
         SELECT strftime('%Y-%m', CrimeRegisteredDate) as month, COUNT(*) as cnt
         FROM CaseMaster
-        WHERE CrimeRegisteredDate >= '2024-06-01'
+        WHERE CrimeRegisteredDate >= '2025-06-01'
         GROUP BY month
         ORDER BY month
     """)
@@ -132,7 +132,7 @@ async def kpi_sparklines():
     active_by_month = query("""
         SELECT strftime('%Y-%m', CrimeRegisteredDate) as month, COUNT(*) as cnt
         FROM CaseMaster
-        WHERE CaseStatusID IN (1, 2) AND CrimeRegisteredDate >= '2024-06-01'
+        WHERE CaseStatusID IN (1, 2) AND CrimeRegisteredDate >= '2025-06-01'
         GROUP BY month
         ORDER BY month
     """)
