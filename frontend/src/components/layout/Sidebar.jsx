@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import logo from '../../assets/logo.png'
 import Icon from '../Icons'
 
 export default function Sidebar() {
@@ -64,7 +63,7 @@ export default function Sidebar() {
         gap: 10,
       }}>
         <img
-          src={logo}
+          src="logo.png"
           alt="Sentinal"
           onError={(e) => {
             e.target.onerror = null;

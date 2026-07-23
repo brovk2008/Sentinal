@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, redirectToHostedSignup, signupUser } from '../lib/catalystAuth'
-import logo from '../assets/logo.png'
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -107,7 +106,7 @@ export default function SignupPage() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
         }}>
           <img
-            src={logo}
+            src="logo.png"
             alt="Sentinal"
             style={{ height: 60, width: 'auto', objectFit: 'contain' }}
           />

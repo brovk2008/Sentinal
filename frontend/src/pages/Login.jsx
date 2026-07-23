@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
 import { useTranslation } from 'react-i18next'
-import logo from '../assets/logo.png'
 
 export default function Login() {
   const { t } = useTranslation()
@@ -85,7 +84,7 @@ export default function Login() {
           gap: 6
         }}>
           <img
-            src={logo}
+            src="logo.png"
             alt="Sentinal"
             style={{ height: 60, width: 'auto', objectFit: 'contain' }}
           />
