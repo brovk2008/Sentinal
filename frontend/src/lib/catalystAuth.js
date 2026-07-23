@@ -178,7 +178,11 @@ function getCachedUser() {
 
 /* ── Public API ────────────────────────────────────────────────────────── */
 export function isLocalDev()      { return IS_LOCAL; }
-export function isLocalAuthMode() { return IS_LOCAL; }
+export function isLocalAuthMode() {
+  return IS_LOCAL || 
+         window.location.search.includes("demo=true") || 
+         window.location.hash.includes("demo=true");
+}
 
 /**
  * Redirect to login.
