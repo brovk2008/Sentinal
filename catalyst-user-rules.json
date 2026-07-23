@@ -10,5 +10,27 @@
       "ip": {}
     },
     "system": true
+  },
+  {
+    "name": "Root Logo Rewrite",
+    "source_endpoint": "/logo.png",
+    "target_endpoint": "/app/logo.png",
+    "target": "client",
+    "method": "GET",
+    "throttling": {
+      "overall": {},
+      "ip": {}
+    }
+  },
+  {
+    "name": "Root Favicon Rewrite",
+    "source_endpoint": "/favicon.ico",
+    "target_endpoint": "/app/favicon.svg",
+    "target": "client",
+    "method": "GET",
+    "throttling": {
+      "overall": {},
+      "ip": {}
+    }
   }
 ]
