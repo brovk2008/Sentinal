@@ -81,6 +81,17 @@ export default function DataIngestion() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []); // ← runs exactly once
 
+  // Listen to demo mode auto-triggers
+  useEffect(() => {
+    const handleDemoPdf = () => {
+      if (DEFAULT_SCRAPED_FIRS?.length) {
+        handleViewPdf(DEFAULT_SCRAPED_FIRS[0]);
+      }
+    };
+    window.addEventListener('demo-trigger-ingestion-pdf', handleDemoPdf);
+    return () => window.removeEventListener('demo-trigger-ingestion-pdf', handleDemoPdf);
+  }, [searchResults]);
+
   // ── Polling helpers — only active while a scrape is running ─────────────
   const startPolling = () => {
     if (intervalRef.current) return; // already polling

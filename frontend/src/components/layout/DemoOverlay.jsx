@@ -73,6 +73,18 @@ export default function DemoOverlay() {
           detail: { query: step.query }
         }))
       }, 1500)
+    } else if (step.action === 'custom_event') {
+      navigate(step.target)
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent(step.event))
+      }, 800)
+    } else if (step.action === 'custom_event_payload') {
+      navigate(step.target)
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent(step.event, {
+          detail: step.payload
+        }))
+      }, 800)
     }
   }
 

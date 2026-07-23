@@ -641,6 +641,15 @@ export default function GeospatialMap() {
     ? timelapseFrames[currentFrameIndex].points
     : points
 
+  // Listen to demo mode auto-triggers
+  useEffect(() => {
+    const handleDemoGlobe = () => {
+      setGlobeMode(true);
+    };
+    window.addEventListener('demo-trigger-globe-zoom', handleDemoGlobe);
+    return () => window.removeEventListener('demo-trigger-globe-zoom', handleDemoGlobe);
+  }, []);
+
   return (
     <div style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
       {/* Filters panel */}

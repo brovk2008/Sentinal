@@ -1,82 +1,107 @@
 export const DEMO_STEPS = [
   {
     step: 1,
-    title: "Overview",
-    narrative: "Karnataka Police has detected unusual financial activity linked to a known cyber fraud syndicate...",
+    title: "Intelligence Overview",
+    narrative: "Welcome to Project Sentinal. The command center dashboard aggregates real-time crime feeds, charge sheet rates, and district metrics across Karnataka.",
     action: "navigate",
     target: "/dashboard",
     highlight: null
   },
   {
     step: 2,
-    title: "Crime Spike Alert",
-    narrative: "The dashboard shows Bengaluru Urban with a 23% spike in cyber fraud...",
+    title: "District Crime Spikes",
+    narrative: "The system automatically flags anomalies, highlighting a 23% spike in cyber fraud cases in the Bengaluru region.",
     action: "highlight",
     target: "/dashboard",
-    highlight: ".card"  // We will highlight one of the main dashboard cards
+    highlight: ".grid"
   },
   {
     step: 3,
-    title: "Network Analysis",
-    narrative: "Connecting the dots — Ramesh K. appears in 7 cases across 3 districts...",
+    title: "SmartBrowz Data Ingestion",
+    narrative: "Let's review the ingested data. We use Catalyst SmartBrowz to scrape Form 1 FIR PDFs from the KSP portal.",
     action: "navigate",
-    target: "/connections",
+    target: "/ingestion",
     highlight: null
   },
   {
     step: 4,
-    title: "Financial Trail",
-    narrative: "₹2.4 crore moved through 3 mule accounts linked to the syndicate...",
-    action: "navigate",
-    target: "/financial",
+    title: "Serverless OCR Extraction",
+    narrative: "When an FIR is fetched, our serverless OCR function parses complainant and accused rosters, extracting structured metadata instantly.",
+    action: "custom_event",
+    target: "/ingestion",
+    event: "demo-trigger-ingestion-pdf",
     highlight: null
   },
   {
     step: 5,
-    title: "Case Timeline",
-    narrative: "FIR CR/2024/0456 shows the complete investigation lifecycle...",
-    action: "navigate_with_case",
-    target: "/timeline",
-    caseId: 1
+    title: "Google Earth 3D Globe",
+    narrative: "We project these geospatial points onto a photorealistic 3D Globe. Scroll to zoom in from space to localized street-level pins.",
+    action: "custom_event",
+    target: "/map",
+    event: "demo-trigger-globe-zoom",
+    highlight: null
   },
   {
     step: 6,
-    title: "CDR Evidence",
-    narrative: "Phone records show coordinated calls 48 hours before the incident...",
-    action: "navigate",
-    target: "/cdr",
-    highlight: null
-  },
-  {
-    step: 7,
-    title: "AI Intelligence Query",
-    narrative: "The AI assistant surfaces patterns invisible to manual analysis...",
-    action: "navigate_and_type",
-    target: "/assistant",
-    query: "What are the key connections in the Bengaluru Cyber Fraud Collective?"
-  },
-  {
-    step: 8,
-    title: "Pattern Intelligence",
-    narrative: "The system detects an active crime spree — same MO across 7 FIRs in 3 districts. Likely same offender.",
-    action: "navigate",
-    target: "/patterns",
-    highlight: null
-  },
-  {
-    step: 9,
-    title: "Upload Suspect Photo",
-    narrative: "Officer uploads a CCTV frame. AI identifies physical features, auto-tags, and adds to canvas.",
+    title: "Investigation Canvas",
+    narrative: "Here is our Palantir-inspired canvas. We map out Ramesh K. alongside associated phone IMEIs, locations, and bank accounts.",
     action: "navigate",
     target: "/connections",
     highlight: null
   },
   {
-    step: 10,
-    title: "Investigation Complete",
-    narrative: "Suspect identified, financial trail documented, chargesheet ready.",
-    action: "navigate",
-    target: "/timeline",
+    step: 7,
+    title: "AI Graph Linker",
+    narrative: "Clicking AI Analyze fires QuickML (GLM-4.7-Flash). The model checks historical CDR links and draws suggested green edges automatically.",
+    action: "custom_event",
+    target: "/connections",
+    event: "demo-trigger-canvas-ai",
     highlight: null
+  },
+  {
+    step: 8,
+    title: "MO Series Linking",
+    narrative: "Our Pattern Intelligence engine automatically clusters criminal series operating with identical Modus Operandi.",
+    action: "custom_event_payload",
+    target: "/patterns",
+    event: "demo-trigger-pattern-tab",
+    payload: { tab: "mo" },
+    highlight: null
+  },
+  {
+    step: 9,
+    title: "Near-Repeat Spatial Risk",
+    narrative: "Following Near-Repeat theory, we forecast risk zones within 500m of burglaries and recommend tactical patrol actions.",
+    action: "custom_event_payload",
+    target: "/patterns",
+    event: "demo-trigger-pattern-tab",
+    payload: { tab: "nearRepeat" },
+    highlight: null
+  },
+  {
+    step: 10,
+    title: "Cross-FIR Syndicate Roster",
+    narrative: "The system automatically parses repeat offenders across districts to reveal organized crime syndicates and hierarchy roles.",
+    action: "custom_event_payload",
+    target: "/patterns",
+    event: "demo-trigger-pattern-tab",
+    payload: { tab: "syndicates" },
+    highlight: null
+  },
+  {
+    step: 11,
+    title: "RAG AI Intelligence assistant",
+    narrative: "Finally, investigators can query 10,000+ case records using natural language. Watch the AI auto-type and submit.",
+    action: "navigate_and_type",
+    target: "/assistant",
+    query: "Show me the network of Ramesh K. and related cyber fraud cases in Bangalore"
+  },
+  {
+    step: 12,
+    title: "Unified Case Timeline",
+    narrative: "All findings are compiled into a unified chronological case timeline, ready for official chargesheet generation.",
+    action: "navigate_with_case",
+    target: "/timeline",
+    caseId: 1
   }
 ]

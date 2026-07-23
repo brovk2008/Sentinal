@@ -55,6 +55,17 @@ export default function PatternIntel() {
     loadAllIntelligence();
   }, []);
 
+  // Listen to demo mode auto-triggers
+  useEffect(() => {
+    const handleDemoTab = (e) => {
+      if (e.detail?.tab) {
+        setActiveTab(e.detail.tab);
+      }
+    };
+    window.addEventListener('demo-trigger-pattern-tab', handleDemoTab);
+    return () => window.removeEventListener('demo-trigger-pattern-tab', handleDemoTab);
+  }, []);
+
   return (
     <div style={{ padding: '24px 32px', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', minHeight: '100%', background: '#07070e' }}>
       {/* Page Header */}

@@ -320,6 +320,17 @@ export default function ConnectionsBoard() {
     }).catch(console.error)
   }, [])
 
+  // Listen to demo mode auto-triggers
+  useEffect(() => {
+    const handleDemoCanvas = () => {
+      setTimeout(() => {
+        handleAIAnalyze();
+      }, 1000);
+    };
+    window.addEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
+    return () => window.removeEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
+  }, [nodes, edges]);
+
   // Auto-save on change (debounced 2s)
   useEffect(() => {
     if (nodes.length === 0) return
