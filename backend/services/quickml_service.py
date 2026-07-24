@@ -33,12 +33,12 @@ GLM_CHAT_URL = (
 VISION_CHAT_URL = (
     os.getenv("SENTINAL_VISION_URL")
     or os.getenv("CATALYST_VISION_URL")
-    or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/qwen/chat"
+    or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/vlm/chat"
 )
 
 DEFAULT_LLM_MODEL = (
     os.getenv("SENTINAL_LLM_MODEL")
-    or os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
+    or os.getenv("CATALYST_LLM_MODEL", "crm-di-glm47b_30b_it")  # Catalyst internal model ID for GLM-4.7-Flash
 )
 VISION_MODEL = (
     os.getenv("SENTINAL_VISION_MODEL")

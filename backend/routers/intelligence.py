@@ -52,12 +52,11 @@ def get_case_by_crime_no(crime_no: str) -> dict | None:
         case["victims"] = victims
     return case
 
-
-
 @router.get("/debug/quickml")
 async def debug_quickml(request: Request):
     """Diagnostic endpoint — test QuickML auth + response chain live on AppSail."""
     import os
+    import asyncio
     from services.quickml_service import _get_catalyst_token, GLM_CHAT_URL, PROJECT_ID, ORG_ID, DEFAULT_LLM_MODEL
 
     result = {
