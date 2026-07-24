@@ -289,4 +289,20 @@ export function initPageTranslator() {
     }
   })
   console.log('[PageTranslator] Initialized — listening for language changes')
+
+  // Run initial translation if language is saved and is not English
+  const savedLang = localStorage.getItem('sentinal_lang') || 'en'
+  if (savedLang !== 'en') {
+    const runInitial = () => {
+      // Small delay to let page mount and fetch initial dashboard/case data
+      setTimeout(() => {
+        translatePage(savedLang).catch(err => console.warn('[PageTranslator] Startup translate failed:', err))
+      }, 1500)
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      runInitial()
+    } else {
+      window.addEventListener('DOMContentLoaded', runInitial)
+    }
+  }
 }
