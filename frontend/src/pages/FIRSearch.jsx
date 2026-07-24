@@ -1,5 +1,4 @@
-import { useState, useRef } from 'react'
-import { generateFirHtml } from '../utils/firHtmlGenerator'
+import { useState, useRef, useEffect } from 'react'
 
 const BASE_URL    = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || `${BASE_URL}/api/v1/fir`).replace(/\/$/, '');
@@ -90,7 +89,7 @@ export default function FIRSearch() {
   const searchFIR = async () => {
     if (!districtId || !stationId || !firNum) return
     setSearching(true)
-    setFirHtml(null)
+    setPdfUrl(null)
     setPdfMeta(null)
     setPdfB64(null)
     setParsedData(null)
@@ -364,7 +363,7 @@ export default function FIRSearch() {
           </button>
 
           {/* OCR Button — shown any time a FIR has been fetched */}
-          {(pdfB64 || firHtml) && (
+          {(pdfB64 || pdfUrl) && (
             <button
               className="btn"
               onClick={runOCR}
