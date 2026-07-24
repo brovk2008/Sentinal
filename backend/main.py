@@ -146,12 +146,13 @@ async def lifespan(app: FastAPI):
     try:
         _log_debug("Lifespan starting...")
 
-        # Sync/Restore the database from Catalyst File Store if backup exists
+        # Sync/Restore the database and RAG files from Catalyst File Store if backups exist
         try:
-            from services.catalyst_db_sync import download_db_from_filestore
+            from services.catalyst_db_sync import download_db_from_filestore, download_rag_from_filestore
             download_db_from_filestore()
+            download_rag_from_filestore()
         except Exception as db_sync_err:
-            _log_debug(f"Database sync download from Catalyst skipped/failed: {db_sync_err}")
+            _log_debug(f"Database/RAG sync download from Catalyst skipped/failed: {db_sync_err}")
 
         init_all_tables()  # Creates all missing tables + seeds synthetic data
         # Non-blocking model load so server responds with 200 OK instantly

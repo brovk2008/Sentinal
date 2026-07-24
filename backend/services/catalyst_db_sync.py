@@ -128,3 +128,106 @@ def upload_db_to_catalyst():
     except Exception as e:
         log.error(f"Failed to backup DB to Catalyst: {e}")
     return False
+
+
+def download_rag_from_filestore():
+    """Download RAG vector store and metadata files from Catalyst File Store at startup."""
+    app = get_catalyst_app()
+    if not app:
+        return False
+    try:
+        filestore = app.filestore()
+        folder = get_or_create_folder(filestore, FOLDER_NAME)
+        if not folder:
+            return False
+
+        files = list_files_in_folder(folder)
+        meta_id = None
+        emb_id = None
+        for f in files:
+            name = f.get("file_name")
+            if name == "chunk_metadata.json.gz":
+                meta_id = f.get("id")
+            elif name == "embeddings.npy.gz":
+                emb_id = f.get("id")
+
+        restored_any = False
+        # Restore metadata
+        if meta_id:
+            log.info(f"Downloading RAG metadata from File Store (File ID: {meta_id})...")
+            content = folder.download_file(meta_id)
+            if content:
+                meta_path = str(config.CHUNK_METADATA_PATH) + ".gz"
+                os.makedirs(os.path.dirname(meta_path), exist_ok=True)
+                with open(meta_path, "wb") as f_out:
+                    f_out.write(content)
+                log.info("RAG metadata successfully restored!")
+                restored_any = True
+
+        # Restore embeddings
+        if emb_id:
+            log.info(f"Downloading RAG embeddings from File Store (File ID: {emb_id})...")
+            content = folder.download_file(emb_id)
+            if content:
+                emb_path = str(config.EMBEDDINGS_PATH) + ".gz"
+                os.makedirs(os.path.dirname(emb_path), exist_ok=True)
+                with open(emb_path, "wb") as f_out:
+                    f_out.write(content)
+                log.info("RAG embeddings successfully restored!")
+                restored_any = True
+
+        return restored_any
+    except Exception as e:
+        log.error(f"Failed to restore RAG files from Catalyst: {e}")
+    return False
+
+
+def upload_rag_to_catalyst():
+    """Backup RAG vector store and metadata files to Catalyst File Store."""
+    app = get_catalyst_app()
+    if not app:
+        return False
+    try:
+        filestore = app.filestore()
+        folder = get_or_create_folder(filestore, FOLDER_NAME)
+        if not folder:
+            return False
+
+        meta_path = str(config.CHUNK_METADATA_PATH) + ".gz"
+        emb_path = str(config.EMBEDDINGS_PATH) + ".gz"
+
+        for local_path, target_name in [(meta_path, "chunk_metadata.json.gz"), (emb_path, "embeddings.npy.gz")]:
+            if not os.path.exists(local_path):
+                continue
+
+            with open(local_path, "rb") as local_f:
+                file_bytes = local_f.read()
+
+            # Remove previous version
+            files = list_files_in_folder(folder)
+            for f in files:
+                if f.get("file_name") == target_name:
+                    old_id = f.get("id")
+                    log.info(f"Deleting old RAG backup '{target_name}' (File ID: {old_id})...")
+                    try:
+                        folder.delete_file(old_id)
+                    except Exception as del_err:
+                        log.warning(f"Failed to delete old backup file: {del_err}")
+
+            # Upload new version via temp file
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(file_bytes)
+                tmp_name = tmp.name
+
+            try:
+                log.info(f"Uploading '{target_name}' to Catalyst File Store...")
+                with open(tmp_name, "rb") as f_read:
+                    folder.upload_file(target_name, f_read)
+                log.info(f"'{target_name}' backup upload completed successfully!")
+            finally:
+                os.remove(tmp_name)
+
+        return True
+    except Exception as e:
+        log.error(f"Failed to backup RAG files to Catalyst: {e}")
+    return False

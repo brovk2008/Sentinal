@@ -46,7 +46,7 @@ def _get_auth_headers() -> dict:
     try:
         import zcatalyst_sdk as catalyst
         app   = catalyst.initialize()
-        token = app.credential_handler().get_token()
+        token = app.credential.token()
         return {
             "Authorization": f"Zoho-oauthtoken {token}",
             "CATALYST-ORG":  ORG_ID,

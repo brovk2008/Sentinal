@@ -76,6 +76,19 @@ def _ensure_uploads_table():
 
 
 async def _get_current_user_id(request: Request) -> str:
+    # 1. Try native SDK properties
+    try:
+        from zcatalyst_sdk import initialize as catalyst_init
+        app = catalyst_init()
+        user_info = app.credential.current_user
+        if user_info:
+            uid = user_info.get("user_id") or user_info.get("userid") or user_info.get("zuid")
+            if uid:
+                return str(uid)
+    except Exception as sdk_err:
+        print(f"[Uploads] Native SDK user ID fetch failed: {sdk_err}")
+
+    # 2. HTTP fallback
     try:
         import httpx
         CATALYST_SERVERLESS = "https://sentinal-60073535541.development.catalystserverless.in"
@@ -98,7 +111,7 @@ async def _get_current_user_id(request: Request) -> str:
                     if uid:
                         return str(uid)
     except Exception as e:
-        print(f"Error fetching current user in uploads: {e}")
+        print(f"Error fetching current user in uploads fallback: {e}")
     return "anonymous"
 
 
@@ -147,10 +160,18 @@ Extract and list:
 Respond ONLY as a JSON object with keys: persons, objects, location, text_visible, tags (array of keywords)"""
 
     try:
+        token = QUICKML_KEY
+        try:
+            import zcatalyst_sdk as catalyst
+            app = catalyst.initialize()
+            token = app.credential.token()
+        except Exception as tok_err:
+            print(f"[Vision] SDK token fetch failed, using fallback: {tok_err}")
+
         async with httpx.AsyncClient(timeout=30.0) as client:
             res = await client.post(
                 VISION_URL,
-                headers={"Authorization": f"Zoho-oauthtoken {QUICKML_KEY}",
+                headers={"Authorization": f"Zoho-oauthtoken {token}",
                          "Content-Type": "application/json"},
                 json={
                     "model": VISION_MODEL,

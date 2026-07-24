@@ -189,6 +189,13 @@ class RAGService:
             with gzip.open(emb_path_gz, "wb") as f:
                 np.save(f, self.embeddings)
             print(f"[RAG] Persisted updated metadata and embeddings to disk.")
+            
+            # Sync to Catalyst File Store
+            try:
+                from services.catalyst_db_sync import upload_rag_to_catalyst
+                upload_rag_to_catalyst()
+            except Exception as r_sync_err:
+                print(f"[RAG Sync] Warning: failed to sync updated vector store to Catalyst: {r_sync_err}")
         except Exception as e:
             print(f"[RAG] Error persisting updated chunks to disk: {e}")
 
