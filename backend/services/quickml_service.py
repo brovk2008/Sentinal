@@ -33,6 +33,8 @@ VISION_CHAT_URL = (
     os.getenv("SENTINAL_VISION_URL")
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/vlm/chat"
 )
+if "/qwen/chat" in VISION_CHAT_URL:
+    VISION_CHAT_URL = VISION_CHAT_URL.replace("/qwen/chat", "/vlm/chat")
 
 DEFAULT_LLM_MODEL = (
     os.getenv("SENTINAL_LLM_MODEL")
