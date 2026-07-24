@@ -492,3 +492,13 @@ async def predict_next(district_id: Optional[int] = Query(None)):
         return {"error": str(e), "prediction": "Analysis failed", "confidence": 0}
 
 
+@router.get("/test-glm")
+async def test_glm():
+    try:
+        from services.quickml_service import call_ai
+        res = await call_ai("You are a helpful assistant.", "Hello! Respond with 'QuickML is working'")
+        return {"success": True, "res": res}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
