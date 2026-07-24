@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, redirectToHostedSignup, signupUser } from '../lib/catalystAuth'
 
@@ -15,13 +15,9 @@ export default function SignupPage() {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (!isLocalAuthMode()) {
-      redirectToHostedSignup()
-    }
-  }, [])
-
+  // On Catalyst (non-local) immediately redirect to Catalyst hosted signup.
   if (!isLocalAuthMode()) {
+    redirectToHostedSignup()
     return (
       <div style={{
         height: '100vh',

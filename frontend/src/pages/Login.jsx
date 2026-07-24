@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
 import { useTranslation } from 'react-i18next'
@@ -17,13 +17,11 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (!isLocalAuthMode()) {
-      redirectToHostedLogin()
-    }
-  }, [])
-
+  // On Catalyst (non-local) immediately redirect to Catalyst hosted auth.
+  // This fires synchronously before any render, so no double-redirect race.
   if (!isLocalAuthMode()) {
+    // Trigger redirect on first render
+    redirectToHostedLogin()
     return (
       <div style={{
         height: '100vh',

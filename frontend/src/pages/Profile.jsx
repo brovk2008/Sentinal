@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/Icons'
+import { logoutUser } from '../lib/catalystAuth'
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -28,11 +29,8 @@ export default function Profile() {
     return 'Officer'
   }
 
-  const handleSignOut = () => {
-    localStorage.removeItem('sentinal_authed')
-    localStorage.removeItem('sentinal_user')
-    window.location.href = '/__catalyst/auth/logout?service_url=' +
-      encodeURIComponent(window.location.origin + '/#/login')
+  const handleSignOut = async () => {
+    await logoutUser()
   }
 
   return (
