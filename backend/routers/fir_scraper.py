@@ -510,10 +510,36 @@ async def real_ocr(body: dict):
         except Exception as e:
             log.warning(f"[OCR] pdfplumber error: {e}")
 
-    if not raw_text:
+    # ── Step 1b: Tesseract/easyocr fallback for image-only PDFs ─────────────
+    # If pdfplumber extracted fewer than 50 chars, the PDF is likely image-only.
+    # Attempt rendering each page to a PIL image and running Tesseract OCR.
+    if len(raw_text) < 50 and pdf_b64:
+        log.info("[OCR] pdfplumber got <50 chars — attempting image OCR fallback (Tesseract/pdf2image)...")
+        try:
+            import pdf2image, pytesseract
+            pdf_bytes = base64.b64decode(pdf_b64)
+            images = pdf2image.convert_from_bytes(pdf_bytes, dpi=200)
+            ocr_pages = []
+            for img in images:
+                # Tesseract with Kannada+English language models
+                page_text = pytesseract.image_to_string(img, lang="kan+eng", config="--psm 6")
+                ocr_pages.append(page_text)
+            tesseract_text = "\n".join(ocr_pages).strip()
+            if len(tesseract_text) > 50:
+                raw_text = tesseract_text
+                pages_text = ocr_pages
+                log.info(f"[OCR] Tesseract extracted {len(raw_text)} chars from {len(images)} pages")
+            else:
+                log.warning("[OCR] Tesseract also got <50 chars — PDF may be corrupted or encrypted")
+        except ImportError:
+            log.warning("[OCR] pdf2image/pytesseract not installed — image OCR unavailable")
+        except Exception as tess_err:
+            log.warning(f"[OCR] Tesseract fallback failed: {tess_err}")
+
+    if not raw_text or len(raw_text) < 20:
         return {
             "success": False,
-            "error": "Could not extract text — PDF may be image-only. Try a text-based KSP FIR.",
+            "error": "Could not extract text — PDF may be image-only or corrupted. Ensure this is a digital KSP FIR (not a scanned paper copy).",
             "parsed_data": None
         }
 
@@ -822,11 +848,80 @@ async def save_ocr_record(req: SaveOCRRequest):
     except Exception as rag_err:
         log.warning(f"[RAG] Failed to index OCR record: {rag_err}")
 
+    # ── Auto-populate CaseMaster + Accused + Victim ─────────────────────────
+    # Every real FIR saved becomes a proper CaseMaster entry so it appears in
+    # the Timeline, Persons, and Network Graph tabs automatically.
+    case_master_id = None
+    try:
+        p = req.parsed_data or {}
+
+        # Only create if we have a meaningful crime number
+        crime_no = f"KSP/{req.year}/{req.fir_number.zfill(4)}" if req.fir_number else None
+        if crime_no:
+            # Avoid duplicates — check if this crime_no already exists
+            existing = query_one("SELECT CaseMasterID FROM CaseMaster WHERE CrimeNo = ?", (crime_no,))
+            if existing:
+                case_master_id = existing["CaseMasterID"]
+            else:
+                brief = (
+                    f"LIVE FIR — {req.act_section or 'IPC 1860'}. "
+                    f"Complainant: {p.get('complainant_name', 'Unknown')}. "
+                    f"Accused: {', '.join([a.get('name','') for a in p.get('accused',[])[:3]] or ['Unknown'])}. "
+                    f"Place: {p.get('place_of_occurrence', req.station_name or 'Unknown')}. "
+                    f"Narrative: {p.get('fir_narrative', '')[:200]}"
+                )
+                case_master_id = execute(
+                    """
+                    INSERT INTO CaseMaster (
+                        CrimeNo, CaseNo, CrimeRegisteredDate, PolicePersonID, PoliceStationID,
+                        CaseCategoryID, GravityOffenceID, CrimeMajorHeadID, CrimeMinorHeadID,
+                        CaseStatusID, CourtID, IncidentFromDate, IncidentToDate, BriefFacts
+                    ) VALUES (?, ?, ?, 1, 1, 1, 1, 1, 1, 1, 1, ?, ?, ?)
+                    """,
+                    (
+                        crime_no,
+                        f"OCR/{record_id}",
+                        p.get("fir_date", req.year),
+                        p.get("occurrence_from_date", p.get("fir_date", req.year)),
+                        p.get("occurrence_to_date", p.get("fir_date", req.year)),
+                        brief,
+                    )
+                )
+                log.info(f"[AutoCase] Created CaseMaster {case_master_id} for {crime_no}")
+
+                # Insert accused persons
+                for acc in p.get("accused", []):
+                    aname = (acc.get("name") or "").strip()
+                    if aname:
+                        try:
+                            execute(
+                                "INSERT INTO Accused (CaseMasterID, AccusedName, AgeYear, GenderID, is_priority) VALUES (?, ?, ?, ?, ?)",
+                                (case_master_id, aname, acc.get("age", 30), 1, 1)
+                            )
+                        except Exception:
+                            pass
+
+                # Insert victims
+                for vic in p.get("victims", []):
+                    vname = (vic.get("name") or "").strip()
+                    if vname:
+                        try:
+                            execute(
+                                "INSERT INTO Victim (CaseMasterID, VictimName, AgeYear, GenderID) VALUES (?, ?, ?, ?)",
+                                (case_master_id, vname, vic.get("age", 30), 1)
+                            )
+                        except Exception:
+                            pass
+
+    except Exception as cm_err:
+        log.warning(f"[AutoCase] Failed to auto-populate CaseMaster: {cm_err}")
+
     return {
         "status": "ok",
-        "message": "OCR record saved to database and indexed in AI knowledge base",
+        "message": "OCR record saved, indexed in AI knowledge base, and added to case timeline",
         "record_id": record_id,
         "rag_indexed": rag_indexed,
+        "case_master_id": case_master_id,
     }
 
 
