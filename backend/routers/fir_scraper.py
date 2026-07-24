@@ -485,192 +485,249 @@ async def fetch_fir(req: FIRRequest):
 @router.post("/mock-ocr")
 async def real_ocr(body: dict):
     """
-    Real OCR using pdfplumber — extracts text from the actual PDF bytes
-    and parses KSP FIR fields: complainant, accused, IPC sections, dates, SHO etc.
-    Falls back to graceful partial extraction if parsing is incomplete.
+    Real OCR — extracts ALL fields from live KSP FIR PDFs using pdfplumber.
+    KSP PDFs use mixed Kannada+English text; key values (names, dates, sections)
+    are already in English/digits — so we parse directly without needing pre-translation.
+    Translation is applied to fir_contents for the display drawer separately.
     """
-    import base64
-    import re
-    import io
+    import base64, re, io
 
-    meta     = body.get("fir_metadata", {})
-    pdf_b64  = body.get("pdf_b64", "")
+    meta    = body.get("fir_metadata", {})
+    pdf_b64 = body.get("pdf_b64", "")
 
-    raw_text = ""
+    raw_text   = ""
     pages_text = []
 
-    # ── Step 1: Extract raw text from PDF bytes ─────────────────────────────
+    # ── Step 1: Extract text from every PDF page via pdfplumber ─────────────
     if pdf_b64:
         try:
             import pdfplumber
             pdf_bytes = base64.b64decode(pdf_b64)
             with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
                 for page in pdf.pages:
-                    t = page.extract_text() or ""
-                    pages_text.append(t)
+                    pages_text.append(page.extract_text() or "")
             raw_text = "\n".join(pages_text).strip()
         except Exception as e:
-            log.warning(f"[RealOCR] pdfplumber failed: {e}")
+            log.warning(f"[OCR] pdfplumber error: {e}")
 
-    # ── Step 2: Translate to English first to parse reliably ────────────────
-    # We translate the first 4000 chars containing metadata & entities
-    translated_text = ""
-    try:
-        trans_res = await zia.translate_text(raw_text[:4000], source_lang="auto", target_lang="en")
-        translated_text = trans_res.get("translated_text", "")
-    except Exception as te:
-        log.warning(f"[RealOCR] Translation pre-parse failed: {te}")
+    if not raw_text:
+        return {
+            "success": False,
+            "error": "Could not extract text — PDF may be image-only. Try a text-based KSP FIR.",
+            "parsed_data": None
+        }
 
-    # Use translated text if available, fallback to raw text
-    parse_source = translated_text if translated_text else raw_text
-    norm = re.sub(r'\s+', ' ', parse_source)
+    # ── Step 2: Smart field extraction ──────────────────────────────────────
+    # KSP FIR format: Kannada labels + English/digit values.
+    # We anchor on English patterns that always appear in these PDFs.
+    norm = re.sub(r"\s+", " ", raw_text)
 
-    def find(patterns, text=parse_source, default=""):
+    def find(patterns, default=""):
         for p in patterns:
-            m = re.search(p, text, re.IGNORECASE | re.MULTILINE)
+            m = re.search(p, raw_text, re.IGNORECASE | re.MULTILINE)
             if m:
-                return m.group(1).strip()
+                val = m.group(1).strip()
+                if val:
+                    return val
         return default
 
-    # Core FIR identifiers
+    def find_norm(patterns, default=""):
+        for p in patterns:
+            m = re.search(p, norm, re.IGNORECASE)
+            if m:
+                val = m.group(1).strip()
+                if val:
+                    return val
+        return default
+
+    # ── FIR core identifiers ─────────────────────────────────────────────
+    # KSP format: "ಅಪರಾಧ ಸಂಖ್ಯೆ : 5/2024  ಪ.ವ.ವ. ದಿನಾಂಕ : 24/01/2024"
     fir_number = find([
-        r"Date\s*No\.?\s*:\s*(\d+)/",
+        r"(\d+)/20\d\d\b",           # "5/2024"
         r"FIR\s*No\.?\s*[:\-]?\s*(\d+)",
         r"Crime\s*No\.?\s*[:\-]?\s*(\d+)",
-        r"Case\s*No\.?\s*[:\-]?\s*(\d+)",
-    ], text=parse_source, default=meta.get("fir_number", ""))
+    ], default=meta.get("fir_number", ""))
 
     year = find([
-        r"Date\s*No\.?\s*:\s*\d+/(\d{4})",
-        r"Year\s*[:\-]?\s*(\d{4})",
-        r"(\d{4})\s*/\s*\d+",
-        r"/(\d{4})",
-    ], text=parse_source, default=meta.get("year", "2024"))
+        r"\d+/(20\d\d)\b",           # year part of "5/2024"
+        r"/(20\d\d)",
+    ], default=meta.get("year", "2024"))
 
+    # Date: "24/01/2024" — first date in the doc is usually FIR registration date
     fir_date = find([
-        r"Date\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})",
-        r"Date\s*of\s*FIR\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})",
-    ], text=parse_source)
+        r"(\d{2}/\d{2}/20\d\d)",
+    ])
 
-    # Act / IPC sections
+    # ── Act / IPC Sections ────────────────────────────────────────────────
+    # KSP always writes: "IPC 1860, (U/S 143 ,147 ,..."
     act_section = find([
-        r"(?:Acts?|Matu\s+Kalanga|Section)\s*[:\-]?\s*([^\n]{3,150})",
-        r"(?:U/?[Ss]|Under\s+[Ss]ection|[Ss]ec(?:tion)?s?)\.?\s*[:\-]?\s*([\d\s,/A-Za-z\(\)]+(?:IPC|BNS|CrPC|POCSO|IT Act|NDPS|Arms Act|MV Act)[^\n]*)",
-    ], text=parse_source)
+        r"(IPC\s+\d+[^\n]{0,120})",
+        r"(BNS\s+\d+[^\n]{0,120})",
+        r"(U/S\s+[\d\s,]+[^\n]{0,60})",
+        r"(POCSO[^\n]{0,60})",
+        r"(NDPS[^\n]{0,60})",
+    ])
 
-    # Place of occurrence
+    # ── Court ─────────────────────────────────────────────────────────────
+    court_name = find([
+        r"((?:JMFC|CJM|Sessions?|District|Addl\.?\s*Civil\s*Judge)[^\n]{3,80})",
+    ])
+
+    # ── Place of occurrence ───────────────────────────────────────────────
+    # KSP line 4(a): after Kannada label, place is in English caps
     place = find([
-        r"List\s*of\s*works\s*:\s*\n?\s*([^\n]{5,150})",
-        r"Place\s*of\s*Occurrence\s*:\s*\n?\s*([^\n]{5,150})",
-        r"[Pp]lace\s*of\s*[Oo]ccurrence\s*[:\-]?\s*([^\n]{5,100})",
-    ], text=parse_source)
+        r"IN\s+([A-Z][A-Z\s&,\.]{5,150})",
+        r"([A-Z][A-Z\s&]+(?:TQ|TALUK|PS|DIST|KARNATAKA)[^\n]{0,80})",
+    ])
 
-    # Occurrence dates/times
-    occ_from = find([r"From\s*:\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})", r"[Ff]rom\s*[Dd]ate\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})"], text=parse_source)
-    occ_to   = find([r"To\s*:\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})", r"[Tt]o\s*[Dd]ate\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})"], text=parse_source)
-    occ_from_time = find([r"From\s*[Tt]ime\s*[:\-]?\s*(\d{1,2}:\d{2})", r"[Ff]rom\s*[Tt]ime\s*[:\-]?\s*(\d{1,2}:\d{2})"], text=parse_source)
-    occ_to_time   = find([r"To\s*[Tt]ime\s*[:\-]?\s*(\d{1,2}:\d{2})", r"[Tt]o\s*[Tt]ime\s*[:\-]?\s*(\d{1,2}:\d{2})"], text=parse_source)
+    # ── Occurrence dates/times ────────────────────────────────────────────
+    # KSP line 3(a): "Wednesday  ದಿನಾಂಕ ಇಂದ : 19/01/2024  ದಿನಾಂಕ ವರೆ : 19/01/2024"
+    # Then: "ಸಮಯಇಂದ : 11:30:00  ಸಮಯಯವರೆ : 21:00:00"
+    dates_block = re.search(r"(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)"
+                            r"[^\n]*?(\d{2}/\d{2}/20\d\d)[^\n]*?(\d{2}/\d{2}/20\d\d)?", norm)
+    occ_day       = dates_block.group(1) if dates_block else ""
+    occ_from_date = dates_block.group(2) if dates_block else ""
+    occ_to_date   = dates_block.group(3) if dates_block else ""
 
-    # Complainant / Informant
-    complainant_name = find([
-        r"(?:\(a\)\s*Suru\s*:\s*)([A-Z\s\.]{3,50})",
-        r"[Cc]omplainant(?:'s)?\s*[Nn]ame\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
-        r"[Ii]nformant\s*[Nn]ame\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
-    ], text=parse_source)
-    complainant_age = find([r"Age\s*:\s*(\d+)", r"[Aa]ge\s*[:\-]?\s*(\d{1,3})\s*[Yy]"], text=parse_source)
-    complainant_sex = find([r"[Ss]ex\s*[:\-]?\s*(Male|Female|Transgender)", r"[Gg]ender\s*[:\-]?\s*(Male|Female|Transgender)"], text=parse_source)
-    complainant_phone = find([r"\(g\)\s*(?:Distance|Phone|Mobile)\s*:\s*(\+?[\d\s\-]{8,15})", r"(?:Phone|Mobile|Contact)\s*(?:No\.?)?\s*[:\-]?\s*(\+?[\d\s\-]{8,15})"], text=parse_source)
-    complainant_addr = find([r"\(k\)\s*(?:S|Address)\s*:\s*([^\n]{5,150})", r"[Cc]omplainant'?s?\s*[Aa]ddress\s*[:\-]?\s*([^\n]{10,120})"], text=parse_source)
+    times = re.findall(r"(\d{1,2}:\d{2}(?::\d{2})?)", norm)
+    occ_from_time = times[0] if len(times) > 0 else ""
+    occ_to_time   = times[1] if len(times) > 1 else ""
 
-    # District and Police Station (fallback to metadata names if not parsed)
-    district_text = find([r"[Dd]istrict\s*[:\-]?\s*([A-Za-z\s]{3,40})"], text=parse_source, default=meta.get("district_name", ""))
-    station_text = find([r"(?:Police\s+)?[Ss]tation\s*[:\-]?\s*([A-Za-z\s\.]{3,50})"], text=parse_source, default=meta.get("station_name", ""))
+    # ── Complainant / Informant ───────────────────────────────────────────
+    # KSP line 5(a): "ಸದರು : N A LOHAR  ತಂದೆ/ಗಂಡನ ಸದರ : A"
+    # Then: "ವಯಸ್ : 40  (c) ವೃತ್ತ : Businessman"
+    # "(g) ದೂರವಾಣಿ : 9448337275"
+    # "(k) ವಿಳಾಸ : HUBBALLI TQ HUBBALLI..."
+    comp_name  = find_norm([
+        r"\(a\)\s*[^A-Z]{0,30}([A-Z][A-Z\s\.]{2,40})(?:\s+[a-z]|\s+Male|\s+Female|\s*/)",
+    ])
+    # Extra fallback: any "N A LOHAR" style 2-4 uppercase word sequence after Kannada
+    if not comp_name:
+        comp_name = find_norm([r"(?:^\d+\.\s*|Suru\s*:\s*|name\s*:\s*)([A-Z][A-Z\s\.]{3,40}?)(?:\s+(?:Male|Female|Mr|Mrs|\d)|\s*$)"])
 
-    # SHO / IO details
-    sho_name = find([
-        r"(?:SHO|Station\s*House\s*Officer|Inspector|Sub-Inspector|SI|ASI)\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
-        r"[Ss]igned?\s+by\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
-    ], text=parse_source)
+    comp_age   = find_norm([r"\(b\)\s*[^\d]{0,20}(\d{1,3})\b"])
+    comp_sex   = find_norm([r"\b(Male|Female|Transgender)\b"])
+    comp_phone = find_norm([r"(\d{10})\b"])
+    comp_addr  = find_norm([
+        r"\(k\)\s*[^A-Z]{0,10}([A-Z][A-Z\s,\.]{5,120}?)(?:\s*\(\s*l\s*\)|\s*Page|\s*\d+\s+[A-Z]{3,})",
+        r"((?:HUBBALLI|BENGALURU|MYSURU|BANGALORE|HUBLI|DHARWAD|BELGAUM|BALLARI|BAGALKOT)[^\n]{0,100})",
+    ])
+    comp_father = find_norm([
+        r"(?:S/O|D/O|W/O|Father|Husband)[:\s]+([A-Z][A-Z\s\.]{2,40}?)(?:\s+(?:Male|Female|\d)|\s*$)",
+    ])
 
-    # Accused — extract all names from normalized text matching: "sl_no NAME ... (Ax)"
+    # ── Accused ───────────────────────────────────────────────────────────
+    # KSP format: "1 ASHOK B BADIGER (A1) / Accused Common man Male\n  BALAKUNDI TQ ILKAL..."
     accused = []
-    matches = re.findall(r"(\d+)\s+([A-Z\s\.\,\&]{3,50}?)(?:\s+(?:Accused|Common|man|Male|Female|Others|AND|OTHERS|\/|[a-z]+))*?\s*\((A\d+)\)", norm)
-    for m in matches:
-        accused.append({
-            "sl_no": int(m[0]),
-            "name": m[1].strip()
-        })
+    # Primary: digit + CAPS NAME + (Ax)
+    acc_matches = re.findall(
+        r"(\d+)\s+([A-Z][A-Z\s\.\,&]{2,50}?)\s*\((A\d+)\)",
+        norm
+    )
+    for sl, name, _ in acc_matches:
+        cleaned = re.sub(r"\s+", " ", name).strip()
+        if cleaned and len(cleaned) > 2:
+            accused.append({"sl_no": int(sl), "name": cleaned})
+    # Dedup
+    seen = set()
+    accused = [a for a in accused if not (a["name"] in seen or seen.add(a["name"]))]
 
-    # Fallback accused matches: "sl_no NAME / Accused"
-    if not accused:
-        matches2 = re.findall(r"(\d+)\s+([A-Z\s\.\,\&]{3,50}?)\s*/\s*Accused", norm)
-        for m in matches2:
-            accused.append({
-                "sl_no": int(m[0]),
-                "name": m[1].strip()
-            })
-
-    # Fallback to Kannada raw text parsing if translated extraction returns empty accused list
-    if not accused:
-        a_matches = re.findall(r"[Aa]-?\d+\s*[:\.\)]\s*([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})", raw_text)
-        for i, n in enumerate(a_matches[:10], 1):
-            accused.append({"sl_no": i, "name": n.strip()})
-
-    # Victims
+    # ── Victims ───────────────────────────────────────────────────────────
     victims = []
-    victim_block = find([r"Victims?\s*Details?\s*:\s*([^\n]+)"], text=parse_source)
-    if victim_block:
-        vnames = re.findall(r"(?:\d+[\.\)]\s*)([A-Za-z\s\.]{3,40})", victim_block)
+    # KSP line 7: victim table — look for CAPS names after section 7
+    victim_section = re.search(r"7\.[^\n]*\n(.*?)(?:8\.|Page)", raw_text, re.DOTALL)
+    if victim_section:
+        vblock = victim_section.group(1)
+        vnames = re.findall(r"([A-Z][A-Z\s\.]{2,40}?)(?:\s+(?:Male|Female|Common|Accused|Victim))", vblock)
         for i, n in enumerate(vnames[:5], 1):
-            victims.append({"sl_no": i, "name": n.strip()})
+            n = re.sub(r"\s+", " ", n).strip()
+            if n:
+                victims.append({"sl_no": i, "name": n})
 
-    # Crime group / nature
-    crime_group = find([
-        r"[Cc]rime\s*[Gg]roup\s*[:\-]?\s*([^\n]{5,80})",
-        r"[Nn]ature\s*of\s*[Cc]rime\s*[:\-]?\s*([^\n]{5,80})",
-    ], text=parse_source)
+    # ── Property ──────────────────────────────────────────────────────────
+    property_items = []
+    prop_section = re.search(r"8\.[^\n]*\n(.*?)(?:9\.|Page)", raw_text, re.DOTALL)
+    if prop_section:
+        pblock = prop_section.group(1)
+        # Look for property type + value
+        pitems = re.findall(r"(\d+)\s+([A-Za-z][A-Za-z\s]{2,40}?)\s+(\d{1,10}\.?\d*)", pblock)
+        for sl, ptype, val in pitems[:5]:
+            property_items.append({"sl_no": int(sl), "type": ptype.strip(), "value": val})
 
-    action_taken = find([
-        r"[Aa]ction\s*[Tt]aken\s*[:\-]?\s*([^\n]{5,200})",
-    ], text=parse_source)
+    # ── SHO / IO details ─────────────────────────────────────────────────
+    # KSP bottom: "LAXMIKANTHA S\nPI"
+    sho_name = find([
+        r"\n([A-Z][A-Z\s\.]{3,40})\n(?:PI|SI|ASI|PSI|DySP|SP|Inspector|Sub.Inspector)",
+        r"(?:PI|SI|PSI|ASI|Inspector|Sub.Inspector)[^\n]*\n([A-Z][A-Z\s\.]{3,40})",
+    ])
+    sho_rank = find([r"\n(PI|SI|ASI|PSI|DySP|SP)\b"])
+
+    # ── FIR narrative / brief facts ──────────────────────────────────────
+    # Section 10: "ಪ್ರಥಮ ವತ್ತಾನ ವರದಿಯ ವಿವರಗಳು" — extract ~500 chars
+    narrative = ""
+    narr_m = re.search(r"10\.[^\n]*\n(.{20,1000}?)(?:11\.|Page)", raw_text, re.DOTALL)
+    if narr_m:
+        narrative = narr_m.group(1).strip()
+
+    action_taken = find([r"(?:Investigation|Arrest|FIR)\b([^\n]{0,200})"])
+    if not action_taken:
+        action_taken = find_norm([r"(?:Investigation|Arrest|Enquiry)[^\n]{0,100}"])
+
+    # ── District / Station from metadata (most reliable) ──────────────────
+    district   = meta.get("district_name") or find([r"Bagalkot|Ballari|Bengaluru|Mysuru|Hubbal|Dharwad"], default="")
+    station    = meta.get("station_name")  or find([r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+PS)\b"])
+
+    # ── Signatures ────────────────────────────────────────────────────────
+    has_comp_sig = bool(re.search(r"ಸಹಿ|Signature|Signed|ಸಂತ", raw_text))
+    has_sho_sig  = bool(sho_name or re.search(r"\bPI\b|\bSI\b|\bPSI\b", raw_text))
 
     parsed = {
-        "fir_number":           fir_number or meta.get("fir_number", ""),
-        "year":                 year or meta.get("year", ""),
-        "district":             district_text or meta.get("district_name", ""),
-        "police_station":       station_text or meta.get("station_name", ""),
-        "court_name":           find([r"[Cc]ourt\s*[:\-]?\s*([^\n]{5,60})"], text=parse_source),
-        "fir_date":             fir_date,
-        "crime_number":         f"{fir_number}/{year}" if fir_number and year else "",
-        "act_section":          act_section or "IPC 1860",
-        "crime_group":          crime_group or "Under Investigation",
-        "occurrence_from_date": occ_from,
-        "occurrence_to_date":   occ_to,
-        "occurrence_from_time": occ_from_time,
-        "occurrence_to_time":   occ_to_time,
-        "occurrence_day":       find([r"[Dd]ay\s*[:\-]?\s*([A-Za-z]+day)"], text=parse_source),
-        "place_of_occurrence":  place,
-        "complainant_name":     complainant_name or "N A LOHAR",
-        "complainant_age":      int(complainant_age) if complainant_age and complainant_age.isdigit() else 40,
-        "complainant_sex":      complainant_sex or "Male",
-        "complainant_phone":    complainant_phone or "9448337275",
-        "complainant_address":  complainant_addr or "HUBBALLI TQ HUBBALLI, Dharwad",
-        "fir_contents":         raw_text[:3000],
-        "action_taken":         action_taken or "Investigation",
-        "sho_name":             sho_name or "Inspector",
-        "has_complainant_signature": bool(re.search(r"Signature|Signed", parse_source)) or True,
-        "has_sho_signature":         bool(re.search(r"SHO|Signed", parse_source)) or True,
-        "accused":              accused if accused else [{"sl_no": 1, "name": "ASHOK B BADIGER"}, {"sl_no": 2, "name": "DODDAPPA PALLED"}],
-        "victims":              victims or [],
-        "property":             [],
-        "_raw_pages":           len(pages_text),
-        "_raw_chars":           len(raw_text),
+        # Core
+        "fir_number":            fir_number,
+        "year":                  year,
+        "crime_number":          f"{fir_number}/{year}" if fir_number and year else "",
+        "fir_date":              fir_date,
+        "district":              district,
+        "police_station":        station,
+        "court_name":            court_name,
+        # Offence
+        "act_section":           act_section,
+        "crime_group":           "Under Investigation / Live Record",
+        # Occurrence
+        "occurrence_day":        occ_day,
+        "occurrence_from_date":  occ_from_date,
+        "occurrence_to_date":    occ_to_date,
+        "occurrence_from_time":  occ_from_time,
+        "occurrence_to_time":    occ_to_time,
+        "place_of_occurrence":   place,
+        # Complainant
+        "complainant_name":      comp_name,
+        "complainant_father":    comp_father,
+        "complainant_age":       int(comp_age) if comp_age and comp_age.isdigit() else None,
+        "complainant_sex":       comp_sex,
+        "complainant_phone":     comp_phone,
+        "complainant_address":   comp_addr,
+        # People
+        "accused":               accused,
+        "victims":               victims,
+        "property":              property_items,
+        # SHO
+        "sho_name":              sho_name,
+        "sho_rank":              sho_rank,
+        # Narrative
+        "fir_contents":          raw_text,            # full raw (Kannada+English) for translate
+        "fir_narrative":         narrative,
+        "action_taken":          action_taken or "Investigation",
+        # Signatures
+        "has_complainant_signature": has_comp_sig,
+        "has_sho_signature":         has_sho_sig,
+        # Meta
+        "_raw_pages":            len(pages_text),
+        "_raw_chars":            len(raw_text),
     }
 
-    return {"success": True, "parsed_data": parsed, "engine": "pdfplumber"}
+    return {"success": True, "parsed_data": parsed, "engine": "pdfplumber-direct"}
 
-
-# ── OCR Record Persistence & Translation Endpoints ─────────────────────────
 
 class SaveOCRRequest(BaseModel):
     id: Optional[str] = None
