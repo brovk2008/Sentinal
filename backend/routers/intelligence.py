@@ -86,12 +86,15 @@ async def debug_quickml(request: Request):
     # Try actual QuickML call
     try:
         import httpx
+        model_to_use = DEFAULT_LLM_MODEL
+        if model_to_use.lower() in ("glm-4.7-flash", "glm-4.7"):
+            model_to_use = "crm-di-glm47b_30b_it"
         async with httpx.AsyncClient(timeout=20) as client:
             r = await client.post(
                 GLM_CHAT_URL,
                 headers=headers,
                 json={"messages": [{"role": "user", "content": "Reply with: SENTINAL AI ONLINE"}],
-                      "model": DEFAULT_LLM_MODEL, "max_tokens": 30}
+                      "model": model_to_use, "max_tokens": 30}
             )
             result["quickml_status"] = r.status_code
             result["quickml_response_preview"] = r.text[:500]

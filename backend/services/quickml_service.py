@@ -132,6 +132,9 @@ async def call_ai_messages(
     }
 
     used_model = model or DEFAULT_LLM_MODEL
+    if used_model.lower() in ("glm-4.7-flash", "glm-4.7"):
+        used_model = "crm-di-glm47b_30b_it"
+
     user_text = "\n".join(
         m.get("content", "") for m in messages if m.get("role") == "user"
     ) or "Hello"
