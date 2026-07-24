@@ -8,8 +8,9 @@ router = APIRouter()
 
 class TranslateRequest(BaseModel):
     text: str
-    source_lang: str = "en"
-    target_lang: str = "kn"
+    source_lang: str = "auto"   # auto-detects Kannada, Hindi etc.
+    target_lang: str = "en"
+
 
 
 class TTSRequest(BaseModel):

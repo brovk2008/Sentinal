@@ -71,25 +71,32 @@ def is_configured() -> bool:
         return False
 
 
-async def translate_text(text: str, source_lang: str = "en", target_lang: str = "kn", request=None) -> dict:
-    """Translate text using Catalyst Zia / QuickML Translation model."""
-    headers = _headers(request)
+async def translate_text(text: str, source_lang: str = "auto", target_lang: str = "kn", request=None) -> dict:
+    """Translate text using Catalyst Zia first, then deep-translator (Google) as fallback."""
     
-    # Target translation endpoints
+    # Language code map: our codes -> Google Translate codes
+    LANG_MAP = {
+        "en": "en", "kn": "kn", "hi": "hi", "ta": "ta",
+        "te": "te", "ur": "ur", "mr": "mr", "pa": "pa",
+        "gu": "gu", "ml": "ml", "bn": "bn", "auto": "auto",
+    }
+    google_target = LANG_MAP.get(target_lang, target_lang)
+    google_source = LANG_MAP.get(source_lang, "auto")
+
+    if not text or not text.strip():
+        return {"success": True, "translated_text": text}
+
+    # 1. Try Catalyst Zia first (when creds are available)
+    headers = _headers(request)
     urls = [
         f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
-        f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-translation",
-        f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/text-translation",
-        TRANSLATION_URL
+        TRANSLATION_URL,
     ]
-
-    last_err = ""
     for url in urls:
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
+            async with httpx.AsyncClient(timeout=15) as client:
                 r = await client.post(
-                    url,
-                    headers=headers,
+                    url, headers=headers,
                     json={"text": text, "source_language": source_lang, "target_language": target_lang, "text_list": [text]},
                 )
                 if r.status_code == 200:
@@ -102,14 +109,51 @@ async def translate_text(text: str, source_lang: str = "en", target_lang: str = 
                         or (data.get("result") or {}).get("translated_text")
                     )
                     if translated:
-                        return {"success": True, "translated_text": translated, "raw": data}
-                else:
-                    last_err = f"{r.status_code}: {r.text}"
-        except Exception as e:
-            last_err = str(e)
+                        return {"success": True, "translated_text": translated, "engine": "catalyst-zia"}
+        except Exception:
+            pass
 
-    # Return local translation fallback if remote model is pending setup
-    return {"success": True, "translated_text": f"[KN] {text}", "fallback": True, "error": last_err}
+    # 2. Real fallback: Google Translate via deep-translator (no API key needed)
+    try:
+        from deep_translator import GoogleTranslator
+        # deep-translator runs synchronously — offload to thread
+        import asyncio
+        loop = asyncio.get_event_loop()
+        
+        def _do_translate():
+            src = google_source if google_source != "auto" else "auto"
+            chunks = [text[i:i+4000] for i in range(0, len(text), 4000)]
+            translated_chunks = []
+            for chunk in chunks:
+                translated_chunks.append(
+                    GoogleTranslator(source=src, target=google_target).translate(chunk)
+                )
+            return " ".join(translated_chunks)
+
+        translated = await loop.run_in_executor(None, _do_translate)
+        if translated:
+            return {"success": True, "translated_text": translated, "engine": "google-translate"}
+    except Exception as e:
+        print(f"[Translation] deep-translator failed: {e}")
+
+    # 3. Last resort: LibreTranslate public endpoint
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                "https://libretranslate.de/translate",
+                json={"q": text, "source": google_source if google_source != "auto" else "auto", "target": google_target, "format": "text"},
+                headers={"Content-Type": "application/json"},
+            )
+            if r.status_code == 200:
+                data = r.json()
+                translated = data.get("translatedText")
+                if translated:
+                    return {"success": True, "translated_text": translated, "engine": "libretranslate"}
+    except Exception:
+        pass
+
+    return {"success": False, "translated_text": text, "error": "All translation engines failed"}
+
 
 
 async def text_to_speech(text: str, language: str = "en-IN", request=None) -> dict:
