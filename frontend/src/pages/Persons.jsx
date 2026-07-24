@@ -72,7 +72,7 @@ export default function Persons() {
       <div style={{
         flex: 1, overflowY: 'auto', padding: 20,
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
         gap: 14,
         alignContent: 'start',
       }}>
