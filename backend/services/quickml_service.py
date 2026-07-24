@@ -27,12 +27,10 @@ ORG_ID = (
 
 GLM_CHAT_URL = (
     os.getenv("SENTINAL_QUICKML_URL")
-    or os.getenv("CATALYST_QUICKML_URL")
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/glm/chat"
 )
 VISION_CHAT_URL = (
     os.getenv("SENTINAL_VISION_URL")
-    or os.getenv("CATALYST_VISION_URL")
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/vlm/chat"
 )
 
