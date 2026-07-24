@@ -1,28 +1,31 @@
 """
 quickml_service.py
-Catalyst QuickML API wrapper for Project Sentinal v2.
+Catalyst QuickML API wrapper for Project Sentinal.
 
-Auth pattern (from Catalyst console screenshot):
-  - URL:     https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/glm/chat
-  - Headers: { "CATALYST-ORG": "<org_id>", "Authorization": "Zoho-oauthtoken <access_token>" }
-  - Method:  POST
+Auth pattern:
+  URL:     https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/glm/chat
+  Headers: { "CATALYST-ORG": "<org_id>", "Authorization": "Zoho-oauthtoken <token>" }
 
-Inside AppSail, zcatalyst_sdk automatically fetches a fresh OAuth token.
-No manual QUICKML_KEY needed — the URL IS the full endpoint for both models.
+Inside AppSail, zcatalyst_sdk auto-fetches the OAuth token from the
+X-ZC-Admin-Cred-Token header that Catalyst injects into every request.
 """
 
 import httpx
 import os
-import json
 import logging
 
 log = logging.getLogger(__name__)
 
-PROJECT_ID = os.getenv("SENTINAL_PROJECT_ID") or os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
-ORG_ID     = os.getenv("SENTINAL_ORG_ID") or os.getenv("CATALYST_ORG_ID", "60073535541")
+PROJECT_ID = (
+    os.getenv("SENTINAL_PROJECT_ID")
+    or os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
+)
+ORG_ID = (
+    os.getenv("SENTINAL_ORG_ID")
+    or os.getenv("CATALYST_ORG_ID", "60073535541")
+)
 
-# Full endpoint URLs — taken directly from Catalyst QuickML console
-GLM_CHAT_URL    = (
+GLM_CHAT_URL = (
     os.getenv("SENTINAL_QUICKML_URL")
     or os.getenv("CATALYST_QUICKML_URL")
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/glm/chat"
@@ -33,62 +36,63 @@ VISION_CHAT_URL = (
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/qwen/chat"
 )
 
-DEFAULT_LLM_MODEL = os.getenv("SENTINAL_LLM_MODEL") or os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
-VISION_MODEL      = os.getenv("SENTINAL_VISION_MODEL") or os.getenv("CATALYST_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
+DEFAULT_LLM_MODEL = (
+    os.getenv("SENTINAL_LLM_MODEL")
+    or os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
+)
+VISION_MODEL = (
+    os.getenv("SENTINAL_VISION_MODEL")
+    or os.getenv("CATALYST_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
+)
 
 
-def _get_auth_headers(request=None) -> dict:
+def _get_catalyst_token(request=None) -> str | None:
     """
-    Build Catalyst QuickML auth headers.
-
-    Strategy (in order):
-    1. If a FastAPI Request is provided, use it so zcatalyst_sdk can parse
-       Catalyst-injected headers (X-ZC-Admin-Cred-Token etc.) — most reliable.
-    2. Try ApplicationDefaultCredential (reads from env/properties file) — works
-       in AppSail background tasks and routes that don't pass request.
-    3. Fall back to SENTINAL_QUICKML_KEY env var for local dev.
+    Obtain a Zoho OAuth token using zcatalyst_sdk.
+    Strategy 1: Use the FastAPI Request object (most reliable inside AppSail —
+                 Catalyst injects X-ZC-Admin-Cred-Token into every request).
+    Strategy 2: ApplicationDefaultCredential (for background tasks).
+    Strategy 3: SENTINAL_QUICKML_KEY env var (local dev only).
     """
     try:
         import zcatalyst_sdk as catalyst
-        app = None
+
+        # Strategy 1: Request-scoped token
         if request is not None:
             try:
                 app = catalyst.initialize(req=request)
+                raw = app.credential.token()
+                token = raw[1] if isinstance(raw, (tuple, list)) and len(raw) > 1 else str(raw)
+                if token and len(token) > 10:
+                    log.info("[QuickML] Token via request credential OK.")
+                    return token
             except Exception as req_err:
-                log.warning(f"[QuickML] Request-based initialization failed: {req_err}. Falling back to default app...")
+                log.warning(f"[QuickML] Request credential failed: {req_err}")
 
-        if app is None:
-            try:
-                app = catalyst.initialize()
-            except Exception as default_err:
-                try:
-                    app = catalyst.initialize_app(
-                        credential=catalyst.credentials.ApplicationDefaultCredential().credential
-                    )
-                except Exception as app_err:
-                    log.warning(f"[QuickML] App-level initialization failed: {default_err} / {app_err}")
+        # Strategy 2: Default app credential
+        try:
+            app = catalyst.initialize()
+            raw = app.credential.token()
+            token = raw[1] if isinstance(raw, (tuple, list)) and len(raw) > 1 else str(raw)
+            if token and len(token) > 10:
+                log.info("[QuickML] Token via default credential OK.")
+                return token
+        except Exception as def_err:
+            log.warning(f"[QuickML] Default credential failed: {def_err}")
 
-        if app is not None:
-            raw_token = app.credential.token()
-            token = raw_token[1] if isinstance(raw_token, (tuple, list)) and len(raw_token) > 1 else raw_token
-            return {
-                "Authorization": f"Zoho-oauthtoken {token}",
-                "CATALYST-ORG":  ORG_ID,
-                "Content-Type":  "application/json",
-            }
-    except Exception as e:
-        log.warning(f"[QuickML] SDK token fetch failed, trying env key: {e}")
+    except ImportError:
+        log.warning("[QuickML] zcatalyst_sdk not installed.")
+    except Exception as outer_err:
+        log.warning(f"[QuickML] Token extraction error: {outer_err}")
 
-    # Fallback: manual key for local dev / testing
-    key = os.getenv("SENTINAL_QUICKML_KEY", "")
-    if key:
-        return {
-            "Authorization": f"Zoho-oauthtoken {key}",
-            "CATALYST-ORG":  ORG_ID,
-            "Content-Type":  "application/json",
-        }
+    # Strategy 3: Manual env var (local dev)
+    key = (os.getenv("SENTINAL_QUICKML_KEY") or "").strip()
+    if key and "your-" not in key.lower() and "placeholder" not in key.lower():
+        log.info("[QuickML] Using SENTINAL_QUICKML_KEY from env.")
+        return key
 
-    return {}   # no auth — request will fail with 401
+    log.error("[QuickML] No valid Catalyst credential found.")
+    return None
 
 
 async def call_ai(
@@ -98,7 +102,7 @@ async def call_ai(
     model: str | None = None,
     request=None,
 ) -> str:
-    """Call Catalyst QuickML GLM chat model."""
+    """Convenience wrapper — builds a messages list and calls call_ai_messages."""
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user",   "content": user_prompt},
@@ -112,112 +116,82 @@ async def call_ai_messages(
     model: str | None = None,
     request=None,
 ) -> str:
-    """Call Catalyst QuickML with an OpenAI-style messages array."""
-    headers = _get_auth_headers(request)
+    """
+    Call Catalyst QuickML GLM with an OpenAI-style messages array.
+    ONLY uses Zoho Catalyst QuickML — no external AI services.
+    """
+    token = _get_catalyst_token(request)
+    if not token:
+        log.error("[QuickML] No token — cannot call GLM.")
+        return "LLM_SERVICE_UNAVAILABLE"
 
-    user_text = "\n".join([m.get("content", "") for m in messages if m.get("role") == "user"]) or "Hello"
+    headers = {
+        "Authorization": f"Zoho-oauthtoken {token}",
+        "CATALYST-ORG": ORG_ID,
+        "Content-Type": "application/json",
+    }
 
-    # Clean headers without Content-Type for form data requests
-    clean_headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
+    used_model = model or DEFAULT_LLM_MODEL
+    user_text = "\n".join(
+        m.get("content", "") for m in messages if m.get("role") == "user"
+    ) or "Hello"
 
-    attempt_errors = []
+    def _extract_text(data: dict) -> str | None:
+        return (
+            (data.get("choices") or [{}])[0].get("message", {}).get("content")
+            or data.get("output", {}).get("text")
+            or data.get("result")
+            or data.get("data")
+            or data.get("response")
+            or data.get("text")
+        )
+
     try:
         async with httpx.AsyncClient(timeout=45) as client:
 
-            # ── Attempt 1: QuickML GLM Chat (JSON body, standard OpenAI format) ──
-            if headers:
-                try:
-                    r = await client.post(
-                        GLM_CHAT_URL,
-                        headers=headers,
-                        json={"messages": messages, "model": model or DEFAULT_LLM_MODEL, "max_tokens": max_tokens}
-                    )
-                    log.info(f"[QuickML Attempt 1] status={r.status_code}")
-                    if r.status_code == 200:
-                        data = r.json()
-                        text = (
-                            data.get("choices", [{}])[0].get("message", {}).get("content")
-                            or data.get("output", {}).get("text")
-                            or data.get("result")
-                            or data.get("data")
-                            or data.get("response")
-                        )
-                        if text:
-                            log.info("[QuickML Attempt 1] SUCCESS")
-                            return str(text)
-                    else:
-                        attempt_errors.append(f"[GLM Chat status={r.status_code}: {r.text[:200]}]")
-                except Exception as err:
-                    attempt_errors.append(f"[Attempt 1 err: {err}]")
+            # ── Attempt 1: Full OpenAI-compatible messages array ──────────────
+            try:
+                r1 = await client.post(
+                    GLM_CHAT_URL,
+                    headers=headers,
+                    json={"messages": messages, "model": used_model, "max_tokens": max_tokens},
+                )
+                log.info(f"[QuickML GLM #1] status={r1.status_code}")
+                if r1.status_code == 200:
+                    text = _extract_text(r1.json())
+                    if text:
+                        log.info("[QuickML GLM #1] SUCCESS")
+                        return str(text)
+                    log.warning(f"[QuickML GLM #1] 200 but empty text. body={r1.text[:300]}")
+                else:
+                    log.warning(f"[QuickML GLM #1] {r1.status_code}: {r1.text[:300]}")
+            except Exception as e1:
+                log.warning(f"[QuickML GLM #1] Exception: {e1}")
 
-            # ── Attempt 2: QuickML prompt-only payload ──
-            if headers:
-                try:
-                    r2 = await client.post(
-                        GLM_CHAT_URL,
-                        headers=headers,
-                        json={"prompt": user_text, "model": model or DEFAULT_LLM_MODEL}
-                    )
-                    log.info(f"[QuickML Attempt 2] status={r2.status_code}")
-                    if r2.status_code == 200:
-                        data2 = r2.json()
-                        text2 = (
-                            data2.get("choices", [{}])[0].get("message", {}).get("content")
-                            or data2.get("output", {}).get("text")
-                            or data2.get("result")
-                            or data2.get("data")
-                        )
-                        if text2:
-                            log.info("[QuickML Attempt 2] SUCCESS")
-                            return str(text2)
-                    else:
-                        attempt_errors.append(f"[GLM Prompt-only status={r2.status_code}: {r2.text[:200]}]")
-                except Exception as err2:
-                    attempt_errors.append(f"[Attempt 2 err: {err2}]")
+            # ── Attempt 2: Prompt-only payload (older endpoint style) ─────────
+            try:
+                r2 = await client.post(
+                    GLM_CHAT_URL,
+                    headers=headers,
+                    json={"prompt": user_text, "model": used_model, "max_tokens": max_tokens},
+                )
+                log.info(f"[QuickML GLM #2] status={r2.status_code}")
+                if r2.status_code == 200:
+                    text2 = _extract_text(r2.json())
+                    if text2:
+                        log.info("[QuickML GLM #2] SUCCESS")
+                        return str(text2)
+                    log.warning(f"[QuickML GLM #2] 200 but empty text. body={r2.text[:300]}")
+                else:
+                    log.warning(f"[QuickML GLM #2] {r2.status_code}: {r2.text[:300]}")
+            except Exception as e2:
+                log.warning(f"[QuickML GLM #2] Exception: {e2}")
 
-            # ── Fallback A: OpenRouter (env var SENTINEL_OPENROUTER_KEY or OPENROUTER_API_KEY) ──
-            from config import config
-            or_key = (
-                os.getenv("SENTINEL_OPENROUTER_KEY")
-                or os.getenv("OPENROUTER_API_KEY")
-                or config.OPENROUTER_KEY
-                or ""
-            ).strip()
-            if or_key and or_key != "your-openrouter-key-here":
-                try:
-                    or_headers = {
-                        "Authorization": f"Bearer {or_key}",
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "https://sentinal-60073535541.development.catalystserverless.in",
-                        "X-Title": "Project Sentinal — KSP Intelligence"
-                    }
-                    or_res = await client.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        json={
-                            "model": config.OPENROUTER_MODEL or "google/gemma-3-27b-it:free",
-                            "messages": messages,
-                            "max_tokens": max_tokens
-                        },
-                        headers=or_headers,
-                        timeout=30
-                    )
-                    log.info(f"[OpenRouter Fallback A] status={or_res.status_code}")
-                    if or_res.status_code == 200:
-                        data_or = or_res.json()
-                        out_or = data_or.get("choices", [{}])[0].get("message", {}).get("content")
-                        if out_or:
-                            log.info("[OpenRouter Fallback A] SUCCESS")
-                            return out_or
-                    else:
-                        attempt_errors.append(f"[OpenRouter status={or_res.status_code}: {or_res.text[:200]}]")
-                except Exception as or_err:
-                    attempt_errors.append(f"[OpenRouter err: {or_err}]")
+    except Exception as outer_err:
+        log.error(f"[QuickML] HTTP client error: {outer_err}")
 
-            log.error(f"[QuickML] ALL attempts failed: {' | '.join(attempt_errors)}")
-            return "LLM_SERVICE_UNAVAILABLE"
-    except Exception as e:
-        log.error(f"[QuickML] Client-level failure: {e}")
-        return "LLM_SERVICE_UNAVAILABLE"
+    log.error("[QuickML] All Catalyst GLM attempts failed.")
+    return "LLM_SERVICE_UNAVAILABLE"
 
 
 async def call_vision(
@@ -228,23 +202,29 @@ async def call_vision(
     request=None,
 ) -> str:
     """Call Catalyst QuickML Qwen Vision model for image + text analysis."""
-    headers = _get_auth_headers(request)
-    if not headers:
-        return "Catalyst QuickML Vision is not configured."
+    token = _get_catalyst_token(request)
+    if not token:
+        return "Catalyst QuickML Vision: no token available."
+
+    headers = {
+        "Authorization": f"Zoho-oauthtoken {token}",
+        "CATALYST-ORG": ORG_ID,
+        "Content-Type": "application/json",
+    }
 
     body = {
-        "model":       VISION_MODEL,
+        "model": VISION_MODEL,
         "messages": [
             {"role": "system", "content": system_prompt},
             {
                 "role": "user",
                 "content": [
-                    {"type": "text",      "text": user_prompt},
+                    {"type": "text", "text": user_prompt},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
                 ],
             },
         ],
-        "max_tokens":  max_tokens,
+        "max_tokens": max_tokens,
         "temperature": 0.2,
     }
 
