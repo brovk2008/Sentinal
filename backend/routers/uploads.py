@@ -250,6 +250,116 @@ async def _analyze_csv(content: bytes, filename: str) -> str:
         return f"CSV analysis failed: {e}"
 
 
+async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) -> tuple:
+    """Execute actual, dynamic Zoho Catalyst Zia AI analysis (Face, Object, OCR, Moderation) on uploaded evidence."""
+    summary_parts = []
+    tags = ["Zia Analyzed"]
+
+    try:
+        from zcatalyst_sdk import initialize as catalyst_init
+        app = catalyst_init()
+        zia_service = app.zia()
+    except Exception as e:
+        print(f"[Zia] Failed to initialize Zia Service: {e}")
+        return "Zia analysis skipped (Catalyst SDK init error)", ["Evidence"]
+
+    import tempfile
+
+    # 1. Run Image Intelligence (Face, Object, Moderation)
+    if file_type == 'image':
+        # Zia Face Analytics
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(content)
+                tmp_name = tmp.name
+            try:
+                with open(tmp_name, 'rb') as f_read:
+                    faces = zia_service.analyse_face(f_read, {"age": True, "gender": True, "emotion": True})
+                if faces:
+                    face_list = faces if isinstance(faces, list) else [faces]
+                    summary_parts.append(f"Zia Face Analytics: Detected {len(face_list)} face(s).")
+                    for idx, face in enumerate(face_list):
+                        gender = face.get("gender") or "?"
+                        age = face.get("age") or "?"
+                        emotion = face.get("emotion") or "?"
+                        summary_parts.append(f"  - Face {idx+1}: Gender={gender}, Age={age}, Emotion={emotion}")
+                        tags.append(f"Face-{gender}")
+            finally:
+                os.remove(tmp_name)
+        except Exception as face_err:
+            print(f"[Zia Face] failed: {face_err}")
+
+        # Zia Object Detection
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(content)
+                tmp_name = tmp.name
+            try:
+                with open(tmp_name, 'rb') as f_read:
+                    objects = zia_service.detect_object(f_read)
+                if objects:
+                    obj_list = objects if isinstance(objects, list) else [objects]
+                    detected_names = [obj.get("object_name") for obj in obj_list if obj.get("object_name")]
+                    summary_parts.append(f"Zia Object Detection: Detected objects: {', '.join(detected_names)}.")
+                    for name in detected_names[:4]:
+                        tags.append(name.capitalize())
+            finally:
+                os.remove(tmp_name)
+        except Exception as obj_err:
+            print(f"[Zia Object] failed: {obj_err}")
+
+        # Zia Image Moderation
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(content)
+                tmp_name = tmp.name
+            try:
+                with open(tmp_name, 'rb') as f_read:
+                    moderation = zia_service.moderate_image(f_read)
+                if moderation:
+                    safety = "Safe" if moderation.get("safety") or moderation.get("is_safe") else "Requires Review"
+                    summary_parts.append(f"Zia Image Moderation Status: {safety}.")
+            finally:
+                os.remove(tmp_name)
+        except Exception as mod_err:
+            print(f"[Zia Moderation] failed: {mod_err}")
+
+    # 2. Run Text/OCR Intelligence (PDF or Image)
+    if file_type == 'document' or file_type == 'image':
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(content)
+                tmp_name = tmp.name
+            try:
+                with open(tmp_name, 'rb') as f_read:
+                    ocr_res = zia_service.extract_optical_characters(f_read)
+                if ocr_res and ocr_res.get("text"):
+                    text_found = ocr_res.get("text")
+                    summary_parts.append(f"Zia OCR Text Found:\n{text_found[:600]}")
+                    tags.append("OCR Scanned")
+            finally:
+                os.remove(tmp_name)
+        except Exception as ocr_err:
+            print(f"[Zia OCR] failed: {ocr_err}")
+
+    # Fallback to Plumber for PDFs
+    if not summary_parts and file_type == 'document':
+        try:
+            import pdfplumber
+            with pdfplumber.open(io.BytesIO(content)) as pdf:
+                text = "\n".join(p.extract_text() or '' for p in pdf.pages[:5])
+            if text:
+                summary_parts.append(f"PDF parsed text:\n{text[:600]}")
+                tags.append("PDF Parsed")
+        except:
+            pass
+
+    if not summary_parts:
+        summary_parts.append(f"Evidence file '{filename}' uploaded. Size: {len(content)} bytes.")
+
+    return "\n".join(summary_parts), list(set(tags))
+
+
 @router.post("/upload")
 async def upload_file(
     request:     Request,
@@ -311,16 +421,7 @@ async def upload_file(
     ai_summary = ""
     ai_tags    = []
     try:
-        if file_type == 'image':
-            ai_summary, ai_tags = await _analyze_image(content, label, mime)
-        elif file_type == 'document' and mime == 'application/pdf':
-            ai_summary = await _extract_pdf_text(content)
-        elif file_type == 'data':
-            ai_summary = await _analyze_csv(content, file.filename)
-        elif file_type == 'audio':
-            ai_summary = "Audio file uploaded. Use Zia STT endpoint to transcribe."
-        elif file_type == 'video':
-            ai_summary = "Video file uploaded. Frame analysis not yet available."
+        ai_summary, ai_tags = await _run_real_zia_analysis(content, file_type, file.filename)
     except Exception as e:
         ai_summary = f"AI analysis error: {e}"
 
