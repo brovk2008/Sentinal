@@ -104,6 +104,23 @@ async def debug_quickml(request: Request):
     return result
 
 
+@router.post("/debug/vision")
+async def debug_vision(request: Request):
+    """Diagnostic route to test Catalyst Vision model raw output."""
+    try:
+        from services.quickml_service import call_vision
+        # 1x1 png base64
+        img_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        sys_p = "You are a professional crime intelligence analyst."
+        user_p = "Describe this image in 5 words."
+        res = await call_vision(sys_p, user_p, img_b64, request=request)
+        return {"success": True, "vision_response": res}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+
+
 @router.post("/query")
 async def intelligence_query(req: QueryRequest, request: Request):
     """Run RAG pipeline: embed query → retrieve → generate answer with history and board context."""
