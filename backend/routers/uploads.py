@@ -255,6 +255,7 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
     """Execute actual, dynamic Zoho Catalyst Zia AI analysis (Face, Object, OCR, Moderation) on uploaded evidence."""
     summary_parts = []
     tags = ["Zia Analyzed"]
+    extracted_text = ""
 
     try:
         from zcatalyst_sdk import initialize as catalyst_init
@@ -262,7 +263,7 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
         zia_service = app.zia()
     except Exception as e:
         print(f"[Zia] Failed to initialize Zia Service: {e}")
-        return "Zia analysis skipped (Catalyst SDK init error)", ["Evidence"]
+        return "Zia analysis skipped (Catalyst SDK init error)", ["Evidence"], ""
 
     import tempfile
 
@@ -325,8 +326,26 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
         except Exception as mod_err:
             print(f"[Zia Moderation] failed: {mod_err}")
 
+        # Catalyst Vision API Analysis (Qwen Model)
+        try:
+            from services.quickml_service import call_vision
+            import base64
+            b64_image = base64.b64encode(content).decode("utf-8")
+            sys_p = "You are a professional crime intelligence analyst for Karnataka State Police."
+            user_p = (
+                "Describe this evidence image in detail. Identify any persons, clothing, weapons, vehicles, license plates, "
+                "or written text. Format your response in structured markdown with headings: 'Visual Assessment', "
+                "'Key Entities Detected', and 'Criminological Value'."
+            )
+            vision_desc = await call_vision(sys_p, user_p, b64_image)
+            if vision_desc and "error" not in vision_desc.lower():
+                summary_parts.append(f"Catalyst AI Vision Assessment:\n{vision_desc}")
+                tags.append("AI Vision Analyzed")
+                extracted_text += f"\n[AI Vision Analysis of image {filename}]:\n{vision_desc}"
+        except Exception as vis_err:
+            print(f"[Uploads] Catalyst Vision failed: {vis_err}")
+
     # 2. Run Text/OCR/NLP Intelligence
-    extracted_text = ""
 
     # Run OCR if it's an image or document
     if file_type == 'document' or file_type == 'image':
@@ -443,7 +462,7 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
     if not summary_parts:
         summary_parts.append(f"Evidence file '{filename}' uploaded. Size: {len(content)} bytes.")
 
-    return "\n".join(summary_parts), list(set(tags))
+    return "\n".join(summary_parts), list(set(tags)), extracted_text
 
 
 @router.post("/upload")
@@ -506,8 +525,9 @@ async def upload_file(
     # AI analysis by type
     ai_summary = ""
     ai_tags    = []
+    extracted_text = ""
     try:
-        ai_summary, ai_tags = await _run_real_zia_analysis(content, file_type, file.filename)
+        ai_summary, ai_tags, extracted_text = await _run_real_zia_analysis(content, file_type, file.filename)
     except Exception as e:
         ai_summary = f"AI analysis error: {e}"
 
@@ -526,15 +546,26 @@ async def upload_file(
     con.commit()
     con.close()
 
-    # Dynamic RAG addition if requested
+    # Dynamic RAG addition — now always auto-added by default for AI intelligence context
     rag_added = False
-    if add_to_rag == 'true' and ai_summary:
-        try:
-            from services.rag_service import rag_service
-            await rag_service.add_chunks([ai_summary], label or file.filename)
+    try:
+        from services.rag_service import rag_service
+        chunks = []
+        if ai_summary:
+            chunks.append(f"UPLOADED EVIDENCE PROFILE ({label or file.filename}):\n{ai_summary}")
+        if extracted_text and len(extracted_text) > 10:
+            text_len = len(extracted_text)
+            for i in range(0, text_len, 800):
+                chunk = extracted_text[i:i+800].strip()
+                if chunk:
+                    chunks.append(f"UPLOADED EVIDENCE CONTENT ({label or file.filename}) [Part {i//800 + 1}]:\n{chunk}")
+        
+        if chunks:
+            await rag_service.add_chunks(chunks, f"Uploaded File: {label or file.filename}")
             rag_added = True
-        except Exception as rag_err:
-            print(f"RAG dynamic addition error: {rag_err}")
+            log.info(f"[Uploads RAG] Successfully auto-indexed {len(chunks)} chunks for {file.filename}")
+    except Exception as rag_err:
+        print(f"RAG dynamic addition error: {rag_err}")
 
     return {
         "success":    True,

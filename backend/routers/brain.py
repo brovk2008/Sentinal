@@ -77,9 +77,35 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
                 FROM CaseMaster WHERE CaseMasterID IN ({ph})
             """, tuple(request.case_ids))
 
+        # Query RAG for all entities on the board
+        search_terms = []
+        for n in nodes:
+            label = n.get("label") or n.get("title")
+            if not label and isinstance(n.get("data"), dict):
+                label = n["data"].get("label") or n["data"].get("title")
+            if label:
+                search_terms.append(label)
+
+        rag_context = ""
+        if search_terms:
+            try:
+                from services.rag_service import rag_service
+                rag_docs = []
+                for term in search_terms:
+                    retrieved = await rag_service.retrieve(term, top_k=2)
+                    for r in retrieved:
+                        sum_text = r.get("summary", "")
+                        title = r.get("title", "Doc")
+                        if sum_text and sum_text not in rag_docs:
+                            rag_docs.append(f"Evidence Document: {title} | Content: {sum_text}")
+                if rag_docs:
+                    rag_context = "\n".join(rag_docs)
+            except Exception as rag_err:
+                print(f"[Analyze Board] RAG context error: {rag_err}")
+
         system_prompt = (
             "You are a senior criminal analyst AI for Karnataka Police Crime Intelligence. "
-            "Analyze the investigator's corkboard (nodes and strings) along with underlying case files. "
+            "Analyze the investigator's corkboard (nodes and strings), database cases, and uploaded evidence documents (from RAG). "
             "Suggest hidden linkages, target coordinates/hotspots, and insights. "
             "Output must be a valid JSON object ONLY. Do not wrap in markdown or explanation blocks."
         )
@@ -91,6 +117,9 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
         
         Related Database Cases:
         {json.dumps(case_data)}
+        
+        Uploaded Evidence & Case Records (RAG context):
+        {rag_context}
         
         Analyze this intelligence data. Output JSON schema:
         {{
@@ -306,36 +335,90 @@ async def connect_dots(request: ConnectDotsRequest, http_request: Request):
                                 })
 
         db_context = "\n".join(real_connections) if real_connections else "No direct case/co-accused links found in database."
-        
+
+        # Query RAG for all entities to discover hidden document connections (OCR text, RAG profiles, etc.)
+        rag_context = ""
+        if entity_names:
+            try:
+                from services.rag_service import rag_service
+                rag_docs = []
+                for name in entity_names:
+                    retrieved = await rag_service.retrieve(name, top_k=2)
+                    for r in retrieved:
+                        sum_text = r.get("summary", "")
+                        title = r.get("title", "Doc")
+                        if sum_text and sum_text not in rag_docs:
+                            rag_docs.append(f"Document: {title} | Content: {sum_text}")
+                if rag_docs:
+                    rag_context = "\n".join(rag_docs)
+            except Exception as rag_err:
+                print(f"[Connect Dots RAG] retrieval error: {rag_err}")
+
         system_prompt = (
             "You are a Senior Police Intelligence Analyst for Karnataka Police. "
-            "Analyze the given entities and their database links, and construct a logical, actionable connection analysis."
+            "Analyze the given entities, database query findings, and uploaded evidence documents (from RAG context) to find hidden links. "
+            "Output must be a valid JSON object ONLY. Do not wrap in markdown or explanation blocks."
         )
-        
+
         user_prompt = f"""
-        Investigation board has these entities: {entity_names}
+        Investigation board nodes list (with ids):
+        {json.dumps(nodes)}
+        
         Database query findings:
         {db_context}
         
-        Tasks:
-        1. Identify which entities are connected (using DB findings or logical inferences like location, syndicate or contact overlap).
-        2. Explain WHY each connection is critical for the investigation.
-        3. Suggest next steps.
+        Uploaded Evidence & Case Records (RAG context):
+        {rag_context}
         
-        Keep your response concise, professional, and under 200 words.
-        Format your response starting with 'KEY CONNECTIONS:' followed by bullet points.
+        Tasks:
+        1. Identify hidden connections between the nodes (using locations, timeline, case facts, contacts, or syndicate clues).
+        2. Format your response as a JSON object matching this schema:
+        {{
+           "analysis": "A concise text summary of key connections, starting with 'KEY CONNECTIONS:' followed by bullet points",
+           "suggested_connections": [
+              {{
+                 "from_node_id": "source_node_id",
+                 "to_node_id": "target_node_id",
+                 "relationship_type": "Brief link label (e.g. Mule Owner)",
+                 "reasoning": "Reason explaining the connection"
+              }}
+           ]
+        }}
         """
         
+        analysis = ""
         try:
-            analysis = await call_ai(system_prompt, user_prompt, max_tokens=600, request=http_request)
-        except Exception:
-            analysis = f"KEY CONNECTIONS:\n" + "\n".join([f"• {c}" for c in real_connections]) if real_connections else "No connections found."
+            ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
+            cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
+            ai_data = json.loads(cleaned)
+            analysis = ai_data.get("analysis") or ""
+            
+            # Merge AI suggested connections into suggested_connections
+            ai_inferred = ai_data.get("suggested_connections") or []
+            for item in ai_inferred:
+                f_id = item.get("from_node_id") or item.get("fromNodeId")
+                t_id = item.get("to_node_id") or item.get("toNodeId")
+                rel = item.get("relationship_type") or item.get("label") or "AI Link"
+                reason = item.get("reasoning") or item.get("reason") or ""
+                if f_id and t_id:
+                    # Avoid duplicates
+                    if not any(x.get("from_node_id") == f_id and x.get("to_node_id") == t_id for x in suggested_connections):
+                        suggested_connections.append({
+                            "from_node_id": f_id,
+                            "to_node_id": t_id,
+                            "relationship_type": rel,
+                            "reasoning": reason
+                        })
+        except Exception as e:
+            print(f"[Connect Dots AI] failed to parse AI suggested connections: {e}")
+            if not analysis:
+                analysis = f"KEY CONNECTIONS:\n" + "\n".join([f"• {c}" for c in real_connections]) if real_connections else "No connections found."
 
         return {
             "success": True,
             "connections": connections_list,
             "suggested_connections": suggested_connections,
-            "suggested_edges": suggested_connections, # For frontend key matching compatibility
+            "suggested_edges": suggested_connections, # For frontend compatibility
             "analysis": analysis,
             "network_summary": "Syndicate cells sharing target locations.",
             "key_actor": person_nodes[0] if person_nodes else "Unknown"

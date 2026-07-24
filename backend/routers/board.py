@@ -105,7 +105,7 @@ def delete_board(board_id: str):
 @router.post("/upload-evidence")
 async def upload_evidence(http_request: Request, file: UploadFile = File(...)):
     """
-    Process image/pdf upload, simulate Catalyst Zia face/OCR extraction,
+    Process image/pdf upload, run actual Catalyst Vision or Zia OCR analysis,
     and suggest case connections using LLM context.
     """
     try:
@@ -114,27 +114,9 @@ async def upload_evidence(http_request: Request, file: UploadFile = File(...)):
         file_url = f"data:{file.content_type};base64,{b64_str}"
         
         filename_lower = file.filename.lower()
+        is_image = file.content_type and file.content_type.startswith("image/")
         
-        # Zia Simulation
-        zia_analysis = {
-            "faces": [],
-            "objects": [],
-            "text_found": ""
-        }
-        
-        # Mock analysis based on filename clues
-        if any(x in filename_lower for x in ["cctv", "suspect", "face", "accused", "person"]):
-            zia_analysis["faces"] = [{"age": "28-34", "gender": "Male", "features": "Short dark hair, light beard, scars on left cheek"}]
-            zia_analysis["objects"] = ["person", "jacket", "vehicle"]
-            zia_analysis["text_found"] = "CCTV Bengaluru North Crossing"
-        elif any(x in filename_lower for x in ["bank", "statement", "invoice", "receipt", "money"]):
-            zia_analysis["objects"] = ["document", "paper"]
-            zia_analysis["text_found"] = "State Bank of India Account No. 90812328 · UPI Ref 4301988 · Transaction of Rs. 4,80,000 to Ashok Kumar"
-        else:
-            zia_analysis["objects"] = ["document", "evidence"]
-            zia_analysis["text_found"] = f"Evidence record for case file: {file.filename}. Primary notes indicate mobile phone logs extracted."
-
-        # Fetch recent case contexts
+        # Fetch recent case contexts for matching
         recent_cases = query("""
             SELECT cm.CaseMasterID as case_id, cm.CrimeNo as crime_no, 
                    ch.CrimeGroupName as crime_group, cm.BriefFacts as facts
@@ -143,46 +125,119 @@ async def upload_evidence(http_request: Request, file: UploadFile = File(...)):
             ORDER BY cm.CaseMasterID DESC LIMIT 8
         """)
         
-        system_prompt = (
-            "You are a forensic advisor assistant for Karnataka Police. "
-            "Examine the uploaded file metadata, Zia text extraction, and recent case files to suggest linkages. "
-            "Output must be a valid JSON object ONLY. No markdown formatting tags, no explanation block."
-        )
-        
-        user_prompt = f"""
-        Evidence file name: {file.filename}
-        Zia Extracted Data: {json.dumps(zia_analysis)}
-        
-        Recent Cases Database:
-        {json.dumps(recent_cases)}
-        
-        Based on this, suggest which cases this evidence might be linked to.
-        Provide response as JSON object matching this schema:
-        {{
-           "suggested_case_links": [
-              {{ "case_id": 12, "crime_no": "0012/2024", "confidence": "85%", "reason": "Reason details" }}
-           ],
-           "suggested_tags": ["Cyber Fraud", "Money Trail"]
-        }}
-        """
-        
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
-        
-        # Clean potential markdown surrounding tags
-        cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
-        try:
-            ai_data = json.loads(cleaned)
-        except Exception:
-            ai_data = {
-                "suggested_case_links": [],
-                "suggested_tags": ["Evidence Upload", "File"]
-            }
+        zia_analysis = {
+            "faces": [],
+            "objects": [],
+            "text_found": ""
+        }
+        suggested_tags = ["Evidence"]
+        suggested_case_links = []
+
+        if is_image:
+            # 1. Run actual Catalyst Vision analysis on the image
+            from services.quickml_service import call_vision
+            system_prompt = (
+                "You are a Senior Criminal Analyst for Karnataka Police. "
+                "Examine this evidence image along with the database cases to suggest linkages. "
+                "Output must be a valid JSON object ONLY. Do not wrap in markdown or explanation blocks."
+            )
+            user_prompt = f"""
+            Analyze this uploaded image (filename: {file.filename}).
             
+            Recent Cases Database for reference matching:
+            {json.dumps(recent_cases)}
+            
+            Determine if there are connections between the visual elements (persons, text, accounts, location clues) and the database cases.
+            Provide your response as a JSON object matching this schema:
+            {{
+               "text_found": "Concise summary of the visual elements and any visible text found in the image",
+               "suggested_case_links": [
+                  {{ "case_id": 12, "crime_no": "0012/2024", "confidence": "85%", "reason": "Detail the correlation" }}
+               ],
+               "suggested_tags": ["CCTV", "UPI Trail"]
+            }}
+            """
+            try:
+                ai_response = await call_vision(system_prompt, user_prompt, b64_str, request=http_request)
+                cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
+                ai_data = json.loads(cleaned)
+                zia_analysis["text_found"] = ai_data.get("text_found") or "Image analyzed by Catalyst Vision."
+                suggested_tags = ai_data.get("suggested_tags", ["Image Analysis"])
+                suggested_case_links = ai_data.get("suggested_case_links", [])
+            except Exception as vis_err:
+                print(f"[Evidence Board] Catalyst Vision analysis failed: {vis_err}")
+                zia_analysis["text_found"] = f"Vision analysis offline: {vis_err}"
+
+            # 2. Add Zia face detection if possible (graceful fallback)
+            try:
+                from zcatalyst_sdk import initialize as catalyst_init
+                app = catalyst_init()
+                zia_service = app.zia()
+                import tempfile
+                import os
+                with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                    tmp.write(file_bytes)
+                    tmp_name = tmp.name
+                try:
+                    with open(tmp_name, 'rb') as f_read:
+                        faces = zia_service.analyse_face(f_read, {"age": True, "gender": True, "emotion": True})
+                    if faces:
+                        face_list = faces if isinstance(faces, list) else [faces]
+                        zia_analysis["faces"] = face_list
+                finally:
+                    os.remove(tmp_name)
+            except Exception as zia_err:
+                print(f"[Evidence Board] Zia face analysis skipped: {zia_err}")
+        else:
+            # 3. For non-images (PDFs/CSVs/Text), run text extraction and use standard LLM
+            extracted_text = ""
+            if file.content_type == "application/pdf":
+                try:
+                    import pdfplumber
+                    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                        extracted_text = "\n".join(p.extract_text() or '' for p in pdf.pages[:3])
+                except Exception:
+                    extracted_text = f"PDF file uploaded: {file.filename}"
+            else:
+                extracted_text = file_bytes.decode("utf-8", errors="ignore")[:4000]
+
+            system_prompt = (
+                "You are a Senior Criminal Analyst for Karnataka Police. "
+                "Examine this text content along with the database cases to suggest case linkages. "
+                "Output must be a valid JSON object ONLY. Do not wrap in markdown."
+            )
+            user_prompt = f"""
+            Evidence text content:
+            {extracted_text[:3000]}
+            
+            Recent Cases Database:
+            {json.dumps(recent_cases)}
+            
+            Provide response as JSON object matching this schema:
+            {{
+               "text_found": "A summary of the text content",
+               "suggested_case_links": [
+                  {{ "case_id": 12, "crime_no": "0012/2024", "confidence": "85%", "reason": "Reason details" }}
+               ],
+               "suggested_tags": ["Document", "Audit Trail"]
+            }}
+            """
+            try:
+                ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
+                cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
+                ai_data = json.loads(cleaned)
+                zia_analysis["text_found"] = ai_data.get("text_found") or "Text content summarized."
+                suggested_tags = ai_data.get("suggested_tags", ["Text Analysis"])
+                suggested_case_links = ai_data.get("suggested_case_links", [])
+            except Exception as ai_err:
+                print(f"[Evidence Board] LLM text analysis failed: {ai_err}")
+                zia_analysis["text_found"] = f"Text analysis offline: {ai_err}"
+
         return {
             "file_url": file_url,
             "zia_analysis": zia_analysis,
-            "suggested_tags": ai_data.get("suggested_tags", ["Evidence"]),
-            "suggested_case_links": ai_data.get("suggested_case_links", [])
+            "suggested_tags": suggested_tags,
+            "suggested_case_links": suggested_case_links
         }
     except Exception as e:
         raise HTTPException(500, f"Upload processing failed: {e}")
