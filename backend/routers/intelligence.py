@@ -54,6 +54,52 @@ def get_case_by_crime_no(crime_no: str) -> dict | None:
 
 
 
+@router.get("/debug/quickml")
+async def debug_quickml(request: Request):
+    """Diagnostic endpoint — test QuickML auth + response chain live on AppSail."""
+    import os
+    from services.quickml_service import _get_auth_headers, GLM_CHAT_URL, PROJECT_ID, ORG_ID, DEFAULT_LLM_MODEL
+    
+    result = {
+        "project_id": PROJECT_ID,
+        "org_id": ORG_ID,
+        "glm_url": GLM_CHAT_URL,
+        "default_model": DEFAULT_LLM_MODEL,
+        "sentinel_quickml_key_set": bool(os.getenv("SENTINAL_QUICKML_KEY")),
+        "openrouter_key_set": bool(os.getenv("SENTINEL_OPENROUTER_KEY") or os.getenv("OPENROUTER_API_KEY")),
+    }
+
+    # Try building auth headers
+    try:
+        headers = _get_auth_headers(request)
+        result["auth_headers_built"] = True
+        result["auth_header_keys"] = list(headers.keys())
+        result["has_auth_value"] = bool(headers.get("Authorization"))
+        auth_val = headers.get("Authorization", "")
+        result["auth_preview"] = auth_val[:40] + "..." if len(auth_val) > 40 else auth_val
+    except Exception as auth_err:
+        result["auth_headers_built"] = False
+        result["auth_error"] = str(auth_err)
+        headers = {}
+
+    # Try actual QuickML call
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.post(
+                GLM_CHAT_URL,
+                headers=headers,
+                json={"messages": [{"role": "user", "content": "Reply with: SENTINAL AI ONLINE"}],
+                      "model": DEFAULT_LLM_MODEL, "max_tokens": 30}
+            )
+            result["quickml_status"] = r.status_code
+            result["quickml_response_preview"] = r.text[:400]
+    except Exception as call_err:
+        result["quickml_call_error"] = str(call_err)
+
+    return result
+
+
 @router.post("/query")
 async def intelligence_query(req: QueryRequest, request: Request):
     """Run RAG pipeline: embed query → retrieve → generate answer with history and board context."""

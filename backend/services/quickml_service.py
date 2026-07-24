@@ -114,64 +114,25 @@ async def call_ai_messages(
 ) -> str:
     """Call Catalyst QuickML with an OpenAI-style messages array."""
     headers = _get_auth_headers(request)
-    if not headers:
-        return (
-            "Catalyst QuickML is not configured. "
-            "Running inside AppSail: zcatalyst_sdk should auto-authenticate. "
-            "For local dev, set SENTINAL_QUICKML_KEY to a valid Zoho OAuth token."
-        )
 
     user_text = "\n".join([m.get("content", "") for m in messages if m.get("role") == "user"]) or "Hello"
-    sys_text = "\n".join([m.get("content", "") for m in messages if m.get("role") == "system"]) or "Assistant"
 
-    payload_json = json.dumps({"messages": messages, "prompt": user_text, "model": model or DEFAULT_LLM_MODEL})
-    
-    # Clean headers without Content-Type for multipart/custom requests
+    # Clean headers without Content-Type for form data requests
     clean_headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
-
-    # Attempt 1: Native Catalyst SDK app.quick_ml()
-    try:
-        import zcatalyst_sdk as catalyst
-        if request is not None:
-            c_app = catalyst.initialize(req=request)
-            qml = c_app.quick_ml()
-            # Try predict with GLM endpoint key or project ID
-            res = qml.predict(end_point_key=PROJECT_ID, input_data={"prompt": user_text, "messages": json.dumps(messages)})
-            if res:
-                return str(res)
-    except Exception as sdk_err:
-        log.warning(f"[QuickML] SDK predict failed: {sdk_err}")
-
-    PREDICT_URL = f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/endpoints/predict"
-
-    attempts = [
-        # Attempt 1: Standard JSON body predict with GLM-4.7-Flash
-        {
-            "url": GLM_CHAT_URL,
-            "headers": headers,
-            "json": {"prompt": user_text, "messages": messages, "model": "GLM-4.7-Flash"}
-        },
-        # Attempt 2: Predict endpoint with X-QUICKML-ENDPOINT-KEY
-        {
-            "url": PREDICT_URL,
-            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": "GLM-4.7-Flash"},
-            "json": {"data": {"prompt": user_text, "messages": messages}}
-        },
-        # Attempt 3: Form data with prompt
-        {
-            "url": GLM_CHAT_URL,
-            "headers": clean_headers,
-            "data": {"prompt": user_text}
-        }
-    ]
 
     attempt_errors = []
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            for i, kwargs in enumerate(attempts):
-                target_url = kwargs.pop("url", GLM_CHAT_URL)
+        async with httpx.AsyncClient(timeout=45) as client:
+
+            # ── Attempt 1: QuickML GLM Chat (JSON body, standard OpenAI format) ──
+            if headers:
                 try:
-                    r = await client.post(target_url, **kwargs)
+                    r = await client.post(
+                        GLM_CHAT_URL,
+                        headers=headers,
+                        json={"messages": messages, "model": model or DEFAULT_LLM_MODEL, "max_tokens": max_tokens}
+                    )
+                    log.info(f"[QuickML Attempt 1] status={r.status_code}")
                     if r.status_code == 200:
                         data = r.json()
                         text = (
@@ -179,44 +140,83 @@ async def call_ai_messages(
                             or data.get("output", {}).get("text")
                             or data.get("result")
                             or data.get("data")
+                            or data.get("response")
                         )
                         if text:
+                            log.info("[QuickML Attempt 1] SUCCESS")
                             return str(text)
+                    else:
+                        attempt_errors.append(f"[GLM Chat status={r.status_code}: {r.text[:200]}]")
                 except Exception as err:
-                    attempt_errors.append(f"[Attempt {i+1} err: {err}]")
+                    attempt_errors.append(f"[Attempt 1 err: {err}]")
 
-            # Fallback to OpenRouter using valid free tier key
-            try:
-                from config import config
-                or_headers = {
-                    "Authorization": f"Bearer {config.OPENROUTER_KEY}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://sentinal.ksp",
-                    "X-Title": "Project Sentinal"
-                }
-                or_res = await client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    json={
-                        "model": config.OPENROUTER_MODEL,
-                        "messages": messages,
-                        "max_tokens": max_tokens
-                    },
-                    headers=or_headers,
-                    timeout=20
-                )
-                if or_res.status_code == 200:
-                    data = or_res.json()
-                    out = data.get("choices", [{}])[0].get("message", {}).get("content")
-                    if out:
-                        return out
-                else:
-                    log.warning(f"[OpenRouter Fallback] returned status {or_res.status_code}: {or_res.text}")
-            except Exception as or_err:
-                log.warning(f"[QuickML Fallback LLM Error]: {or_err}")
+            # ── Attempt 2: QuickML prompt-only payload ──
+            if headers:
+                try:
+                    r2 = await client.post(
+                        GLM_CHAT_URL,
+                        headers=headers,
+                        json={"prompt": user_text, "model": model or DEFAULT_LLM_MODEL}
+                    )
+                    log.info(f"[QuickML Attempt 2] status={r2.status_code}")
+                    if r2.status_code == 200:
+                        data2 = r2.json()
+                        text2 = (
+                            data2.get("choices", [{}])[0].get("message", {}).get("content")
+                            or data2.get("output", {}).get("text")
+                            or data2.get("result")
+                            or data2.get("data")
+                        )
+                        if text2:
+                            log.info("[QuickML Attempt 2] SUCCESS")
+                            return str(text2)
+                    else:
+                        attempt_errors.append(f"[GLM Prompt-only status={r2.status_code}: {r2.text[:200]}]")
+                except Exception as err2:
+                    attempt_errors.append(f"[Attempt 2 err: {err2}]")
 
+            # ── Fallback A: OpenRouter (env var SENTINEL_OPENROUTER_KEY or OPENROUTER_API_KEY) ──
+            from config import config
+            or_key = (
+                os.getenv("SENTINEL_OPENROUTER_KEY")
+                or os.getenv("OPENROUTER_API_KEY")
+                or config.OPENROUTER_KEY
+                or ""
+            ).strip()
+            if or_key and or_key != "your-openrouter-key-here":
+                try:
+                    or_headers = {
+                        "Authorization": f"Bearer {or_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://sentinal-60073535541.development.catalystserverless.in",
+                        "X-Title": "Project Sentinal — KSP Intelligence"
+                    }
+                    or_res = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        json={
+                            "model": config.OPENROUTER_MODEL or "google/gemma-3-27b-it:free",
+                            "messages": messages,
+                            "max_tokens": max_tokens
+                        },
+                        headers=or_headers,
+                        timeout=30
+                    )
+                    log.info(f"[OpenRouter Fallback A] status={or_res.status_code}")
+                    if or_res.status_code == 200:
+                        data_or = or_res.json()
+                        out_or = data_or.get("choices", [{}])[0].get("message", {}).get("content")
+                        if out_or:
+                            log.info("[OpenRouter Fallback A] SUCCESS")
+                            return out_or
+                    else:
+                        attempt_errors.append(f"[OpenRouter status={or_res.status_code}: {or_res.text[:200]}]")
+                except Exception as or_err:
+                    attempt_errors.append(f"[OpenRouter err: {or_err}]")
+
+            log.error(f"[QuickML] ALL attempts failed: {' | '.join(attempt_errors)}")
             return "LLM_SERVICE_UNAVAILABLE"
     except Exception as e:
-        log.error(f"[QuickML] GLM request failed: {e}")
+        log.error(f"[QuickML] Client-level failure: {e}")
         return "LLM_SERVICE_UNAVAILABLE"
 
 
