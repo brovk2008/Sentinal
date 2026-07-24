@@ -53,7 +53,7 @@ export default function FIRSearch() {
   const [stationsLoading, setStationsLoading] = useState(false)
 
   const [searching, setSearching]   = useState(false)
-  const [firHtml, setFirHtml]       = useState(null)   // HTML string for srcdoc
+  const [pdfUrl, setPdfUrl]         = useState(null)   // Blob URL for real PDF
   const [pdfMeta, setPdfMeta]       = useState(null)
   const iframeRef                   = useRef(null)
 
@@ -119,18 +119,25 @@ export default function FIRSearch() {
         return
       }
 
-      if (data.status === 'found') {
-        setPdfB64(data.pdf_b64 || null)
+      if (data.status === 'found' && data.pdf_b64) {
+        setPdfB64(data.pdf_b64)
         setPdfMeta(data.fir_metadata)
-        const distName = DISTRICTS.find(d => d.id === districtId)?.name || districtId
-        const statName = stations.find(s => s.id === stationId)?.name || stationId
-        setFirHtml(generateFirHtml(data.fir_metadata, firNum, year, distName, statName))
-        setMsg('✅ FIR fetched. View PDF or click OCR & Save.', 'success')
+        
+        try {
+          const binaryStr = atob(data.pdf_b64)
+          const bytes = new Uint8Array(binaryStr.length)
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+          const blob = new Blob([bytes], { type: 'application/pdf' })
+          const blobUrl = URL.createObjectURL(blob)
+          setPdfUrl(blobUrl)
+        } catch (e) {
+          setPdfUrl(`data:application/pdf;base64,${data.pdf_b64}`)
+        }
+
+        setMsg('✅ Real FIR PDF retrieved from KSP portal. Click OCR & Save to extract fields.', 'success')
       } else if (data.status === 'error') {
-        // Show the actual error from the scraper
-        setMsg(`⚠️ ${data.message || data.detail || 'Scraper error — check configuration'}`, 'warn')
+        setMsg(`⚠️ ${data.message || data.detail || 'Scraper error'}`, 'warn')
       } else if (data.detail) {
-        // FastAPI HTTPException format
         setMsg(`⚠️ ${data.detail}`, 'warn')
       } else {
         setMsg(`⚠️ ${data.message || 'Unknown response from scraper'}`, 'warn')
@@ -415,7 +422,7 @@ export default function FIRSearch() {
               : 'PDF Viewer'}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {firHtml && (
+            {pdfUrl && (
               <button
                 onClick={() => translateFIRDocument('en')}
                 style={{
@@ -433,28 +440,26 @@ export default function FIRSearch() {
           </div>
         </div>
 
-        {/* PDF Content — HTML srcdoc viewer */}
-        <div style={{ flex: 1, overflow: 'hidden', background: firHtml ? '#fff' : 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+        {/* PDF Content — Real PDF viewer */}
+        <div style={{ flex: 1, overflow: 'hidden', background: pdfUrl ? '#525659' : 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
           {searching ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--copper-400)' }}>Fetching FIR from KSP portal...</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--copper-400)' }}>Fetching real FIR PDF from KSP portal...</div>
               </div>
             </div>
-          ) : firHtml ? (
+          ) : pdfUrl ? (
             <iframe
-              ref={iframeRef}
-              srcDoc={firHtml}
-              title="FIR Document"
-              sandbox="allow-same-origin allow-modals"
+              src={pdfUrl}
+              title="Official KSP FIR Document"
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             />
           ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>FIR Viewer</div>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>Live FIR PDF Viewer</div>
                 <div style={{ fontSize: 11, marginTop: 4 }}>Select district → station → FIR number, then click Search</div>
               </div>
             </div>
