@@ -162,6 +162,81 @@ async def intelligence_query(req: QueryRequest, request: Request):
                 print(f"[RAG CDR Context] Error: {e}")
 
         extra_context = canvas_context + files_context + cdr_context
+
+        # ── Live OCR Records context — search real scraped FIRs from the database ──
+        # Pull matching OCR records from SQLite when query mentions FIR numbers, 
+        # accused names, districts, or police stations
+        ocr_context = ""
+        try:
+            import sqlite3 as _sqlite3
+            _con = _sqlite3.connect(config.DB_PATH)
+            _con.row_factory = _sqlite3.Row
+
+            # Extract potential FIR number (e.g. "FIR 5/2024", "FIR no 12", "fir 5 2024")
+            fir_num_match = re.search(r'\bfir\b.*?(\d{1,4})\b', req.query.lower())
+            # Extract possible year mention
+            year_match = re.search(r'\b(20\d{2})\b', req.query)
+            # Look for district or station name keywords
+            q_lower = req.query.lower()
+
+            _ocr_rows = []
+            if fir_num_match:
+                fnum = fir_num_match.group(1)
+                yr_filter = year_match.group(1) if year_match else "%"
+                _ocr_rows = _con.execute(
+                    "SELECT * FROM ocr_records WHERE fir_number = ? AND year LIKE ? LIMIT 5",
+                    (fnum, yr_filter)
+                ).fetchall()
+
+            if not _ocr_rows:
+                # Keyword search across extracted_text, district_name, station_name, parsed_data
+                keywords_for_ocr = [w for w in re.findall(r'[a-zA-Z]{4,}', req.query) if w.lower() not in {
+                    'what', 'show', 'tell', 'about', 'give', 'find', 'list', 'search', 'from',
+                    'with', 'that', 'this', 'where', 'which', 'have', 'been', 'were', 'case'
+                }]
+                for kw in keywords_for_ocr[:4]:
+                    rows = _con.execute(
+                        """SELECT * FROM ocr_records 
+                           WHERE extracted_text LIKE ? OR parsed_data LIKE ?
+                              OR district_name LIKE ? OR station_name LIKE ?
+                           LIMIT 3""",
+                        (f"%{kw}%", f"%{kw}%", f"%{kw}%", f"%{kw}%")
+                    ).fetchall()
+                    _ocr_rows.extend(rows)
+                # Deduplicate
+                seen_ids = set()
+                unique_rows = []
+                for r in _ocr_rows:
+                    if r["id"] not in seen_ids:
+                        seen_ids.add(r["id"])
+                        unique_rows.append(r)
+                _ocr_rows = unique_rows[:5]
+
+            _con.close()
+
+            if _ocr_rows:
+                ocr_context = "\n\n[LIVE KSP FIR DATABASE — Real scraped records from Karnataka State Police portal]\n"
+                for row in _ocr_rows:
+                    p_data = {}
+                    try:
+                        p_data = json.loads(row["parsed_data"] or "{}")
+                    except Exception:
+                        pass
+                    accused_list = [a.get("name", "") for a in p_data.get("accused", []) if a.get("name")]
+                    ocr_context += (
+                        f"\nFIR No. {row['fir_number']}/{row['year']} | "
+                        f"{row['station_name']}, {row['district_name']}\n"
+                        f"  Sections: {row['act_section'] or 'N/A'}\n"
+                        f"  Complainant: {p_data.get('complainant_name', 'N/A')}\n"
+                        f"  Accused ({len(accused_list)}): {', '.join(accused_list) or 'N/A'}\n"
+                        f"  Place: {p_data.get('place_of_occurrence', 'N/A')}\n"
+                        f"  Narrative: {p_data.get('fir_narrative', '')[:400]}\n"
+                        f"  Raw text (first 600 chars): {(row['extracted_text'] or '')[:600]}\n"
+                    )
+        except Exception as ocr_ctx_err:
+            print(f"[Intelligence] OCR context injection error: {ocr_ctx_err}")
+
+        extra_context = ocr_context + extra_context
         context = case_context + board_context + extra_context + "\n\n" + "\n\n---\n\n".join([r.get("summary", "") for r in (retrieved or [])])
         citations = [
             {

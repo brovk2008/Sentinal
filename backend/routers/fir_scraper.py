@@ -750,7 +750,11 @@ class TranslateOCRRequest(BaseModel):
 
 @router.post("/ocr/save")
 async def save_ocr_record(req: SaveOCRRequest):
-    """Save an extracted OCR record into SQLite for account-wide access across tabs."""
+    """Save an extracted OCR record into SQLite AND index it in the RAG vector store.
+    
+    This makes every live FIR scraped from KSP immediately searchable by the
+    Sentinal AI Assistant — the judge's real-time data becomes AI queryable.
+    """
     record_id = req.id or f"ocr-{uuid.uuid4().hex[:8]}"
     parsed_json = json.dumps(req.parsed_data or {})
     
@@ -770,8 +774,60 @@ async def save_ocr_record(req: SaveOCRRequest):
         req.station_id, req.station_name, req.act_section, req.crime_group,
         req.extracted_text, req.translated_text, parsed_json
     ))
-    
-    return {"status": "ok", "message": "OCR record saved to database", "record_id": record_id}
+
+    # ── Vectorize into RAG store so AI Assistant can query this live FIR ─────
+    # Build a rich natural-language summary of the parsed FIR for semantic search
+    rag_indexed = False
+    try:
+        from services.rag_service import rag_service
+        p = req.parsed_data or {}
+        
+        accused_names = ", ".join(
+            [a.get("name", "").strip() for a in p.get("accused", []) if a.get("name", "").strip()]
+        ) or "Unknown"
+        victim_names = ", ".join(
+            [v.get("name", "").strip() for v in p.get("victims", []) if v.get("name", "").strip()]
+        ) or ""
+
+        fir_summary = (
+            f"LIVE FIR RECORD — FIR No. {req.fir_number}/{req.year} "
+            f"registered at {req.station_name or 'Police Station'}, "
+            f"{req.district_name or 'District'}, Karnataka. "
+            f"Crime Group: {req.crime_group or 'Under Investigation'}. "
+            f"Sections: {req.act_section or 'IPC 1860'}. "
+            f"Complainant: {p.get('complainant_name', 'Unknown')}. "
+            f"Accused persons ({len(p.get('accused', []))}): {accused_names}. "
+            + (f"Victims: {victim_names}. " if victim_names else "")
+            + f"Place of occurrence: {p.get('place_of_occurrence', 'Unknown')}. "
+            f"Date: {p.get('fir_date', req.year)}. "
+            f"SHO/IO: {p.get('sho_name', 'Unknown')} ({p.get('sho_rank', '')}). "
+            f"Court: {p.get('court_name', 'Unknown')}. "
+        )
+
+        # Also add the raw text in chunks of 800 chars for dense retrieval
+        raw_text = req.extracted_text or ""
+        chunks = [fir_summary]
+        if raw_text and len(raw_text) > 50:
+            for i in range(0, min(len(raw_text), 4000), 800):
+                chunk = raw_text[i:i+800].strip()
+                if chunk:
+                    chunks.append(f"FIR {req.fir_number}/{req.year} ({req.station_name}): {chunk}")
+
+        added = await rag_service.add_chunks(
+            chunks=chunks,
+            source_title=f"Live FIR {req.fir_number}/{req.year} — {req.station_name}, {req.district_name}"
+        )
+        rag_indexed = True
+        log.info(f"[RAG] Indexed {added} chunks from FIR {req.fir_number}/{req.year} into vector store")
+    except Exception as rag_err:
+        log.warning(f"[RAG] Failed to index OCR record: {rag_err}")
+
+    return {
+        "status": "ok",
+        "message": "OCR record saved to database and indexed in AI knowledge base",
+        "record_id": record_id,
+        "rag_indexed": rag_indexed,
+    }
 
 
 @router.get("/ocr/records")

@@ -160,6 +160,73 @@ def _bg_model_loader():
             if hasattr(predict_mod, "load_models"):
                 predict_mod.load_models()
                 _log_debug("ML prediction models loaded successfully.")
+
+        # ── Startup OCR Re-indexer ────────────────────────────────────────────
+        # Scan existing ocr_records and index any that aren't already in the
+        # RAG vector store. This ensures old FIRs scraped before the live-index
+        # feature was added are still queryable by the AI Assistant.
+        try:
+            import sqlite3 as _sqlite3
+            import json as _json
+            from services.rag_service import rag_service
+
+            _con = _sqlite3.connect(config.DB_PATH)
+            _con.row_factory = _sqlite3.Row
+            _ocr_rows = _con.execute(
+                "SELECT * FROM ocr_records ORDER BY created_at DESC LIMIT 200"
+            ).fetchall()
+            _con.close()
+
+            if _ocr_rows:
+                # Find titles already in RAG metadata to avoid duplicates
+                existing_titles = {m.get("title", "") for m in rag_service.metadata}
+                to_index = []
+                for row in _ocr_rows:
+                    title = f"Live FIR {row['fir_number']}/{row['year']} — {row['station_name']}, {row['district_name']}"
+                    if title not in existing_titles:
+                        to_index.append((row, title))
+
+                if to_index:
+                    _log_debug(f"[Startup RAG] Re-indexing {len(to_index)} OCR records into vector store...")
+                    import asyncio as _asyncio
+
+                    async def _reindex():
+                        for row, title in to_index:
+                            try:
+                                p = {}
+                                try:
+                                    p = _json.loads(row["parsed_data"] or "{}")
+                                except Exception:
+                                    pass
+                                accused = ", ".join([a.get("name", "") for a in p.get("accused", []) if a.get("name")]) or "Unknown"
+                                summary = (
+                                    f"LIVE FIR RECORD — FIR No. {row['fir_number']}/{row['year']} "
+                                    f"at {row['station_name']}, {row['district_name']}, Karnataka. "
+                                    f"Sections: {row['act_section'] or 'IPC 1860'}. "
+                                    f"Complainant: {p.get('complainant_name', 'Unknown')}. "
+                                    f"Accused: {accused}. "
+                                    f"Place: {p.get('place_of_occurrence', 'Unknown')}. "
+                                    f"Narrative: {p.get('fir_narrative', '')[:300]}."
+                                )
+                                chunks = [summary]
+                                raw = row["extracted_text"] or ""
+                                for i in range(0, min(len(raw), 3200), 800):
+                                    chunk = raw[i:i+800].strip()
+                                    if chunk:
+                                        chunks.append(f"FIR {row['fir_number']}/{row['year']} ({row['station_name']}): {chunk}")
+                                await rag_service.add_chunks(chunks, title)
+                            except Exception as _re:
+                                _log_debug(f"[Startup RAG] Error indexing {title}: {_re}")
+
+                    _loop = _asyncio.new_event_loop()
+                    _loop.run_until_complete(_reindex())
+                    _loop.close()
+                    _log_debug(f"[Startup RAG] Re-indexed {len(to_index)} OCR records into vector store.")
+                else:
+                    _log_debug("[Startup RAG] All OCR records already indexed in RAG.")
+        except Exception as _ocr_idx_err:
+            _log_debug(f"[Startup RAG] Re-indexer skipped: {_ocr_idx_err}")
+
     except Exception as e:
         _log_debug(f"Background ML/loader error: {traceback.format_exc()}")
 
