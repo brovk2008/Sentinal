@@ -9,38 +9,47 @@ import os
 import httpx
 
 PROJECT_ID = os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
-QUICKML_BASE = os.getenv(
-    "CATALYST_QUICKML_BASE",
-    f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}",
-)
+ORG_ID     = os.getenv("CATALYST_ORG_ID", "60073535541")
+QUICKML_BASE = f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}"
 CATALYST_KEY = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
 
-TRANSLATION_URL = os.getenv("CATALYST_NLP_TRANSLATION_URL") or f"{QUICKML_BASE}/nlp/text-translation"
+TRANSLATION_URL = "https://api.catalyst.zoho.in/quickml/api/v1/models/zia/translate"
 TTS_URL = os.getenv("CATALYST_NLP_TTS_URL") or f"{QUICKML_BASE}/nlp/text-to-audio"
 STT_URL = os.getenv("CATALYST_NLP_STT_URL") or f"{QUICKML_BASE}/nlp/audio-to-text"
 
 
 def _headers() -> dict:
+    try:
+        import zcatalyst_sdk as catalyst
+        app = catalyst.initialize()
+        token = app.credential.token()
+        return {
+            "Authorization": f"Zoho-oauthtoken {token}",
+            "CATALYST-ORG": ORG_ID,
+            "Content-Type": "application/json",
+        }
+    except Exception as e:
+        print(f"[Zia NLP] Failed to get live Catalyst token: {e}")
+
     return {
-        "Authorization": f"Catalyst {CATALYST_KEY}",
+        "Authorization": f"Zoho-oauthtoken {CATALYST_KEY}",
+        "CATALYST-ORG": ORG_ID,
         "Content-Type": "application/json",
     }
 
 
 def is_configured() -> bool:
-    return bool(CATALYST_KEY)
+    return True
 
 
 async def translate_text(text: str, source_lang: str = "en", target_lang: str = "kn") -> dict:
     """Translate text using Catalyst Text Translation model."""
-    if not CATALYST_KEY:
-        return {"success": False, "error": "Catalyst NLP not configured", "translated_text": text}
-
     try:
+        headers = _headers()
         async with httpx.AsyncClient(timeout=60) as client:
             r = await client.post(
                 TRANSLATION_URL,
-                headers=_headers(),
+                headers=headers,
                 json={"text": text, "source_language": source_lang, "target_language": target_lang},
             )
             r.raise_for_status()
@@ -48,7 +57,9 @@ async def translate_text(text: str, source_lang: str = "en", target_lang: str = 
             translated = (
                 data.get("translated_text")
                 or data.get("translation")
-                or data.get("result", {}).get("translated_text")
+                or (data.get("data") if isinstance(data.get("data"), str) else None)
+                or (data.get("data") or {}).get("translated_text")
+                or (data.get("result") or {}).get("translated_text")
                 or text
             )
             return {"success": True, "translated_text": translated, "raw": data}

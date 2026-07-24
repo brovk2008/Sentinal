@@ -6,6 +6,8 @@ const sparkData = [
   { v: 72 }, { v: 85 },
 ]
 
+import { ZiaText } from '../layout/ZiaTranslate'
+
 export default function KpiCard({ label, value, change, changeType = 'up', onClick, sparklineData }) {
   const isUp = changeType === 'up'
 
@@ -43,7 +45,7 @@ export default function KpiCard({ label, value, change, changeType = 'up', onCli
         </ResponsiveContainer>
       </div>
 
-      <div className="section-label" style={{ marginBottom: 0 }}>{label}</div>
+      <div className="section-label" style={{ marginBottom: 0 }}><ZiaText>{label}</ZiaText></div>
       <div
         data-testid="kpi-value"
         style={{

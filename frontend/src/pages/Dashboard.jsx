@@ -8,6 +8,7 @@ import CrimeDonut from '../components/charts/CrimeDonut'
 import DistrictBar from '../components/charts/DistrictBar'
 import TrendLine from '../components/charts/TrendLine'
 import RiskGauge from '../components/charts/RiskGauge'
+import { ZiaText } from '../components/layout/ZiaTranslate'
 import {
   fetchKpis, fetchCrimeDistribution, fetchTopOffenders,
   fetchDistrictComparison, fetchMonthlyTrend, fetchRecentTimeline,
@@ -155,8 +156,8 @@ export default function Dashboard() {
       {/* Header Row with War Room Button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Command Center Dashboard</h1>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Project Sentinal — Karnataka State Police</div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}><ZiaText>Command Center Dashboard</ZiaText></h1>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}><ZiaText>Project Sentinal — Karnataka State Police</ZiaText></div>
         </div>
         <button
           className="btn btn-copper"
@@ -218,8 +219,8 @@ export default function Dashboard() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             marginBottom: 12,
           }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>CRIME TREND 2023-2024</div>
-            <div className="mono" style={{ fontSize: 10 }}>Monthly</div>
+            <div className="section-label" style={{ marginBottom: 0 }}><ZiaText>CRIME TREND 2023-2024</ZiaText></div>
+            <div className="mono" style={{ fontSize: 10 }}><ZiaText>Monthly</ZiaText></div>
           </div>
           <div style={{ height: 250 }}>
             <TrendLine data={trend} />
@@ -228,7 +229,7 @@ export default function Dashboard() {
 
         {/* Crime Donut */}
         <div className="card" style={{ padding: 16, minWidth: 0 }}>
-          <div className="section-label">CRIME DISTRIBUTION</div>
+          <div className="section-label"><ZiaText>CRIME DISTRIBUTION</ZiaText></div>
           <div style={{ height: 260 }}>
             <CrimeDonut data={crimeData} total={kpis?.total_cases} />
           </div>
@@ -237,7 +238,7 @@ export default function Dashboard() {
         {/* Recent Timeline */}
         <div className="card" style={{ padding: 16, overflowY: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>RECENT ACTIVITY</div>
+            <div className="section-label" style={{ marginBottom: 0 }}><ZiaText>RECENT ACTIVITY</ZiaText></div>
             <span className="live-dot" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -261,11 +262,11 @@ export default function Dashboard() {
                     flexShrink: 0,
                   }} />
                   <span style={{ fontSize: 11, color: 'var(--text-primary)', fontWeight: 500 }}>
-                    {ev.CrimeGroupName}
+                    <ZiaText>{ev.CrimeGroupName}</ZiaText>
                   </span>
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, marginLeft: 12 }}>
-                  {ev.DistrictName} · {ev.CrimeRegisteredDate}
+                  <ZiaText>{ev.DistrictName}</ZiaText> · {ev.CrimeRegisteredDate}
                 </div>
               </div>
             ))}
@@ -282,7 +283,7 @@ export default function Dashboard() {
       }}>
         {/* Top Offenders */}
         <div className="card" style={{ padding: 16 }}>
-          <div className="section-label">MOST WANTED</div>
+          <div className="section-label"><ZiaText>MOST WANTED</ZiaText></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {offenders.map((o, i) => (
               <div
@@ -303,10 +304,10 @@ export default function Dashboard() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
-                    {o.name}
+                    <ZiaText>{o.name}</ZiaText>
                   </div>
                 </div>
-                <span className="badge badge-copper">{o.case_count} cases</span>
+                <span className="badge badge-copper">{o.case_count} <ZiaText>cases</ZiaText></span>
               </div>
             ))}
           </div>
@@ -314,7 +315,7 @@ export default function Dashboard() {
 
         {/* District Comparison */}
         <div className="card" style={{ padding: 16, minWidth: 0 }}>
-          <div className="section-label">DISTRICT COMPARISON</div>
+          <div className="section-label"><ZiaText>DISTRICT COMPARISON</ZiaText></div>
           <div style={{ height: 230 }}>
             <DistrictBar
               data={districts.districts?.slice(0, 6) || []}
@@ -325,16 +326,16 @@ export default function Dashboard() {
 
         {/* Risk Gauge */}
         <div className="card" style={{ padding: '16px 16px 20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minWidth: 0 }}>
-          <div className="section-label" style={{ alignSelf: 'flex-start', marginBottom: 12 }}>PREDICTIVE RISK ({forecast?.district || 'Bengaluru Urban'})</div>
+          <div className="section-label" style={{ alignSelf: 'flex-start', marginBottom: 12 }}><ZiaText>PREDICTIVE RISK</ZiaText> (<ZiaText>{forecast?.district || 'Bengaluru Urban'}</ZiaText>)</div>
           <RiskGauge value={forecast?.risk_score || 78} />
           <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             {forecast?.risk_factors?.map((f, i) => (
-              <div key={i}>• {f}</div>
+              <div key={i}>• <ZiaText>{f}</ZiaText></div>
             )) || (
                 <>
-                  <div>• Bengaluru Urban spike detected</div>
-                  <div>• Cyber fraud ↑ 23% this quarter</div>
-                  <div>• Narcotics activity in Belagavi</div>
+                  <div>• <ZiaText>Bengaluru Urban spike detected</ZiaText></div>
+                  <div>• <ZiaText>Cyber fraud ↑ 23% this quarter</ZiaText></div>
+                  <div>• <ZiaText>Narcotics activity in Belagavi</ZiaText></div>
                 </>
               )}
           </div>
@@ -342,7 +343,7 @@ export default function Dashboard() {
 
         {/* Alerts Panel */}
         <div className="card" style={{ padding: 16, overflowY: 'auto' }}>
-          <div className="section-label">ACTIVE ALERTS</div>
+          <div className="section-label"><ZiaText>ACTIVE ALERTS</ZiaText></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {alerts.map((a, i) => (
               <div key={a.id || i} style={{
@@ -358,11 +359,11 @@ export default function Dashboard() {
                       a.severity === 'high' ? '#e0a832' : '#4a9ede',
                   }} />
                   <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>
-                    {a.title}
+                    <ZiaText>{a.title}</ZiaText>
                   </span>
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3, marginLeft: 12 }}>
-                  {a.description}
+                  <ZiaText>{a.description}</ZiaText>
                 </div>
               </div>
             ))}
