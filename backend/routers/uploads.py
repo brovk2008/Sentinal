@@ -324,7 +324,10 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
         except Exception as mod_err:
             print(f"[Zia Moderation] failed: {mod_err}")
 
-    # 2. Run Text/OCR Intelligence (PDF or Image)
+    # 2. Run Text/OCR/NLP Intelligence
+    extracted_text = ""
+
+    # Run OCR if it's an image or document
     if file_type == 'document' or file_type == 'image':
         try:
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -334,8 +337,8 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
                 with open(tmp_name, 'rb') as f_read:
                     ocr_res = zia_service.extract_optical_characters(f_read)
                 if ocr_res and ocr_res.get("text"):
-                    text_found = ocr_res.get("text")
-                    summary_parts.append(f"Zia OCR Text Found:\n{text_found[:600]}")
+                    extracted_text = ocr_res.get("text")
+                    summary_parts.append(f"Zia OCR Text Found:\n{extracted_text[:600]}")
                     tags.append("OCR Scanned")
             finally:
                 os.remove(tmp_name)
@@ -343,16 +346,98 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
             print(f"[Zia OCR] failed: {ocr_err}")
 
     # Fallback to Plumber for PDFs
-    if not summary_parts and file_type == 'document':
+    if not extracted_text and file_type == 'document':
         try:
             import pdfplumber
             with pdfplumber.open(io.BytesIO(content)) as pdf:
                 text = "\n".join(p.extract_text() or '' for p in pdf.pages[:5])
             if text:
-                summary_parts.append(f"PDF parsed text:\n{text[:600]}")
+                extracted_text = text
+                summary_parts.append(f"PDF parsed text:\n{extracted_text[:600]}")
                 tags.append("PDF Parsed")
         except:
             pass
+
+    # Run Zia Text Analytics (NER, Keywords, Sentiment) if any text is found
+    if extracted_text:
+        doc_slice = extracted_text[:4000]
+
+        # 2a. Zia NER (Named Entity Recognition)
+        try:
+            ner_res = zia_service.get_NER_prediction([doc_slice])
+            if ner_res:
+                entities = ner_res if isinstance(ner_res, list) else [ner_res]
+                entity_strs = []
+                for e in entities:
+                    if isinstance(e, dict):
+                        ent = e.get("entity") or e.get("text")
+                        cls = e.get("classification") or e.get("type")
+                        if ent and cls:
+                            entity_strs.append(f"{ent} ({cls})")
+                            if cls.upper() in ["PERSON", "ORGANIZATION", "LOCATION"]:
+                                tags.append(ent)
+                    elif isinstance(e, list):
+                        for sub_e in e:
+                            if isinstance(sub_e, dict):
+                                ent = sub_e.get("entity") or sub_e.get("text")
+                                cls = sub_e.get("classification") or sub_e.get("type")
+                                if ent and cls:
+                                    entity_strs.append(f"{ent} ({cls})")
+
+                if not entity_strs and isinstance(ner_res, dict):
+                    ner_data = ner_res.get("ner_data") or ner_res.get("result") or []
+                    for item in (ner_data if isinstance(ner_data, list) else [ner_data]):
+                        if isinstance(item, dict):
+                            ent = item.get("entity") or item.get("text")
+                            cls = item.get("classification") or item.get("type")
+                            if ent and cls:
+                                entity_strs.append(f"{ent} ({cls})")
+                                if cls.upper() in ["PERSON", "ORGANIZATION", "LOCATION"]:
+                                    tags.append(ent)
+
+                if entity_strs:
+                    summary_parts.append(f"Zia NER Entities: {', '.join(entity_strs[:10])}")
+        except Exception as ner_err:
+            print(f"[Zia NER] failed: {ner_err}")
+
+        # 2b. Zia Keyword Extraction
+        try:
+            kw_res = zia_service.get_keyword_extraction([doc_slice])
+            if kw_res:
+                keywords = []
+                if isinstance(kw_res, list):
+                    keywords = kw_res
+                elif isinstance(kw_res, dict):
+                    keywords = kw_res.get("keyword_data") or kw_res.get("keywords") or kw_res.get("result") or []
+
+                kw_list = []
+                for kw in keywords:
+                    if isinstance(kw, dict):
+                        kw_list.append(kw.get("keyword") or kw.get("text"))
+                    elif isinstance(kw, str):
+                        kw_list.append(kw)
+
+                kw_list = [k for k in kw_list if k]
+                if kw_list:
+                    summary_parts.append(f"Zia Keywords: {', '.join(kw_list[:8])}")
+                    for k in kw_list[:4]:
+                        tags.append(k.capitalize())
+        except Exception as kw_err:
+            print(f"[Zia Keywords] failed: {kw_err}")
+
+        # 2c. Zia Sentiment Analysis
+        try:
+            sent_res = zia_service.get_sentiment_analysis([doc_slice])
+            if sent_res:
+                sentiment = ""
+                if isinstance(sent_res, list) and len(sent_res) > 0:
+                    sentiment = sent_res[0].get("sentiment") if sent_res[0] else ""
+                elif isinstance(sent_res, dict):
+                    sentiment = sent_res.get("sentiment") or (sent_res.get("result") or {}).get("sentiment") or ""
+                if sentiment:
+                    summary_parts.append(f"Zia Document Sentiment: {sentiment.upper()}")
+        except Exception as sent_err:
+            print(f"[Zia Sentiment] failed: {sent_err}")
 
     if not summary_parts:
         summary_parts.append(f"Evidence file '{filename}' uploaded. Size: {len(content)} bytes.")
