@@ -482,44 +482,204 @@ async def fetch_fir(req: FIRRequest):
     )
 
 
-
-
 @router.post("/mock-ocr")
-async def mock_ocr(body: dict):
-    """Mock OCR — used when Zia OCR function is not configured."""
-    meta = body.get("fir_metadata", {})
-    return {
-        "success": True,
-        "parsed_data": {
-            "fir_number":           meta.get("fir_number", "0001"),
-            "year":                 meta.get("year", "2024"),
-            "district":             "Bengaluru Urban",
-            "police_station":       "Cubbon Park PS",
-            "court_name":           "JMFC Court",
-            "fir_date":             "01/01/2024",
-            "crime_number":         f"{meta.get('fir_number','1')}/2024",
-            "act_section":          "IPC 420, IPC 34",
-            "occurrence_from_date": "31/12/2023",
-            "occurrence_to_date":   "31/12/2023",
-            "occurrence_from_time": "18:00",
-            "occurrence_to_time":   "18:30",
-            "occurrence_day":       "Sunday",
-            "place_of_occurrence":  "Main Road, Demo Area",
-            "complainant_name":     "Demo Complainant",
-            "complainant_age":      35,
-            "complainant_sex":      "Male",
-            "complainant_phone":    "9876543210",
-            "complainant_address":  "Demo Address, Bengaluru",
-            "fir_contents":         "[Mock OCR] Real OCR requires Zia function deployment.",
-            "action_taken":         "FIR registered, investigation initiated",
-            "sho_name":             "Inspector Demo",
-            "has_complainant_signature": True,
-            "has_sho_signature":         True,
-            "accused":  [{"sl_no": 1, "name": "Accused Demo 1"}],
-            "victims":  [{"sl_no": 1, "name": "Victim Demo 1"}],
-            "property": [],
-        },
+async def real_ocr(body: dict):
+    """
+    Real OCR using pdfplumber — extracts text from the actual PDF bytes
+    and parses KSP FIR fields: complainant, accused, IPC sections, dates, SHO etc.
+    Falls back to graceful partial extraction if parsing is incomplete.
+    """
+    import base64
+    import re
+    import io
+
+    meta     = body.get("fir_metadata", {})
+    pdf_b64  = body.get("pdf_b64", "")
+
+    raw_text = ""
+    pages_text = []
+
+    # ── Step 1: Extract raw text from PDF bytes ─────────────────────────────
+    if pdf_b64:
+        try:
+            import pdfplumber
+            pdf_bytes = base64.b64decode(pdf_b64)
+            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                for page in pdf.pages:
+                    t = page.extract_text() or ""
+                    pages_text.append(t)
+            raw_text = "\n".join(pages_text).strip()
+        except Exception as e:
+            log.warning(f"[RealOCR] pdfplumber failed: {e}")
+
+    if not raw_text:
+        return {"success": False, "error": "Could not extract text from PDF — PDF may be image-based or corrupted."}
+
+    # ── Step 2: Smart regex parser for KSP FIR format ───────────────────────
+    def find(patterns, text=raw_text, default=""):
+        for p in patterns:
+            m = re.search(p, text, re.IGNORECASE | re.MULTILINE)
+            if m:
+                return m.group(1).strip()
+        return default
+
+    def find_block(start_pattern, end_pattern, text=raw_text):
+        m = re.search(rf"{start_pattern}(.*?){end_pattern}", text, re.IGNORECASE | re.DOTALL)
+        return m.group(1).strip() if m else ""
+
+    # Core FIR identifiers
+    fir_number = find([
+        r"FIR\s*No\.?\s*[:\-]?\s*(\d+)",
+        r"Crime\s*No\.?\s*[:\-]?\s*(\d+)",
+        r"Case\s*No\.?\s*[:\-]?\s*(\d+)",
+    ], default=meta.get("fir_number", ""))
+
+    year = find([
+        r"Year\s*[:\-]?\s*(\d{4})",
+        r"(\d{4})\s*/\s*\d+",
+        r"/(\d{4})",
+    ], default=meta.get("year", "2024"))
+
+    fir_date = find([
+        r"Date\s*of\s*FIR\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})",
+        r"FIR\s*Date\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})",
+        r"Date\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})",
+    ])
+
+    # Act / IPC sections
+    act_section = find([
+        r"(?:U/?[Ss]|Under\s+[Ss]ection|[Ss]ec(?:tion)?s?)\.?\s*[:\-]?\s*([\d\s,/A-Za-z\(\)]+(?:IPC|BNS|CrPC|POCSO|IT Act|NDPS|Arms Act|MV Act)[^\n]*)",
+        r"(?:Sections?|Acts?)\s*[:\-]?\s*([^\n]{5,80})",
+        r"(IPC\s*[\d\s,/A-Za-z]+)",
+        r"(BNS\s*[\d\s,/A-Za-z]+)",
+    ])
+
+    # Place of occurrence
+    place = find([
+        r"[Pp]lace\s*of\s*[Oo]ccurrence\s*[:\-]?\s*([^\n]{5,100})",
+        r"[Ll]ocation\s*[:\-]?\s*([^\n]{5,100})",
+        r"[Aa]ddress\s*of\s*[Oo]ffence\s*[:\-]?\s*([^\n]{5,100})",
+    ])
+
+    # Occurrence dates/times
+    occ_from = find([r"[Ff]rom\s*[Dd]ate\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})"])
+    occ_to   = find([r"[Tt]o\s*[Dd]ate\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})"])
+    occ_from_time = find([r"[Ff]rom\s*[Tt]ime\s*[:\-]?\s*(\d{1,2}:\d{2})"])
+    occ_to_time   = find([r"[Tt]o\s*[Tt]ime\s*[:\-]?\s*(\d{1,2}:\d{2})"])
+
+    # Complainant / Informant
+    complainant_name = find([
+        r"[Cc]omplainant(?:'s)?\s*[Nn]ame\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+        r"[Ii]nformant\s*[Nn]ame\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+        r"[Nn]ame\s+of\s+[Cc]omplainant\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+    ])
+    complainant_age = find([r"[Aa]ge\s*[:\-]?\s*(\d{1,3})\s*[Yy]"])
+    complainant_sex = find([r"[Ss]ex\s*[:\-]?\s*(Male|Female|Transgender)", r"[Gg]ender\s*[:\-]?\s*(Male|Female|Transgender)"])
+    complainant_phone = find([r"(?:Phone|Mobile|Contact)\s*(?:No\.?)?\s*[:\-]?\s*(\+?[\d\s\-]{8,15})"])
+    complainant_addr = find([
+        r"[Cc]omplainant'?s?\s*[Aa]ddress\s*[:\-]?\s*([^\n]{10,120})",
+        r"[Aa]ddress\s*[:\-]?\s*([^\n]{10,120})",
+    ])
+
+    # District and Police Station (from text itself, not just metadata)
+    district_text = find([
+        r"[Dd]istrict\s*[:\-]?\s*([A-Za-z\s]{3,40})",
+    ], default=meta.get("district_id", ""))
+
+    station_text = find([
+        r"(?:Police\s+)?[Ss]tation\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+        r"[Tt]hana\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+        r"P\.?S\.?\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+    ], default=meta.get("station_id", ""))
+
+    # SHO / IO details
+    sho_name = find([
+        r"(?:SHO|Station\s*House\s*Officer|Inspector|Sub-Inspector|SI|ASI)\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+        r"[Ss]igned?\s+by\s*[:\-]?\s*([A-Za-z\s\.]{3,50})",
+    ])
+
+    # Accused — extract all names from accused section
+    accused = []
+    accused_block = find_block(
+        r"[Aa]ccused\s*[Dd]etails?",
+        r"(?:[Cc]omplainant|[Vv]ictim|[Pp]roperty|[Ss]ection|[Oo]ccurrence|[Ss]ignature)"
+    )
+    if not accused_block:
+        accused_block = find_block(r"[Aa]rrestee|[Ss]uspect", r"(?:[Cc]omplainant|[Vv]ictim|[Ss]ection)")
+
+    if accused_block:
+        names = re.findall(
+            r"(?:\d+[\.\)]\s*)?([A-Z][a-z]+(?:\s+[A-Z@][a-zA-Z]+){1,4})(?:\s*(?:S/O|D/O|W/O|Alias|@))",
+            accused_block
+        )
+        if not names:
+            names = re.findall(r"(?:\d+[\.\)]\s*)([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})", accused_block)
+        for i, n in enumerate(names[:10], 1):
+            accused.append({"sl_no": i, "name": n.strip()})
+
+    # If no accused found via block, try global search for accused names near "A-1", "A-2" markers
+    if not accused:
+        a_matches = re.findall(r"[Aa]-?\d+\s*[:\.\)]\s*([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})", raw_text)
+        for i, n in enumerate(a_matches[:10], 1):
+            accused.append({"sl_no": i, "name": n.strip()})
+
+    # Victims
+    victims = []
+    victim_block = find_block(
+        r"[Vv]ictim\s*[Dd]etails?",
+        r"(?:[Ss]ection|[Oo]ccurrence|[Ss]ignature|[Pp]roperty|[Aa]ccused)"
+    )
+    if victim_block:
+        vnames = re.findall(r"(?:\d+[\.\)]\s*)([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})", victim_block)
+        for i, n in enumerate(vnames[:5], 1):
+            victims.append({"sl_no": i, "name": n.strip()})
+
+    # Crime group / nature
+    crime_group = find([
+        r"[Cc]rime\s*[Gg]roup\s*[:\-]?\s*([^\n]{5,80})",
+        r"[Nn]ature\s*of\s*[Cc]rime\s*[:\-]?\s*([^\n]{5,80})",
+        r"[Oo]ffence\s*[:\-]?\s*([^\n]{5,80})",
+    ])
+
+    action_taken = find([
+        r"[Aa]ction\s*[Tt]aken\s*[:\-]?\s*([^\n]{5,200})",
+        r"[Ii]nvestigation\s*[Oo]fficer\s*[:\-]?\s*([^\n]{5,100})",
+    ])
+
+    parsed = {
+        "fir_number":           fir_number or meta.get("fir_number", ""),
+        "year":                 year or meta.get("year", ""),
+        "district":             district_text,
+        "police_station":       station_text,
+        "court_name":           find([r"[Cc]ourt\s*[:\-]?\s*([^\n]{5,60})"]),
+        "fir_date":             fir_date,
+        "crime_number":         f"{fir_number}/{year}" if fir_number and year else "",
+        "act_section":          act_section,
+        "crime_group":          crime_group,
+        "occurrence_from_date": occ_from,
+        "occurrence_to_date":   occ_to,
+        "occurrence_from_time": occ_from_time,
+        "occurrence_to_time":   occ_to_time,
+        "occurrence_day":       find([r"[Dd]ay\s*[:\-]?\s*([A-Za-z]+day)"]),
+        "place_of_occurrence":  place,
+        "complainant_name":     complainant_name,
+        "complainant_age":      int(complainant_age) if complainant_age and complainant_age.isdigit() else None,
+        "complainant_sex":      complainant_sex,
+        "complainant_phone":    complainant_phone,
+        "complainant_address":  complainant_addr,
+        "fir_contents":         raw_text[:3000],
+        "action_taken":         action_taken,
+        "sho_name":             sho_name,
+        "has_complainant_signature": bool(re.search(r"[Cc]omplainant.{0,20}[Ss]ignature", raw_text)),
+        "has_sho_signature":         bool(re.search(r"SHO|[Ss]igned|[Ss]ignature\s+of\s+[Ss]tation", raw_text)),
+        "accused":              accused,
+        "victims":              victims,
+        "property":             [],
+        "_raw_pages":           len(pages_text),
+        "_raw_chars":           len(raw_text),
     }
+
+    return {"success": True, "parsed_data": parsed, "engine": "pdfplumber"}
 
 
 # ── OCR Record Persistence & Translation Endpoints ─────────────────────────
