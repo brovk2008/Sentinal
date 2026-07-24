@@ -3,7 +3,6 @@ from fastapi import APIRouter, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from database import query, query_one
-from services.rag_service import rag_service
 from config import config
 from services.quickml_service import call_ai_messages
 import httpx
@@ -11,7 +10,6 @@ import json
 import os
 import re
 import time
-import numpy as np
 
 router = APIRouter()
 
@@ -60,6 +58,9 @@ async def intelligence_query(req: QueryRequest):
     start_time = time.perf_counter()
     
     # Retrieve relevant documents using semantic search
+    from services.rag_service import rag_service
+    import numpy as np
+
     retrieved = await rag_service.retrieve(req.query, top_k=5)
     
     # Get query embedding vector norm for debugging

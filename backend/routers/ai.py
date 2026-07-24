@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 from database import query_one, query
-from services.ml_service import ml_service
 
 router = APIRouter()
 
 @router.get("/forecast/top-risk")
 async def top_risk():
     """Predictive Risk Gauge endpoint returning top risk district and metrics."""
+    from services.ml_service import ml_service
     # Find the district with the highest crime rate
     top_district = query_one("""
         SELECT d.DistrictName, d.DistrictID, COUNT(*) as cnt

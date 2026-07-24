@@ -1,12 +1,12 @@
-/**
- * Criminology Engine Service
- * Implements real-world criminological pattern analysis:
- * 1. Modus Operandi (MO) Series Linking
- * 2. Near Repeat Risk Forecasting (Bowers & Johnson)
- * 3. Cross-FIR Entity Intersect (Syndicate Roster)
- * 4. Spree & Repeat Victimization Detection
- * 5. Predictive Temporal-Spatial Incident Forecasting
- */
+"""
+Criminology Engine Service
+Implements real-world criminological pattern analysis:
+1. Modus Operandi (MO) Series Linking
+2. Near Repeat Risk Forecasting (Bowers & Johnson)
+3. Cross-FIR Entity Intersect (Syndicate Roster)
+4. Spree & Repeat Victimization Detection
+5. Predictive Temporal-Spatial Incident Forecasting
+"""
 import math
 import json
 import sqlite3

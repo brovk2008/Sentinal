@@ -5,9 +5,6 @@ All ML-powered crime prediction endpoints.
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-import joblib
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from database import query, query_one
 import os
@@ -24,6 +21,7 @@ _models = {}
 
 def load_models():
     global _models
+    import joblib
     model_files = {
         'hotspot':        'hotspot_v2.joblib',
         'crime_type':     'crime_type_predictor.joblib',
