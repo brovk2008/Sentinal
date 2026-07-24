@@ -495,11 +495,26 @@ async def predict_next(district_id: Optional[int] = Query(None)):
 
 @router.get("/test-glm")
 async def test_glm():
+    sdk_log = []
+    token = None
+    try:
+        sdk_log.append("Attempting import zcatalyst_sdk...")
+        import zcatalyst_sdk as catalyst
+        sdk_log.append("Initializing catalyst...")
+        app = catalyst.initialize()
+        sdk_log.append("Fetching app.credential.token()...")
+        token = app.credential.token()
+        sdk_log.append(f"Token obtained (len={len(token) if token else 0})")
+    except Exception as e:
+        import traceback
+        sdk_log.append(f"SDK Error: {e}")
+        sdk_log.append(traceback.format_exc())
+
     try:
         from services.quickml_service import call_ai
         res = await call_ai("You are a helpful assistant.", "Hello! Respond with 'QuickML is working'")
-        return {"success": True, "res": res}
+        return {"success": True, "res": res, "sdk_log": sdk_log, "token": token[:10] + "..." if token else None}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": str(e), "sdk_log": sdk_log}
 
 
