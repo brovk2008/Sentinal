@@ -158,12 +158,34 @@ def create_uploaded_files_table():
             mime_type   TEXT,
             stratus_key TEXT,
             stratus_url TEXT,
-            ai_summary  TEXT,
-            ai_tags     TEXT,
-            user_id     TEXT DEFAULT 'anonymous',
-            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            file_size   INTEGER,
+            extracted_text TEXT,
+            zia_metadata   TEXT,
+            rag_synced     INTEGER DEFAULT 0,
+            uploaded_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+
+def create_scrape_table():
+    try:
+        from scrapers.scraper_store import init_scrape_table
+        init_scrape_table()
+    except Exception as e:
+        _exec("""
+            CREATE TABLE IF NOT EXISTS fir_scrape_index (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                district_id     INTEGER,
+                district        TEXT,
+                police_station  TEXT,
+                station_id      TEXT,
+                fir_number      TEXT,
+                year            TEXT,
+                status          TEXT,
+                pdf_stratus_key TEXT DEFAULT '',
+                scraped_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
     try:
         con = _con()
         con.execute("ALTER TABLE uploaded_files ADD COLUMN user_id TEXT DEFAULT 'anonymous'")
@@ -379,7 +401,7 @@ def init_all_tables():
         seed_evidence_boards()
         seed_crime_syndicates()
 
-        print("[init_db] ✅ All tables ready.")
+        print("[init_db] All tables ready.")
     except Exception as e:
         import traceback
         print(f"[init_db] ERROR: {e}\n{traceback.format_exc()}")
