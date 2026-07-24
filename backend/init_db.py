@@ -186,13 +186,26 @@ def create_scrape_table():
                 scraped_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-    try:
-        con = _con()
-        con.execute("ALTER TABLE uploaded_files ADD COLUMN user_id TEXT DEFAULT 'anonymous'")
-        con.commit()
-        con.close()
-    except Exception:
-        pass
+
+def create_ocr_records_table():
+    _exec("""
+        CREATE TABLE IF NOT EXISTS ocr_records (
+            id              TEXT PRIMARY KEY,
+            fir_number      TEXT,
+            year            TEXT,
+            district_id     TEXT,
+            district_name   TEXT,
+            station_id      TEXT,
+            station_name    TEXT,
+            act_section     TEXT,
+            crime_group     TEXT,
+            extracted_text  TEXT,
+            translated_text TEXT,
+            parsed_data     TEXT,
+            user_id         TEXT DEFAULT 'anonymous',
+            created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
 
 # ─── Seed data ──────────────────────────────────────────────────────────────
@@ -394,6 +407,7 @@ def init_all_tables():
         create_crime_syndicates()
         create_uploaded_files_table()
         create_scrape_table()
+        create_ocr_records_table()
 
         # Seed synthetic data if tables are empty
         seed_financial_transactions()

@@ -25,6 +25,7 @@ import DataIngestion from './pages/DataIngestion'
 import PatternIntel from './pages/PatternIntel'
 import Profile from './pages/Profile'
 import DataUploadIntel from './pages/DataUploadIntel'
+import OCRRecords from './pages/OCRRecords'
 import AuthGuard from './components/AuthGuard'
 import BackendWakeup from './components/layout/BackendWakeup'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -118,6 +119,7 @@ export default function App() {
           <Route path="/patterns"           element={<PatternIntel />} />
           <Route path="/profile"            element={<Profile />} />
           <Route path="/upload"             element={<DataUploadIntel />} />
+          <Route path="/ocr-records"        element={<OCRRecords />} />
         </Route>
       </Routes>
     </HashRouter>

@@ -7,8 +7,13 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from pydantic import BaseModel
+from typing import Optional, List
+from database import query, query_one, execute
+from services import zia_nlp_service as zia
+import uuid
+import json
 
 log    = logging.getLogger(__name__)
 router = APIRouter()
@@ -515,3 +520,98 @@ async def mock_ocr(body: dict):
             "property": [],
         },
     }
+
+
+# ── OCR Record Persistence & Translation Endpoints ─────────────────────────
+
+class SaveOCRRequest(BaseModel):
+    id: Optional[str] = None
+    fir_number: str
+    year: str
+    district_id: Optional[str] = ""
+    district_name: Optional[str] = ""
+    station_id: Optional[str] = ""
+    station_name: Optional[str] = ""
+    act_section: Optional[str] = ""
+    crime_group: Optional[str] = ""
+    extracted_text: Optional[str] = ""
+    translated_text: Optional[str] = ""
+    parsed_data: Optional[dict] = {}
+
+class TranslateOCRRequest(BaseModel):
+    text: str
+    source_lang: str = "auto"
+    target_lang: str = "en"
+
+@router.post("/ocr/save")
+async def save_ocr_record(req: SaveOCRRequest):
+    """Save an extracted OCR record into SQLite for account-wide access across tabs."""
+    record_id = req.id or f"ocr-{uuid.uuid4().hex[:8]}"
+    parsed_json = json.dumps(req.parsed_data or {})
+    
+    execute("""
+        INSERT INTO ocr_records (
+            id, fir_number, year, district_id, district_name,
+            station_id, station_name, act_section, crime_group,
+            extracted_text, translated_text, parsed_data
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            extracted_text=excluded.extracted_text,
+            translated_text=excluded.translated_text,
+            parsed_data=excluded.parsed_data,
+            created_at=CURRENT_TIMESTAMP
+    """, (
+        record_id, req.fir_number, req.year, req.district_id, req.district_name,
+        req.station_id, req.station_name, req.act_section, req.crime_group,
+        req.extracted_text, req.translated_text, parsed_json
+    ))
+    
+    return {"status": "ok", "message": "OCR record saved to database", "record_id": record_id}
+
+
+@router.get("/ocr/records")
+async def get_ocr_records(q: Optional[str] = None, year: Optional[str] = None):
+    """Retrieve stored OCR records across all cases and stations."""
+    sql = "SELECT * FROM ocr_records WHERE 1=1"
+    params = []
+    if year:
+        sql += " AND year = ?"
+        params.append(year)
+    if q:
+        sql += " AND (fir_number LIKE ? OR district_name LIKE ? OR station_name LIKE ? OR extracted_text LIKE ? OR parsed_data LIKE ?)"
+        params.extend([f"%{q}%", f"%{q}%", f"%{q}%", f"%{q}%", f"%{q}%"])
+    sql += " ORDER BY created_at DESC LIMIT 100"
+    
+    rows = query(sql, tuple(params))
+    results = []
+    for r in rows:
+        item = dict(r)
+        if item.get("parsed_data"):
+            try:
+                item["parsed_data"] = json.loads(item["parsed_data"])
+            except Exception:
+                pass
+        results.append(item)
+    return {"status": "ok", "total": len(results), "records": results}
+
+
+@router.get("/ocr/records/{record_id}")
+async def get_single_ocr_record(record_id: str):
+    """Retrieve single detailed OCR record."""
+    row = query_one("SELECT * FROM ocr_records WHERE id = ?", (record_id,))
+    if not row:
+        raise HTTPException(status_code=404, detail="OCR record not found")
+    item = dict(row)
+    if item.get("parsed_data"):
+        try:
+            item["parsed_data"] = json.loads(item["parsed_data"])
+        except Exception:
+            pass
+    return item
+
+
+@router.post("/ocr/translate")
+async def translate_ocr_content(req: TranslateOCRRequest, request: Request):
+    """Dynamically translate raw OCR or FIR document text using Catalyst NLP."""
+    res = await zia.translate_text(req.text, req.source_lang, req.target_lang, request=request)
+    return res

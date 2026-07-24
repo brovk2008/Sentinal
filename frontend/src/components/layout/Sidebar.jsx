@@ -33,6 +33,7 @@ export default function Sidebar() {
         { path: '/map', icon: <Icon name="map" size={13} />, label: t('nav.map') },
         { path: '/persons', icon: <Icon name="persons" size={13} />, label: t('nav.persons') },
         { path: '/fir-search', icon: <Icon name="fir" size={13} />, label: t('nav.firsearch') },
+        { path: '/ocr-records', icon: <Icon name="evidence" size={13} />, label: 'OCR Intelligence Store' },
       ],
     },
     {

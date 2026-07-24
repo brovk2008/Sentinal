@@ -33,6 +33,7 @@ export default function Topbar() {
   const switchLanguage = (code) => {
     i18n.changeLanguage(code)
     localStorage.setItem('sentinal_lang', code)
+    window.dispatchEvent(new CustomEvent('sentinal-language-changed', { detail: { lang: code } }))
     setShowLang(false)
   }
 

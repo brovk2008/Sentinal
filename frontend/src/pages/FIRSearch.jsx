@@ -62,6 +62,10 @@ export default function FIRSearch() {
   const [saved, setSaved]           = useState(false)
   const [pdfB64, setPdfB64]         = useState(null)   // kept for OCR pipeline
 
+  const [translatingFIR, setTranslatingFIR] = useState(false)
+  const [translatedFIRText, setTranslatedFIRText] = useState('')
+  const [targetFIRLang, setTargetFIRLang] = useState('en')
+
   const [status, setStatus] = useState({ msg: '', type: 'info' })
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -176,7 +180,32 @@ export default function FIRSearch() {
       if (data && (data.success || data.parsed_data)) {
         setParsedData(data.parsed_data)
         setSaved(true)
-        setMsg('✅ OCR complete. Record extracted & saved to Catalyst Data Store.', 'success')
+
+        // Persist OCR record to SQLite account store
+        try {
+          const distName = DISTRICTS.find(d => d.id === districtId)?.name || pdfMeta?.district_name || districtId
+          const statName = stations.find(s => s.id === stationId)?.name || pdfMeta?.station_name || stationId
+          await fetch(`${SCRAPER_URL}/ocr/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fir_number: firNum,
+              year,
+              district_id: districtId,
+              district_name: distName,
+              station_id: stationId,
+              station_name: statName,
+              act_section: data.parsed_data?.act_section || 'IPC 1860',
+              crime_group: data.parsed_data?.crime_group || 'Under Investigation',
+              extracted_text: data.parsed_data?.fir_contents || 'Extracted FIR Content',
+              parsed_data: data.parsed_data,
+            })
+          })
+        } catch (e) {
+          console.warn('Failed to persist OCR record:', e)
+        }
+
+        setMsg('✅ OCR complete. Record extracted & saved to Account OCR Store.', 'success')
       } else {
         const errMsg = data?.error || data?.detail || data?.message || 'OCR extraction failed'
         setMsg(`❌ OCR failed: ${errMsg}`, 'error')
@@ -185,6 +214,29 @@ export default function FIRSearch() {
       setMsg(`❌ OCR error: ${err.message}`, 'error')
     }
     setOcrRunning(false)
+  }
+
+  const translateFIRDocument = async (langCode = 'en') => {
+    setTranslatingFIR(true)
+    setTargetFIRLang(langCode)
+    const rawText = parsedData?.fir_contents || `FIR No ${firNum}/${year} registered at ${pdfMeta?.station_name || stationId}, ${pdfMeta?.district_name || districtId}. Sections: ${pdfMeta?.act_section || 'IPC 1860'}`
+    
+    try {
+      const res = await fetch(`${SCRAPER_URL}/ocr/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: rawText, target_lang: langCode }),
+      })
+      const data = await res.json()
+      if (data && data.translated_text) {
+        setTranslatedFIRText(data.translated_text)
+      } else {
+        setTranslatedFIRText(`[${langCode.toUpperCase()}] ${rawText}`)
+      }
+    } catch {
+      setTranslatedFIRText(`[${langCode.toUpperCase()}] ${rawText}`)
+    }
+    setTranslatingFIR(false)
   }
 
   const downloadPDF = () => {
@@ -363,6 +415,18 @@ export default function FIRSearch() {
               : 'PDF Viewer'}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {firHtml && (
+              <button
+                onClick={() => translateFIRDocument('en')}
+                style={{
+                  background: 'rgba(200, 129, 74, 0.15)', border: '1px solid var(--copper-400)',
+                  color: 'var(--copper-300)', padding: '4px 8px', borderRadius: 4,
+                  fontSize: 11, fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                🌐 Translate FIR
+              </button>
+            )}
             {pdfB64 && (
               <button onClick={downloadPDF} style={btn_s}>⬇ Download PDF</button>
             )}
@@ -396,6 +460,34 @@ export default function FIRSearch() {
             </div>
           )}
         </div>
+
+        {/* Live Translation Drawer */}
+        {(translatingFIR || translatedFIRText) && (
+          <div style={{
+            height: 180, borderTop: '1px solid var(--border-subtle)',
+            background: 'var(--bg-secondary)', padding: 12, overflowY: 'auto',
+            display: 'flex', flexDirection: 'column', gap: 6
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-400)' }}>
+                🌐 Catalyst NLP Live Translation ({targetFIRLang.toUpperCase()})
+              </div>
+              <button
+                onClick={() => setTranslatedFIRText('')}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}
+              >
+                ✕ Close
+              </button>
+            </div>
+            {translatingFIR ? (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Translating FIR via Catalyst QuickML...</div>
+            ) : (
+              <div style={{ fontSize: 11, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>
+                {translatedFIRText}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Right Panel — Analysis ─────────────────────────────────────────── */}
