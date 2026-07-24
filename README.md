@@ -110,8 +110,11 @@ Interactive force-directed graph built with Vis-Network mapping associations bet
 
 ### 🤖 AI Intelligence Assistant (RAG)
 Query case files in natural language:
-> *"List repeat offenders in Bengaluru City linked to cyber fraud cases"*  
-> *"What are the dominant IPC sections for theft in Hubballi-Dharwad?"*
+- *"List repeat offenders in Bengaluru City linked to cyber fraud cases"*  
+- *"What are the dominant IPC sections for theft in Hubballi-Dharwad?"*
+
+### 👁️ Catalyst Vision VLM Integration
+Using `VL-Qwen3.6-35B-A3B` serving on `/vlm/chat`, investigators can upload evidence photos, CCTV frames, or suspect boards. The model analyzes visual context, extracts details, and automatically indexes the information into the RAG vector store.
 
 ---
 
@@ -123,8 +126,8 @@ Query case files in natural language:
 | 2 | **Web Client / Slate** | Hosts the Vite React frontend client application with relative asset bundling. |
 | 3 | **Stratus** | Cloud storage for scraped FIR PDFs (`sentinal-fir-pdfs` bucket). |
 | 4 | **SmartBrowz** | Spins up 8 parallel headless Chrome webdrivers to scrape the KSP portal. |
-| 5 | **QuickML** | Chat model serving (GLM-4.7-Flash) and feature-extraction embeddings. |
-| 6 | **Zia** | OCR engine used to extract FIR fields and resolve portal image captchas. |
+| 5 | **QuickML** | Model serving (GLM-4.7-Flash for text chat, VL-Qwen3.6-35B-A3B for vision chat) and feature embeddings. |
+| 6 | **Zia** | OCR engine used to extract FIR fields, translate language, and analyze faces. |
 | 7 | **DataStore** | Stores structured application settings and scraper tracking indexes. |
 | 8 | **Authentication** | User login and authorization management. |
 
@@ -138,10 +141,13 @@ sentinal/
 │   ├── Dockerfile
 │   ├── main.py                        ← FastAPI entrypoint
 │   ├── routers/
-│   │   └── fir_scraper.py             ← FIR fetch, synthetic generator, & OCR
-│   ├── scrapers/
-│   │   ├── ksp_scraper.py             ← SmartBrowz browser grid crawler
-│   │   └── scraper_store.py           ← Stratus PDF upload + DB indexer
+│   │   ├── fir_scraper.py             ← FIR fetch, synthetic generator, & OCR
+│   │   ├── board.py                   ← Evidence Board & VLM image analysis
+│   │   ├── brain.py                   ← RAG assistant & canvas connect dots
+│   │   └── uploads.py                 ← Secure Stratus file uploading & RAG indexing
+│   ├── services/
+│   │   ├── quickml_service.py         ← Catalyst QuickML REST Client (GLM + VLM)
+│   │   └── rag_service.py             ← Local SQLite + embeddings search index
 │   └── data/
 │       ├── sentinal.db                ← Relational database (SQLite)
 │       └── embeddings.npy.gz          ← Compressed RAG vectors
@@ -151,16 +157,78 @@ sentinal/
 │       ├── api.js                     ← Centralized API client wrapper
 │       ├── utils/
 │       │   └── firHtmlGenerator.js    ← KSP Form 1 HTML document generator
-│       ├── components/layout/
-│       │   ├── Sidebar.jsx            ← Navigation & logo branding
-│       │   └── Topbar.jsx
+│       ├── components/
+│       │   └── layout/
+│       │       ├── Sidebar.jsx        ← Navigation & logo branding
+│       │       └── Topbar.jsx
 │       └── pages/
+│           ├── ConnectionsBoard.jsx   ← Interactive ReactFlow canvas
+│           ├── EvidenceBoard.jsx      ← Pinboard evidence uploads & suspect matching
 │           ├── FIRSearch.jsx          ← Live FIR lookup, viewer, & OCR
 │           ├── DataIngestion.jsx      ← Ingestion dashboard & PDF actions
-│           ├── Dashboard.jsx
-│           ├── GeospatialMap.jsx
-│           └── NetworkGraph3D.jsx
-└── catalyst.json                      ← Catalyst resource deployment config
+│           └── GeospatialMap.jsx      ← Interactive crime heatmaps
+├── catalyst.json                      ← Catalyst resource deployment config
+└── main.py                            ← AppSail startup wrapper
+```
+
+---
+
+## 🚀 Running Locally
+
+### Prerequisites
+- **Python 3.11**
+- **Node.js 18+** & **npm**
+- **Catalyst CLI** (`npm install -g zcatalyst-cli`)
+
+### 1. Backend Setup (FastAPI)
+1. Navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Configure your local environment variables in `backend/.env`:
+   ```env
+   SENTINAL_PROJECT_ID=50170000000065001
+   SENTINAL_ORG_ID=60073535541
+   SENTINAL_QUICKML_KEY=your_catalyst_oauth_token
+   ```
+4. Start the FastAPI development server:
+   ```bash
+   python main.py
+   ```
+   The backend will be running on `http://localhost:9000`.
+
+### 2. Frontend Setup (React + Vite)
+1. Navigate to the `frontend/` directory:
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite frontend development server:
+   ```bash
+   npm run dev
+   ```
+   The application will be running on `http://localhost:5173`.
+
+---
+
+## ☁️ Deploying to Catalyst
+
+To deploy the entire project (backend AppSail, frontend Web Client, and Advanced I/O functions) to Zoho Catalyst, run:
+
+```bash
+catalyst deploy
+```
+
+*Note: For presentation deployments, spinners can be suppressed using standard PowerShell chaining:*
+```powershell
+cmd /c "call catalyst deploy < NUL"
 ```
 
 ---
