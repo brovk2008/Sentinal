@@ -10,6 +10,7 @@
 [![Live Slate App](https://img.shields.io/badge/🌐_Slate_App-sentinal--peak.onslate.in-darkred?style=for-the-badge)](https://sentinal-peak.onslate.in)
 [![Powered by](https://img.shields.io/badge/Powered_by-Catalyst_by_Zoho-blue?style=for-the-badge)](https://catalyst.zoho.com)
 [![Status](https://img.shields.io/badge/Status-Live_&_Verified-brightgreen?style=for-the-badge)]()
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-orange?style=for-the-badge)](https://creativecommons.org/licenses/by/4.0/)
 
 > **Transforming fragmented FIR records into a living intelligence ecosystem —**
 > real-time scraping, AI-powered investigation, predictive hotspot mapping,
@@ -247,3 +248,25 @@ Built with 🔥 on [Catalyst by Zoho](https://catalyst.zoho.com)
 **[🌐 Slate App URL](https://sentinal-peak.onslate.in)**
 
 </div>
+
+---
+
+## 📄 License & Attribution
+
+This project is licensed under the **Creative Commons Attribution 4.0 International (CC BY 4.0)** license.
+
+> **You are free to use, share, remix, and build upon this project — even commercially —  
+> as long as you give appropriate credit to the original author.**
+
+### Required Attribution Format
+
+If you use this project or any part of it, you must include:
+
+```
+SENTINAL by Vaibhav Kumar (Team MECH)
+https://github.com/brovk2008/Sentinal
+```
+
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-orange?style=for-the-badge)](https://creativecommons.org/licenses/by/4.0/)
+
+© 2026 Vaibhav Kumar (Team MECH). All rights reserved under CC BY 4.0.
