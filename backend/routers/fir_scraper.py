@@ -143,7 +143,7 @@ def _generate_synthetic_fir_pdf(req: FIRRequest) -> dict:
         db_case = query_one("""
             SELECT cm.*, ch.CrimeGroupName, u.UnitName, d.DistrictName
             FROM CaseMaster cm
-            LEFT JOIN CaseHeads ch ON cm.CrimeHeadID = ch.CrimeHeadID
+            LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
             LEFT JOIN Unit u ON cm.PoliceStationID = u.UnitID
             LEFT JOIN District d ON u.DistrictID = d.DistrictID
             WHERE cm.CaseMasterID = ? OR cm.CrimeNo LIKE ?
