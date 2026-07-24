@@ -58,28 +58,30 @@ def get_case_by_crime_no(crime_no: str) -> dict | None:
 async def debug_quickml(request: Request):
     """Diagnostic endpoint — test QuickML auth + response chain live on AppSail."""
     import os
-    from services.quickml_service import _get_auth_headers, GLM_CHAT_URL, PROJECT_ID, ORG_ID, DEFAULT_LLM_MODEL
-    
+    from services.quickml_service import _get_catalyst_token, GLM_CHAT_URL, PROJECT_ID, ORG_ID, DEFAULT_LLM_MODEL
+
     result = {
         "project_id": PROJECT_ID,
         "org_id": ORG_ID,
         "glm_url": GLM_CHAT_URL,
         "default_model": DEFAULT_LLM_MODEL,
-        "sentinel_quickml_key_set": bool(os.getenv("SENTINAL_QUICKML_KEY")),
-        "openrouter_key_set": bool(os.getenv("SENTINEL_OPENROUTER_KEY") or os.getenv("OPENROUTER_API_KEY")),
+        "sentinal_quickml_key_set": bool(os.getenv("SENTINAL_QUICKML_KEY")),
+        "x_zc_header_present": bool(request.headers.get("X-ZC-Admin-Cred-Token") or request.headers.get("x-zc-admin-cred-token")),
     }
 
-    # Try building auth headers
+    # Try obtaining the Catalyst token
     try:
-        headers = _get_auth_headers(request)
-        result["auth_headers_built"] = True
-        result["auth_header_keys"] = list(headers.keys())
-        result["has_auth_value"] = bool(headers.get("Authorization"))
-        auth_val = headers.get("Authorization", "")
-        result["auth_preview"] = auth_val[:40] + "..." if len(auth_val) > 40 else auth_val
+        token = await asyncio.get_event_loop().run_in_executor(None, lambda: _get_catalyst_token(request))
+        result["token_obtained"] = bool(token)
+        result["token_preview"] = (token[:30] + "...") if token and len(token) > 30 else token
+        headers = {
+            "Authorization": f"Zoho-oauthtoken {token}",
+            "CATALYST-ORG": ORG_ID,
+            "Content-Type": "application/json",
+        } if token else {}
     except Exception as auth_err:
-        result["auth_headers_built"] = False
-        result["auth_error"] = str(auth_err)
+        result["token_obtained"] = False
+        result["token_error"] = str(auth_err)
         headers = {}
 
     # Try actual QuickML call
@@ -93,7 +95,7 @@ async def debug_quickml(request: Request):
                       "model": DEFAULT_LLM_MODEL, "max_tokens": 30}
             )
             result["quickml_status"] = r.status_code
-            result["quickml_response_preview"] = r.text[:400]
+            result["quickml_response_preview"] = r.text[:500]
     except Exception as call_err:
         result["quickml_call_error"] = str(call_err)
 
