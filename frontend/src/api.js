@@ -390,3 +390,8 @@ export const fetchFir = (payload) =>
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   });
+
+export const fetchUploads = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/api/v1/uploads/list?${qs}`);
+};

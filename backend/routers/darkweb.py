@@ -7,7 +7,7 @@ All data is SIMULATED for demo purposes.
 import random
 import json
 from datetime import datetime, timedelta
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from database import query
 from services.quickml_service import call_ai
 
@@ -136,7 +136,7 @@ async def get_dark_web_feed():
 
 
 @router.get("/assessment/{syndicate_name}")
-async def get_threat_assessment(syndicate_name: str):
+async def get_threat_assessment(syndicate_name: str, http_request: Request):
     """AI-generated threat assessment for a specific syndicate."""
     # Get syndicate data
     syndicate = query(
@@ -158,7 +158,7 @@ Focus on: current threat level, likely next actions, recommended response."""
     try:
         assessment = await call_ai(
             "You are a Karnataka Police cyber intelligence analyst.",
-            prompt, max_tokens=200
+            prompt, max_tokens=200, request=http_request
         )
     except:
         assessment = (

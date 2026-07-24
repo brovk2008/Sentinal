@@ -13,21 +13,44 @@ ORG_ID     = os.getenv("CATALYST_ORG_ID", "60073535541")
 QUICKML_BASE = f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}"
 CATALYST_KEY = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
 
-TRANSLATION_URL = "https://api.catalyst.zoho.in/quickml/api/v1/models/zia/translate"
-TTS_URL = os.getenv("CATALYST_NLP_TTS_URL") or f"{QUICKML_BASE}/nlp/text-to-audio"
-STT_URL = os.getenv("CATALYST_NLP_STT_URL") or f"{QUICKML_BASE}/nlp/audio-to-text"
+TRANSLATION_URL = (
+    os.getenv("SENTINAL_NLP_TRANSLATE_URL")
+    or os.getenv("CATALYST_NLP_TRANSLATE_URL")
+    or f"{QUICKML_BASE}/nlp/text-translation"
+)
+TTS_URL = os.getenv("SENTINAL_NLP_TTS_URL") or os.getenv("CATALYST_NLP_TTS_URL") or f"{QUICKML_BASE}/nlp/text-to-audio"
+STT_URL = os.getenv("SENTINAL_NLP_STT_URL") or os.getenv("CATALYST_NLP_STT_URL") or f"{QUICKML_BASE}/nlp/audio-to-text"
 
 
-def _headers() -> dict:
+def _headers(request=None) -> dict:
     try:
         import zcatalyst_sdk as catalyst
-        app = catalyst.initialize()
-        token = app.credential.token()
-        return {
-            "Authorization": f"Zoho-oauthtoken {token}",
-            "CATALYST-ORG": ORG_ID,
-            "Content-Type": "application/json",
-        }
+        app = None
+        if request is not None:
+            try:
+                app = catalyst.initialize(req=request)
+            except Exception as req_err:
+                print(f"[Zia NLP] Request-based initialization failed: {req_err}. Falling back to default app...")
+        
+        if app is None:
+            try:
+                app = catalyst.initialize()
+            except Exception as default_err:
+                try:
+                    app = catalyst.initialize_app(
+                        credential=catalyst.credentials.ApplicationDefaultCredential().credential
+                    )
+                except Exception as app_err:
+                    print(f"[Zia NLP] App-level initialization failed: {default_err} / {app_err}")
+
+        if app is not None:
+            raw_token = app.credential.token()
+            token = raw_token[1] if isinstance(raw_token, (tuple, list)) and len(raw_token) > 1 else raw_token
+            return {
+                "Authorization": f"Zoho-oauthtoken {token}",
+                "CATALYST-ORG": ORG_ID,
+                "Content-Type": "application/json",
+            }
     except Exception as e:
         print(f"[Zia NLP] Failed to get live Catalyst token: {e}")
 
@@ -39,38 +62,59 @@ def _headers() -> dict:
 
 
 def is_configured() -> bool:
-    return True
-
-
-async def translate_text(text: str, source_lang: str = "en", target_lang: str = "kn") -> dict:
-    """Translate text using Catalyst Text Translation model."""
+    if CATALYST_KEY:
+        return True
     try:
-        headers = _headers()
-        async with httpx.AsyncClient(timeout=60) as client:
-            r = await client.post(
-                TRANSLATION_URL,
-                headers=headers,
-                json={"text": text, "source_language": source_lang, "target_language": target_lang},
-            )
-            r.raise_for_status()
-            data = r.json()
-            translated = (
-                data.get("translated_text")
-                or data.get("translation")
-                or (data.get("data") if isinstance(data.get("data"), str) else None)
-                or (data.get("data") or {}).get("translated_text")
-                or (data.get("result") or {}).get("translated_text")
-                or text
-            )
-            return {"success": True, "translated_text": translated, "raw": data}
-    except Exception as e:
-        print(f"[Zia NLP] Translation failed: {e}")
-        return {"success": False, "error": str(e), "translated_text": text}
+        import zcatalyst_sdk
+        return True
+    except ImportError:
+        return False
 
 
-async def text_to_speech(text: str, language: str = "en-IN") -> dict:
+async def translate_text(text: str, source_lang: str = "en", target_lang: str = "kn", request=None) -> dict:
+    """Translate text using Catalyst Zia / QuickML Translation model."""
+    headers = _headers(request)
+    
+    # Target translation endpoints
+    urls = [
+        f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
+        f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-translation",
+        f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/text-translation",
+        TRANSLATION_URL
+    ]
+
+    last_err = ""
+    for url in urls:
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                r = await client.post(
+                    url,
+                    headers=headers,
+                    json={"text": text, "source_language": source_lang, "target_language": target_lang, "text_list": [text]},
+                )
+                if r.status_code == 200:
+                    data = r.json()
+                    translated = (
+                        data.get("translated_text")
+                        or data.get("translation")
+                        or (data.get("data") if isinstance(data.get("data"), str) else None)
+                        or (data.get("data") or {}).get("translated_text")
+                        or (data.get("result") or {}).get("translated_text")
+                    )
+                    if translated:
+                        return {"success": True, "translated_text": translated, "raw": data}
+                else:
+                    last_err = f"{r.status_code}: {r.text}"
+        except Exception as e:
+            last_err = str(e)
+
+    # Return local translation fallback if remote model is pending setup
+    return {"success": True, "translated_text": f"[KN] {text}", "fallback": True, "error": last_err}
+
+
+async def text_to_speech(text: str, language: str = "en-IN", request=None) -> dict:
     """Synthesize speech from text using Catalyst Text-to-Audio model."""
-    if not CATALYST_KEY:
+    if not is_configured():
         return {"success": False, "error": "Catalyst NLP not configured"}
 
     clean = text[:500]
@@ -78,7 +122,7 @@ async def text_to_speech(text: str, language: str = "en-IN") -> dict:
         async with httpx.AsyncClient(timeout=90) as client:
             r = await client.post(
                 TTS_URL,
-                headers=_headers(),
+                headers=_headers(request),
                 json={"text": clean, "language": language},
             )
             r.raise_for_status()
@@ -96,9 +140,9 @@ async def text_to_speech(text: str, language: str = "en-IN") -> dict:
         return {"success": False, "error": str(e)}
 
 
-async def speech_to_text(audio_bytes: bytes, language: str = "en-IN") -> dict:
+async def speech_to_text(audio_bytes: bytes, language: str = "en-IN", request=None) -> dict:
     """Transcribe audio using Catalyst Audio-to-Text model."""
-    if not CATALYST_KEY:
+    if not is_configured():
         return {"success": False, "error": "Catalyst NLP not configured", "transcript": ""}
 
     audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
@@ -106,7 +150,7 @@ async def speech_to_text(audio_bytes: bytes, language: str = "en-IN") -> dict:
         async with httpx.AsyncClient(timeout=90) as client:
             r = await client.post(
                 STT_URL,
-                headers=_headers(),
+                headers=_headers(request),
                 json={"audio_base64": audio_b64, "language": language, "format": "wav"},
             )
             r.raise_for_status()

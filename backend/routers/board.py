@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional, List
 import json
@@ -103,7 +103,7 @@ def delete_board(board_id: str):
         raise HTTPException(500, f"Failed to delete board: {e}")
 
 @router.post("/upload-evidence")
-async def upload_evidence(file: UploadFile = File(...)):
+async def upload_evidence(http_request: Request, file: UploadFile = File(...)):
     """
     Process image/pdf upload, simulate Catalyst Zia face/OCR extraction,
     and suggest case connections using LLM context.
@@ -166,7 +166,7 @@ async def upload_evidence(file: UploadFile = File(...)):
         }}
         """
         
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
         
         # Clean potential markdown surrounding tags
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
@@ -188,7 +188,7 @@ async def upload_evidence(file: UploadFile = File(...)):
         raise HTTPException(500, f"Upload processing failed: {e}")
 
 @router.post("/match-suspect")
-async def match_suspect(file: UploadFile = File(...)):
+async def match_suspect(http_request: Request, file: UploadFile = File(...)):
     """
     Simulate Catalyst Zia face analysis and run demographic matching
     against the registered Accused directory in the database.
@@ -229,7 +229,7 @@ async def match_suspect(file: UploadFile = File(...)):
         }}
         """
         
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             ai_data = json.loads(cleaned)

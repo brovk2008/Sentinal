@@ -13,6 +13,7 @@ No manual QUICKML_KEY needed — the URL IS the full endpoint for both models.
 
 import httpx
 import os
+import json
 import logging
 
 log = logging.getLogger(__name__)
@@ -34,24 +35,45 @@ DEFAULT_LLM_MODEL = os.getenv("SENTINAL_LLM_MODEL",    "GLM-4.7-Flash")
 VISION_MODEL      = os.getenv("SENTINAL_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
 
 
-def _get_auth_headers() -> dict:
+def _get_auth_headers(request=None) -> dict:
     """
     Build Catalyst QuickML auth headers.
 
-    Inside AppSail: zcatalyst_sdk fetches a live OAuth token automatically.
-    Locally (dev):  falls back to SENTINAL_QUICKML_KEY env var so you can
-                    paste a token from the Catalyst console for testing.
+    Strategy (in order):
+    1. If a FastAPI Request is provided, use it so zcatalyst_sdk can parse
+       Catalyst-injected headers (X-ZC-Admin-Cred-Token etc.) — most reliable.
+    2. Try ApplicationDefaultCredential (reads from env/properties file) — works
+       in AppSail background tasks and routes that don't pass request.
+    3. Fall back to SENTINAL_QUICKML_KEY env var for local dev.
     """
-    # Try SDK-based token (works inside AppSail container automatically)
     try:
         import zcatalyst_sdk as catalyst
-        app   = catalyst.initialize()
-        token = app.credential.token()
-        return {
-            "Authorization": f"Zoho-oauthtoken {token}",
-            "CATALYST-ORG":  ORG_ID,
-            "Content-Type":  "application/json",
-        }
+        app = None
+        if request is not None:
+            try:
+                app = catalyst.initialize(req=request)
+            except Exception as req_err:
+                log.warning(f"[QuickML] Request-based initialization failed: {req_err}. Falling back to default app...")
+
+        if app is None:
+            try:
+                app = catalyst.initialize()
+            except Exception as default_err:
+                try:
+                    app = catalyst.initialize_app(
+                        credential=catalyst.credentials.ApplicationDefaultCredential().credential
+                    )
+                except Exception as app_err:
+                    log.warning(f"[QuickML] App-level initialization failed: {default_err} / {app_err}")
+
+        if app is not None:
+            raw_token = app.credential.token()
+            token = raw_token[1] if isinstance(raw_token, (tuple, list)) and len(raw_token) > 1 else raw_token
+            return {
+                "Authorization": f"Zoho-oauthtoken {token}",
+                "CATALYST-ORG":  ORG_ID,
+                "Content-Type":  "application/json",
+            }
     except Exception as e:
         log.warning(f"[QuickML] SDK token fetch failed, trying env key: {e}")
 
@@ -72,22 +94,24 @@ async def call_ai(
     user_prompt: str,
     max_tokens: int = 2000,
     model: str | None = None,
+    request=None,
 ) -> str:
     """Call Catalyst QuickML GLM chat model."""
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user",   "content": user_prompt},
     ]
-    return await call_ai_messages(messages, max_tokens=max_tokens, model=model)
+    return await call_ai_messages(messages, max_tokens=max_tokens, model=model, request=request)
 
 
 async def call_ai_messages(
     messages: list,
     max_tokens: int = 2000,
     model: str | None = None,
+    request=None,
 ) -> str:
     """Call Catalyst QuickML with an OpenAI-style messages array."""
-    headers = _get_auth_headers()
+    headers = _get_auth_headers(request)
     if not headers:
         return (
             "Catalyst QuickML is not configured. "
@@ -95,18 +119,80 @@ async def call_ai_messages(
             "For local dev, set SENTINAL_QUICKML_KEY to a valid Zoho OAuth token."
         )
 
-    body = {
-        "model":       model or DEFAULT_LLM_MODEL,
-        "messages":    messages,
-        "max_tokens":  max_tokens,
-        "temperature": 0.2,
-    }
+    user_text = "\n".join([m.get("content", "") for m in messages if m.get("role") == "user"]) or "Hello"
+    sys_text = "\n".join([m.get("content", "") for m in messages if m.get("role") == "system"]) or "Assistant"
 
+    payload_json = json.dumps({"messages": messages, "prompt": user_text, "model": model or DEFAULT_LLM_MODEL})
+    
+    # Clean headers without Content-Type for multipart/custom requests
+    clean_headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
+
+    # Attempt 1: Native Catalyst SDK app.quick_ml()
+    try:
+        import zcatalyst_sdk as catalyst
+        if request is not None:
+            c_app = catalyst.initialize(req=request)
+            qml = c_app.quick_ml()
+            # Try predict with GLM endpoint key or project ID
+            res = qml.predict(end_point_key=PROJECT_ID, input_data={"prompt": user_text, "messages": json.dumps(messages)})
+            if res:
+                return str(res)
+    except Exception as sdk_err:
+        log.warning(f"[QuickML] SDK predict failed: {sdk_err}")
+
+    PREDICT_URL = f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/endpoints/predict"
+
+    attempts = [
+        # Attempt 1: Standard SDK predict endpoint
+        {
+            "url": PREDICT_URL,
+            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": PROJECT_ID},
+            "json": {"data": {"prompt": user_text, "messages": messages}}
+        },
+        # Attempt 2: GLM chat with X-QUICKML-ENDPOINT-KEY
+        {
+            "url": GLM_CHAT_URL,
+            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": PROJECT_ID},
+            "json": {"data": {"prompt": user_text, "messages": messages}}
+        },
+        # Attempt 3: Predict endpoint with text string
+        {
+            "url": PREDICT_URL,
+            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": PROJECT_ID},
+            "json": {"data": {"text": user_text}}
+        },
+        # Attempt 4: GLM chat with prompt string
+        {
+            "url": GLM_CHAT_URL,
+            "headers": headers,
+            "json": {"data": {"prompt": user_text}}
+        }
+    ]
+
+    attempt_errors = []
     try:
         async with httpx.AsyncClient(timeout=90) as client:
-            r = await client.post(GLM_CHAT_URL, headers=headers, json=body)
-            r.raise_for_status()
-            return r.json()["choices"][0]["message"]["content"]
+            for i, kwargs in enumerate(attempts):
+                target_url = kwargs.pop("url", GLM_CHAT_URL)
+                try:
+                    r = await client.post(target_url, **kwargs)
+                    if r.status_code == 200:
+                        data = r.json()
+                        text = (
+                            data.get("choices", [{}])[0].get("message", {}).get("content")
+                            or data.get("output", {}).get("text")
+                            or data.get("result")
+                            or data.get("data")
+                        )
+                        if text:
+                            return str(text)
+                        return json.dumps(data)
+                    else:
+                        attempt_errors.append(f"[Attempt {i+1} code {r.status_code}: {r.text}]")
+                except Exception as err:
+                    attempt_errors.append(f"[Attempt {i+1} err: {err}]")
+
+            return f"Catalyst QuickML errors: {' | '.join(attempt_errors)}"
     except Exception as e:
         log.error(f"[QuickML] GLM request failed: {e}")
         return f"Catalyst QuickML error: {e}"
@@ -117,9 +203,10 @@ async def call_vision(
     user_prompt: str,
     image_b64: str,
     max_tokens: int = 1500,
+    request=None,
 ) -> str:
     """Call Catalyst QuickML Qwen Vision model for image + text analysis."""
-    headers = _get_auth_headers()
+    headers = _get_auth_headers(request)
     if not headers:
         return "Catalyst QuickML Vision is not configured."
 

@@ -6,7 +6,8 @@ import {
   stopScraper,
   queryScrapedFirs,
   fetchScraperDistricts,
-  fetchFir
+  fetchFir,
+  fetchUploads
 } from '../api';
 import FileUploader from '../components/FileUploader';
 import { generateFirHtml } from '../utils/firHtmlGenerator';
@@ -52,7 +53,15 @@ export default function DataIngestion() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfModal, setPdfModal] = useState(null);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  const loadUploadedFiles = () => {
+    fetchUploads()
+      .then(res => {
+        if (res && res.files) setUploadedFiles(res.files);
+      })
+      .catch(err => console.error('Failed to load uploaded files', err));
+  };
 
   const consoleEndRef = useRef(null);
   const intervalRef = useRef(null);
@@ -64,6 +73,9 @@ export default function DataIngestion() {
         if (res && res.districts) setDistricts(res.districts);
       })
       .catch(err => console.error('Failed to load districts', err));
+
+    // Load persisted evidence uploads from DB
+    loadUploadedFiles();
 
     // Check once if a scrape was already running before we opened the page
     fetchScraperStatus()
@@ -722,13 +734,110 @@ export default function DataIngestion() {
         padding: 20
       }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--copper-400)', marginTop: 0, marginBottom: 16 }}>
-          MANUAL EVIDENCE UPLOAD
+          MANUAL EVIDENCE UPLOAD & OCR INGESTION
         </h2>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
           Upload any file — suspect photos, CDR CSVs, CCTV frames, PDFs.
-          AI analyzes automatically and makes content searchable.
+          AI analyzes automatically and saves extracted OCR metadata to your account permanently.
         </p>
-        <FileUploader onUploadComplete={(f) => console.log('Uploaded:', f)} />
+        <FileUploader onUploadComplete={(f) => { console.log('Uploaded:', f); loadUploadedFiles(); }} />
+
+        {/* Persisted Uploads & OCR Records */}
+        <div style={{ marginTop: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-mono)' }}>
+              📁 PERSISTED EVIDENCE & OCR ARCHIVE ({uploadedFiles.length})
+            </h3>
+            <button
+              onClick={loadUploadedFiles}
+              style={{
+                background: 'rgba(224, 168, 50, 0.1)',
+                border: '1px solid var(--copper-500)',
+                color: 'var(--copper-400)',
+                padding: '4px 10px',
+                borderRadius: 4,
+                fontSize: 11,
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              🔄 Refresh Archive
+            </button>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                  <th style={{ padding: '8px 12px' }}>LABEL / FILENAME</th>
+                  <th style={{ padding: '8px 12px' }}>TYPE</th>
+                  <th style={{ padding: '8px 12px' }}>ZIA OCR & AI SUMMARY</th>
+                  <th style={{ padding: '8px 12px' }}>INGESTED AT</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {uploadedFiles.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ padding: '20px 12px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      No evidence or OCR files uploaded yet for this workspace. Upload a file above to persist it forever.
+                    </td>
+                  </tr>
+                ) : (
+                  uploadedFiles.map(file => (
+                    <tr key={file.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                      <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--copper-400)' }}>
+                        {file.label || file.filename}
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{
+                          padding: '2px 6px',
+                          borderRadius: 3,
+                          fontSize: 10,
+                          fontWeight: 600,
+                          background: 'rgba(224, 168, 50, 0.15)',
+                          color: 'var(--copper-400)',
+                          textTransform: 'uppercase'
+                        }}>
+                          {file.entity_type || file.file_type}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={file.ai_summary}>
+                        {file.ai_summary || 'Analysis complete. Indexed in RAG store.'}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 11 }}>
+                        {file.uploaded_at || 'Just now'}
+                      </td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                        {file.stratus_url ? (
+                          <a
+                            href={file.stratus_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              border: '1px solid #10b981',
+                              borderRadius: 4,
+                              color: '#10b981',
+                              padding: '4px 8px',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              textDecoration: 'none'
+                            }}
+                          >
+                            👁 View File
+                          </a>
+                        ) : (
+                          <span style={{ color: '#10b981', fontSize: 11, fontWeight: 600 }}>✓ Stored</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* ── PDF Modal ───────────────────────────────────────────────────── */}

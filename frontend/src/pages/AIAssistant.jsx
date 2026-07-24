@@ -105,7 +105,7 @@ const SUGGESTIONS = [
 ]
 
 export default function AIAssistant() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [messages, setMessages] = useState([
     {
       role: 'system',
@@ -172,25 +172,29 @@ Type your query below or select a suggestion to begin.`,
     setLoading(true)
 
     try {
-      const res = await queryIntelligence(q)
+      const activeLang = i18n.language || 'en'
+      const res = await queryIntelligence({ query: q, target_lang: activeLang })
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          content: res.answer,
-          citations: res.citations || [],
+          content: res?.answer || 'No response content returned.',
+          citations: res?.citations || [],
           debugInfo: {
-            retrievalTime: res.retrieval_time_ms,
-            searchedChunks: res.total_chunks_searched,
-            vectorNorm: res.query_vector_norm
+            retrievalTime: res?.retrieval_time_ms,
+            searchedChunks: res?.total_chunks_searched,
+            vectorNorm: res?.query_vector_norm
           }
         },
       ])
-    } catch {
+    } catch (err) {
+      console.error('[AI Assistant] Query failed:', err)
       setMessages(prev => [
         ...prev,
         { role: 'assistant', content: '⚠️ Intelligence query failed. Please try again.' },
       ])
+    } finally {
+      setLoading(false)
     }
   }
 

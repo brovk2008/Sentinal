@@ -164,7 +164,8 @@ Respond ONLY as a JSON object with keys: persons, objects, location, text_visibl
         try:
             import zcatalyst_sdk as catalyst
             app = catalyst.initialize()
-            token = app.credential.token()
+            raw_token = app.credential.token()
+            token = raw_token[1] if isinstance(raw_token, (tuple, list)) and len(raw_token) > 1 else raw_token
         except Exception as tok_err:
             print(f"[Vision] SDK token fetch failed, using fallback: {tok_err}")
 

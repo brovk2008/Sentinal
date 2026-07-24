@@ -1,5 +1,5 @@
 """Persons router — accused profiles and repeat offenders."""
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from database import query, query_one
 
 router = APIRouter()
@@ -152,7 +152,7 @@ async def accused_profile(accused_id: int):
 from services.quickml_service import call_ai
 
 @router.get("/{accused_id}/knowledge-graph")
-async def accused_knowledge_graph(accused_id: int):
+async def accused_knowledge_graph(accused_id: int, http_request: Request):
     """Accused profile as an interactive knowledge graph and MO summarization."""
     # 1. Fetch accused profile
     person = query_one("SELECT * FROM Accused WHERE AccusedMasterID = ?", (accused_id,))
@@ -245,7 +245,8 @@ Format as a brief, professional crime intelligence analyst description."""
         mo_summary = await call_ai(
             "You are a Karnataka Police crime intelligence analyst.",
             prompt,
-            max_tokens=250
+            max_tokens=250,
+            request=http_request
         )
     except Exception:
         mo_summary = f"Accused operates primarily in {', '.join(districts[:2])} regions specializing in {cases[0]['CrimeGroupName'] if cases else 'organized crimes'} utilizing coordination tactics."

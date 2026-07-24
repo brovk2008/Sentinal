@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional, List
@@ -58,7 +58,7 @@ class SitrepRequest(BaseModel):
 # ─── Endpoints ───────────────────────────────────────────────────────
 
 @router.post("/analyze-board")
-async def analyze_board(request: AnalyzeBoardRequest):
+async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
     """
     Read current board nodes + connections and suggest new links and predicted coordinates.
     """
@@ -119,7 +119,7 @@ async def analyze_board(request: AnalyzeBoardRequest):
         }}
         """
         
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2000)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2000, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             results = json.loads(cleaned)
@@ -135,7 +135,7 @@ async def analyze_board(request: AnalyzeBoardRequest):
         raise HTTPException(500, f"Board analysis failed: {e}")
 
 @router.post("/predict-next-crime")
-async def predict_next_crime(request: PredictNextCrimeRequest):
+async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Request):
     """
     Suspect-centric crime forecasting.
     """
@@ -177,7 +177,7 @@ async def predict_next_crime(request: PredictNextCrimeRequest):
         }}
         """
 
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             results = json.loads(cleaned)
@@ -197,7 +197,7 @@ async def predict_next_crime(request: PredictNextCrimeRequest):
         raise HTTPException(500, f"Crime prediction failed: {e}")
 
 @router.post("/connect-dots")
-async def connect_dots(request: ConnectDotsRequest):
+async def connect_dots(request: ConnectDotsRequest, http_request: Request):
     """
     Find connections between entities using DB queries + AI.
     Handles requests from both ConnectionsBoard and EvidenceBoard.
@@ -326,7 +326,7 @@ async def connect_dots(request: ConnectDotsRequest):
         """
         
         try:
-            analysis = await call_ai(system_prompt, user_prompt, max_tokens=600)
+            analysis = await call_ai(system_prompt, user_prompt, max_tokens=600, request=http_request)
         except Exception:
             analysis = f"KEY CONNECTIONS:\n" + "\n".join([f"• {c}" for c in real_connections]) if real_connections else "No connections found."
 
@@ -343,7 +343,7 @@ async def connect_dots(request: ConnectDotsRequest):
         raise HTTPException(500, f"Connect dots failed: {e}")
 
 @router.post("/reconstruct-timeline")
-async def reconstruct_timeline(request: ReconstructTimelineRequest):
+async def reconstruct_timeline(request: ReconstructTimelineRequest, http_request: Request):
     """
     Case chronology reconstruction with AI logical inferences.
     """
@@ -409,7 +409,7 @@ async def reconstruct_timeline(request: ReconstructTimelineRequest):
         }}
         """
 
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2000)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2000, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         return json.loads(cleaned)
     except Exception as e:
@@ -423,7 +423,7 @@ async def sitrep_preview(board_id: str):
     return Response(content=f"<html><body><h3>Situation Report Preview</h3><p>Board: {board_id}</p></body></html>", media_type="text/html")
 
 @router.post("/generate-sitrep")
-async def generate_sitrep(request: SitrepRequest):
+async def generate_sitrep(request: SitrepRequest, http_request: Request):
     """
     Outputs a formal SITREP report in PDF format.
     """
@@ -467,7 +467,7 @@ async def generate_sitrep(request: SitrepRequest):
         }}
         """
 
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2500)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2500, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         report_data = json.loads(cleaned)
 

@@ -65,9 +65,12 @@ def analyze_mo_clusters(db_path: str) -> List[Dict[str, Any]]:
     cursor = conn.cursor()
     
     rows = cursor.execute("""
-        SELECT CaseMasterID, CrimeNo, DistrictName, StationName, BriefFacts, CrimeGroupName, CrimeRegisteredDate
-        FROM CaseMaster
-        ORDER BY CrimeRegisteredDate DESC
+        SELECT c.CaseMasterID, c.CrimeNo, d.DistrictName, u.UnitName AS StationName, c.BriefFacts, ch.CrimeGroupName, c.CrimeRegisteredDate
+        FROM CaseMaster c
+        LEFT JOIN Unit u ON c.PoliceStationID = u.UnitID
+        LEFT JOIN District d ON u.DistrictID = d.DistrictID
+        LEFT JOIN CrimeHead ch ON c.CrimeMajorHeadID = ch.CrimeHeadID
+        ORDER BY c.CrimeRegisteredDate DESC
         LIMIT 250
     """).fetchall()
     conn.close()
@@ -77,6 +80,8 @@ def analyze_mo_clusters(db_path: str) -> List[Dict[str, Any]]:
         facts = r["BriefFacts"] or ""
         group = r["CrimeGroupName"] or "General Crime"
         traits = extract_mo_traits(facts, group)
+        district = r["DistrictName"] or "Bengaluru Urban"
+        station = r["StationName"] or "Cyber Crime PS"
         
         series_key = f"{group} | {traits['execution_method']} | {traits['target_category']}"
         if series_key not in series_map:
@@ -94,13 +99,13 @@ def analyze_mo_clusters(db_path: str) -> List[Dict[str, Any]]:
         
         s = series_map[series_key]
         s["cases_count"] += 1
-        s["districts_affected"].add(r["DistrictName"])
+        s["districts_affected"].add(district)
         if len(s["sample_cases"]) < 4:
             s["sample_cases"].append({
                 "case_id": r["CaseMasterID"],
                 "crime_no": r["CrimeNo"],
-                "district": r["DistrictName"],
-                "station": r["StationName"],
+                "district": district,
+                "station": station,
                 "date": r["CrimeRegisteredDate"]
             })
 
@@ -120,10 +125,13 @@ def calculate_near_repeat_risk(db_path: str) -> List[Dict[str, Any]]:
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
     rows = cursor.execute("""
-        SELECT CaseMasterID, CrimeNo, DistrictName, StationName, Latitude, Longitude, CrimeRegisteredDate, CrimeGroupName
-        FROM CaseMaster
-        WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL
-        ORDER BY CrimeRegisteredDate DESC
+        SELECT c.CaseMasterID, c.CrimeNo, d.DistrictName, u.UnitName AS StationName, c.latitude AS Latitude, c.longitude AS Longitude, c.CrimeRegisteredDate, ch.CrimeGroupName
+        FROM CaseMaster c
+        LEFT JOIN Unit u ON c.PoliceStationID = u.UnitID
+        LEFT JOIN District d ON u.DistrictID = d.DistrictID
+        LEFT JOIN CrimeHead ch ON c.CrimeMajorHeadID = ch.CrimeHeadID
+        WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+        ORDER BY c.CrimeRegisteredDate DESC
         LIMIT 100
     """).fetchall()
     conn.close()
@@ -134,21 +142,23 @@ def calculate_near_repeat_risk(db_path: str) -> List[Dict[str, Any]]:
         lng = r["Longitude"]
         if not lat or not lng:
             continue
+        district = r["DistrictName"] or "Bengaluru Urban"
+        station = r["StationName"] or "Cyber Crime PS"
+        group = r["CrimeGroupName"] or "General Crime"
 
-        # Bowers & Johnson spatial decay multiplier (Same origin = 4.5x risk, <400m = 3.2x, <1km = 1.8x)
         risk_zones.append({
             "source_case_id": r["CaseMasterID"],
             "source_crime_no": r["CrimeNo"],
-            "district": r["DistrictName"],
-            "station": r["StationName"],
+            "district": district,
+            "station": station,
             "lat": lat,
             "lng": lng,
-            "crime_group": r["CrimeGroupName"],
+            "crime_group": group,
             "date": r["CrimeRegisteredDate"],
             "risk_multiplier": "4.2x",
             "timeframe": "1 - 14 Days",
             "impact_radius_meters": 500,
-            "recommended_action": f"Deploy intensified night patrols within 500m radius of {r['StationName']}."
+            "recommended_action": f"Deploy intensified night patrols within 500m radius of {station}."
         })
 
     return risk_zones[:20]
@@ -158,13 +168,15 @@ def analyze_syndicate_intersect(db_path: str) -> List[Dict[str, Any]]:
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
     
-    # Pull accused & suspects from case files
     rows = cursor.execute("""
-        SELECT AccusedName, DistrictName, StationName, CrimeGroupName, COUNT(*) as case_count
-        FROM CaseMaster
-        WHERE AccusedName IS NOT NULL AND AccusedName != '' AND AccusedName != 'Unknown'
-        GROUP BY AccusedName
-        HAVING case_count >= 2
+        SELECT a.AccusedName, d.DistrictName, u.UnitName AS StationName, ch.CrimeGroupName, COUNT(DISTINCT c.CaseMasterID) as case_count
+        FROM Accused a
+        JOIN CaseMaster c ON a.CaseMasterID = c.CaseMasterID
+        LEFT JOIN Unit u ON c.PoliceStationID = u.UnitID
+        LEFT JOIN District d ON u.DistrictID = d.DistrictID
+        LEFT JOIN CrimeHead ch ON c.CrimeMajorHeadID = ch.CrimeHeadID
+        WHERE a.AccusedName IS NOT NULL AND a.AccusedName != '' AND a.AccusedName != 'Unknown'
+        GROUP BY a.AccusedName
         ORDER BY case_count DESC
         LIMIT 12
     """).fetchall()
@@ -173,14 +185,18 @@ def analyze_syndicate_intersect(db_path: str) -> List[Dict[str, Any]]:
     syndicates = []
     for idx, r in enumerate(rows):
         role = "Mastermind / Coordinator" if idx % 3 == 0 else ("Money Mule Specialist" if idx % 3 == 1 else "Field Enforcer")
+        district = r["DistrictName"] or "Bengaluru Urban"
+        station = r["StationName"] or "Cyber Crime PS"
+        group = r["CrimeGroupName"] or "Cyber Crime"
+
         syndicates.append({
             "syndicate_id": f"SYN-2025-{idx+1:02d}",
             "primary_suspect": r["AccusedName"],
             "role": role,
             "total_linked_firs": r["case_count"],
-            "primary_district": r["DistrictName"],
-            "primary_station": r["StationName"],
-            "crime_category": r["CrimeGroupName"],
+            "primary_district": district,
+            "primary_station": station,
+            "crime_category": group,
             "risk_level": "CRITICAL" if r["case_count"] >= 4 else "HIGH",
             "cross_district_operations": r["case_count"] > 2
         })
@@ -193,10 +209,13 @@ def detect_spree_alerts(db_path: str) -> List[Dict[str, Any]]:
     cursor = conn.cursor()
     
     rows = cursor.execute("""
-        SELECT DistrictName, StationName, CrimeGroupName, COUNT(*) as cnt
-        FROM CaseMaster
-        GROUP BY DistrictName, StationName, CrimeGroupName
-        HAVING cnt >= 3
+        SELECT d.DistrictName, u.UnitName AS StationName, ch.CrimeGroupName, COUNT(*) as cnt
+        FROM CaseMaster c
+        LEFT JOIN Unit u ON c.PoliceStationID = u.UnitID
+        LEFT JOIN District d ON u.DistrictID = d.DistrictID
+        LEFT JOIN CrimeHead ch ON c.CrimeMajorHeadID = ch.CrimeHeadID
+        GROUP BY d.DistrictName, u.UnitName, ch.CrimeGroupName
+        HAVING cnt >= 2
         ORDER BY cnt DESC
         LIMIT 10
     """).fetchall()
@@ -204,13 +223,17 @@ def detect_spree_alerts(db_path: str) -> List[Dict[str, Any]]:
 
     alerts = []
     for r in rows:
+        district = r["DistrictName"] or "Bengaluru Urban"
+        station = r["StationName"] or "Cyber Crime PS"
+        group = r["CrimeGroupName"] or "General Crime"
+
         alerts.append({
             "alert_type": "ACTIVE_CRIME_SPREE",
-            "district": r["DistrictName"],
-            "station": r["StationName"],
-            "crime_group": r["CrimeGroupName"],
+            "district": district,
+            "station": station,
+            "crime_group": group,
             "frequency_cluster": f"{r['cnt']} FIRs in 72h window",
             "threat_score": min(99, 70 + r["cnt"] * 5),
-            "suggested_response": f"Issue immediate APB & deploy tactical checkposts near {r['StationName']} boundaries."
+            "suggested_response": f"Issue immediate APB & deploy tactical checkposts near {station} boundaries."
         })
     return alerts

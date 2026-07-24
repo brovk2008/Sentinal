@@ -5,6 +5,7 @@
   "buildPath": ".",
   "port": 9000,
   "memory": 2048,
+  "installCommand": "pip install -r requirements.txt",
   "env_variables": {
     "SENTINAL_PROJECT_ID":        "50170000000065001",
     "SENTINAL_ORG_ID":            "60073535541",
@@ -18,4 +19,3 @@
     "SMARTBROWZ_WEBDRIVER_URL":   "https://60073535541:5442bad1657a042b133011611f1a54f60c4f3d946fd6d81ea1e68909eed4172b@webdriver.catalystsmartbrowz.in/browser360/webdriver/50170000000065001"
   }
 }
-  

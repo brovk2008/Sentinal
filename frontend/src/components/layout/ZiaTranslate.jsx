@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { translateText } from '../../api'
+
 // Client-side cache to prevent calling the translation API multiple times for the same text
 const translationCache = {}
 
@@ -21,19 +23,7 @@ export function ZiaText({ children, className, style }) {
       return
     }
 
-    // Call Zia Translation API via AppSail backend
-    fetch('/api/v1/nlp/translate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: children,
-        source_lang: 'en',
-        target_lang: currentLang
-      })
-    })
-      .then(res => res.json())
+    translateText(children, 'en', currentLang)
       .then(data => {
         if (data && data.translated_text) {
           translationCache[cacheKey] = data.translated_text

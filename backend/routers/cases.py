@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from database import query, query_one
 from typing import Optional, List
 from pydantic import BaseModel
@@ -164,7 +164,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 @router.post("/compare")
-async def compare_cases(req: CompareRequest):
+async def compare_cases(req: CompareRequest, http_request: Request):
     if len(req.case_ids) < 2 or len(req.case_ids) > 3:
         raise HTTPException(status_code=400, detail="Must compare between 2 and 3 cases")
         
@@ -287,6 +287,7 @@ async def compare_cases(req: CompareRequest):
         "You are a senior crime intelligence analyst for Karnataka Police.",
         prompt,
         max_tokens=1024,
+        request=http_request,
     )
     if summary_text.startswith("Catalyst QuickML"):
         summary_text = ""

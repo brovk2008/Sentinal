@@ -102,24 +102,40 @@ from init_db import init_all_tables
 def _bg_model_loader():
     try:
         import subprocess
-        # Check if numpy/scikit-learn are installed
+        pkg_dir = "/tmp/sentinal-packages"
+        os.makedirs(pkg_dir, exist_ok=True)
+        if pkg_dir not in sys.path:
+            sys.path.insert(0, pkg_dir)
+
+        # ALWAYS ensure zcatalyst-sdk is installed — it's critical for all AI auth
+        try:
+            import zcatalyst_sdk
+            _log_debug("zcatalyst_sdk already available.")
+        except ImportError:
+            _log_debug("Installing zcatalyst-sdk (required for AI auth)...")
+            r = subprocess.run([
+                sys.executable, "-m", "pip", "install",
+                "--quiet", "--no-cache-dir", "--target", pkg_dir,
+                "zcatalyst-sdk==1.0.3"
+            ], capture_output=True, text=True, timeout=120)
+            _log_debug(f"zcatalyst-sdk install finished (code {r.returncode}): {r.stderr[-300:] if r.returncode else 'OK'}")
+            # Reload sys.path to pick it up immediately
+            if pkg_dir not in sys.path:
+                sys.path.insert(0, pkg_dir)
+
+        # Install heavy ML packages only if missing
         try:
             import numpy, sklearn
             _log_debug("ML packages already installed.")
         except ImportError:
             _log_debug("Installing ML packages in background...")
-            pkg_dir = "/tmp/sentinal-packages"
-            os.makedirs(pkg_dir, exist_ok=True)
-            if pkg_dir not in sys.path:
-                sys.path.insert(0, pkg_dir)
-            
             cmd = [
                 sys.executable, "-m", "pip", "install",
                 "--quiet", "--no-cache-dir", "--target", pkg_dir,
                 "--only-binary", ":all:",
                 "numpy==1.26.4", "scikit-learn==1.5.0", "joblib==1.4.2",
                 "pandas==2.2.2", "reportlab==4.2.0", "pdfplumber==0.11.4",
-                "beautifulsoup4==4.12.3", "zcatalyst-sdk==1.0.3"
+                "beautifulsoup4==4.12.3"
             ]
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             _log_debug(f"Background ML pip install finished (code {r.returncode})")
