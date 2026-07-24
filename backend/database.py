@@ -42,5 +42,14 @@ def execute(sql: str, params: tuple = ()) -> int:
     with get_db() as conn:
         cursor = conn.execute(sql, params)
         conn.commit()
-        return cursor.lastrowid if cursor.lastrowid else cursor.rowcount
+        result = cursor.lastrowid if cursor.lastrowid else cursor.rowcount
+
+    # Trigger async/background backup of the database to Catalyst File Store
+    try:
+        from services.catalyst_db_sync import upload_db_to_catalyst
+        upload_db_to_catalyst()
+    except Exception as sync_err:
+        print(f"[DB Sync] Warning: failed to backup SQLite to Catalyst: {sync_err}")
+
+    return result
 

@@ -253,7 +253,7 @@ async def upload_file(
     # Get current user ID
     user_id = await _get_current_user_id(request)
 
-    # Try Stratus upload
+    # Try Stratus upload, fall back to File Store
     try:
         from zcatalyst_sdk import initialize as catalyst_init
         app     = catalyst_init()
@@ -262,7 +262,29 @@ async def upload_file(
         bucket.upload_object(stratus_key, content, content_type=mime)
         stratus_url = bucket.get_object_url(stratus_key)
     except Exception as e:
-        print(f"[Uploads] Stratus upload skipped: {e}")
+        print(f"[Uploads] Stratus upload skipped: {e}. Trying File Store fallback...")
+        try:
+            from zcatalyst_sdk import initialize as catalyst_init
+            app = catalyst_init()
+            filestore = app.filestore()
+            from services.catalyst_db_sync import get_or_create_folder
+            folder = get_or_create_folder(filestore, "Sentinal Uploads")
+            if folder:
+                import tempfile
+                with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                    tmp.write(content)
+                    tmp_name = tmp.name
+                try:
+                    with open(tmp_name, "rb") as f_read:
+                        file_details = folder.upload_file(file.filename, f_read)
+                    filestore_file_id = file_details.get("id") if isinstance(file_details, dict) else getattr(file_details, "id", None)
+                    if filestore_file_id:
+                        stratus_key = f"filestore:{filestore_file_id}"
+                        stratus_url = f"/api/v1/uploads/raw-file/{filestore_file_id}"
+                finally:
+                    os.remove(tmp_name)
+        except Exception as fs_err:
+            print(f"[Uploads] File Store upload failed: {fs_err}")
 
     # AI analysis by type
     ai_summary = ""
@@ -363,3 +385,33 @@ async def delete_file(file_id: str):
     con.commit()
     con.close()
     return {"success": True, "file_id": file_id}
+
+
+@router.get("/raw-file/{file_id}")
+async def get_raw_file(file_id: str):
+    """Serve the raw file bytes directly from Catalyst File Store."""
+    from fastapi.responses import StreamingResponse
+    try:
+        from zcatalyst_sdk import initialize as catalyst_init
+        app = catalyst_init()
+        filestore = app.filestore()
+        from services.catalyst_db_sync import get_or_create_folder
+        folder = get_or_create_folder(filestore, "Sentinal Uploads")
+        if not folder:
+            raise HTTPException(404, "Uploads folder not found")
+        
+        response_obj = folder.get_file_stream(file_id)
+        
+        def iter_file():
+            for chunk in response_obj.iter_content(chunk_size=8192):
+                yield chunk
+                
+        # Query database to find the mime type
+        con = sqlite3.connect(_DB_PATH)
+        row = con.execute("SELECT mime_type FROM uploaded_files WHERE id = ? OR stratus_key = ?", (file_id, f"filestore:{file_id}")).fetchone()
+        con.close()
+        mime = row[0] if row else "application/octet-stream"
+        
+        return StreamingResponse(iter_file(), media_type=mime)
+    except Exception as e:
+        raise HTTPException(500, f"Failed to download file from File Store: {e}")
