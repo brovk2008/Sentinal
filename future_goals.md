@@ -20,6 +20,14 @@ This document outlines the standard engineering roadmap for transitioning the Se
 * **Regulatory Compliance**: Align data processing and retention policies with regional data protection regulations, such as India's Digital Personal Data Protection (DPDP) Act or standard enterprise privacy guidelines.
 * **Data Minimization & Redaction**: Automatically redact personally identifiable information (PII) of victims or unrelated individuals from text fields before processing or indexing.
 
-## 5. Deployment & Scalability
-* **Containerization**: Package services using Docker containers to ensure consistent runtimes across different environments.
-* **Orchestration & Load Balancing**: Deploy services on managed container orchestration platforms (like Kubernetes) to support automated scaling, health checks, and high availability.
+## 6. Advanced Link Analysis & Entity Resolution
+* **Entity Resolution Engine**: Implement probabilistic record linkage algorithms (like deduplication using Fellegi-Sunter methodology or machine-learning-based classification) to identify when different spellings or records refer to the same individual across separate data sources.
+* **Graph Database Infrastructure**: Migrate the connection networks from static SQLite queries to dedicated graph databases (such as **Neo4j** or **Amazon Neptune**) to support real-time multi-hop relationship queries and graph algorithms (e.g., PageRank, Louvain community detection).
+
+## 7. Automated Data Pipeline & ETL Orchestration
+* **Workflow Orchestration**: Use tools like **Apache Airflow**, **Prefect**, or **Dagster** to schedule, monitor, and run automated data extraction, transformation, and loading (ETL) pipelines.
+* **Stream Processing**: Transition from batch updates to event-driven processing using message brokers like **Apache Kafka** or **RabbitMQ** to ingest and vectorize new data points in real time.
+
+## 8. Continuous Model Training (MLOps)
+* **Model Registry and Monitoring**: Deploy platforms like **MLflow** to track model versions, registry, and monitor drift for predictive classification and text categorization models.
+* **Distributed Training**: Scale feature extraction pipelines to use distributed processing frameworks like **Apache Spark** for large-scale document analysis.
