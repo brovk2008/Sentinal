@@ -3,6 +3,12 @@ import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
 import { useTranslation } from 'react-i18next'
 
+const getLogoPath = () => {
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocal) return 'logo.png';
+  return window.location.pathname.includes('/app/') ? 'logo.png' : 'app/logo.png';
+};
+
 export default function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -84,7 +90,7 @@ export default function Login() {
           gap: 6
         }}>
           <img
-            src="logo.png"
+            src={getLogoPath()}
             alt="Sentinal"
             style={{ height: 60, width: 'auto', objectFit: 'contain' }}
           />

@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isLocalAuthMode, redirectToHostedSignup, signupUser } from '../lib/catalystAuth'
 
+const getLogoPath = () => {
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocal) return 'logo.png';
+  return window.location.pathname.includes('/app/') ? 'logo.png' : 'app/logo.png';
+};
+
 export default function SignupPage() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
@@ -106,7 +112,7 @@ export default function SignupPage() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
         }}>
           <img
-            src="logo.png"
+            src={getLogoPath()}
             alt="Sentinal"
             style={{ height: 60, width: 'auto', objectFit: 'contain' }}
           />

@@ -2,6 +2,12 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Icon from '../Icons'
 
+const getLogoPath = () => {
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocal) return 'logo.png';
+  return window.location.pathname.includes('/app/') ? 'logo.png' : 'app/logo.png';
+};
+
 export default function Sidebar() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -63,7 +69,7 @@ export default function Sidebar() {
         gap: 10,
       }}>
         <img
-          src="logo.png"
+          src={getLogoPath()}
           alt="Sentinal"
           onError={(e) => {
             e.target.onerror = null;
