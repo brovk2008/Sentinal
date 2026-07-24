@@ -215,27 +215,45 @@ async def call_vision(
         "Content-Type": "application/json",
     }
 
+    # Strip any data URI scheme (e.g., "data:image/jpeg;base64,") if present
+    clean_b64 = image_b64
+    if "," in image_b64:
+        clean_b64 = image_b64.split(",", 1)[1]
+
     body = {
+        "prompt": user_prompt,
         "model": VISION_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_prompt},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
-                ],
-            },
-        ],
-        "max_tokens": max_tokens,
+        "images": [clean_b64],
+        "system_prompt": system_prompt,
+        "top_k": 50,
+        "top_p": 0.9,
         "temperature": 0.2,
+        "max_tokens": max_tokens,
     }
 
     try:
         async with httpx.AsyncClient(timeout=120) as client:
             r = await client.post(VISION_CHAT_URL, headers=headers, json=body)
+            log.info(f"[QuickML Vision] status={r.status_code}")
             r.raise_for_status()
-            return r.json()["choices"][0]["message"]["content"]
+            
+            data = r.json()
+            # Support both OpenAI-style and custom Catalyst response outputs
+            content = (
+                (data.get("choices") or [{}])[0].get("message", {}).get("content")
+                or data.get("response")
+                or data.get("output", {}).get("text")
+                or data.get("result")
+                or data.get("text")
+                or str(data)
+            )
+            return str(content)
     except Exception as e:
         log.error(f"[QuickML Vision] Request failed: {e}")
+        # Return response body for extra debugging if available
+        try:
+            if hasattr(e, "response") and e.response is not None:
+                return f"Catalyst Vision error: {e}. Body: {e.response.text}"
+        except:
+            pass
         return f"Catalyst Vision error: {e}"
