@@ -8,10 +8,10 @@ import base64
 import os
 import httpx
 
-PROJECT_ID = os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
-ORG_ID     = os.getenv("CATALYST_ORG_ID", "60073535541")
+PROJECT_ID = os.getenv("SENTINAL_PROJECT_ID") or os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
+ORG_ID     = os.getenv("SENTINAL_ORG_ID") or os.getenv("CATALYST_ORG_ID", "60073535541")
 QUICKML_BASE = f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}"
-CATALYST_KEY = os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
+CATALYST_KEY = os.getenv("SENTINAL_QUICKML_KEY") or os.getenv("ZCAT_QUICKML_KEY") or os.getenv("CATALYST_QUICKML_KEY") or ""
 
 TRANSLATION_URL = (
     os.getenv("SENTINAL_NLP_TRANSLATE_URL")

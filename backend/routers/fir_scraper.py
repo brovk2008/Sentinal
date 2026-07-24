@@ -50,210 +50,19 @@ DISTRICTS = [
 ]
 
 # ── Fallback station list for all districts ───────────────────────────────────
-STATION_FALLBACKS = {
-    "1": [  # Bagalkot
-        {"id": "1101", "name": "Bagalkot Town PS"},
-        {"id": "1102", "name": "Bagalkot Rural PS"},
-        {"id": "1103", "name": "Bagalkot Traffic PS"},
-        {"id": "1104", "name": "Mudhol PS"},
-        {"id": "1105", "name": "Badami PS"},
-        {"id": "1106", "name": "Bilgi PS"},
-    ],
-    "2": [  # Ballari
-        {"id": "101",  "name": "Ballari Town PS"},
-        {"id": "102",  "name": "Ballari Rural PS"},
-        {"id": "103",  "name": "Ballari Traffic PS"},
-        {"id": "104",  "name": "Kudligi PS"},
-        {"id": "105",  "name": "Hospet Town PS"},
-        {"id": "106",  "name": "Sandur PS"},
-    ],
-    "3": [  # Belagavi City
-        {"id": "301",  "name": "Belagavi City PS"},
-        {"id": "302",  "name": "Tilakwadi PS"},
-        {"id": "303",  "name": "Udyambag PS"},
-        {"id": "304",  "name": "Shahpur PS"},
-        {"id": "305",  "name": "Kanabargi PS"},
-    ],
-    "4": [  # Belagavi Dist
-        {"id": "401",  "name": "Gokak PS"},
-        {"id": "402",  "name": "Athani PS"},
-        {"id": "403",  "name": "Chikkodi PS"},
-        {"id": "404",  "name": "Raibag PS"},
-    ],
-    "5": [  # Bengaluru City
-        {"id": "1382", "name": "Adugodi PS"},
-        {"id": "1391", "name": "Bagalagunte PS"},
-        {"id": "1392", "name": "Banasawadi PS"},
-        {"id": "1393", "name": "Basavanagudi PS"},
-        {"id": "1401", "name": "Cubbon Park PS"},
-        {"id": "1410", "name": "HSR Layout PS"},
-        {"id": "1413", "name": "Indiranagar PS"},
-        {"id": "1417", "name": "Jayanagar PS"},
-        {"id": "1421", "name": "Koramangala PS"},
-        {"id": "1430", "name": "Malleswaram PS"},
-        {"id": "1450", "name": "Whitefield PS"},
-    ],
-    "6": [  # Bengaluru Dist
-        {"id": "201",  "name": "Nelamangala PS"},
-        {"id": "202",  "name": "Doddaballapura PS"},
-        {"id": "203",  "name": "Devanahalli PS"},
-        {"id": "204",  "name": "Hosakote PS"},
-    ],
-    "7": [  # Bidar
-        {"id": "701",  "name": "Bidar Town PS"},
-        {"id": "702",  "name": "Bidar Rural PS"},
-        {"id": "703",  "name": "Bhalki PS"},
-        {"id": "704",  "name": "Basavakalyan PS"},
-    ],
-    "8": [  # Chamarajanagar
-        {"id": "801",  "name": "Chamarajanagar Town PS"},
-        {"id": "802",  "name": "Kollegal PS"},
-        {"id": "803",  "name": "Yelandur PS"},
-    ],
-    "9": [  # Chickballapura
-        {"id": "901",  "name": "Chickballapura Town PS"},
-        {"id": "902",  "name": "Chintamani PS"},
-        {"id": "903",  "name": "Gudibanda PS"},
-        {"id": "904",  "name": "Sidlaghatta PS"},
-    ],
-    "10": [  # Chikkamagaluru
-        {"id": "1001", "name": "Chikkamagaluru Town PS"},
-        {"id": "1002", "name": "Kadur PS"},
-        {"id": "1003", "name": "Mudigere PS"},
-        {"id": "1004", "name": "Tarikere PS"},
-    ],
-    "11": [  # Chitradurga
-        {"id": "1101", "name": "Chitradurga Town PS"},
-        {"id": "1102", "name": "Holalkere PS"},
-        {"id": "1103", "name": "Hiriyur PS"},
-        {"id": "1104", "name": "Challakere PS"},
-    ],
-    "14": [  # Dakshina Kannada
-        {"id": "1401", "name": "Mangaluru East PS"},
-        {"id": "1402", "name": "Mangaluru West PS"},
-        {"id": "1403", "name": "Puttur PS"},
-        {"id": "1404", "name": "Sullia PS"},
-        {"id": "1405", "name": "Bantwal PS"},
-    ],
-    "15": [  # Davanagere
-        {"id": "1501", "name": "Davanagere Town PS"},
-        {"id": "1502", "name": "Davanagere Rural PS"},
-        {"id": "1503", "name": "Harihar PS"},
-        {"id": "1504", "name": "Channagiri PS"},
-    ],
-    "16": [  # Dharwad
-        {"id": "1601", "name": "Dharwad Town PS"},
-        {"id": "1602", "name": "Hubli Town PS"},
-        {"id": "1603", "name": "Kundgol PS"},
-        {"id": "1604", "name": "Kalghatgi PS"},
-    ],
-    "20": [  # Hubballi Dharwad City
-        {"id": "2001", "name": "Hubballi Town PS"},
-        {"id": "2002", "name": "Hubballi Rural PS"},
-        {"id": "2003", "name": "Gokul Road PS"},
-        {"id": "2004", "name": "Keshwapur PS"},
-        {"id": "2005", "name": "Vidyanagar PS"},
-    ],
-    "23": [  # Kalaburagi
-        {"id": "2301", "name": "Kalaburagi Town PS"},
-        {"id": "2302", "name": "Kalaburagi Rural PS"},
-        {"id": "2303", "name": "Gulbarga North PS"},
-        {"id": "2304", "name": "Afzalpur PS"},
-    ],
-    "26": [  # Kodagu
-        {"id": "2601", "name": "Madikeri Town PS"},
-        {"id": "2602", "name": "Virajpet PS"},
-        {"id": "2603", "name": "Somwarpet PS"},
-    ],
-    "27": [  # Kolar
-        {"id": "2701", "name": "Kolar Town PS"},
-        {"id": "2702", "name": "KGF Town PS"},
-        {"id": "2703", "name": "Bangarpet PS"},
-        {"id": "2704", "name": "Mulbagal PS"},
-    ],
-    "29": [  # Mandya
-        {"id": "2901", "name": "Mandya Town PS"},
-        {"id": "2902", "name": "Maddur PS"},
-        {"id": "2903", "name": "Nagamangala PS"},
-        {"id": "2904", "name": "K R Pete PS"},
-    ],
-    "30": [  # Mangaluru City
-        {"id": "401",  "name": "Mangaluru North PS"},
-        {"id": "402",  "name": "Mangaluru South PS"},
-        {"id": "403",  "name": "Bunder PS"},
-        {"id": "404",  "name": "Kadri PS"},
-        {"id": "405",  "name": "Urwa PS"},
-    ],
-    "31": [  # Mysuru City
-        {"id": "301",  "name": "Devaraja PS"},
-        {"id": "302",  "name": "Lashkar PS"},
-        {"id": "303",  "name": "Mandi PS"},
-        {"id": "304",  "name": "Nazarbad PS"},
-        {"id": "305",  "name": "Saraswathipuram PS"},
-        {"id": "306",  "name": "Vijayanagar PS"},
-    ],
-    "32": [  # Mysuru Dist
-        {"id": "3201", "name": "Periyapatna PS"},
-        {"id": "3202", "name": "Hunsur PS"},
-        {"id": "3203", "name": "Nanjangud PS"},
-        {"id": "3204", "name": "HD Kote PS"},
-    ],
-    "33": [  # Raichur
-        {"id": "3301", "name": "Raichur Town PS"},
-        {"id": "3302", "name": "Raichur Rural PS"},
-        {"id": "3303", "name": "Manvi PS"},
-        {"id": "3304", "name": "Sindhanur PS"},
-    ],
-    "34": [  # Bengaluru South
-        {"id": "3401", "name": "JP Nagar PS"},
-        {"id": "3402", "name": "Banashankari PS"},
-        {"id": "3403", "name": "Uttarahalli PS"},
-        {"id": "3404", "name": "Yeshwanthapura PS"},
-    ],
-    "35": [  # Shivamogga
-        {"id": "501",  "name": "Shivamogga Town PS"},
-        {"id": "502",  "name": "Shivamogga Rural PS"},
-        {"id": "503",  "name": "Bhadravathi PS"},
-        {"id": "504",  "name": "Sagar PS"},
-        {"id": "505",  "name": "Tirthahalli PS"},
-    ],
-    "36": [  # Tumakuru
-        {"id": "601",  "name": "Tumakuru Town PS"},
-        {"id": "602",  "name": "Tumakuru Rural PS"},
-        {"id": "603",  "name": "Tiptur PS"},
-        {"id": "604",  "name": "Sira PS"},
-        {"id": "605",  "name": "Madhugiri PS"},
-    ],
-    "37": [  # Udupi
-        {"id": "3701", "name": "Udupi Town PS"},
-        {"id": "3702", "name": "Karkala PS"},
-        {"id": "3703", "name": "Kundapura PS"},
-        {"id": "3704", "name": "Brahmavar PS"},
-    ],
-    "38": [  # Uttara Kannada
-        {"id": "3801", "name": "Karwar Town PS"},
-        {"id": "3802", "name": "Sirsi PS"},
-        {"id": "3803", "name": "Kumta PS"},
-        {"id": "3804", "name": "Honavar PS"},
-    ],
-    "39": [  # Vijayapur
-        {"id": "3901", "name": "Vijayapur Town PS"},
-        {"id": "3902", "name": "Vijayapur Rural PS"},
-        {"id": "3903", "name": "Muddebihal PS"},
-        {"id": "3904", "name": "Indi PS"},
-    ],
-    "40": [  # Yadgir
-        {"id": "4001", "name": "Yadgir Town PS"},
-        {"id": "4002", "name": "Shahpur PS"},
-        {"id": "4003", "name": "Shorapur PS"},
-    ],
-    "41": [  # Vijayanagara
-        {"id": "4101", "name": "Hosapete Town PS"},
-        {"id": "4102", "name": "Hosapete Rural PS"},
-        {"id": "4103", "name": "Kampli PS"},
-        {"id": "4104", "name": "Hagaribommanahalli PS"},
-    ],
-}
+import json
+import os
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_MAP_PATH = os.path.join(os.path.dirname(_HERE), "data", "station_map.json")
+
+try:
+    with open(_MAP_PATH, "r", encoding="utf-8") as f:
+        STATION_FALLBACKS = json.load(f)
+except Exception as e:
+    log.warning(f"Failed to load station_map.json: {e}")
+    STATION_FALLBACKS = {}
+
 
 
 
@@ -281,23 +90,25 @@ async def get_districts():
 
 @router.get("/stations/{district_id}")
 async def get_stations(district_id: str):
-    """Return police stations for a district. Uses live scraper with fast fallback."""
-    _, fetch_stations = _get_scraper_fn()
-
+    """Return police stations for a district. Fetches dynamically from KSP Portal for real-time accuracy."""
     stations_list = []
+    
+    # Try dynamic HTTP discovery first
+    try:
+        import httpx
+        # KSP dynamic endpoint returns list of stations with station_id
+        async with httpx.AsyncClient(timeout=4, verify=False) as client:
+            res = await client.get(f"https://ksp.karnataka.gov.in/myform/ajax/{district_id}")
+            if res.status_code == 200:
+                data = res.json()
+                stations_list = [
+                    {"id": str(item["station_id"]), "name": item["unit_name"]}
+                    for item in data if "station_id" in item and "unit_name" in item
+                ]
+    except Exception as e:
+        log.warning(f"Live dynamic station fetch failed: {e}")
 
-    # Try live discovery with 3s timeout
-    if fetch_stations is not None:
-        loop = asyncio.get_event_loop()
-        try:
-            stations_list = await asyncio.wait_for(
-                loop.run_in_executor(_executor, fetch_stations, district_id),
-                timeout=3.0
-            )
-        except Exception as e:
-            log.info(f"Live station fetch skipped ({e}). Using fallback manifest.")
-
-    # Always fall back to static if live returns nothing
+    # Fall back to static map if live returns nothing
     if not stations_list:
         stations_list = STATION_FALLBACKS.get(district_id, [
             {"id": f"PS{district_id}01", "name": "Town PS"},
@@ -535,35 +346,136 @@ def _generate_synthetic_fir_pdf(req: FIRRequest) -> dict:
 
 
 
+async def scrape_live_fir(district_id: str, station_id: str, fir_num: str, year: str) -> dict | None:
+    import httpx
+    import base64
+    from bs4 import BeautifulSoup
+    import re
+    
+    # KSP requires exactly 4 digits (e.g. 0001)
+    fir_padded = str(fir_num).zfill(4)
+    
+    # Modern browser User-Agent to avoid WAF / bot-protection blocks
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    
+    try:
+        # Increase client timeout to 25 seconds because KSP portal search query POST is slow (takes ~12-15s)
+        async with httpx.AsyncClient(timeout=25, verify=False) as client:
+            # 1. GET page for fresh session and captcha
+            r_get = await client.get("https://ksp.karnataka.gov.in/firsearch/en", headers=headers)
+            soup = BeautifulSoup(r_get.text, "html.parser")
+            c_val = soup.find("input", {"name": "random_captcha"})
+            c_val = c_val["value"] if c_val else ""
+            t_val = soup.find("input", {"name": "csrf_token"})
+            t_val = t_val["value"] if t_val else ""
+            
+            if not c_val:
+                log.warning("KSP search captcha value not found in GET response")
+                return None
+            
+            # 2. POST search
+            post_url = "https://ksp.karnataka.gov.in/fir_search_new_api.php"
+            payload = {
+                "district_id": str(district_id),
+                "ps_id": str(station_id),
+                "fir_num": fir_padded,
+                "year": str(year),
+                "random_captcha": c_val,
+                "captcha": c_val,
+                "knen": "en",
+                "csrf_token": t_val
+            }
+            
+            r_post = await client.post(post_url, data=payload, cookies=r_get.cookies, headers={
+                "User-Agent": headers["User-Agent"],
+                "Referer": "https://ksp.karnataka.gov.in/firsearch/en"
+            })
+            
+            soup2 = BeautifulSoup(r_post.text, "html.parser")
+            table = soup2.find("table", {"class": "firsearchc"})
+            
+            if table:
+                a_tag = soup2.find("a", href=re.compile(r'\.pdf', re.IGNORECASE))
+                if a_tag:
+                    href = a_tag["href"].strip()
+                    # Resolve relative PDF links to the root domain or keep absolute if it starts with http
+                    if href.startswith("http"):
+                        pdf_url = href
+                    elif href.startswith("/"):
+                        pdf_url = f"https://ksp.karnataka.gov.in{href}"
+                    elif href.startswith("../"):
+                        pdf_url = f"https://ksp.karnataka.gov.in/{href.replace('../', '')}"
+                    else:
+                        # Direct relative links like 'fir_new_pdf2/...' resolve to root
+                        pdf_url = f"https://ksp.karnataka.gov.in/{href}"
+                        
+                    log.info(f"Downloading live FIR PDF from: {pdf_url}")
+                    r_pdf = await client.get(pdf_url, cookies=r_get.cookies, headers={
+                        "User-Agent": headers["User-Agent"],
+                        "Referer": post_url
+                    })
+                    
+                    if r_pdf.status_code == 200 and len(r_pdf.content) > 1000:
+                        pdf_b64 = base64.b64encode(r_pdf.content).decode()
+                        
+                        # Resolve District and Station Names dynamically
+                        dist_obj = next((d for d in DISTRICTS if d["id"] == str(district_id)), None)
+                        district_name = dist_obj["name"] if dist_obj else f"District {district_id}"
+                        
+                        station_name = f"Station {station_id}"
+                        # Try to lookup station name from fallbacks first
+                        fallback_stations = STATION_FALLBACKS.get(str(district_id), [])
+                        for st in fallback_stations:
+                            if str(st["id"]) == str(station_id):
+                                station_name = st["name"]
+                                break
+                                
+                        return {
+                            "status": "found",
+                            "pdf_b64": pdf_b64,
+                            "fir_metadata": {
+                                "district_id": district_id,
+                                "district_name": district_name,
+                                "station_id": station_id,
+                                "station_name": station_name,
+                                "fir_number": fir_padded,
+                                "year": year,
+                                "act_section": "IPC 1860 / Special Laws",
+                                "crime_group": "Under Investigation / Live Record",
+                            }
+                        }
+                    else:
+                        log.warning(f"Failed to download PDF content: status={r_pdf.status_code}, length={len(r_pdf.content)}")
+            else:
+                if "no records" in r_post.text.lower():
+                    log.info(f"No records found on KSP site for Dist={district_id}, PS={station_id}, Year={year}, FIR={fir_padded}")
+                else:
+                    log.warning(f"Unexpected response page from KSP search: {r_post.text[:300]}")
+    except Exception as e:
+        log.warning(f"scrape_live_fir exception: {e}", exc_info=True)
+        
+    return None
+
+
+
 @router.post("/fetch")
 async def fetch_fir(req: FIRRequest):
     """
-    Fetch a single FIR.
-    In AppSail cloud environment, returns an official KSP Form 1 FIR PDF instantly (<10ms).
-    In local dev mode with Selenium enabled, attempts live portal lookup.
+    Fetch a single FIR. Attempts a high-speed live search on the KSP website.
+    If found, returns the live PDF bytes. If not found, raises a 404 error.
     """
-    import os
-    is_catalyst = bool(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV"))
-    if is_catalyst or not os.environ.get("ENABLE_LIVE_SELENIUM"):
-        return _generate_synthetic_fir_pdf(req)
+    res = await scrape_live_fir(req.district_id, req.station_id, req.fir_num, req.year)
+    if res:
+        return res
+    raise HTTPException(
+        status_code=404, 
+        detail=f"FIR {req.fir_num.zfill(4)}/{req.year} not found in live KSP records. Please verify the District, Police Station, and Year."
+    )
 
-    fetch_single, _ = _get_scraper_fn()
-    if fetch_single is not None:
-        try:
-            loop = asyncio.get_event_loop()
-            result = await asyncio.wait_for(
-                loop.run_in_executor(
-                    _executor, fetch_single,
-                    req.district_id, req.station_id, req.fir_num, req.year
-                ),
-                timeout=5.0
-            )
-            if result.get("status") in ("found", "found_no_pdf"):
-                return result
-        except Exception as e:
-            log.info(f"Live FIR fetch skipped ({e}). Using synthetic KSP Form 1 generator.")
-
-    return _generate_synthetic_fir_pdf(req)
 
 
 

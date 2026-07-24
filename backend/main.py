@@ -1,5 +1,10 @@
 import sys, os
 
+# Set Catalyst Org & Project ID for zcatalyst_sdk
+os.environ["X_ZOHO_CATALYST_ORG_ID"] = "60073535541"
+os.environ["CATALYST_ORG_ID"] = "60073535541"
+os.environ["CATALYST_PROJECT_ID"] = "50170000000065001"
+
 # MUST BE AT VERY TOP: Add bundled Linux AMD64 wheels in ./lib to sys.path
 _HERE_LIB = os.path.join(os.path.dirname(__file__), "lib")
 for _pkg_path in [_HERE_LIB, "/catalyst/lib", "/app/lib", "/tmp/sentinal-packages", "/tmp/site-packages"]:

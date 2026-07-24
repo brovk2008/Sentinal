@@ -28,6 +28,10 @@ class Config:
     CATALYST_LLM_MODEL    = os.getenv("SENTINAL_LLM_MODEL",    "GLM-4.7-Flash")
     CATALYST_VISION_MODEL = os.getenv("SENTINAL_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
 
+    # OpenRouter fallback configuration
+    OPENROUTER_KEY = os.getenv("SENTINEL_OPENROUTER_KEY", "")
+    OPENROUTER_MODEL = "google/gemma-4-26b-a4b-it:free"
+
     USE_CATALYST_DB = os.getenv("USE_CATALYST_DB", "false").lower() == "true"
 
 config = Config()

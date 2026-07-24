@@ -1,0 +1,4520 @@
+{
+    "1": [
+        {
+            "id": "1245",
+            "name": "Amengad PS"
+        },
+        {
+            "id": "1246",
+            "name": "Badami PS"
+        },
+        {
+            "id": "2220",
+            "name": "Bagalkot CEN Crime PS"
+        },
+        {
+            "id": "1238",
+            "name": "Bagalkot Rural PS"
+        },
+        {
+            "id": "1236",
+            "name": "Bagalkot Town PS"
+        },
+        {
+            "id": "1237",
+            "name": "Bagalkot Traffic PS"
+        },
+        {
+            "id": "2217",
+            "name": "Bagalkot Women PS"
+        },
+        {
+            "id": "2375",
+            "name": "Bagalkote DCRE PS"
+        },
+        {
+            "id": "1259",
+            "name": "Banahatti PS"
+        },
+        {
+            "id": "1263",
+            "name": "Bilagi PS"
+        },
+        {
+            "id": "1249",
+            "name": "Guledagudda PS"
+        },
+        {
+            "id": "1241",
+            "name": "Hungunda PS"
+        },
+        {
+            "id": "1242",
+            "name": "Ilakal PS"
+        },
+        {
+            "id": "2189",
+            "name": "Ilakal Rural PS"
+        },
+        {
+            "id": "1251",
+            "name": "Jamakhandi Rural PS"
+        },
+        {
+            "id": "1250",
+            "name": "Jamakhandi Town PS"
+        },
+        {
+            "id": "1240",
+            "name": "Kaladagi PS"
+        },
+        {
+            "id": "1247",
+            "name": "Kerur PS"
+        },
+        {
+            "id": "1256",
+            "name": "Lokapur PS"
+        },
+        {
+            "id": "1258",
+            "name": "Mahalingapur PS"
+        },
+        {
+            "id": "1255",
+            "name": "Mudhol PS"
+        },
+        {
+            "id": "1888",
+            "name": "Navanagara PS"
+        },
+        {
+            "id": "1254",
+            "name": "Savalgi PS"
+        },
+        {
+            "id": "1260",
+            "name": "Teradal PS"
+        }
+    ],
+    "2": [
+        {
+            "id": "1920",
+            "name": "APMC Yard PS"
+        },
+        {
+            "id": "2221",
+            "name": "Ballari CEN Crime PS"
+        },
+        {
+            "id": "2368",
+            "name": "Ballari DCRE PS"
+        },
+        {
+            "id": "2205",
+            "name": "Ballari Women PS"
+        },
+        {
+            "id": "338",
+            "name": "Bellary Rural PS"
+        },
+        {
+            "id": "337",
+            "name": "Bellary Traffic PS"
+        },
+        {
+            "id": "333",
+            "name": "Brucepet PS"
+        },
+        {
+            "id": "334",
+            "name": "Cowlbazar PS"
+        },
+        {
+            "id": "362",
+            "name": "Gadiganur PS"
+        },
+        {
+            "id": "335",
+            "name": "Gandhinagar PS"
+        },
+        {
+            "id": "348",
+            "name": "Hatcholli PS"
+        },
+        {
+            "id": "357",
+            "name": "Kampli PS"
+        },
+        {
+            "id": "1893",
+            "name": "Kuduthini PS"
+        },
+        {
+            "id": "343",
+            "name": "Kurugod PS"
+        },
+        {
+            "id": "342",
+            "name": "Moka PS"
+        },
+        {
+            "id": "339",
+            "name": "P.D. Halli PS"
+        },
+        {
+            "id": "366",
+            "name": "Sandur PS"
+        },
+        {
+            "id": "346",
+            "name": "Sirigeri PS"
+        },
+        {
+            "id": "347",
+            "name": "Siruguppa PS"
+        },
+        {
+            "id": "344",
+            "name": "Tekkalkota PS"
+        },
+        {
+            "id": "364",
+            "name": "Thoranagal PS"
+        }
+    ],
+    "3": [
+        {
+            "id": "298",
+            "name": "APMC Yard PS"
+        },
+        {
+            "id": "1456",
+            "name": "Bagewadi PS"
+        },
+        {
+            "id": "2240",
+            "name": "Belagavi City CEN Crime PS"
+        },
+        {
+            "id": "310",
+            "name": "Belagavi Rural PS"
+        },
+        {
+            "id": "306",
+            "name": "Belgaum North Traffic PS"
+        },
+        {
+            "id": "305",
+            "name": "Belgaum South Traffic PS"
+        },
+        {
+            "id": "303",
+            "name": "Camp PS"
+        },
+        {
+            "id": "311",
+            "name": "Kakati PS"
+        },
+        {
+            "id": "301",
+            "name": "Khadebazar PS"
+        },
+        {
+            "id": "297",
+            "name": "Malamaruthi PS"
+        },
+        {
+            "id": "1457",
+            "name": "Marihal PS"
+        },
+        {
+            "id": "292",
+            "name": "Market PS"
+        },
+        {
+            "id": "296",
+            "name": "Shahapura PS"
+        },
+        {
+            "id": "302",
+            "name": "Tilakwadi PS"
+        },
+        {
+            "id": "1455",
+            "name": "Udyambag PS"
+        },
+        {
+            "id": "1453",
+            "name": "Women PS"
+        }
+    ],
+    "4": [
+        {
+            "id": "1487",
+            "name": "Agali PS"
+        },
+        {
+            "id": "324",
+            "name": "Ankalgi PS"
+        },
+        {
+            "id": "2011",
+            "name": "Ankali PS"
+        },
+        {
+            "id": "1485",
+            "name": "Athani PS"
+        },
+        {
+            "id": "1464",
+            "name": "Bailahongal PS"
+        },
+        {
+            "id": "1482",
+            "name": "Basaweshwar Chowk PS"
+        },
+        {
+            "id": "2223",
+            "name": "Belagavi CEN Crime PS"
+        },
+        {
+            "id": "2394",
+            "name": "Belagavi DCRE PS"
+        },
+        {
+            "id": "2243",
+            "name": "Belagavi Women PS"
+        },
+        {
+            "id": "1478",
+            "name": "Chikkodi PS"
+        },
+        {
+            "id": "2133",
+            "name": "Chikkodi Town Traffic PS"
+        },
+        {
+            "id": "1467",
+            "name": "Doddawad PS"
+        },
+        {
+            "id": "1460",
+            "name": "Ghataprabha PS"
+        },
+        {
+            "id": "319",
+            "name": "Gokak Rural PS"
+        },
+        {
+            "id": "323",
+            "name": "Gokak Town PS"
+        },
+        {
+            "id": "2126",
+            "name": "Harugeri PS"
+        },
+        {
+            "id": "1461",
+            "name": "Hukkeri PS"
+        },
+        {
+            "id": "1486",
+            "name": "Kagwad PS"
+        },
+        {
+            "id": "1473",
+            "name": "Katkol PS"
+        },
+        {
+            "id": "2204",
+            "name": "Khadakalat PS"
+        },
+        {
+            "id": "314",
+            "name": "Khanapur PS"
+        },
+        {
+            "id": "1466",
+            "name": "Kittur PS"
+        },
+        {
+            "id": "1484",
+            "name": "Kudachi PS"
+        },
+        {
+            "id": "1459",
+            "name": "Kulgod PS"
+        },
+        {
+            "id": "1458",
+            "name": "Mudalgi PS"
+        },
+        {
+            "id": "1470",
+            "name": "Murgod PS"
+        },
+        {
+            "id": "315",
+            "name": "Nandagad PS"
+        },
+        {
+            "id": "1465",
+            "name": "Nesargi PS"
+        },
+        {
+            "id": "1481",
+            "name": "Nippani Rural PS"
+        },
+        {
+            "id": "1480",
+            "name": "Nippani Town PS"
+        },
+        {
+            "id": "1483",
+            "name": "Raibag PS"
+        },
+        {
+            "id": "1472",
+            "name": "Ramadurga PS"
+        },
+        {
+            "id": "1479",
+            "name": "Sadalaga PS"
+        },
+        {
+            "id": "1462",
+            "name": "Sankeshwar PS"
+        },
+        {
+            "id": "1468",
+            "name": "Soundatti PS"
+        },
+        {
+            "id": "2344",
+            "name": "Sureban PS"
+        },
+        {
+            "id": "1463",
+            "name": "Yamakanmardi PS"
+        }
+    ],
+    "5": [
+        {
+            "id": "1382",
+            "name": "Adugodi PS"
+        },
+        {
+            "id": "1762",
+            "name": "Adugodi Traffic PS"
+        },
+        {
+            "id": "1770",
+            "name": "Airport Traffic PS"
+        },
+        {
+            "id": "1818",
+            "name": "Amruthahally PS"
+        },
+        {
+            "id": "2188",
+            "name": "Annapoorneshwari Nagar PS"
+        },
+        {
+            "id": "1389",
+            "name": "Ashoknagar PS"
+        },
+        {
+            "id": "1761",
+            "name": "Ashoknagar Traffic PS"
+        },
+        {
+            "id": "1916",
+            "name": "Avalahally PS"
+        },
+        {
+            "id": "1820",
+            "name": "BIAL PS"
+        },
+        {
+            "id": "1899",
+            "name": "BIAL Traffic PS"
+        },
+        {
+            "id": "2195",
+            "name": "Bagalagunte PS"
+        },
+        {
+            "id": "1822",
+            "name": "Bagalur PS"
+        },
+        {
+            "id": "1776",
+            "name": "Banasawadi Traffic PS"
+        },
+        {
+            "id": "1375",
+            "name": "Banashankari PS"
+        },
+        {
+            "id": "1783",
+            "name": "Banashankari Traffic PS"
+        },
+        {
+            "id": "1406",
+            "name": "Banaswadi PS"
+        },
+        {
+            "id": "2193",
+            "name": "Bandepalya PS"
+        },
+        {
+            "id": "1376",
+            "name": "Basavanagudi PS"
+        },
+        {
+            "id": "1784",
+            "name": "Basavanagudi Traffic PS"
+        },
+        {
+            "id": "1377",
+            "name": "Basavanagudi Women PS"
+        },
+        {
+            "id": "1426",
+            "name": "Basaveshwara Nagar PS"
+        },
+        {
+            "id": "2194",
+            "name": "Beguru PS"
+        },
+        {
+            "id": "2198",
+            "name": "Bellanduru PS"
+        },
+        {
+            "id": "2363",
+            "name": "Bengaluru City East DCRE PS"
+        },
+        {
+            "id": "2364",
+            "name": "Bengaluru City West DCRE PS"
+        },
+        {
+            "id": "1401",
+            "name": "Bharathi Nagar PS"
+        },
+        {
+            "id": "2141",
+            "name": "Bommanahalli PS"
+        },
+        {
+            "id": "2123",
+            "name": "Byadarahalli PS"
+        },
+        {
+            "id": "1411",
+            "name": "Byappanahalli PS"
+        },
+        {
+            "id": "1418",
+            "name": "Byatarayanapura PS"
+        },
+        {
+            "id": "1787",
+            "name": "Byatrarayanapura Traffic PS"
+        },
+        {
+            "id": "2060",
+            "name": "CCB Bengaluru City Police"
+        },
+        {
+            "id": "2146",
+            "name": "Central CEN Crime PS"
+        },
+        {
+            "id": "2349",
+            "name": "Central Women PS"
+        },
+        {
+            "id": "1364",
+            "name": "Chamarajpet PS"
+        },
+        {
+            "id": "1788",
+            "name": "Chamarajpet Traffic PS"
+        },
+        {
+            "id": "1420",
+            "name": "Chandra Layout PS"
+        },
+        {
+            "id": "1797",
+            "name": "Channammanakere Achu Kattu PS"
+        },
+        {
+            "id": "2342",
+            "name": "Chikkabanavara Traffic"
+        },
+        {
+            "id": "268",
+            "name": "Chikkajala PS"
+        },
+        {
+            "id": "1898",
+            "name": "Chikkajala Traffic PS"
+        },
+        {
+            "id": "1432",
+            "name": "City Market PS"
+        },
+        {
+            "id": "1789",
+            "name": "City Market Traffic PS"
+        },
+        {
+            "id": "1400",
+            "name": "Commercial Street PS"
+        },
+        {
+            "id": "1417",
+            "name": "Cottonpet PS"
+        },
+        {
+            "id": "1398",
+            "name": "Cubbon Park PS"
+        },
+        {
+            "id": "1766",
+            "name": "Cubbonpark Traffic PS"
+        },
+        {
+            "id": "2200",
+            "name": "Cyber Crime Police Station"
+        },
+        {
+            "id": "2051",
+            "name": "DCRE HQ PS Bengaluru"
+        },
+        {
+            "id": "266",
+            "name": "Devanahalli PS"
+        },
+        {
+            "id": "1402",
+            "name": "Devarajeevanahalli PS"
+        },
+        {
+            "id": "2147",
+            "name": "East CEN Crime PS"
+        },
+        {
+            "id": "1387",
+            "name": "East Women PS"
+        },
+        {
+            "id": "1387",
+            "name": "East Zone Women PS"
+        },
+        {
+            "id": "1799",
+            "name": "Electronic City PS"
+        },
+        {
+            "id": "1896",
+            "name": "Electronic City Traffic PS"
+        },
+        {
+            "id": "1348",
+            "name": "Gangammana Gudi PS"
+        },
+        {
+            "id": "1368",
+            "name": "Girinagar PS"
+        },
+        {
+            "id": "2268",
+            "name": "Govindapura PS"
+        },
+        {
+            "id": "2303",
+            "name": "Govindaraja Nagar PS"
+        },
+        {
+            "id": "1416",
+            "name": "H.A.L. PS"
+        },
+        {
+            "id": "2132",
+            "name": "HSR Lay Out Traffic PS"
+        },
+        {
+            "id": "1796",
+            "name": "HSR Layout PS"
+        },
+        {
+            "id": "1769",
+            "name": "Halasur Gate Traffic PS"
+        },
+        {
+            "id": "1410",
+            "name": "Halasur PS"
+        },
+        {
+            "id": "1775",
+            "name": "Halasur Traffic PS"
+        },
+        {
+            "id": "1386",
+            "name": "Halasurgate PS"
+        },
+        {
+            "id": "1366",
+            "name": "Hanumanthanagar PS"
+        },
+        {
+            "id": "1333",
+            "name": "Hebbagodi PS"
+        },
+        {
+            "id": "1354",
+            "name": "Hebbal PS"
+        },
+        {
+            "id": "1777",
+            "name": "Hebbal Traffic PS"
+        },
+        {
+            "id": "1408",
+            "name": "Hennur PS"
+        },
+        {
+            "id": "2320",
+            "name": "Hennur Traffic PS"
+        },
+        {
+            "id": "1394",
+            "name": "High Grounds PS"
+        },
+        {
+            "id": "1767",
+            "name": "High Grounds Traffic PS"
+        },
+        {
+            "id": "1798",
+            "name": "Hulimavu PS"
+        },
+        {
+            "id": "2001",
+            "name": "Hulimavu Traffic PS"
+        },
+        {
+            "id": "1412",
+            "name": "Indiranagar PS"
+        },
+        {
+            "id": "1351",
+            "name": "J.C. Nagar PS"
+        },
+        {
+            "id": "1421",
+            "name": "Jagajeevanram Nagar PS"
+        },
+        {
+            "id": "14",
+            "name": "Jalahalli PS"
+        },
+        {
+            "id": "2005",
+            "name": "Jalahalli Traffic PS"
+        },
+        {
+            "id": "1372",
+            "name": "Jayanagar PS"
+        },
+        {
+            "id": "1786",
+            "name": "Jayanagar Traffic PS"
+        },
+        {
+            "id": "1373",
+            "name": "Jayaprakash Nagar PS"
+        },
+        {
+            "id": "1413",
+            "name": "Jeevan Bheemanagar PS"
+        },
+        {
+            "id": "1773",
+            "name": "Jeevan Bhima Nagar (Indiranagar) Traffic PS"
+        },
+        {
+            "id": "1422",
+            "name": "Jnanabharathi PS"
+        },
+        {
+            "id": "2347",
+            "name": "Jnanabharathi Traffic PS"
+        },
+        {
+            "id": "2201",
+            "name": "K G Halli Traffic PS"
+        },
+        {
+            "id": "1405",
+            "name": "K.R. Puram PS"
+        },
+        {
+            "id": "1774",
+            "name": "K.R.Puram Traffic PS"
+        },
+        {
+            "id": "257",
+            "name": "Kadugodi PS"
+        },
+        {
+            "id": "1407",
+            "name": "Kadugondana Halli PS"
+        },
+        {
+            "id": "1431",
+            "name": "Kalasipalya PS"
+        },
+        {
+            "id": "1428",
+            "name": "Kamakshipalya PS"
+        },
+        {
+            "id": "1793",
+            "name": "Kamakshipalya Traffic PS"
+        },
+        {
+            "id": "1427",
+            "name": "Kempapura Agrahara PS"
+        },
+        {
+            "id": "1367",
+            "name": "Kempegowda Nagar PS"
+        },
+        {
+            "id": "1423",
+            "name": "Kengeri PS"
+        },
+        {
+            "id": "2006",
+            "name": "Kengeri Traffic PS"
+        },
+        {
+            "id": "1873",
+            "name": "Kodigehalli PS"
+        },
+        {
+            "id": "2202",
+            "name": "Konanakunte PS"
+        },
+        {
+            "id": "1383",
+            "name": "Koramangala PS"
+        },
+        {
+            "id": "1875",
+            "name": "Kothanur PS"
+        },
+        {
+            "id": "1378",
+            "name": "Kumaraswamy Layout PS"
+        },
+        {
+            "id": "1795",
+            "name": "Kumaraswamy Layout Traffic PS"
+        },
+        {
+            "id": "2003",
+            "name": "Kumbalagudu PS"
+        },
+        {
+            "id": "1914",
+            "name": "Madanayakanahally PS"
+        },
+        {
+            "id": "1380",
+            "name": "Madivala PS"
+        },
+        {
+            "id": "1763",
+            "name": "Madivala Traffic PS"
+        },
+        {
+            "id": "1425",
+            "name": "Magadi Road PS"
+        },
+        {
+            "id": "1790",
+            "name": "Magadi Road Traffic PS"
+        },
+        {
+            "id": "1414",
+            "name": "Mahadevapura PS"
+        },
+        {
+            "id": "1359",
+            "name": "Mahalakshmipuram PS"
+        },
+        {
+            "id": "1357",
+            "name": "Malleshwaram PS"
+        },
+        {
+            "id": "1778",
+            "name": "Malleshwaram Traffic PS"
+        },
+        {
+            "id": "2199",
+            "name": "Marathahalli PS"
+        },
+        {
+            "id": "1381",
+            "name": "Mico Layout PS"
+        },
+        {
+            "id": "1764",
+            "name": "Mico Layout Traffic PS"
+        },
+        {
+            "id": "1363",
+            "name": "Nandini Layout PS"
+        },
+        {
+            "id": "2149",
+            "name": "North CEN Crime PS"
+        },
+        {
+            "id": "247",
+            "name": "North East Women PS"
+        },
+        {
+            "id": "2345",
+            "name": "North Women PS"
+        },
+        {
+            "id": "2260",
+            "name": "NorthEast CEN Crime PS"
+        },
+        {
+            "id": "1800",
+            "name": "Parappana Agrahara"
+        },
+        {
+            "id": "1350",
+            "name": "Peenya PS"
+        },
+        {
+            "id": "1779",
+            "name": "Peenya Traffic PS"
+        },
+        {
+            "id": "1399",
+            "name": "Pulakeshinagar PS"
+        },
+        {
+            "id": "1772",
+            "name": "Pulakeshinagar Traffic PS"
+        },
+        {
+            "id": "2203",
+            "name": "Puttenahalli PS"
+        },
+        {
+            "id": "1349",
+            "name": "R.M.C. Yard PS"
+        },
+        {
+            "id": "1352",
+            "name": "R.T. Nagar PS"
+        },
+        {
+            "id": "1780",
+            "name": "R.T.Nagar Traffic PS"
+        },
+        {
+            "id": "1362",
+            "name": "Rajagopal Nagar PS"
+        },
+        {
+            "id": "1360",
+            "name": "Rajajinagar PS"
+        },
+        {
+            "id": "1781",
+            "name": "Rajajinagar Traffic PS"
+        },
+        {
+            "id": "1336",
+            "name": "Rajanukunte PS"
+        },
+        {
+            "id": "1877",
+            "name": "Rajarajeshwari Nagar PS"
+        },
+        {
+            "id": "1409",
+            "name": "Ramamurthy Nagar PS"
+        },
+        {
+            "id": "1392",
+            "name": "S.J. Park PS"
+        },
+        {
+            "id": "1396",
+            "name": "Sadashivanagar PS"
+        },
+        {
+            "id": "1768",
+            "name": "Sadashivanagar Traffic PS"
+        },
+        {
+            "id": "1391",
+            "name": "Sampangiramanagar PS"
+        },
+        {
+            "id": "1874",
+            "name": "Sampigehalli PS"
+        },
+        {
+            "id": "1353",
+            "name": "Sanjay Nagar PS"
+        },
+        {
+            "id": "1393",
+            "name": "Seshadripuram PS"
+        },
+        {
+            "id": "1369",
+            "name": "Shankarpura PS"
+        },
+        {
+            "id": "1403",
+            "name": "Shivajinagar PS"
+        },
+        {
+            "id": "1771",
+            "name": "Shivajinagar Traffic PS"
+        },
+        {
+            "id": "1385",
+            "name": "Siddapura PS"
+        },
+        {
+            "id": "30",
+            "name": "Soladevanahalli PS"
+        },
+        {
+            "id": "2258",
+            "name": "South CEN Crime PS"
+        },
+        {
+            "id": "2346",
+            "name": "South East Women PS"
+        },
+        {
+            "id": "1377",
+            "name": "South Women PS"
+        },
+        {
+            "id": "2259",
+            "name": "SouthEast CEN Crime PS"
+        },
+        {
+            "id": "1358",
+            "name": "Srirampura PS"
+        },
+        {
+            "id": "1361",
+            "name": "Subramanyanagar PS"
+        },
+        {
+            "id": "1379",
+            "name": "Subramanyapura PS"
+        },
+        {
+            "id": "2197",
+            "name": "Suddaguntepalya PS"
+        },
+        {
+            "id": "1347",
+            "name": "Thalaghattapura PS"
+        },
+        {
+            "id": "1384",
+            "name": "Thilaknagar PS"
+        },
+        {
+            "id": "1430",
+            "name": "Upparpet PS"
+        },
+        {
+            "id": "1791",
+            "name": "Upparpet Traffic PS"
+        },
+        {
+            "id": "1785",
+            "name": "V V Puram Traffic PS"
+        },
+        {
+            "id": "259",
+            "name": "Varthur PS"
+        },
+        {
+            "id": "1397",
+            "name": "Vidhana Soudha PS"
+        },
+        {
+            "id": "15",
+            "name": "Vidyaranyapura PS"
+        },
+        {
+            "id": "1424",
+            "name": "Vijayanagar PS"
+        },
+        {
+            "id": "1792",
+            "name": "Vijayanagar Traffic PS"
+        },
+        {
+            "id": "1365",
+            "name": "Vishveshwarapuram PS"
+        },
+        {
+            "id": "1390",
+            "name": "Viveknagar PS"
+        },
+        {
+            "id": "1395",
+            "name": "Vyalikaval PS"
+        },
+        {
+            "id": "2148",
+            "name": "West CEN Crime PS"
+        },
+        {
+            "id": "2348",
+            "name": "West Women PS"
+        },
+        {
+            "id": "2261",
+            "name": "Whitefield CEN Crime PS"
+        },
+        {
+            "id": "258",
+            "name": "Whitefield PS"
+        },
+        {
+            "id": "1895",
+            "name": "Whitefield Traffic PS"
+        },
+        {
+            "id": "2350",
+            "name": "Whitefield Women PS"
+        },
+        {
+            "id": "1388",
+            "name": "Wilsongarden PS"
+        },
+        {
+            "id": "1765",
+            "name": "Wilsongarden Traffic PS"
+        },
+        {
+            "id": "1356",
+            "name": "Yelahanka New Town PS"
+        },
+        {
+            "id": "1355",
+            "name": "Yelahanka PS"
+        },
+        {
+            "id": "1794",
+            "name": "Yelahanka Traffic PS"
+        },
+        {
+            "id": "6",
+            "name": "Yeshwanthapura PS"
+        },
+        {
+            "id": "1782",
+            "name": "Yeshwanthapura Traffic PS"
+        },
+        {
+            "id": "2408",
+            "name": "chikkabanavara PS"
+        }
+    ],
+    "6": [
+        {
+            "id": "1330",
+            "name": "Anekal PS"
+        },
+        {
+            "id": "1812",
+            "name": "Anugondanahalli PS"
+        },
+        {
+            "id": "1332",
+            "name": "Attibele PS"
+        },
+        {
+            "id": "1331",
+            "name": "Bannerghatta PS"
+        },
+        {
+            "id": "2222",
+            "name": "Bengaluru CEN Crime PS"
+        },
+        {
+            "id": "2247",
+            "name": "Bengaluru Dist Women PS"
+        },
+        {
+            "id": "2365",
+            "name": "Bengaluru Rural DCRE PS"
+        },
+        {
+            "id": "1814",
+            "name": "Chennarayapatana PS"
+        },
+        {
+            "id": "272",
+            "name": "Dobbespet PS"
+        },
+        {
+            "id": "263",
+            "name": "Doddaballapura Rural PS"
+        },
+        {
+            "id": "262",
+            "name": "Doddaballapura Town PS"
+        },
+        {
+            "id": "264",
+            "name": "Doddabelavangala PS"
+        },
+        {
+            "id": "1335",
+            "name": "Hosahalli PS"
+        },
+        {
+            "id": "253",
+            "name": "Hosakote PS"
+        },
+        {
+            "id": "2264",
+            "name": "Hosakote Traffic PS"
+        },
+        {
+            "id": "2000",
+            "name": "Jigani PS"
+        },
+        {
+            "id": "254",
+            "name": "Nandagudi PS"
+        },
+        {
+            "id": "1913",
+            "name": "Nelamangala Rural PS"
+        },
+        {
+            "id": "271",
+            "name": "Nelamangala Town PS"
+        },
+        {
+            "id": "2169",
+            "name": "Nelamangala Traffic PS"
+        },
+        {
+            "id": "1334",
+            "name": "Sarjapura PS"
+        },
+        {
+            "id": "1816",
+            "name": "Sulibele PS"
+        },
+        {
+            "id": "2144",
+            "name": "Suryanagar PS"
+        },
+        {
+            "id": "1811",
+            "name": "Thirumalashettahalli PS"
+        },
+        {
+            "id": "273",
+            "name": "Thyamagondlu PS"
+        },
+        {
+            "id": "267",
+            "name": "Vijayapura PS"
+        },
+        {
+            "id": "1878",
+            "name": "Vishwanathapura PS"
+        }
+    ],
+    "7": [
+        {
+            "id": "1474",
+            "name": "Aurad PS"
+        },
+        {
+            "id": "400",
+            "name": "Bagdal PS"
+        },
+        {
+            "id": "403",
+            "name": "Basava Kalyana Rural PS"
+        },
+        {
+            "id": "401",
+            "name": "Basava Kalyana Town PS"
+        },
+        {
+            "id": "405",
+            "name": "Basava Kalyana Traffic PS"
+        },
+        {
+            "id": "383",
+            "name": "Bemalkhed PS"
+        },
+        {
+            "id": "390",
+            "name": "Bhalki Rural PS"
+        },
+        {
+            "id": "1477",
+            "name": "Bhalki Town PS"
+        },
+        {
+            "id": "2224",
+            "name": "Bidar CEN Crime PS"
+        },
+        {
+            "id": "2380",
+            "name": "Bidar DCRE PS"
+        },
+        {
+            "id": "396",
+            "name": "Bidar Rural PS"
+        },
+        {
+            "id": "372",
+            "name": "Bidar Town PS"
+        },
+        {
+            "id": "377",
+            "name": "Bidar Traffic PS"
+        },
+        {
+            "id": "2139",
+            "name": "Bidar Women PS"
+        },
+        {
+            "id": "1476",
+            "name": "Chintaki PS"
+        },
+        {
+            "id": "381",
+            "name": "Chitaguppa PS"
+        },
+        {
+            "id": "392",
+            "name": "Dhannura PS"
+        },
+        {
+            "id": "374",
+            "name": "Gandhi Gunj PS"
+        },
+        {
+            "id": "386",
+            "name": "Hallikhed PS"
+        },
+        {
+            "id": "1921",
+            "name": "Hokrana PS"
+        },
+        {
+            "id": "404",
+            "name": "Hulsoor PS"
+        },
+        {
+            "id": "385",
+            "name": "Humnabad PS"
+        },
+        {
+            "id": "1922",
+            "name": "Humnabad Traffic PS"
+        },
+        {
+            "id": "399",
+            "name": "Janwada PS"
+        },
+        {
+            "id": "394",
+            "name": "Kamalanagar PS"
+        },
+        {
+            "id": "391",
+            "name": "Khataka Chincholi PS"
+        },
+        {
+            "id": "395",
+            "name": "Kushnoor PS"
+        },
+        {
+            "id": "382",
+            "name": "Manna Ekhelli PS"
+        },
+        {
+            "id": "2004",
+            "name": "Mannalli PS"
+        },
+        {
+            "id": "376",
+            "name": "Market PS"
+        },
+        {
+            "id": "1469",
+            "name": "Matala PS"
+        },
+        {
+            "id": "2130",
+            "name": "Mehakar PS"
+        },
+        {
+            "id": "1471",
+            "name": "Mudbi PS"
+        },
+        {
+            "id": "373",
+            "name": "New Town PS"
+        },
+        {
+            "id": "1475",
+            "name": "Shanthapur PS"
+        }
+    ],
+    "8": [
+        {
+            "id": "2009",
+            "name": "Begur PS"
+        },
+        {
+            "id": "2178",
+            "name": "Chamarajanagar CEN Crime PS"
+        },
+        {
+            "id": "1121",
+            "name": "Chamarajanagar East PS"
+        },
+        {
+            "id": "1120",
+            "name": "Chamarajanagar Rural PS"
+        },
+        {
+            "id": "1119",
+            "name": "Chamarajanagar Town PS"
+        },
+        {
+            "id": "2105",
+            "name": "Chamarajanagar Traffic PS"
+        },
+        {
+            "id": "2387",
+            "name": "Chamarajanagara DCRE PS"
+        },
+        {
+            "id": "2173",
+            "name": "Chamrajanagar Women ps"
+        },
+        {
+            "id": "1123",
+            "name": "Gundlupete PS"
+        },
+        {
+            "id": "1137",
+            "name": "Hanur PS"
+        },
+        {
+            "id": "1129",
+            "name": "Kollegala Rural PS"
+        },
+        {
+            "id": "1128",
+            "name": "Kollegala Town PS"
+        },
+        {
+            "id": "1125",
+            "name": "Kuderu PS"
+        },
+        {
+            "id": "1138",
+            "name": "M.M. Hills PS"
+        },
+        {
+            "id": "1133",
+            "name": "Mambali PS"
+        },
+        {
+            "id": "1130",
+            "name": "Ramapura PS"
+        },
+        {
+            "id": "1134",
+            "name": "Santemaralli PS"
+        },
+        {
+            "id": "1124",
+            "name": "Terakambi PS"
+        },
+        {
+            "id": "1132",
+            "name": "Yelandur PS"
+        }
+    ],
+    "9": [
+        {
+            "id": "1572",
+            "name": "Bagepalli PS"
+        },
+        {
+            "id": "827",
+            "name": "Batlahalli PS"
+        },
+        {
+            "id": "1576",
+            "name": "Chelur PS"
+        },
+        {
+            "id": "2152",
+            "name": "Chickaballapura CEN Crime PS"
+        },
+        {
+            "id": "834",
+            "name": "Chickballapura Rural PS"
+        },
+        {
+            "id": "833",
+            "name": "Chickballapura Town PS"
+        },
+        {
+            "id": "1919",
+            "name": "Chickballapura Traffic PS"
+        },
+        {
+            "id": "2384",
+            "name": "Chikkaballapura DCRE PS"
+        },
+        {
+            "id": "824",
+            "name": "Chintamani Rural PS"
+        },
+        {
+            "id": "823",
+            "name": "Chintamani Town PS"
+        },
+        {
+            "id": "832",
+            "name": "Dibburahalli PS"
+        },
+        {
+            "id": "837",
+            "name": "Gowribidanur Rural PS"
+        },
+        {
+            "id": "836",
+            "name": "Gowribidanur Town PS"
+        },
+        {
+            "id": "1569",
+            "name": "Gudibande PS"
+        },
+        {
+            "id": "825",
+            "name": "Kencharlahalli PS"
+        },
+        {
+            "id": "838",
+            "name": "Manchenalli PS"
+        },
+        {
+            "id": "2129",
+            "name": "Nandi Giridhama PS"
+        },
+        {
+            "id": "1575",
+            "name": "Patapalya PS"
+        },
+        {
+            "id": "2299",
+            "name": "Peresandra PS"
+        },
+        {
+            "id": "829",
+            "name": "Shidlagatta Rural PS"
+        },
+        {
+            "id": "828",
+            "name": "Shidlaghatta Town PS"
+        },
+        {
+            "id": "2157",
+            "name": "Women PS Chikkaballapura"
+        }
+    ],
+    "10": [
+        {
+            "id": "474",
+            "name": "Ajjampura PS"
+        },
+        {
+            "id": "455",
+            "name": "Aldur PS"
+        },
+        {
+            "id": "463",
+            "name": "Balehonnur PS"
+        },
+        {
+            "id": "456",
+            "name": "Balur PS"
+        },
+        {
+            "id": "460",
+            "name": "Banakal PS"
+        },
+        {
+            "id": "451",
+            "name": "Basavanahalli PS"
+        },
+        {
+            "id": "477",
+            "name": "Birur PS"
+        },
+        {
+            "id": "2211",
+            "name": "Chickmagalur CEN Crime PS"
+        },
+        {
+            "id": "454",
+            "name": "Chickmagalur Rural PS"
+        },
+        {
+            "id": "450",
+            "name": "Chickmagalur Town PS"
+        },
+        {
+            "id": "452",
+            "name": "Chickmagalur Traffic PS"
+        },
+        {
+            "id": "2206",
+            "name": "Chickmagalur Women PS"
+        },
+        {
+            "id": "2392",
+            "name": "Chikkamagaluru DCRE PS"
+        },
+        {
+            "id": "461",
+            "name": "Gonibeedu PS"
+        },
+        {
+            "id": "465",
+            "name": "Hariharapura PS"
+        },
+        {
+            "id": "1890",
+            "name": "Jayapura PS"
+        },
+        {
+            "id": "481",
+            "name": "Kadur PS"
+        },
+        {
+            "id": "1525",
+            "name": "Kalasa PS"
+        },
+        {
+            "id": "464",
+            "name": "Koppa PS"
+        },
+        {
+            "id": "1528",
+            "name": "Kuduremukh PS"
+        },
+        {
+            "id": "1750",
+            "name": "Lakkavalli PS"
+        },
+        {
+            "id": "473",
+            "name": "Lingadahalli PS"
+        },
+        {
+            "id": "1891",
+            "name": "Mallanduru PS"
+        },
+        {
+            "id": "459",
+            "name": "Mudigere PS"
+        },
+        {
+            "id": "470",
+            "name": "N.R. Pura PS"
+        },
+        {
+            "id": "483",
+            "name": "Panchanahalli PS"
+        },
+        {
+            "id": "482",
+            "name": "Sakkaraya Patna PS"
+        },
+        {
+            "id": "479",
+            "name": "Singatagere PS"
+        },
+        {
+            "id": "232",
+            "name": "Sringeri PS"
+        },
+        {
+            "id": "468",
+            "name": "Tarikere Town PS"
+        },
+        {
+            "id": "469",
+            "name": "Yagati PS"
+        }
+    ],
+    "11": [
+        {
+            "id": "512",
+            "name": "Abbinahole PS"
+        },
+        {
+            "id": "494",
+            "name": "Bharamasagara PS"
+        },
+        {
+            "id": "500",
+            "name": "Challakere PS"
+        },
+        {
+            "id": "499",
+            "name": "Chikkajajur PS"
+        },
+        {
+            "id": "2226",
+            "name": "Chitradurga CEN Crime PS"
+        },
+        {
+            "id": "2372",
+            "name": "Chitradurga DCRE PS"
+        },
+        {
+            "id": "2212",
+            "name": "Chitradurga Extension PS"
+        },
+        {
+            "id": "490",
+            "name": "Chitradurga Kote PS"
+        },
+        {
+            "id": "493",
+            "name": "Chitradurga Rural PS"
+        },
+        {
+            "id": "489",
+            "name": "Chitradurga Town PS"
+        },
+        {
+            "id": "491",
+            "name": "Chitradurga Traffic PS"
+        },
+        {
+            "id": "2135",
+            "name": "Chitrahalli Gate PS"
+        },
+        {
+            "id": "1925",
+            "name": "Hiriyur Rural PS"
+        },
+        {
+            "id": "509",
+            "name": "Hiriyur Town PS"
+        },
+        {
+            "id": "498",
+            "name": "Holalkere PS"
+        },
+        {
+            "id": "513",
+            "name": "Hosadurga PS"
+        },
+        {
+            "id": "511",
+            "name": "Imangala PS"
+        },
+        {
+            "id": "507",
+            "name": "Molakalmuru PS"
+        },
+        {
+            "id": "502",
+            "name": "Nayakanhatti PS"
+        },
+        {
+            "id": "504",
+            "name": "Parasurampura PS"
+        },
+        {
+            "id": "508",
+            "name": "Rampura PS"
+        },
+        {
+            "id": "516",
+            "name": "Srirampura PS"
+        },
+        {
+            "id": "503",
+            "name": "Thalak PS"
+        },
+        {
+            "id": "495",
+            "name": "Turuvanur (Jogi) PS"
+        },
+        {
+            "id": "2118",
+            "name": "Women PS"
+        }
+    ],
+    "12": [
+        {
+            "id": "2111",
+            "name": "CCPS Central Range Bengaluru City"
+        },
+        {
+            "id": "1946",
+            "name": "Cyber Crime Police Station CID"
+        },
+        {
+            "id": "2116",
+            "name": "Cyber Crime Police Station Mangaluru"
+        },
+        {
+            "id": "2114",
+            "name": "Cyber Crime PoliceStation Davanagere"
+        },
+        {
+            "id": "2115",
+            "name": "Cyber Crime PoliceStation Dharwad"
+        },
+        {
+            "id": "2113",
+            "name": "Cyber Crime PoliceStation Kalaburgi"
+        },
+        {
+            "id": "2112",
+            "name": "Cyber Crime PoliceStation Mysuru"
+        }
+    ],
+    "13": [
+        {
+            "id": "2109",
+            "name": "Belekeri CSP"
+        },
+        {
+            "id": "1908",
+            "name": "Bhatkal CSP"
+        },
+        {
+            "id": "2107",
+            "name": "Gangolli CSP"
+        },
+        {
+            "id": "1948",
+            "name": "Hejamady CSP"
+        },
+        {
+            "id": "2108",
+            "name": "Honnavar CSP"
+        },
+        {
+            "id": "1909",
+            "name": "Karwar CSP"
+        },
+        {
+            "id": "1910",
+            "name": "Kumta CSP"
+        },
+        {
+            "id": "1907",
+            "name": "Malpe CSP"
+        },
+        {
+            "id": "1906",
+            "name": "Mangalore CSP"
+        }
+    ],
+    "14": [
+        {
+            "id": "2095",
+            "name": "Bantwala Traffic PS"
+        },
+        {
+            "id": "2158",
+            "name": "Bellare PS"
+        },
+        {
+            "id": "1070",
+            "name": "Belthangadi PS"
+        },
+        {
+            "id": "2245",
+            "name": "Belthangadi Traffic PS"
+        },
+        {
+            "id": "1073",
+            "name": "Buntwala Rural PS"
+        },
+        {
+            "id": "1072",
+            "name": "Buntwala Town PS"
+        },
+        {
+            "id": "2227",
+            "name": "DK CEN Crime PS"
+        },
+        {
+            "id": "2390",
+            "name": "Dakshina Kannada DCRE PS"
+        },
+        {
+            "id": "2209",
+            "name": "Dakshina Kannada Women PS"
+        },
+        {
+            "id": "2142",
+            "name": "Dharmasthala PS"
+        },
+        {
+            "id": "1065",
+            "name": "Kadaba PS"
+        },
+        {
+            "id": "1926",
+            "name": "Punjalkatte PS"
+        },
+        {
+            "id": "1063",
+            "name": "Puttur Rural PS"
+        },
+        {
+            "id": "1060",
+            "name": "Puttur Town PS"
+        },
+        {
+            "id": "1927",
+            "name": "Puttur Traffic PS"
+        },
+        {
+            "id": "1669",
+            "name": "Subramanya PS"
+        },
+        {
+            "id": "1061",
+            "name": "Sullia PS"
+        },
+        {
+            "id": "1064",
+            "name": "Uppinangadi PS"
+        },
+        {
+            "id": "1672",
+            "name": "Venoor PS"
+        },
+        {
+            "id": "1074",
+            "name": "Vitla PS"
+        }
+    ],
+    "15": [
+        {
+            "id": "98",
+            "name": "Azad Nagar PS"
+        },
+        {
+            "id": "97",
+            "name": "Basavanagara PS"
+        },
+        {
+            "id": "1524",
+            "name": "Basavapatna PS"
+        },
+        {
+            "id": "120",
+            "name": "Bilichodu PS"
+        },
+        {
+            "id": "1522",
+            "name": "Channagiri PS"
+        },
+        {
+            "id": "2136",
+            "name": "Davanagere CEN Crime PS"
+        },
+        {
+            "id": "2367",
+            "name": "Davanagere DCRE PS"
+        },
+        {
+            "id": "101",
+            "name": "Davanagere Extention PS"
+        },
+        {
+            "id": "106",
+            "name": "Davanagere Rural PS"
+        },
+        {
+            "id": "1521",
+            "name": "Davanagere South Traffic PS"
+        },
+        {
+            "id": "1928",
+            "name": "Davangere Traffic North PS"
+        },
+        {
+            "id": "99",
+            "name": "Gandhi Nagar PS"
+        },
+        {
+            "id": "107",
+            "name": "Hadadi PS"
+        },
+        {
+            "id": "111",
+            "name": "Harihara Rural PS"
+        },
+        {
+            "id": "110",
+            "name": "Harihara Town PS"
+        },
+        {
+            "id": "1526",
+            "name": "Honnali PS"
+        },
+        {
+            "id": "119",
+            "name": "Jagalur PS"
+        },
+        {
+            "id": "102",
+            "name": "KTJ Nagar PS"
+        },
+        {
+            "id": "112",
+            "name": "Malebennur PS"
+        },
+        {
+            "id": "108",
+            "name": "Mayakonda PS"
+        },
+        {
+            "id": "1527",
+            "name": "Nyamathi PS"
+        },
+        {
+            "id": "1519",
+            "name": "RMC Yard PS"
+        },
+        {
+            "id": "1523",
+            "name": "Santhebennur PS"
+        },
+        {
+            "id": "103",
+            "name": "Vidyanagar PS"
+        },
+        {
+            "id": "1520",
+            "name": "Women PS"
+        }
+    ],
+    "16": [
+        {
+            "id": "610",
+            "name": "Alnavar PS"
+        },
+        {
+            "id": "613",
+            "name": "Annigeri PS"
+        },
+        {
+            "id": "2228",
+            "name": "Dharwad CEN Crime PS"
+        },
+        {
+            "id": "2377",
+            "name": "Dharwad DCRE PS"
+        },
+        {
+            "id": "608",
+            "name": "Dharwad Rural PS"
+        },
+        {
+            "id": "2184",
+            "name": "Dharwad Women PS"
+        },
+        {
+            "id": "609",
+            "name": "Garag PS"
+        },
+        {
+            "id": "1929",
+            "name": "Gudageri PS"
+        },
+        {
+            "id": "1538",
+            "name": "Hubli Rural PS"
+        },
+        {
+            "id": "1535",
+            "name": "Kalaghatagi PS"
+        },
+        {
+            "id": "1540",
+            "name": "Kundagol PS"
+        },
+        {
+            "id": "612",
+            "name": "Navalgund PS"
+        }
+    ],
+    "17": [
+        {
+            "id": "1559",
+            "name": "Betageri Extention PS"
+        },
+        {
+            "id": "1558",
+            "name": "Betageri PS"
+        },
+        {
+            "id": "2229",
+            "name": "Gadag CEN Crime PS"
+        },
+        {
+            "id": "2378",
+            "name": "Gadag DCRE PS"
+        },
+        {
+            "id": "179",
+            "name": "Gadag Rural PS"
+        },
+        {
+            "id": "175",
+            "name": "Gadag Town PS"
+        },
+        {
+            "id": "176",
+            "name": "Gadag Traffic PS"
+        },
+        {
+            "id": "2186",
+            "name": "Gadag Women PS"
+        },
+        {
+            "id": "1566",
+            "name": "Gajendragad PS"
+        },
+        {
+            "id": "1563",
+            "name": "Lakshmeshwar PS"
+        },
+        {
+            "id": "180",
+            "name": "Mulagund PS"
+        },
+        {
+            "id": "1567",
+            "name": "Mundargi PS"
+        },
+        {
+            "id": "1565",
+            "name": "Naregal PS"
+        },
+        {
+            "id": "1568",
+            "name": "Nargund PS"
+        },
+        {
+            "id": "1564",
+            "name": "Ron PS"
+        },
+        {
+            "id": "1562",
+            "name": "Shirahatti PS"
+        }
+    ],
+    "18": [
+        {
+            "id": "727",
+            "name": "Alur PS"
+        },
+        {
+            "id": "749",
+            "name": "Arakalagud PS"
+        },
+        {
+            "id": "738",
+            "name": "Arasikere Rural PS"
+        },
+        {
+            "id": "1819",
+            "name": "Arasikere Town PS"
+        },
+        {
+            "id": "753",
+            "name": "Arehalli PS"
+        },
+        {
+            "id": "739",
+            "name": "Banavara PS"
+        },
+        {
+            "id": "752",
+            "name": "Belur PS"
+        },
+        {
+            "id": "1621",
+            "name": "Channarayapatna Rural PS"
+        },
+        {
+            "id": "1620",
+            "name": "Channarayapatna Town PS"
+        },
+        {
+            "id": "2167",
+            "name": "Channarayapatna Traffic PS"
+        },
+        {
+            "id": "726",
+            "name": "Dudda PS"
+        },
+        {
+            "id": "740",
+            "name": "Gandasi PS"
+        },
+        {
+            "id": "725",
+            "name": "Goruru PS"
+        },
+        {
+            "id": "754",
+            "name": "Halebeedu PS"
+        },
+        {
+            "id": "2187",
+            "name": "Hallymysore PS"
+        },
+        {
+            "id": "2219",
+            "name": "Hassan CEN Crime PS"
+        },
+        {
+            "id": "1741",
+            "name": "Hassan City PS"
+        },
+        {
+            "id": "2388",
+            "name": "Hassan DCRE PS"
+        },
+        {
+            "id": "1743",
+            "name": "Hassan Extn. PS"
+        },
+        {
+            "id": "1748",
+            "name": "Hassan Rural PS"
+        },
+        {
+            "id": "1742",
+            "name": "Hassan Traffic PS"
+        },
+        {
+            "id": "2127",
+            "name": "Hassan Women PS"
+        },
+        {
+            "id": "1624",
+            "name": "Hirisave PS"
+        },
+        {
+            "id": "744",
+            "name": "Holenarasipura Rural PS"
+        },
+        {
+            "id": "745",
+            "name": "Holenarasipura Town PS"
+        },
+        {
+            "id": "1930",
+            "name": "Javagal PS"
+        },
+        {
+            "id": "748",
+            "name": "Konanur PS"
+        },
+        {
+            "id": "1622",
+            "name": "Nuggehalli PS"
+        },
+        {
+            "id": "1744",
+            "name": "Pension Mohalla PS"
+        },
+        {
+            "id": "757",
+            "name": "Sakaleshpura Rural PS"
+        },
+        {
+            "id": "756",
+            "name": "Sakaleshpura Town PS"
+        },
+        {
+            "id": "1824",
+            "name": "Shanthigrama PS"
+        },
+        {
+            "id": "1623",
+            "name": "Shravanabelagola PS"
+        },
+        {
+            "id": "758",
+            "name": "Yesalur PS"
+        }
+    ],
+    "19": [
+        {
+            "id": "160",
+            "name": "Adur PS"
+        },
+        {
+            "id": "1931",
+            "name": "Bankapura PS"
+        },
+        {
+            "id": "140",
+            "name": "Byadagi PS"
+        },
+        {
+            "id": "138",
+            "name": "Guttal PS"
+        },
+        {
+            "id": "147",
+            "name": "Halageri PS"
+        },
+        {
+            "id": "159",
+            "name": "Hanagal PS"
+        },
+        {
+            "id": "151",
+            "name": "Hansabhavi PS"
+        },
+        {
+            "id": "2230",
+            "name": "Haveri CEN Crime PS"
+        },
+        {
+            "id": "2371",
+            "name": "Haveri DCRE PS"
+        },
+        {
+            "id": "137",
+            "name": "Haveri Rural PS"
+        },
+        {
+            "id": "136",
+            "name": "Haveri Town PS"
+        },
+        {
+            "id": "2213",
+            "name": "Haveri Traffic PS"
+        },
+        {
+            "id": "2143",
+            "name": "Haveri Women PS"
+        },
+        {
+            "id": "150",
+            "name": "Hirekerur PS"
+        },
+        {
+            "id": "141",
+            "name": "Kaginele PS"
+        },
+        {
+            "id": "149",
+            "name": "Kumarapattanam PS"
+        },
+        {
+            "id": "146",
+            "name": "Ranebennur Rural PS"
+        },
+        {
+            "id": "142",
+            "name": "Ranebennur Town PS"
+        },
+        {
+            "id": "145",
+            "name": "Ranebennur Traffic PS"
+        },
+        {
+            "id": "154",
+            "name": "Rattihalli PS"
+        },
+        {
+            "id": "158",
+            "name": "Savanoor PS"
+        },
+        {
+            "id": "155",
+            "name": "Shiggaon PS"
+        },
+        {
+            "id": "156",
+            "name": "Tadas PS"
+        }
+    ],
+    "20": [
+        {
+            "id": "1901",
+            "name": "APMC Navanagar"
+        },
+        {
+            "id": "1935",
+            "name": "Ashoknagar PS"
+        },
+        {
+            "id": "79",
+            "name": "Bendigeri PS"
+        },
+        {
+            "id": "2237",
+            "name": "CEN Crime PS Hubballi Dharwad City"
+        },
+        {
+            "id": "1686",
+            "name": "Dharwad Sub-Urban PS"
+        },
+        {
+            "id": "81",
+            "name": "Dharwad Town PS"
+        },
+        {
+            "id": "1690",
+            "name": "Dharwad Traffic PS"
+        },
+        {
+            "id": "2238",
+            "name": "E and N Crime PS HD city"
+        },
+        {
+            "id": "77",
+            "name": "Ghantikeri PS"
+        },
+        {
+            "id": "71",
+            "name": "Gokul Road PS"
+        },
+        {
+            "id": "1936",
+            "name": "Hubli East Traffic PS"
+        },
+        {
+            "id": "1688",
+            "name": "Hubli North Traffic PS"
+        },
+        {
+            "id": "1689",
+            "name": "Hubli South Traffic PS"
+        },
+        {
+            "id": "70",
+            "name": "Hubli Sub-Urban PS"
+        },
+        {
+            "id": "76",
+            "name": "Hubli Town PS"
+        },
+        {
+            "id": "72",
+            "name": "Kamaripeth PS"
+        },
+        {
+            "id": "80",
+            "name": "Kasabapeth PS"
+        },
+        {
+            "id": "73",
+            "name": "Keshavapur PS"
+        },
+        {
+            "id": "78",
+            "name": "Old Hubli PS"
+        },
+        {
+            "id": "1687",
+            "name": "Vidyagiri PS"
+        },
+        {
+            "id": "74",
+            "name": "Vidyanagar PS"
+        },
+        {
+            "id": "75",
+            "name": "Women PS"
+        }
+    ],
+    "21": [
+        {
+            "id": "2021",
+            "name": "ISD PS"
+        }
+    ],
+    "22": [
+        {
+            "id": "219",
+            "name": "Andersonpet PS"
+        },
+        {
+            "id": "215",
+            "name": "BEML Nagar PS"
+        },
+        {
+            "id": "227",
+            "name": "Bangarpet PS"
+        },
+        {
+            "id": "228",
+            "name": "Bethamangala PS"
+        },
+        {
+            "id": "2295",
+            "name": "Budikote Police Station"
+        },
+        {
+            "id": "223",
+            "name": "Champion Reefs PS"
+        },
+        {
+            "id": "2137",
+            "name": "KGF CEN Crime PS"
+        },
+        {
+            "id": "229",
+            "name": "Kamasamudram PS"
+        },
+        {
+            "id": "2296",
+            "name": "Kyasamballi Police Station"
+        },
+        {
+            "id": "224",
+            "name": "Marikuppam PS"
+        },
+        {
+            "id": "214",
+            "name": "Oorgaum PS"
+        },
+        {
+            "id": "218",
+            "name": "Robertsonpet PS"
+        }
+    ],
+    "23": [
+        {
+            "id": "1610",
+            "name": "Afzalpur PS"
+        },
+        {
+            "id": "1605",
+            "name": "Alland PS"
+        },
+        {
+            "id": "1579",
+            "name": "Chincholi PS"
+        },
+        {
+            "id": "1577",
+            "name": "Chittapura PS"
+        },
+        {
+            "id": "1613",
+            "name": "Devalagangapur PS"
+        },
+        {
+            "id": "1570",
+            "name": "Jewargi PS"
+        },
+        {
+            "id": "2231",
+            "name": "Kalaburagi CEN Crime PS"
+        },
+        {
+            "id": "1561",
+            "name": "Kalaburagi Women PS"
+        },
+        {
+            "id": "2379",
+            "name": "Kalaburgi DCRE PS"
+        },
+        {
+            "id": "718",
+            "name": "Kalagi PS"
+        },
+        {
+            "id": "710",
+            "name": "Kamalapur PS"
+        },
+        {
+            "id": "1580",
+            "name": "Kunchavaram PS"
+        },
+        {
+            "id": "1586",
+            "name": "Kurakunta PS"
+        },
+        {
+            "id": "1614",
+            "name": "Madanahipparga PS"
+        },
+        {
+            "id": "717",
+            "name": "Madbool PS"
+        },
+        {
+            "id": "709",
+            "name": "Mahagoan PS"
+        },
+        {
+            "id": "1588",
+            "name": "Malkhed PS"
+        },
+        {
+            "id": "1581",
+            "name": "Miryan PS"
+        },
+        {
+            "id": "1587",
+            "name": "Mudhol PS"
+        },
+        {
+            "id": "1607",
+            "name": "Narona PS"
+        },
+        {
+            "id": "1573",
+            "name": "Nelogi PS"
+        },
+        {
+            "id": "1609",
+            "name": "Nimbarga PS"
+        },
+        {
+            "id": "1583",
+            "name": "Ratkal PS"
+        },
+        {
+            "id": "1612",
+            "name": "Revoor PS"
+        },
+        {
+            "id": "1585",
+            "name": "Sedam PS"
+        },
+        {
+            "id": "713",
+            "name": "Shahabad Town PS"
+        },
+        {
+            "id": "1582",
+            "name": "Sulepet PS"
+        },
+        {
+            "id": "1578",
+            "name": "Wadi PS"
+        },
+        {
+            "id": "1571",
+            "name": "Yedrami PS"
+        }
+    ],
+    "24": [
+        {
+            "id": "687",
+            "name": "Ashoknagar PS"
+        },
+        {
+            "id": "688",
+            "name": "Brahmapur PS"
+        },
+        {
+            "id": "695",
+            "name": "Chowk PS"
+        },
+        {
+            "id": "690",
+            "name": "Ferhatabad PS"
+        },
+        {
+            "id": "2256",
+            "name": "Kalaburagi City CENCrime PS"
+        },
+        {
+            "id": "2257",
+            "name": "Kalaburagi City Women PS"
+        },
+        {
+            "id": "708",
+            "name": "Kalaburagi Rural PS"
+        },
+        {
+            "id": "1747",
+            "name": "Kalaburagi Traffic I PS"
+        },
+        {
+            "id": "1560",
+            "name": "Kalaburagi Traffic II PS"
+        },
+        {
+            "id": "704",
+            "name": "MB Nagar PS"
+        },
+        {
+            "id": "1557",
+            "name": "Ragavendranagar PS"
+        },
+        {
+            "id": "696",
+            "name": "Roza PS"
+        },
+        {
+            "id": "686",
+            "name": "Station Bazar PS"
+        },
+        {
+            "id": "705",
+            "name": "University PS"
+        }
+    ],
+    "25": [
+        {
+            "id": "782",
+            "name": "Arasikere Rly PS"
+        },
+        {
+            "id": "245",
+            "name": "Bangalore Cantonment Rly PS"
+        },
+        {
+            "id": "241",
+            "name": "Bangalore City Rly PS"
+        },
+        {
+            "id": "242",
+            "name": "Bangalore Rural Rly PS"
+        },
+        {
+            "id": "246",
+            "name": "Bangarpet Rly PS"
+        },
+        {
+            "id": "287",
+            "name": "Belgaum Rly PS"
+        },
+        {
+            "id": "1075",
+            "name": "Bellary Rly PS"
+        },
+        {
+            "id": "956",
+            "name": "Bidar Rly PS"
+        },
+        {
+            "id": "1290",
+            "name": "Bijapur Rly PS"
+        },
+        {
+            "id": "247",
+            "name": "Byappanahalli Rly PS"
+        },
+        {
+            "id": "1286",
+            "name": "Davanagere Rly PS"
+        },
+        {
+            "id": "1291",
+            "name": "Gadag Rly PS"
+        },
+        {
+            "id": "248",
+            "name": "Hubli Rly PS"
+        },
+        {
+            "id": "1282",
+            "name": "Mangalore Rly PS"
+        },
+        {
+            "id": "678",
+            "name": "Mysore Rly PS"
+        },
+        {
+            "id": "1034",
+            "name": "Raichur Rly PS"
+        },
+        {
+            "id": "1279",
+            "name": "Shimoga Rly PS"
+        },
+        {
+            "id": "798",
+            "name": "Wadi Rly PS"
+        }
+    ],
+    "26": [
+        {
+            "id": "574",
+            "name": "Bhagamandala PS"
+        },
+        {
+            "id": "582",
+            "name": "Gonikoppa PS"
+        },
+        {
+            "id": "2232",
+            "name": "Kodagu CEN Crime PS"
+        },
+        {
+            "id": "2386",
+            "name": "Kodagu DCRE PS"
+        },
+        {
+            "id": "2185",
+            "name": "Kodagu Women PS"
+        },
+        {
+            "id": "2138",
+            "name": "Kushalanagar Rural PS"
+        },
+        {
+            "id": "587",
+            "name": "Kushalnagar PS"
+        },
+        {
+            "id": "2180",
+            "name": "Kushalnagar Traffic PS"
+        },
+        {
+            "id": "1631",
+            "name": "Kutta PS"
+        },
+        {
+            "id": "575",
+            "name": "Madikeri Rural PS"
+        },
+        {
+            "id": "569",
+            "name": "Madikeri Town PS"
+        },
+        {
+            "id": "571",
+            "name": "Madikeri Traffic PS"
+        },
+        {
+            "id": "573",
+            "name": "Napoklu PS"
+        },
+        {
+            "id": "583",
+            "name": "Ponnampet PS"
+        },
+        {
+            "id": "592",
+            "name": "Shanivarasanthe PS"
+        },
+        {
+            "id": "570",
+            "name": "Siddapura PS"
+        },
+        {
+            "id": "591",
+            "name": "Somwarpet PS"
+        },
+        {
+            "id": "1632",
+            "name": "Srimangala PS"
+        },
+        {
+            "id": "588",
+            "name": "Sunticoppa PS"
+        },
+        {
+            "id": "579",
+            "name": "Virajpet Rural PS"
+        },
+        {
+            "id": "578",
+            "name": "Virajpet Town PS"
+        }
+    ],
+    "27": [
+        {
+            "id": "820",
+            "name": "Gownapalli PS"
+        },
+        {
+            "id": "806",
+            "name": "Gulpet PS"
+        },
+        {
+            "id": "2131",
+            "name": "Kolar CEN Crime PS"
+        },
+        {
+            "id": "2382",
+            "name": "Kolar DCRE PS"
+        },
+        {
+            "id": "809",
+            "name": "Kolar Rural PS"
+        },
+        {
+            "id": "805",
+            "name": "Kolar Town PS"
+        },
+        {
+            "id": "807",
+            "name": "Kolar Traffic PS"
+        },
+        {
+            "id": "2151",
+            "name": "Kolar Women PS"
+        },
+        {
+            "id": "811",
+            "name": "Malur PS"
+        },
+        {
+            "id": "814",
+            "name": "Masti PS"
+        },
+        {
+            "id": "2168",
+            "name": "Mulbagal Rural PS"
+        },
+        {
+            "id": "815",
+            "name": "Mulbagal Town PS"
+        },
+        {
+            "id": "816",
+            "name": "Nangli PS"
+        },
+        {
+            "id": "819",
+            "name": "Rayalpad PS"
+        },
+        {
+            "id": "818",
+            "name": "Srinivasapura PS"
+        },
+        {
+            "id": "810",
+            "name": "Vemagal PS"
+        }
+    ],
+    "28": [
+        {
+            "id": "1160",
+            "name": "Alwandi PS"
+        },
+        {
+            "id": "1167",
+            "name": "Bevoor PS"
+        },
+        {
+            "id": "1171",
+            "name": "Gangavathi Rural PS"
+        },
+        {
+            "id": "1168",
+            "name": "Gangavathi Town PS"
+        },
+        {
+            "id": "1169",
+            "name": "Gangavathi Traffic PS"
+        },
+        {
+            "id": "1177",
+            "name": "Hanumasagar PS"
+        },
+        {
+            "id": "1173",
+            "name": "Kanakagiri PS"
+        },
+        {
+            "id": "1172",
+            "name": "Karatagi PS"
+        },
+        {
+            "id": "2145",
+            "name": "Koppal CEN Crime PS"
+        },
+        {
+            "id": "2373",
+            "name": "Koppal DCRE PS"
+        },
+        {
+            "id": "1159",
+            "name": "Koppal Rural PS"
+        },
+        {
+            "id": "1158",
+            "name": "Koppal Town PS"
+        },
+        {
+            "id": "2002",
+            "name": "Koppal Traffic PS"
+        },
+        {
+            "id": "2207",
+            "name": "Koppal Women PS"
+        },
+        {
+            "id": "1164",
+            "name": "Kuknoor PS"
+        },
+        {
+            "id": "1176",
+            "name": "Kushtagi PS"
+        },
+        {
+            "id": "1162",
+            "name": "Munirabad PS"
+        },
+        {
+            "id": "1178",
+            "name": "Tavaregera PS"
+        },
+        {
+            "id": "1163",
+            "name": "Yelburga PS"
+        }
+    ],
+    "29": [
+        {
+            "id": "845",
+            "name": "Arakere PS"
+        },
+        {
+            "id": "859",
+            "name": "Basaralu PS"
+        },
+        {
+            "id": "873",
+            "name": "Belakavadi PS"
+        },
+        {
+            "id": "867",
+            "name": "Bellur PS"
+        },
+        {
+            "id": "1617",
+            "name": "Besagaraghalli PS"
+        },
+        {
+            "id": "866",
+            "name": "Bindiganavile PS"
+        },
+        {
+            "id": "876",
+            "name": "Halagur PS"
+        },
+        {
+            "id": "875",
+            "name": "K.M. Doddi PS"
+        },
+        {
+            "id": "850",
+            "name": "K.R. Pet Rural PS"
+        },
+        {
+            "id": "849",
+            "name": "K.R. Pet Town PS"
+        },
+        {
+            "id": "846",
+            "name": "K.R. Sagar PS"
+        },
+        {
+            "id": "863",
+            "name": "Keragodu PS"
+        },
+        {
+            "id": "1618",
+            "name": "Kesthur PS"
+        },
+        {
+            "id": "853",
+            "name": "Kikkeri PS"
+        },
+        {
+            "id": "872",
+            "name": "Kirugavalu PS"
+        },
+        {
+            "id": "1619",
+            "name": "Koppa PS"
+        },
+        {
+            "id": "877",
+            "name": "Maddur PS"
+        },
+        {
+            "id": "1911",
+            "name": "Maddur Traffic PS"
+        },
+        {
+            "id": "871",
+            "name": "Malavalli Rural PS"
+        },
+        {
+            "id": "868",
+            "name": "Malavalli Town PS"
+        },
+        {
+            "id": "2233",
+            "name": "Mandya CEN Crime PS"
+        },
+        {
+            "id": "2161",
+            "name": "Mandya Central PS"
+        },
+        {
+            "id": "2385",
+            "name": "Mandya DCRE PS"
+        },
+        {
+            "id": "854",
+            "name": "Mandya East PS"
+        },
+        {
+            "id": "858",
+            "name": "Mandya Rural PS"
+        },
+        {
+            "id": "857",
+            "name": "Mandya Traffic PS"
+        },
+        {
+            "id": "855",
+            "name": "Mandya West PS"
+        },
+        {
+            "id": "2162",
+            "name": "Mandya Women PS"
+        },
+        {
+            "id": "1912",
+            "name": "Melukote PS"
+        },
+        {
+            "id": "1889",
+            "name": "Nagamangala Rural PS"
+        },
+        {
+            "id": "864",
+            "name": "Nagamangala Town PS"
+        },
+        {
+            "id": "848",
+            "name": "Pandavapura PS"
+        },
+        {
+            "id": "862",
+            "name": "Shivalli PS"
+        },
+        {
+            "id": "844",
+            "name": "Srirangapatna PS"
+        },
+        {
+            "id": "2160",
+            "name": "Srirangapatna Rural PS"
+        },
+        {
+            "id": "2263",
+            "name": "Srirangapatna Traffic PS"
+        }
+    ],
+    "30": [
+        {
+            "id": "1051",
+            "name": "Bajpe PS"
+        },
+        {
+            "id": "1045",
+            "name": "Barke PS"
+        },
+        {
+            "id": "2163",
+            "name": "Cyber Crime PS Mangaluru City"
+        },
+        {
+            "id": "2164",
+            "name": "E and N Crime PS Mangaluru City"
+        },
+        {
+            "id": "2171",
+            "name": "Kankanady Town PS"
+        },
+        {
+            "id": "1052",
+            "name": "Kavoor PS"
+        },
+        {
+            "id": "1055",
+            "name": "Konaje PS"
+        },
+        {
+            "id": "1043",
+            "name": "Mangalore East PS"
+        },
+        {
+            "id": "1662",
+            "name": "Mangalore East Traffic PS"
+        },
+        {
+            "id": "1041",
+            "name": "Mangalore North PS"
+        },
+        {
+            "id": "1056",
+            "name": "Mangalore Rural PS"
+        },
+        {
+            "id": "1042",
+            "name": "Mangalore South PS"
+        },
+        {
+            "id": "1663",
+            "name": "Mangalore West Traffic PS"
+        },
+        {
+            "id": "1047",
+            "name": "Mangalore Women PS"
+        },
+        {
+            "id": "1069",
+            "name": "Moodabidre PS"
+        },
+        {
+            "id": "1068",
+            "name": "Mulki PS"
+        },
+        {
+            "id": "1050",
+            "name": "Panambur PS"
+        },
+        {
+            "id": "1054",
+            "name": "Surathkal PS"
+        },
+        {
+            "id": "2013",
+            "name": "Traffic North Police Station"
+        },
+        {
+            "id": "2172",
+            "name": "Traffic South Police Station"
+        },
+        {
+            "id": "1059",
+            "name": "Ullal PS"
+        },
+        {
+            "id": "1046",
+            "name": "Urva PS"
+        }
+    ],
+    "31": [
+        {
+            "id": "2174",
+            "name": "Alanahally PS"
+        },
+        {
+            "id": "48",
+            "name": "Ashokpuram PS"
+        },
+        {
+            "id": "2214",
+            "name": "Cyber Crime PS Mysuru City"
+        },
+        {
+            "id": "52",
+            "name": "Devaraja PS"
+        },
+        {
+            "id": "59",
+            "name": "Deveraja Traffic PS"
+        },
+        {
+            "id": "2215",
+            "name": "E and N Crime PS Mysuru City"
+        },
+        {
+            "id": "2177",
+            "name": "Hebbal PS"
+        },
+        {
+            "id": "43",
+            "name": "Jayalakshmipuram PS"
+        },
+        {
+            "id": "46",
+            "name": "Krishnaraja PS"
+        },
+        {
+            "id": "58",
+            "name": "Krishnaraja Traffic PS"
+        },
+        {
+            "id": "51",
+            "name": "Kuvempunagar PS"
+        },
+        {
+            "id": "53",
+            "name": "Lashkar PS"
+        },
+        {
+            "id": "49",
+            "name": "Laxmipuram PS"
+        },
+        {
+            "id": "40",
+            "name": "Mandi PS"
+        },
+        {
+            "id": "42",
+            "name": "Metagalli PS"
+        },
+        {
+            "id": "41",
+            "name": "Narasimharaja PS"
+        },
+        {
+            "id": "57",
+            "name": "Narasimharaja Traffic PS"
+        },
+        {
+            "id": "54",
+            "name": "Nazarbad PS"
+        },
+        {
+            "id": "50",
+            "name": "Saraswathipuram PS"
+        },
+        {
+            "id": "2015",
+            "name": "Siddarthanagar Traffic PS"
+        },
+        {
+            "id": "55",
+            "name": "Udayagiri PS"
+        },
+        {
+            "id": "2014",
+            "name": "V V Puram Traffic PS"
+        },
+        {
+            "id": "44",
+            "name": "V.V. Puram PS"
+        },
+        {
+            "id": "47",
+            "name": "Vidyaranyarpuram PS"
+        },
+        {
+            "id": "45",
+            "name": "Vijayanagar PS"
+        },
+        {
+            "id": "56",
+            "name": "Women PS"
+        }
+    ],
+    "32": [
+        {
+            "id": "906",
+            "name": "Bannur PS"
+        },
+        {
+            "id": "897",
+            "name": "Beechanahalli PS"
+        },
+        {
+            "id": "1604",
+            "name": "Bettadapura PS"
+        },
+        {
+            "id": "903",
+            "name": "Biligere PS I Badanavalu"
+        },
+        {
+            "id": "894",
+            "name": "Bilikere PS"
+        },
+        {
+            "id": "1602",
+            "name": "Bylakuppe PS"
+        },
+        {
+            "id": "896",
+            "name": "H.D. Kote PS"
+        },
+        {
+            "id": "1556",
+            "name": "Hullahalli PS"
+        },
+        {
+            "id": "893",
+            "name": "Hunusur Rural PS"
+        },
+        {
+            "id": "892",
+            "name": "Hunusur Town PS"
+        },
+        {
+            "id": "885",
+            "name": "Jayapura PS"
+        },
+        {
+            "id": "887",
+            "name": "K.R. Nagar PS"
+        },
+        {
+            "id": "1611",
+            "name": "Kowlande PS"
+        },
+        {
+            "id": "883",
+            "name": "Mysore South PS"
+        },
+        {
+            "id": "2234",
+            "name": "Mysuru CEN Crime PS"
+        },
+        {
+            "id": "2366",
+            "name": "Mysuru DCRE PS"
+        },
+        {
+            "id": "2210",
+            "name": "Mysuru Women PS"
+        },
+        {
+            "id": "902",
+            "name": "Nanjanagudu Rural PS"
+        },
+        {
+            "id": "901",
+            "name": "Nanjanagudu Town PS"
+        },
+        {
+            "id": "2017",
+            "name": "Nanjangudu Traffic PS"
+        },
+        {
+            "id": "1600",
+            "name": "Periyapatna PS"
+        },
+        {
+            "id": "888",
+            "name": "Saligrama PS"
+        },
+        {
+            "id": "898",
+            "name": "Saragur PS"
+        },
+        {
+            "id": "905",
+            "name": "T. Narasipura PS"
+        },
+        {
+            "id": "907",
+            "name": "Talakadu PS"
+        },
+        {
+            "id": "2155",
+            "name": "Varuna PS"
+        },
+        {
+            "id": "884",
+            "name": "Yelawala PS"
+        }
+    ],
+    "33": [
+        {
+            "id": "980",
+            "name": "Balaganoor PS"
+        },
+        {
+            "id": "992",
+            "name": "Devadurga PS"
+        },
+        {
+            "id": "1932",
+            "name": "Devadurga Traffic PS"
+        },
+        {
+            "id": "994",
+            "name": "Gabbur PS"
+        },
+        {
+            "id": "988",
+            "name": "Hutti PS"
+        },
+        {
+            "id": "970",
+            "name": "Idapanur PS"
+        },
+        {
+            "id": "993",
+            "name": "Jalhalli PS"
+        },
+        {
+            "id": "984",
+            "name": "Kowthal PS"
+        },
+        {
+            "id": "985",
+            "name": "Lingasugur PS"
+        },
+        {
+            "id": "981",
+            "name": "Manvi PS"
+        },
+        {
+            "id": "972",
+            "name": "Market Yard PS"
+        },
+        {
+            "id": "989",
+            "name": "Maski PS"
+        },
+        {
+            "id": "990",
+            "name": "Mudgal PS"
+        },
+        {
+            "id": "962",
+            "name": "Netajinagar PS"
+        },
+        {
+            "id": "2235",
+            "name": "Raichur CEN Crime PS"
+        },
+        {
+            "id": "2369",
+            "name": "Raichur DCRE PS"
+        },
+        {
+            "id": "963",
+            "name": "Raichur Rural PS"
+        },
+        {
+            "id": "974",
+            "name": "Raichur Traffic PS"
+        },
+        {
+            "id": "971",
+            "name": "Raichur West PS"
+        },
+        {
+            "id": "961",
+            "name": "Sadar Bazar PS"
+        },
+        {
+            "id": "965",
+            "name": "Shakti Nagar PS"
+        },
+        {
+            "id": "976",
+            "name": "Sindanoor Rural PS"
+        },
+        {
+            "id": "2125",
+            "name": "Sindanur Traffic PS"
+        },
+        {
+            "id": "975",
+            "name": "Sindhanoor Town PS"
+        },
+        {
+            "id": "983",
+            "name": "Sirwar PS"
+        },
+        {
+            "id": "979",
+            "name": "Turvihal PS"
+        },
+        {
+            "id": "2124",
+            "name": "Women PS"
+        },
+        {
+            "id": "966",
+            "name": "Yapaladinni PS"
+        },
+        {
+            "id": "967",
+            "name": "Yeregera PS"
+        }
+    ],
+    "34": [
+        {
+            "id": "286",
+            "name": "Akkur PS"
+        },
+        {
+            "id": "1345",
+            "name": "Bidadi PS"
+        },
+        {
+            "id": "2165",
+            "name": "CHANNAPATNA TRAFFIC PS"
+        },
+        {
+            "id": "281",
+            "name": "Channapatna East PS"
+        },
+        {
+            "id": "284",
+            "name": "Channapatna Rural PS"
+        },
+        {
+            "id": "280",
+            "name": "Channapatna Town PS"
+        },
+        {
+            "id": "1346",
+            "name": "Harohalli PS"
+        },
+        {
+            "id": "1342",
+            "name": "Ijoor PS"
+        },
+        {
+            "id": "1937",
+            "name": "Kaggalipura PS"
+        },
+        {
+            "id": "1338",
+            "name": "Kanakapura Rural PS"
+        },
+        {
+            "id": "1337",
+            "name": "Kanakapura Town PS"
+        },
+        {
+            "id": "2106",
+            "name": "Kanakapura Traffic PS"
+        },
+        {
+            "id": "1339",
+            "name": "Kodihalli PS"
+        },
+        {
+            "id": "276",
+            "name": "Kudur PS"
+        },
+        {
+            "id": "285",
+            "name": "M.K. Doddi PS"
+        },
+        {
+            "id": "275",
+            "name": "Magadi PS"
+        },
+        {
+            "id": "2153",
+            "name": "Ramanagar CEN Crime PS"
+        },
+        {
+            "id": "2383",
+            "name": "Ramanagara DCRE PS"
+        },
+        {
+            "id": "1344",
+            "name": "Ramanagara Rural PS"
+        },
+        {
+            "id": "1341",
+            "name": "Ramanagara Town PS"
+        },
+        {
+            "id": "1343",
+            "name": "Ramanagara Traffic PS"
+        },
+        {
+            "id": "2208",
+            "name": "Ramanagara Women PS"
+        },
+        {
+            "id": "1340",
+            "name": "Sathnoor PS"
+        },
+        {
+            "id": "277",
+            "name": "Tavarekere PS"
+        }
+    ],
+    "35": [
+        {
+            "id": "1823",
+            "name": "Agumbe PS"
+        },
+        {
+            "id": "2338",
+            "name": "Anandapura PS"
+        },
+        {
+            "id": "1664",
+            "name": "Anavatti PS"
+        },
+        {
+            "id": "1014",
+            "name": "Bhadravathi New Town PS"
+        },
+        {
+            "id": "1013",
+            "name": "Bhadravathi Old Town PS"
+        },
+        {
+            "id": "1018",
+            "name": "Bhadravathi Rural PS"
+        },
+        {
+            "id": "1015",
+            "name": "Bhadravathi Traffic PS"
+        },
+        {
+            "id": "1000",
+            "name": "Doddapete PS"
+        },
+        {
+            "id": "1019",
+            "name": "Holehonnur PS"
+        },
+        {
+            "id": "1933",
+            "name": "Hosamane PS"
+        },
+        {
+            "id": "1745",
+            "name": "Hosanagara PS"
+        },
+        {
+            "id": "1006",
+            "name": "Jayanagara PS"
+        },
+        {
+            "id": "1027",
+            "name": "Jog PS"
+        },
+        {
+            "id": "1024",
+            "name": "Kargal PS"
+        },
+        {
+            "id": "1005",
+            "name": "Kote PS"
+        },
+        {
+            "id": "1004",
+            "name": "Kumsi PS"
+        },
+        {
+            "id": "1011",
+            "name": "Malur PS"
+        },
+        {
+            "id": "1900",
+            "name": "Nagara PS"
+        },
+        {
+            "id": "1020",
+            "name": "Paper Town PS"
+        },
+        {
+            "id": "1749",
+            "name": "Ripponpet PS"
+        },
+        {
+            "id": "1023",
+            "name": "Sagar Rural PS"
+        },
+        {
+            "id": "1022",
+            "name": "Sagar Town PS"
+        },
+        {
+            "id": "1886",
+            "name": "Shikaripura Rural PS"
+        },
+        {
+            "id": "1031",
+            "name": "Shikaripura Town PS"
+        },
+        {
+            "id": "2007",
+            "name": "Shimoga East Traffic PS"
+        },
+        {
+            "id": "1002",
+            "name": "Shimoga Rural PS"
+        },
+        {
+            "id": "1001",
+            "name": "Shimoga Traffic PS"
+        },
+        {
+            "id": "1032",
+            "name": "Shiralakuppa PS"
+        },
+        {
+            "id": "2175",
+            "name": "Shivamogga CEN Crime PS"
+        },
+        {
+            "id": "2370",
+            "name": "Shivamogga DCRE PS"
+        },
+        {
+            "id": "1033",
+            "name": "Soraba PS"
+        },
+        {
+            "id": "1010",
+            "name": "Thirthahalli PS"
+        },
+        {
+            "id": "1815",
+            "name": "Tunga Nagar PS"
+        },
+        {
+            "id": "1887",
+            "name": "Vinobanagara PS"
+        },
+        {
+            "id": "1009",
+            "name": "Women PS"
+        }
+    ],
+    "36": [
+        {
+            "id": "1100",
+            "name": "Amruthur PS"
+        },
+        {
+            "id": "1659",
+            "name": "Arasikere PS"
+        },
+        {
+            "id": "1806",
+            "name": "Badavanahalli PS"
+        },
+        {
+            "id": "1090",
+            "name": "Bellavi PS"
+        },
+        {
+            "id": "1095",
+            "name": "Chandrashekarpura PS"
+        },
+        {
+            "id": "1094",
+            "name": "Chelur PS"
+        },
+        {
+            "id": "1652",
+            "name": "Chikkanayakanahalli PS"
+        },
+        {
+            "id": "1103",
+            "name": "Dandina Shivara PS"
+        },
+        {
+            "id": "1093",
+            "name": "Gubbi PS"
+        },
+        {
+            "id": "1801",
+            "name": "Handanakere PS"
+        },
+        {
+            "id": "1636",
+            "name": "Hebbur PS"
+        },
+        {
+            "id": "1113",
+            "name": "Honnavalli PS"
+        },
+        {
+            "id": "1653",
+            "name": "Huliyar PS"
+        },
+        {
+            "id": "1099",
+            "name": "Huliyurdurga PS"
+        },
+        {
+            "id": "2119",
+            "name": "Jayanagara PS"
+        },
+        {
+            "id": "1644",
+            "name": "Kallambella PS"
+        },
+        {
+            "id": "1934",
+            "name": "Kibbanhalli PS"
+        },
+        {
+            "id": "1656",
+            "name": "Kodigenahalli PS"
+        },
+        {
+            "id": "2122",
+            "name": "Kolala PS"
+        },
+        {
+            "id": "1091",
+            "name": "Kora PS"
+        },
+        {
+            "id": "1643",
+            "name": "Koratagere PS"
+        },
+        {
+            "id": "1098",
+            "name": "Kunigal PS"
+        },
+        {
+            "id": "1635",
+            "name": "Kyathasandra PS"
+        },
+        {
+            "id": "1655",
+            "name": "Madhugiri PS"
+        },
+        {
+            "id": "1657",
+            "name": "Medigeshi PS"
+        },
+        {
+            "id": "1085",
+            "name": "New Extention PS"
+        },
+        {
+            "id": "1112",
+            "name": "Nonavinakere PS"
+        },
+        {
+            "id": "1645",
+            "name": "Patanayakanahalli PS"
+        },
+        {
+            "id": "1658",
+            "name": "Pavagada PS"
+        },
+        {
+            "id": "1642",
+            "name": "Sira PS"
+        },
+        {
+            "id": "1646",
+            "name": "Tavarekere PS"
+        },
+        {
+            "id": "1084",
+            "name": "Thilak Park PS"
+        },
+        {
+            "id": "1661",
+            "name": "Thirumani PS"
+        },
+        {
+            "id": "1111",
+            "name": "Tiptur Rural PS"
+        },
+        {
+            "id": "1107",
+            "name": "Tiptur Town PS"
+        },
+        {
+            "id": "2393",
+            "name": "Tumakuru DCRE PS"
+        },
+        {
+            "id": "2140",
+            "name": "Tumkur CEN Crime PS"
+        },
+        {
+            "id": "1089",
+            "name": "Tumkur Rural PS"
+        },
+        {
+            "id": "1080",
+            "name": "Tumkur Town PS"
+        },
+        {
+            "id": "1081",
+            "name": "Tumkur Traffic PS"
+        },
+        {
+            "id": "1102",
+            "name": "Turuvekere PS"
+        },
+        {
+            "id": "2120",
+            "name": "Women PS"
+        },
+        {
+            "id": "1660",
+            "name": "Y.N. Hosakote PS"
+        }
+    ],
+    "37": [
+        {
+            "id": "1628",
+            "name": "Ajekar PS"
+        },
+        {
+            "id": "1200",
+            "name": "Amasebailu PS"
+        },
+        {
+            "id": "1208",
+            "name": "Brahmavar PS"
+        },
+        {
+            "id": "1212",
+            "name": "Byndoor PS"
+        },
+        {
+            "id": "1217",
+            "name": "Gangolli PS"
+        },
+        {
+            "id": "1225",
+            "name": "Hebri PS"
+        },
+        {
+            "id": "1210",
+            "name": "Hiriadka PS"
+        },
+        {
+            "id": "1202",
+            "name": "Kapu PS"
+        },
+        {
+            "id": "1221",
+            "name": "Karkala Rural PS"
+        },
+        {
+            "id": "1224",
+            "name": "Karkala Town PS"
+        },
+        {
+            "id": "1215",
+            "name": "Kollur PS"
+        },
+        {
+            "id": "1211",
+            "name": "Kota PS"
+        },
+        {
+            "id": "1216",
+            "name": "Kundapura PS"
+        },
+        {
+            "id": "2170",
+            "name": "Kundapura Rural PS"
+        },
+        {
+            "id": "1902",
+            "name": "Kundapura Traffic PS"
+        },
+        {
+            "id": "1198",
+            "name": "Malpe PS"
+        },
+        {
+            "id": "1201",
+            "name": "Manipal PS"
+        },
+        {
+            "id": "1203",
+            "name": "Padubidri PS"
+        },
+        {
+            "id": "1219",
+            "name": "Shankaranarayana PS"
+        },
+        {
+            "id": "1206",
+            "name": "Shirva PS"
+        },
+        {
+            "id": "2156",
+            "name": "Udupi CEN Crime PS"
+        },
+        {
+            "id": "2391",
+            "name": "Udupi DCRE PS"
+        },
+        {
+            "id": "1197",
+            "name": "Udupi Town PS"
+        },
+        {
+            "id": "1199",
+            "name": "Udupi Traffic PS"
+        },
+        {
+            "id": "1220",
+            "name": "Women PS"
+        }
+    ],
+    "38": [
+        {
+            "id": "1676",
+            "name": "Ambikanagar PS"
+        },
+        {
+            "id": "1674",
+            "name": "Ankola PS"
+        },
+        {
+            "id": "1677",
+            "name": "Banavasi PS"
+        },
+        {
+            "id": "950",
+            "name": "Bhatkal Rural PS"
+        },
+        {
+            "id": "949",
+            "name": "Bhatkal Town PS"
+        },
+        {
+            "id": "922",
+            "name": "Chittakula PS"
+        },
+        {
+            "id": "932",
+            "name": "Dandeli Rural PS"
+        },
+        {
+            "id": "931",
+            "name": "Dandeli Town PS"
+        },
+        {
+            "id": "954",
+            "name": "Gokarna PS"
+        },
+        {
+            "id": "1675",
+            "name": "Haliyal PS"
+        },
+        {
+            "id": "1680",
+            "name": "Honnavara PS"
+        },
+        {
+            "id": "1370",
+            "name": "Joida PS"
+        },
+        {
+            "id": "923",
+            "name": "Kadra PS"
+        },
+        {
+            "id": "927",
+            "name": "Karwar Rural PS"
+        },
+        {
+            "id": "926",
+            "name": "Karwar Town PS"
+        },
+        {
+            "id": "928",
+            "name": "Karwar Traffic PS"
+        },
+        {
+            "id": "953",
+            "name": "Kumta PS"
+        },
+        {
+            "id": "924",
+            "name": "Mallapura PS"
+        },
+        {
+            "id": "1681",
+            "name": "Manki PS"
+        },
+        {
+            "id": "944",
+            "name": "Mundgod PS"
+        },
+        {
+            "id": "951",
+            "name": "Murudeshwar PS"
+        },
+        {
+            "id": "942",
+            "name": "New Market PS"
+        },
+        {
+            "id": "936",
+            "name": "Ramnagar PS"
+        },
+        {
+            "id": "1678",
+            "name": "Siddapura PS"
+        },
+        {
+            "id": "941",
+            "name": "Sirsi Rural PS"
+        },
+        {
+            "id": "940",
+            "name": "Sirsi Town PS"
+        },
+        {
+            "id": "2154",
+            "name": "UK CEN Crime PS"
+        },
+        {
+            "id": "2218",
+            "name": "UK Women PS"
+        },
+        {
+            "id": "2389",
+            "name": "Uttara Kannada DCRE PS"
+        },
+        {
+            "id": "1679",
+            "name": "Yellapura PS"
+        }
+    ],
+    "39": [
+        {
+            "id": "1496",
+            "name": "APMC PS"
+        },
+        {
+            "id": "1497",
+            "name": "Adarsh Nagar PS"
+        },
+        {
+            "id": "1924",
+            "name": "Alamatti PS"
+        },
+        {
+            "id": "1511",
+            "name": "Almel PS"
+        },
+        {
+            "id": "416",
+            "name": "Babaleshwar PS"
+        },
+        {
+            "id": "429",
+            "name": "Basavan Bagewadi PS"
+        },
+        {
+            "id": "412",
+            "name": "Bijapur Traffic PS"
+        },
+        {
+            "id": "415",
+            "name": "Bijapur rural PS"
+        },
+        {
+            "id": "424",
+            "name": "Chadachan PS"
+        },
+        {
+            "id": "1512",
+            "name": "Devara Hipparagi PS"
+        },
+        {
+            "id": "411",
+            "name": "Gandhi Chowk PS"
+        },
+        {
+            "id": "1495",
+            "name": "Golgumbaz PS"
+        },
+        {
+            "id": "421",
+            "name": "Hortti PS"
+        },
+        {
+            "id": "420",
+            "name": "Indi PS"
+        },
+        {
+            "id": "2216",
+            "name": "Indi Rural PS"
+        },
+        {
+            "id": "2008",
+            "name": "Jalanagar PS"
+        },
+        {
+            "id": "1513",
+            "name": "Kalkeri PS"
+        },
+        {
+            "id": "430",
+            "name": "Kolhar PS"
+        },
+        {
+            "id": "2250",
+            "name": "Kudagi PS"
+        },
+        {
+            "id": "431",
+            "name": "Managoli PS"
+        },
+        {
+            "id": "433",
+            "name": "Muddebihal PS"
+        },
+        {
+            "id": "1923",
+            "name": "Nidagundi PS"
+        },
+        {
+            "id": "1510",
+            "name": "Sindagi PS"
+        },
+        {
+            "id": "434",
+            "name": "Talikot PS"
+        },
+        {
+            "id": "417",
+            "name": "Tikota PS"
+        },
+        {
+            "id": "2225",
+            "name": "Vijayapur CEN Crime PS"
+        },
+        {
+            "id": "2376",
+            "name": "Vijayapura DCRE PS"
+        },
+        {
+            "id": "2239",
+            "name": "Vijayapura Women PS"
+        },
+        {
+            "id": "425",
+            "name": "Zalaki PS"
+        }
+    ],
+    "40": [
+        {
+            "id": "1597",
+            "name": "Bheemarayanagudi PS"
+        },
+        {
+            "id": "1595",
+            "name": "Gogi PS"
+        },
+        {
+            "id": "691",
+            "name": "Gurumitkal PS"
+        },
+        {
+            "id": "1615",
+            "name": "Hunasagi PS"
+        },
+        {
+            "id": "1599",
+            "name": "Kembhavi PS"
+        },
+        {
+            "id": "1603",
+            "name": "Kodekal PS"
+        },
+        {
+            "id": "1601",
+            "name": "Narayanapura PS"
+        },
+        {
+            "id": "692",
+            "name": "Saidapur PS"
+        },
+        {
+            "id": "699",
+            "name": "Shahapur PS"
+        },
+        {
+            "id": "1598",
+            "name": "Shorapur PS"
+        },
+        {
+            "id": "1596",
+            "name": "Wadigere PS"
+        },
+        {
+            "id": "2236",
+            "name": "Yadgir CEN Crime PS"
+        },
+        {
+            "id": "2381",
+            "name": "Yadgir DCRE PS"
+        },
+        {
+            "id": "2159",
+            "name": "Yadgir Traffic PS"
+        },
+        {
+            "id": "2183",
+            "name": "Yadgir Women PS"
+        },
+        {
+            "id": "1590",
+            "name": "Yadgiri Rural PS"
+        },
+        {
+            "id": "1589",
+            "name": "Yadgiri Town PS"
+        }
+    ],
+    "41": [
+        {
+            "id": "117",
+            "name": "Arasikere PS"
+        },
+        {
+            "id": "1885",
+            "name": "Chigateri PS"
+        },
+        {
+            "id": "361",
+            "name": "Chittavadagi PS"
+        },
+        {
+            "id": "1502",
+            "name": "Gudekote PS"
+        },
+        {
+            "id": "1507",
+            "name": "Hadagali PS"
+        },
+        {
+            "id": "1505",
+            "name": "Hagaribommanahalli PS"
+        },
+        {
+            "id": "116",
+            "name": "Halavagilu PS"
+        },
+        {
+            "id": "1883",
+            "name": "Hampi Tourism PS"
+        },
+        {
+            "id": "1884",
+            "name": "Hampi Traffic PS"
+        },
+        {
+            "id": "115",
+            "name": "Harapanahalli PS"
+        },
+        {
+            "id": "1509",
+            "name": "Hirehadagali PS"
+        },
+        {
+            "id": "1504",
+            "name": "Hosahalli PS"
+        },
+        {
+            "id": "352",
+            "name": "Hospet Extention PS"
+        },
+        {
+            "id": "356",
+            "name": "Hospet Rural PS"
+        },
+        {
+            "id": "351",
+            "name": "Hospet Town PS"
+        },
+        {
+            "id": "355",
+            "name": "Hospet Traffic PS"
+        },
+        {
+            "id": "1508",
+            "name": "Ittigi PS"
+        },
+        {
+            "id": "360",
+            "name": "Kamalapur PS"
+        },
+        {
+            "id": "1503",
+            "name": "Kottur PS"
+        },
+        {
+            "id": "1501",
+            "name": "Kudligi PS"
+        },
+        {
+            "id": "365",
+            "name": "Mariyammanahalli PS"
+        },
+        {
+            "id": "353",
+            "name": "T.B. Dam PS"
+        },
+        {
+            "id": "1506",
+            "name": "T.B. Halli PS"
+        },
+        {
+            "id": "2374",
+            "name": "Vijayanagara DCRE PS"
+        }
+    ]
+}

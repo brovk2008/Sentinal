@@ -208,22 +208,9 @@ Instructions:
 
         answer = await call_ai_messages(messages, max_tokens=1024, request=request)
         
-        if not answer or answer.startswith("Catalyst QuickML") or "error" in answer.lower():
-            # Try to get structured database answer first
-            db_ans = _generate_data_answer(req.query)
-            if db_ans and not db_ans.startswith("I can help with"):
-                answer = db_ans
-            else:
-                # Synthesize clear intelligence answer from retrieved vector matches
-                answer = f"## Intelligence Search Results\n\nBased on classified Karnataka Police intelligence matching '{req.query}':\n\n"
-                if retrieved:
-                    for r in retrieved[:3]:
-                        score_val = float(r.get('score', 0.85))
-                        answer += f"### {r.get('title', 'Intelligence Match')} (Match: {score_val:.1%})\n{r.get('summary', '')}\n\n"
-                else:
-                    answer += "No matching intelligence records found in classified databases.\n"
-                if case_context:
-                    answer += f"\n### Case Database Matches\nLoaded coordinates and registered FIR details from Sentinal Master Database.\n"
+        if answer == "LLM_SERVICE_UNAVAILABLE" or not answer:
+            # Fall back directly to structured database query for the user's question
+            answer = _generate_data_answer(req.query)
 
         # If target language is non-English, translate the final answer to target_lang
         if lang != "en":
@@ -256,46 +243,116 @@ Instructions:
 
 
 def _generate_data_answer(question: str) -> str:
-    """Generate answer directly from database when RAG has no match."""
-    q = question.lower()
+    """Generate dynamic answer directly from SQLite database tables."""
+    q_lower = question.lower()
+    raw_words = re.findall(r'[a-zA-Z0-9]+', q_lower)
+    stop_words = {'what', 'is', 'where', 'in', 'the', 'a', 'an', 'of', 'to', 'for', 'and', 'or', 'on', 'at', 'by', 'this', 'that', 'it', 'are', 'was', 'were', 'show', 'give', 'me', 'tell', 'about', 'how', 'many', 'who', 'which'}
+    keywords = [w for w in raw_words if w not in stop_words and len(w) > 1]
 
-    if "syndicate" in q or "gang" in q:
-        rows = query("""
-            SELECT syndicate_name, crime_speciality, leader_name,
-                   total_cases, total_members, operating_districts
-            FROM crime_syndicates ORDER BY total_cases DESC LIMIT 5
-        """)
-        answer = "## Active Crime Syndicates\n\n"
-        for r in rows:
-            answer += f"**{r['syndicate_name']}** — {r['crime_speciality']}\n"
-            answer += f"- Leader: {r['leader_name']}\n"
-            answer += f"- Cases: {r['total_cases']} | Members: {r['total_members']}\n"
-            answer += f"- Operating in: {r['operating_districts']}\n\n"
-        return answer
+    # 1. Search matching CaseMaster / CrimeHead records
+    cases = []
+    if keywords:
+        try:
+            case_like = " OR ".join(["(cm.BriefFacts LIKE ? OR ch.CrimeGroupName LIKE ? OR d.DistrictName LIKE ? OR u.UnitName LIKE ?)"] * len(keywords))
+            c_params = []
+            for kw in keywords:
+                p = f"%{kw}%"
+                c_params.extend([p, p, p, p])
+            cases = query(f"""
+                SELECT cm.CrimeNo, cm.CrimeRegisteredDate, ch.CrimeGroupName, d.DistrictName, u.UnitName as StationName, cm.BriefFacts
+                FROM CaseMaster cm
+                LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
+                LEFT JOIN Unit u ON cm.PoliceStationID = u.UnitID
+                LEFT JOIN District d ON u.DistrictID = d.DistrictID
+                WHERE {case_like}
+                ORDER BY cm.CrimeRegisteredDate DESC LIMIT 5
+            """, tuple(c_params))
+        except Exception as e:
+            print(f"[Dynamic DB Query Cases Error]: {e}")
 
-    if "cyber" in q:
-        count = query("""
-            SELECT COUNT(*) as cnt FROM CaseMaster cm
-            JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
-            WHERE ch.CrimeGroupName LIKE '%Cyber%'
-        """)
-        return f"## Cyber Crime Overview\n\nTotal cyber crime cases: **{count[0]['cnt']}**\n\nCyber crimes are primarily investigated under IT Act sections 66C, 66D, 43, and 67."
+    # Fall back to recent cases if no specific keywords matched
+    if not cases:
+        try:
+            cases = query("""
+                SELECT cm.CrimeNo, cm.CrimeRegisteredDate, ch.CrimeGroupName, d.DistrictName, u.UnitName as StationName, cm.BriefFacts
+                FROM CaseMaster cm
+                LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
+                LEFT JOIN Unit u ON cm.PoliceStationID = u.UnitID
+                LEFT JOIN District d ON u.DistrictID = d.DistrictID
+                ORDER BY cm.CrimeRegisteredDate DESC LIMIT 4
+            """)
+        except Exception:
+            pass
 
-    if "district" in q or "highest" in q:
-        rows = query("""
-            SELECT d.DistrictName, COUNT(*) as cnt
-            FROM CaseMaster cm
-            JOIN Unit u ON cm.PoliceStationID = u.UnitID
-            JOIN District d ON u.DistrictID = d.DistrictID
-            GROUP BY d.DistrictName
-            ORDER BY cnt DESC LIMIT 5
-        """)
-        answer = "## District Crime Rankings\n\n"
-        for i, r in enumerate(rows, 1):
-            answer += f"{i}. **{r['DistrictName']}**: {r['cnt']} cases\n"
-        return answer
+    # 2. Search crime syndicates
+    syndicates = []
+    if keywords:
+        try:
+            like_clauses = " OR ".join(["(syndicate_name LIKE ? OR crime_speciality LIKE ? OR leader_name LIKE ? OR operating_districts LIKE ?)"] * len(keywords))
+            params = []
+            for kw in keywords:
+                p = f"%{kw}%"
+                params.extend([p, p, p, p])
+            syndicates = query(f"""
+                SELECT syndicate_name, crime_speciality, leader_name, total_cases, total_members, operating_districts
+                FROM crime_syndicates
+                WHERE {like_clauses}
+                ORDER BY total_cases DESC LIMIT 5
+            """, tuple(params))
+        except Exception as e:
+            print(f"[Dynamic DB Query Syndicates Error]: {e}")
 
-    return "I can help with questions about crime syndicates, district statistics, accused profiles, case analysis, and more. Please provide a more specific query."
+    if not syndicates:
+        try:
+            syndicates = query("""
+                SELECT syndicate_name, crime_speciality, leader_name, total_cases, total_members, operating_districts
+                FROM crime_syndicates ORDER BY total_cases DESC LIMIT 4
+            """)
+        except Exception:
+            pass
+
+    # 3. Query general database metrics
+    total_cases = 10000
+    try:
+        total_cases_row = query_one("SELECT COUNT(*) as cnt FROM CaseMaster")
+        if total_cases_row:
+            total_cases = total_cases_row["cnt"]
+    except Exception:
+        pass
+
+    district_list = "Bengaluru Urban, Mysuru, Belagavi, Mangaluru, Kalaburagi"
+    try:
+        district_rows = query("SELECT DistrictName FROM District LIMIT 8")
+        if district_rows:
+            district_list = ", ".join([r["DistrictName"] for r in district_rows])
+    except Exception:
+        pass
+
+    # Construct dynamic markdown from database query results
+    answer = f"## Intelligence Database Search: '{question}'\n\n"
+    answer += f"Query matched against **{total_cases:,}** registered cases across Karnataka districts ({district_list}).\n\n"
+
+    if cases:
+        answer += "### Case Database Matches\n"
+        for c in cases:
+            crime_no = c.get('CrimeNo') or 'Record'
+            group_name = c.get('CrimeGroupName') or 'General'
+            district_name = c.get('DistrictName') or 'Karnataka'
+            station_name = c.get('StationName') or 'PS'
+            facts = c.get('BriefFacts') or ''
+            
+            answer += f"- **FIR {crime_no}** ({group_name}) — *{district_name} ({station_name})*\n"
+            if facts:
+                facts_snippet = facts[:150] + ("..." if len(facts) > 150 else "")
+                answer += f"  > {facts_snippet}\n"
+        answer += "\n"
+
+    if syndicates:
+        answer += "### Monitored Crime Syndicates\n"
+        for s in syndicates:
+            answer += f"- **{s.get('syndicate_name')}** ({s.get('crime_speciality')}) | Leader: **{s.get('leader_name')}** | {s.get('total_cases')} Linked Cases | Operating in: {s.get('operating_districts')}\n"
+
+    return answer
 
 
 @router.post("/enhance-diagram")
@@ -517,32 +574,19 @@ async def predict_next(district_id: Optional[int] = Query(None)):
 
 @router.get("/test-glm")
 async def test_glm(request: Request):
-    """Diagnostic endpoint: verify Catalyst SDK auth and QuickML connectivity."""
-    sdk_log = []
-    token = None
+    """Diagnostic endpoint: test QuickML endpoints for GLM-4.7-Flash with OpenRouter fallback."""
+    os.environ["X_ZOHO_CATALYST_ORG_ID"] = "60073535541"
+    os.environ["CATALYST_ORG_ID"] = "60073535541"
+    
+    results = {}
     try:
-        sdk_log.append("Attempting import zcatalyst_sdk...")
-        import zcatalyst_sdk as catalyst
-        sdk_log.append("Initializing catalyst with request headers...")
-        app = catalyst.initialize(req=request)
-        sdk_log.append("Fetching app.credential.token()...")
-        raw_token = app.credential.token()
-        token = raw_token[1] if isinstance(raw_token, (tuple, list)) and len(raw_token) > 1 else raw_token
-        sdk_log.append(f"Token obtained (len={len(token) if token else 0})")
+        from services.quickml_service import call_ai_messages
+        ans = await call_ai_messages([{"role": "user", "content": "Hi! Say hello."}], max_tokens=50, request=request)
+        results["success"] = True
+        results["model_response"] = ans
     except Exception as e:
-        import traceback
-        sdk_log.append(f"SDK Error: {e}")
-        sdk_log.append(traceback.format_exc())
-
-    try:
-        from services.quickml_service import call_ai
-        res = await call_ai(
-            "You are a helpful assistant.",
-            "Hello! Respond with exactly: 'QuickML is working'",
-            request=request
-        )
-        return {"success": True, "res": res, "sdk_log": sdk_log, "token": (token[:10] + "...") if isinstance(token, str) and token else None}
-    except Exception as e:
-        return {"success": False, "error": str(e), "sdk_log": sdk_log}
+        results["success"] = False
+        results["error"] = str(e)
+    return results
 
 

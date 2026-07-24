@@ -18,21 +18,23 @@ import logging
 
 log = logging.getLogger(__name__)
 
-PROJECT_ID = os.getenv("SENTINAL_PROJECT_ID", "50170000000065001")
-ORG_ID     = os.getenv("SENTINAL_ORG_ID",     "60073535541")
+PROJECT_ID = os.getenv("SENTINAL_PROJECT_ID") or os.getenv("CATALYST_PROJECT_ID", "50170000000065001")
+ORG_ID     = os.getenv("SENTINAL_ORG_ID") or os.getenv("CATALYST_ORG_ID", "60073535541")
 
 # Full endpoint URLs — taken directly from Catalyst QuickML console
 GLM_CHAT_URL    = (
     os.getenv("SENTINAL_QUICKML_URL")
+    or os.getenv("CATALYST_QUICKML_URL")
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/glm/chat"
 )
 VISION_CHAT_URL = (
     os.getenv("SENTINAL_VISION_URL")
+    or os.getenv("CATALYST_VISION_URL")
     or f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/qwen/chat"
 )
 
-DEFAULT_LLM_MODEL = os.getenv("SENTINAL_LLM_MODEL",    "GLM-4.7-Flash")
-VISION_MODEL      = os.getenv("SENTINAL_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
+DEFAULT_LLM_MODEL = os.getenv("SENTINAL_LLM_MODEL") or os.getenv("CATALYST_LLM_MODEL", "GLM-4.7-Flash")
+VISION_MODEL      = os.getenv("SENTINAL_VISION_MODEL") or os.getenv("CATALYST_VISION_MODEL", "VL-Qwen3.6-35B-A3B")
 
 
 def _get_auth_headers(request=None) -> dict:
@@ -143,35 +145,29 @@ async def call_ai_messages(
     PREDICT_URL = f"https://api.catalyst.zoho.in/quickml/v1/project/{PROJECT_ID}/endpoints/predict"
 
     attempts = [
-        # Attempt 1: Standard SDK predict endpoint
-        {
-            "url": PREDICT_URL,
-            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": PROJECT_ID},
-            "json": {"data": {"prompt": user_text, "messages": messages}}
-        },
-        # Attempt 2: GLM chat with X-QUICKML-ENDPOINT-KEY
-        {
-            "url": GLM_CHAT_URL,
-            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": PROJECT_ID},
-            "json": {"data": {"prompt": user_text, "messages": messages}}
-        },
-        # Attempt 3: Predict endpoint with text string
-        {
-            "url": PREDICT_URL,
-            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": PROJECT_ID},
-            "json": {"data": {"text": user_text}}
-        },
-        # Attempt 4: GLM chat with prompt string
+        # Attempt 1: Standard JSON body predict with GLM-4.7-Flash
         {
             "url": GLM_CHAT_URL,
             "headers": headers,
-            "json": {"data": {"prompt": user_text}}
+            "json": {"prompt": user_text, "messages": messages, "model": "GLM-4.7-Flash"}
+        },
+        # Attempt 2: Predict endpoint with X-QUICKML-ENDPOINT-KEY
+        {
+            "url": PREDICT_URL,
+            "headers": {**headers, "X-QUICKML-ENDPOINT-KEY": "GLM-4.7-Flash"},
+            "json": {"data": {"prompt": user_text, "messages": messages}}
+        },
+        # Attempt 3: Form data with prompt
+        {
+            "url": GLM_CHAT_URL,
+            "headers": clean_headers,
+            "data": {"prompt": user_text}
         }
     ]
 
     attempt_errors = []
     try:
-        async with httpx.AsyncClient(timeout=90) as client:
+        async with httpx.AsyncClient(timeout=30) as client:
             for i, kwargs in enumerate(attempts):
                 target_url = kwargs.pop("url", GLM_CHAT_URL)
                 try:
@@ -186,16 +182,42 @@ async def call_ai_messages(
                         )
                         if text:
                             return str(text)
-                        return json.dumps(data)
-                    else:
-                        attempt_errors.append(f"[Attempt {i+1} code {r.status_code}: {r.text}]")
                 except Exception as err:
                     attempt_errors.append(f"[Attempt {i+1} err: {err}]")
 
-            return f"Catalyst QuickML errors: {' | '.join(attempt_errors)}"
+            # Fallback to OpenRouter using valid free tier key
+            try:
+                from config import config
+                or_headers = {
+                    "Authorization": f"Bearer {config.OPENROUTER_KEY}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://sentinal.ksp",
+                    "X-Title": "Project Sentinal"
+                }
+                or_res = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    json={
+                        "model": config.OPENROUTER_MODEL,
+                        "messages": messages,
+                        "max_tokens": max_tokens
+                    },
+                    headers=or_headers,
+                    timeout=20
+                )
+                if or_res.status_code == 200:
+                    data = or_res.json()
+                    out = data.get("choices", [{}])[0].get("message", {}).get("content")
+                    if out:
+                        return out
+                else:
+                    log.warning(f"[OpenRouter Fallback] returned status {or_res.status_code}: {or_res.text}")
+            except Exception as or_err:
+                log.warning(f"[QuickML Fallback LLM Error]: {or_err}")
+
+            return "LLM_SERVICE_UNAVAILABLE"
     except Exception as e:
         log.error(f"[QuickML] GLM request failed: {e}")
-        return f"Catalyst QuickML error: {e}"
+        return "LLM_SERVICE_UNAVAILABLE"
 
 
 async def call_vision(
