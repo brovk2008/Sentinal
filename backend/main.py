@@ -318,31 +318,22 @@ app.add_middleware(DeduplicateCORSMiddleware)
 
 
 # ─── CORS Configuration ─────────────────────────────────────────────────────
-# Always add CORSMiddleware. In Catalyst production, the frontend
-# (catalystserverless.in domain) calls the backend (catalystappsail.in domain)
-# — this IS a real cross-origin request the browser blocks without explicit headers.
-# The DeduplicateCORSMiddleware above strips any duplicate headers added by ZGS Gateway.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        # Local dev
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        # Catalyst development domains
-        "https://sentinal-60073535541.development.catalystserverless.in",
-        "https://sentinal-backend-50043676705.development.catalystappsail.in",
-        # Allow any Catalyst domain pattern
-        "https://*.catalystserverless.in",
-        "https://*.catalystappsail.in",
-        "https://*.zoho.in",
-        "https://*.zohocloud.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Only add CORSMiddleware in local development. In Catalyst production, the Catalyst
+# Gateway (ZGS) automatically injects CORS headers. Adding CORSMiddleware here
+# in production results in duplicate CORS headers, which browsers block.
+if not IS_CATALYST:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:3000",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 @app.get("/")
