@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from database import query, query_one
 from config import config
 from services.quickml_service import call_ai_messages
+from services.rag_service import rag_service
 import httpx
 import json
 import os
@@ -60,8 +61,6 @@ async def intelligence_query(req: QueryRequest, request: Request):
         start_time = time.perf_counter()
         
         # Retrieve relevant documents using semantic search
-        from services.rag_service import rag_service
-
         retrieved = await rag_service.retrieve(req.query, top_k=5)
         
         # Get query embedding vector norm for debugging
