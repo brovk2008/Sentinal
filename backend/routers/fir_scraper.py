@@ -552,7 +552,10 @@ async def real_ocr(body: dict):
         for p in patterns:
             m = re.search(p, raw_text, re.IGNORECASE | re.MULTILINE)
             if m:
-                val = m.group(1).strip()
+                try:
+                    val = m.group(1).strip()
+                except IndexError:
+                    val = m.group(0).strip()
                 if val:
                     return val
         return default
@@ -561,7 +564,10 @@ async def real_ocr(body: dict):
         for p in patterns:
             m = re.search(p, norm, re.IGNORECASE)
             if m:
-                val = m.group(1).strip()
+                try:
+                    val = m.group(1).strip()
+                except IndexError:
+                    val = m.group(0).strip()
                 if val:
                     return val
         return default
