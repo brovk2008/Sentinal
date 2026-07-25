@@ -217,10 +217,11 @@ class RAGService:
                     np.save(f, self.embeddings)
             print(f"[RAG] Persisted updated metadata and embeddings (if numpy present) to disk.")
             
-            # Sync to Catalyst File Store
+            # Sync to Catalyst File Store in background thread
             try:
+                import threading
                 from services.catalyst_db_sync import upload_rag_to_catalyst
-                upload_rag_to_catalyst()
+                threading.Thread(target=upload_rag_to_catalyst, daemon=True).start()
             except Exception as r_sync_err:
                 print(f"[RAG Sync] Warning: failed to sync updated vector store to Catalyst: {r_sync_err}")
         except Exception as e:

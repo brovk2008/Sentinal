@@ -46,8 +46,9 @@ def execute(sql: str, params: tuple = ()) -> int:
 
     # Trigger async/background backup of the database to Catalyst File Store
     try:
+        import threading
         from services.catalyst_db_sync import upload_db_to_catalyst
-        upload_db_to_catalyst()
+        threading.Thread(target=upload_db_to_catalyst, daemon=True).start()
     except Exception as sync_err:
         print(f"[DB Sync] Warning: failed to backup SQLite to Catalyst: {sync_err}")
 
