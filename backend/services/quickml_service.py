@@ -150,7 +150,7 @@ async def call_ai_messages(
         )
 
     try:
-        async with httpx.AsyncClient(timeout=45) as client:
+        async with httpx.AsyncClient(timeout=25) as client:
 
             # ── Attempt 1: Full OpenAI-compatible messages array ──────────────
             try:

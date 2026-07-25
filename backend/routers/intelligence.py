@@ -332,7 +332,7 @@ Instructions:
             messages.extend(req.conversation_history[-6:])
         messages.append({"role": "user", "content": user_prompt})
 
-        answer = await call_ai_messages(messages, max_tokens=2048, request=request)
+        answer = await call_ai_messages(messages, max_tokens=800, request=request)
         
         if answer == "LLM_SERVICE_UNAVAILABLE" or not answer:
             # Fall back directly to structured database query for the user's question

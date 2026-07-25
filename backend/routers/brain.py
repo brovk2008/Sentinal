@@ -91,13 +91,14 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
             try:
                 from services.rag_service import rag_service
                 rag_docs = []
-                for term in search_terms:
-                    retrieved = await rag_service.retrieve(term, top_k=2)
-                    for r in retrieved:
-                        sum_text = r.get("summary", "")
-                        title = r.get("title", "Doc")
-                        if sum_text and sum_text not in rag_docs:
-                            rag_docs.append(f"Evidence Document: {title} | Content: {sum_text}")
+                # Query RAG exactly once with combined search terms
+                combined_query = " ".join(search_terms)
+                retrieved = await rag_service.retrieve(combined_query, top_k=3)
+                for r in retrieved:
+                    sum_text = r.get("summary", "")
+                    title = r.get("title", "Doc")
+                    if sum_text and sum_text not in rag_docs:
+                        rag_docs.append(f"Evidence: {title} | Content: {sum_text}")
                 if rag_docs:
                     rag_context = "\n".join(rag_docs)
             except Exception as rag_err:
@@ -107,7 +108,7 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
             "You are a senior criminal analyst AI for Karnataka Police Crime Intelligence. "
             "Analyze the investigator's corkboard (nodes and strings), database cases, and uploaded evidence documents (from RAG). "
             "Suggest hidden linkages, target coordinates/hotspots, and insights. "
-            "Output must be a valid JSON object ONLY. Do not wrap in markdown or explanation blocks."
+            "Output must be a valid JSON object ONLY. Do not wrap in markdown. Keep response extremely brief."
         )
 
         user_prompt = f"""
@@ -121,13 +122,14 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
         Uploaded Evidence & Case Records (RAG context):
         {rag_context}
         
-        Analyze this intelligence data. Output JSON schema:
+        Analyze this intelligence data. Keep investigation_brief under 2 sentences and key_insights to at most 2 items.
+        Output JSON schema:
         {{
             "new_connections": [
                 {{
                     "fromNodeId": "node_id_1",
                     "toNodeId": "node_id_2",
-                    "label": "Hidden contact identified in financial flow",
+                    "label": "Brief link label",
                     "color": "#e0a832",
                     "confidence": "80%"
                 }}
@@ -136,19 +138,19 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
                 {{
                     "lat": 13.012,
                     "lng": 77.591,
-                    "description": "High probability target in next 14 days",
+                    "description": "Short location tip",
                     "risk_level": "CRITICAL",
                     "timeframe": "7-14 days"
                 }}
             ],
             "key_insights": [
-                "Brief bullet point summarizing a critical finding"
+                "Extremely brief finding"
             ],
-            "investigation_brief": "A narrative paragraph explaining the overall context."
+            "investigation_brief": "Very brief 1-2 sentence overall summary."
         }}
         """
         
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2000, request=http_request)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=600, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             results = json.loads(cleaned)
@@ -183,7 +185,7 @@ async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Req
         system_prompt = (
             "You are a predictive crime mapping engine for KSP. "
             "Based on the historical crimes of the suspect, determine when and where they are likely to strike next. "
-            "Output must be a valid JSON object ONLY. Do not wrap in markdown."
+            "Output must be a valid JSON object ONLY. Do not wrap in markdown. Keep response extremely brief."
         )
 
         user_prompt = f"""
@@ -192,7 +194,7 @@ async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Req
         Days Ahead: {request.days_ahead}
         Target Districts: {request.district_ids}
         
-        Compute predictions. Suggest coordinates (lat/lng) in Karnataka (e.g. near Bengaluru around 13.0, 77.6).
+        Compute predictions. Suggest coordinates (lat/lng) in Karnataka (e.g. near Bengaluru around 13.0, 77.6). Keep reasoning very brief (at most 2 sentences).
         Output JSON schema:
         {{
             "predicted_district": "Bengaluru Urban",
@@ -200,13 +202,13 @@ async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Req
             "predicted_crime_type": "Cyber Fraud / Syndicate Transfer",
             "estimated_timeframe": "Next 5-9 days",
             "confidence_percent": 82,
-            "reasoning": "Explain the behavioral model reasoning here.",
+            "reasoning": "Short behavioral model reasoning.",
             "lat": 13.035,
             "lng": 77.597
         }}
         """
 
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=500, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             results = json.loads(cleaned)
@@ -342,13 +344,14 @@ async def connect_dots(request: ConnectDotsRequest, http_request: Request):
             try:
                 from services.rag_service import rag_service
                 rag_docs = []
-                for name in entity_names:
-                    retrieved = await rag_service.retrieve(name, top_k=2)
-                    for r in retrieved:
-                        sum_text = r.get("summary", "")
-                        title = r.get("title", "Doc")
-                        if sum_text and sum_text not in rag_docs:
-                            rag_docs.append(f"Document: {title} | Content: {sum_text}")
+                # Query RAG exactly once with combined search terms
+                combined_query = " ".join(entity_names)
+                retrieved = await rag_service.retrieve(combined_query, top_k=3)
+                for r in retrieved:
+                    sum_text = r.get("summary", "")
+                    title = r.get("title", "Doc")
+                    if sum_text and sum_text not in rag_docs:
+                        rag_docs.append(f"Document: {title} | Content: {sum_text}")
                 if rag_docs:
                     rag_context = "\n".join(rag_docs)
             except Exception as rag_err:
@@ -357,7 +360,7 @@ async def connect_dots(request: ConnectDotsRequest, http_request: Request):
         system_prompt = (
             "You are a Senior Police Intelligence Analyst for Karnataka Police. "
             "Analyze the given entities, database query findings, and uploaded evidence documents (from RAG context) to find hidden links. "
-            "Output must be a valid JSON object ONLY. Do not wrap in markdown or explanation blocks."
+            "Output must be a valid JSON object ONLY. Do not wrap in markdown. Keep response extremely brief."
         )
 
         user_prompt = f"""
@@ -371,24 +374,24 @@ async def connect_dots(request: ConnectDotsRequest, http_request: Request):
         {rag_context}
         
         Tasks:
-        1. Identify hidden connections between the nodes (using locations, timeline, case facts, contacts, or syndicate clues).
+        1. Identify hidden connections between the nodes. Keep the analysis field extremely concise (at most 2 sentences).
         2. Format your response as a JSON object matching this schema:
         {{
-           "analysis": "A concise text summary of key connections, starting with 'KEY CONNECTIONS:' followed by bullet points",
+           "analysis": "KEY CONNECTIONS:\n• Short bullet point summarizing a critical finding",
            "suggested_connections": [
               {{
                  "from_node_id": "source_node_id",
                  "to_node_id": "target_node_id",
-                 "relationship_type": "Brief link label (e.g. Mule Owner)",
-                 "reasoning": "Reason explaining the connection"
+                 "relationship_type": "Brief label (e.g. Mule Owner)",
+                 "reasoning": "Brief reason"
               }}
            ]
-        }}
+         }}
         """
         
         analysis = ""
         try:
-            ai_response = await call_ai(system_prompt, user_prompt, max_tokens=1500, request=http_request)
+            ai_response = await call_ai(system_prompt, user_prompt, max_tokens=600, request=http_request)
             cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
             ai_data = json.loads(cleaned)
             analysis = ai_data.get("analysis") or ""
@@ -460,7 +463,7 @@ async def reconstruct_timeline(request: ReconstructTimelineRequest, http_request
         system_prompt = (
             "You are a forensic timeline reconstruction engine for KSP. "
             "Sort the events, explain how the crime transpired, and insert logical 'ai_inferred' gap-filling events. "
-            "Output must be a valid JSON object ONLY."
+            "Output must be a valid JSON object ONLY. Keep response extremely brief."
         )
 
         user_prompt = f"""
@@ -469,7 +472,8 @@ async def reconstruct_timeline(request: ReconstructTimelineRequest, http_request
         Arrests recorded: {json.dumps(arrests)}
         Raw chronological markers: {json.dumps(raw_events)}
         
-        Reconstruct the timeline. JSON schema:
+        Reconstruct the timeline. Keep narrative_summary under 2 sentences and limit events list to at most 4 items.
+        JSON schema:
         {{
             "events": [
                 {{
@@ -478,22 +482,15 @@ async def reconstruct_timeline(request: ReconstructTimelineRequest, http_request
                     "description": "FIR registered at Hebbal station.",
                     "actors": ["Ashok Kumar"],
                     "evidence_source": "Case Master Records"
-                }},
-                {{
-                    "date": "2024-12-03",
-                    "event_type": "ai_inferred",
-                    "description": "UPI transfers completed to cover trail.",
-                    "actors": ["Ashok Kumar"],
-                    "evidence_source": "Inferred from Bank Ledger Lag Patterns"
                 }}
             ],
-            "narrative_summary": "Overall timeline analysis summary.",
+            "narrative_summary": "Very brief summary of the timeline.",
             "key_actors": ["Ashok Kumar"],
-            "verdict_prediction": "High likelihood of chargesheet resolution."
+            "verdict_prediction": "Likelihood of resolution."
         }}
         """
 
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2000, request=http_request)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=600, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             return json.loads(cleaned)
@@ -533,7 +530,7 @@ async def generate_sitrep(request: SitrepRequest, http_request: Request):
         system_prompt = (
             "You are a senior police superintendent compiling a Situation Report (SITREP). "
             "Write in a highly formal, professional law enforcement tone. "
-            "Output must be a valid JSON object ONLY. Do not wrap in markdown."
+            "Output must be a valid JSON object ONLY. Do not wrap in markdown. Keep response extremely brief."
         )
 
         user_prompt = f"""
@@ -542,24 +539,24 @@ async def generate_sitrep(request: SitrepRequest, http_request: Request):
         Board metadata: {board_name}
         Case facts summaries: {json.dumps(case_info)}
         
-        Write details for the SITREP. JSON schema:
+        Write details for the SITREP. Keep background and summaries extremely brief (at most 2 sentences each).
+        JSON schema:
         {{
-            "executive_summary": "A 3-sentence summary of the active threat.",
-            "background": "Historical context on the group.",
+            "executive_summary": "A 2-sentence summary of the active threat.",
+            "background": "Short historical context on the group.",
             "suspect_cards": [
-                {{ "name": "Ashok Kumar", "mo": "Operates using burner SIMs and remote UPI transfers." }}
+                {{ "name": "Ashok Kumar", "mo": "Short MO description." }}
             ],
-            "financial_summary": "Overview of monitored transaction pipelines.",
-            "current_status": "Briefing of current warrants and surveillance.",
+            "financial_summary": "Brief overview of transaction pipelines.",
+            "current_status": "Briefing of current warrants.",
             "recommended_actions": [
-                "Obtain physical warrant for suspect's Hebbal residence",
                 "Freeze target bank accounts"
             ],
-            "risk_assessment": "Threat rating and secondary risk warnings."
+            "risk_assessment": "Threat rating."
         }}
         """
 
-        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=2500, request=http_request)
+        ai_response = await call_ai(system_prompt, user_prompt, max_tokens=800, request=http_request)
         cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
         try:
             report_data = json.loads(cleaned)
