@@ -319,13 +319,15 @@ export default function DataIngestion() {
         })
       });
       const data = await res.json();
-      if (data && data.translated_parsed_data) {
-        const translatedHtml = generateFirHtml(
-          data.translated_parsed_data,
+      if (data) {
+        const translatedMeta = data.translated_parsed_data || pdfModal.meta;
+        const translatedHtml = data.translated_html || generateFirHtml(
+          translatedMeta,
           pdfModal.firNum,
           pdfModal.yr,
-          pdfModal.distStr,
-          pdfModal.stnStr
+          translatedMeta.district_name || pdfModal.distStr,
+          translatedMeta.station_name || pdfModal.stnStr,
+          targetLang
         );
         setPdfModal(prev => ({
           ...prev,

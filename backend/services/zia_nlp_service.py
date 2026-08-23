@@ -86,13 +86,111 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
     if not text or not text.strip():
         return {"success": True, "translated_text": text}
 
-    # 1. Try Catalyst Zia first (when creds are available)
-    # 1. Direct Google GTX API via httpx (fastest, universally accessible)
+    # Smart source language script detection
+    import re
+    if google_source == "auto" or not google_source:
+        if re.search(r"[\u0C80-\u0CFF]", text):      # Kannada script
+            google_source = "kn"
+        elif re.search(r"[\u0900-\u097F]", text):    # Devanagari (Hindi/Marathi)
+            google_source = "hi"
+        elif re.search(r"[\u0C00-\u0C7F]", text):    # Telugu script
+            google_source = "te"
+        elif re.search(r"[\u0B80-\u0BFF]", text):    # Tamil script
+            google_source = "ta"
+        elif re.search(r"[\u0600-\u06FF]", text):    # Urdu / Arabic script
+            google_source = "ur"
+        elif re.search(r"[a-zA-Z]{2,}", text):       # Latin English script
+            google_source = "en"
+        else:
+            google_source = "auto"
+
+    # Normalize all-caps titles
+    norm_text = text.title() if (text.isupper() and len(text) > 3) else text
+
+    # ── Tier 1: deep-translator GoogleTranslator (Robust, Proxy & Rate-Limit Resilient) ──
+    try:
+        from deep_translator import GoogleTranslator
+        import asyncio
+        loop = asyncio.get_event_loop()
+        
+        def _do_deep_translate():
+            src = google_source if google_source != "auto" else "auto"
+            paragraphs = [p for p in norm_text.split("\n") if p.strip()]
+            if not paragraphs:
+                paragraphs = [norm_text]
+            
+            chunks = []
+            cur_chunk = ""
+            for p in paragraphs:
+                if len(cur_chunk) + len(p) + 1 > 3000:
+                    if cur_chunk:
+                        chunks.append(cur_chunk)
+                    cur_chunk = p
+                else:
+                    cur_chunk = f"{cur_chunk}\n{p}" if cur_chunk else p
+            if cur_chunk:
+                chunks.append(cur_chunk)
+                
+            translated_chunks = []
+            translator = GoogleTranslator(source=src, target=google_target)
+            for chunk in chunks:
+                if len(chunk.strip()) > 0:
+                    tr = translator.translate(chunk)
+                    if tr and len(tr.strip()) > 0:
+                        translated_chunks.append(tr)
+                    else:
+                        translated_chunks.append(chunk)
+            return "\n".join(translated_chunks)
+
+        translated = await loop.run_in_executor(None, _do_deep_translate)
+        if translated and translated.strip():
+            return {"success": True, "translated_text": translated, "engine": "google-deep-translator"}
+    except Exception as deep_err:
+        print(f"[Translation] deep-translator tier failed: {deep_err}")
+
+    # ── Tier 2: Catalyst QuickML AI LLM (Legal Context Translator) ───────────────
+    try:
+        from services.quickml_service import call_ai
+        llm_prompt = f"Translate the following Indian police FIR and legal text into {target_lang}. Translate ALL headers, labels, and text faithfully into {target_lang}. Return ONLY the direct translation without any explanation or commentary:\n\n{norm_text[:2500]}"
+        llm_out = await call_ai("You are an expert multilingual Indian legal translator.", llm_prompt, request=request)
+        if llm_out and len(llm_out) > 5 and "error" not in llm_out.lower() and llm_out.strip() != norm_text.strip():
+            return {"success": True, "translated_text": llm_out.strip(), "engine": "catalyst-quickml-llm"}
+    except Exception as qml_err:
+        print(f"[Translation] QuickML LLM tier failed: {qml_err}")
+
+    # ── Tier 3: Catalyst Zia Text Analytics Translation API ───────────────────────
+    headers = _headers(request)
+    urls = [
+        f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
+        TRANSLATION_URL,
+    ]
+    for url in urls:
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                r = await client.post(
+                    url, headers=headers,
+                    json={"text": norm_text, "source_language": google_source, "target_language": google_target, "text_list": [norm_text]},
+                )
+                if r.status_code == 200:
+                    data = r.json()
+                    translated = (
+                        data.get("translated_text")
+                        or data.get("translation")
+                        or (data.get("data") if isinstance(data.get("data"), str) else None)
+                        or (data.get("data") or {}).get("translated_text")
+                        or (data.get("result") or {}).get("translated_text")
+                    )
+                    if translated and translated.strip() != norm_text.strip():
+                        return {"success": True, "translated_text": translated, "engine": "catalyst-zia"}
+        except Exception:
+            pass
+
+    # ── Tier 4: Direct Google GTX API via httpx with Rotating User-Agents ────────
     try:
         import urllib.parse
-        paragraphs = [p for p in text.split("\n") if p.strip()]
+        paragraphs = [p for p in norm_text.split("\n") if p.strip()]
         if not paragraphs:
-            paragraphs = [text]
+            paragraphs = [norm_text]
         
         chunks = []
         cur_chunk = ""
@@ -113,115 +211,70 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
                     continue
                 q_enc = urllib.parse.quote(c)
                 url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={google_source}&tl={google_target}&dt=t&q={q_enc}"
-                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
                 if r.status_code == 200:
                     data = r.json()
                     chunk_trans = "".join([s[0] for s in data[0] if s and s[0]])
-                    translated_chunks.append(chunk_trans if chunk_trans else c)
+                    if chunk_trans and chunk_trans.strip():
+                        translated_chunks.append(chunk_trans)
+                    else:
+                        raise Exception("Empty GTX chunk")
                 else:
-                    translated_chunks.append(c)
+                    raise Exception(f"GTX status {r.status_code}")
 
         if translated_chunks:
             full_translated = "\n".join(translated_chunks)
             if full_translated.strip():
                 return {"success": True, "translated_text": full_translated, "engine": "google-translate-gtx"}
     except Exception as gtx_err:
-        print(f"[Translation] Google GTX failed: {gtx_err}")
+        print(f"[Translation] Google GTX tier failed: {gtx_err}")
 
-    # 2. Zia Text Analytics Translation via Catalyst API
-    headers = _headers(request)
-    urls = [
-        f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
-        TRANSLATION_URL,
-    ]
-    for url in urls:
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                r = await client.post(
-                    url, headers=headers,
-                    json={"text": text, "source_language": source_lang, "target_language": target_lang, "text_list": [text]},
-                )
-                if r.status_code == 200:
-                    data = r.json()
-                    translated = (
-                        data.get("translated_text")
-                        or data.get("translation")
-                        or (data.get("data") if isinstance(data.get("data"), str) else None)
-                        or (data.get("data") or {}).get("translated_text")
-                        or (data.get("result") or {}).get("translated_text")
-                    )
-                    if translated:
-                        return {"success": True, "translated_text": translated, "engine": "catalyst-zia"}
-        except Exception:
-            pass
-
-    # 3. Fallback: Google Translate via deep-translator
+    # ── Tier 5: MyMemory Translator Fallback ──────────────────────────────────────
     try:
-        from deep_translator import GoogleTranslator
+        from deep_translator import MyMemoryTranslator
         import asyncio
         loop = asyncio.get_event_loop()
-        
-        def _do_translate():
-            src = google_source if google_source != "auto" else "auto"
-            paragraphs = [p for p in text.split("\n") if p.strip()]
-            if not paragraphs:
-                paragraphs = [text]
-            
-            chunks = []
-            cur_chunk = ""
-            for p in paragraphs:
-                if len(cur_chunk) + len(p) + 1 > 3500:
-                    if cur_chunk:
-                        chunks.append(cur_chunk)
-                    cur_chunk = p
-                else:
-                    cur_chunk = f"{cur_chunk}\n{p}" if cur_chunk else p
-            if cur_chunk:
-                chunks.append(cur_chunk)
-                
-            translated_chunks = []
-            translator = GoogleTranslator(source=src, target=google_target)
-            for chunk in chunks:
-                if len(chunk.strip()) > 0:
-                    try:
-                        translated_chunks.append(translator.translate(chunk))
-                    except Exception:
-                        translated_chunks.append(chunk)
-            return "\n".join(translated_chunks)
-
-        translated = await loop.run_in_executor(None, _do_translate)
-        if translated:
-            return {"success": True, "translated_text": translated, "engine": "google-translate"}
-    except Exception as e:
-        print(f"[Translation] deep-translator failed: {e}")
-
-    # 4. Catalyst QuickML LLM Translation
-    try:
-        from services.quickml_service import call_llm
-        llm_prompt = f"Translate the following Indian police document text into {target_lang}. Return ONLY the direct translation without any explanation or conversational filler:\n\n{text[:3000]}"
-        llm_out = await call_llm("You are an expert multilingual legal and police translator.", llm_prompt, request=request)
-        if llm_out and len(llm_out) > 5 and "error" not in llm_out.lower():
-            return {"success": True, "translated_text": llm_out.strip(), "engine": "catalyst-quickml-llm"}
-    except Exception as qml_err:
-        print(f"[Translation] QuickML LLM failed: {qml_err}")
-
-    # 5. Last resort: LibreTranslate public endpoint
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.post(
-                "https://libretranslate.de/translate",
-                json={"q": text[:2000], "source": google_source if google_source != "auto" else "auto", "target": google_target, "format": "text"},
-                headers={"Content-Type": "application/json"},
-            )
-            if r.status_code == 200:
-                data = r.json()
-                translated = data.get("translatedText")
-                if translated:
-                    return {"success": True, "translated_text": translated, "engine": "libretranslate"}
+        mm_tr = await loop.run_in_executor(None, lambda: MyMemoryTranslator(source=google_source, target=google_target).translate(norm_text[:500]))
+        if mm_tr and mm_tr.strip() and mm_tr.strip() != norm_text.strip():
+            return {"success": True, "translated_text": mm_tr, "engine": "mymemory-translator"}
     except Exception:
         pass
 
     return {"success": False, "translated_text": text, "error": "All translation engines failed"}
+
+
+async def translate_html_content(html_str: str, target_lang: str = "en", source_lang: str = "auto", request=None) -> dict:
+    """
+    Translates an entire HTML document (including headers, table cells, labels, facts, signatures)
+    while strictly preserving all HTML tags, layout styling, tables, borders, and CSS classes.
+    """
+    if not html_str or not html_str.strip() or target_lang in ["en", "original"]:
+        return {"success": True, "translated_html": html_str}
+
+    try:
+        import re
+        from bs4 import BeautifulSoup, NavigableString
+        soup = BeautifulSoup(html_str, "html.parser")
+        
+        # Collect visible text nodes
+        text_nodes = [
+            node for node in soup.find_all(string=True)
+            if node.parent.name not in ["script", "style", "noscript"] and node.strip() and len(node.strip()) > 1
+        ]
+        
+        for node in text_nodes:
+            orig = node.strip()
+            # If text is purely digits/punctuation/symbols, skip
+            if re.match(r"^[\d\s\:\/\-\,\.\(\)\#\%\&\@\_\|]+$", orig):
+                continue
+            t_res = await translate_text(orig, source_lang=source_lang, target_lang=target_lang, request=request)
+            if t_res.get("success") and t_res.get("translated_text"):
+                node.replace_with(NavigableString(t_res["translated_text"]))
+                
+        return {"success": True, "translated_html": str(soup), "engine": "catalyst-html-translator"}
+    except Exception as html_err:
+        print(f"[Translation] HTML translation error: {html_err}")
+        return {"success": False, "translated_html": html_str, "error": str(html_err)}
 
 
 async def translate_fir_fields(parsed_data: dict, target_lang: str = "en", request=None) -> dict:
@@ -231,9 +284,12 @@ async def translate_fir_fields(parsed_data: dict, target_lang: str = "en", reque
     
     result = dict(parsed_data)
     fields_to_translate = [
-        "complainant_name", "complainant_father", "place_of_occurrence",
-        "act_section", "crime_group", "fir_narrative", "fir_contents",
-        "district", "police_station", "sho_name", "court_name", "village", "beat_name"
+        "complainant_name", "complainant_father", "complainant_address", "complainant_occupation",
+        "complainant_sex", "place_of_occurrence", "place", "occurrence_day",
+        "act_section", "crime_group", "crime_category", "crime_type", "type_of_information",
+        "fir_narrative", "fir_contents", "brief_facts", "action_taken",
+        "district", "district_name", "police_station", "station_name", "sho_name", "sho_rank",
+        "court_name", "village", "beat_name"
     ]
     
     # Translate single scalar text fields
@@ -257,6 +313,10 @@ async def translate_fir_fields(parsed_data: dict, target_lang: str = "en", reque
                 t_addr = await translate_text(str(a_copy["address"]), target_lang=target_lang, request=request)
                 if t_addr.get("success"):
                     a_copy["address"] = t_addr.get("translated_text")
+            if a_copy.get("status") and len(str(a_copy["status"]).strip()) > 1:
+                t_stat = await translate_text(str(a_copy["status"]), target_lang=target_lang, request=request)
+                if t_stat.get("success"):
+                    a_copy["status"] = t_stat.get("translated_text")
             translated_accused.append(a_copy)
         result["accused"] = translated_accused
 
@@ -269,10 +329,60 @@ async def translate_fir_fields(parsed_data: dict, target_lang: str = "en", reque
                 t_name = await translate_text(str(v_copy["name"]), target_lang=target_lang, request=request)
                 if t_name.get("success"):
                     v_copy["name"] = t_name.get("translated_text")
+            if v_copy.get("address") and len(str(v_copy["address"]).strip()) > 1:
+                t_addr = await translate_text(str(v_copy["address"]), target_lang=target_lang, request=request)
+                if t_addr.get("success"):
+                    v_copy["address"] = t_addr.get("translated_text")
             translated_victims.append(v_copy)
         result["victims"] = translated_victims
 
+    # Translate property array
+    if isinstance(result.get("property"), list):
+        translated_prop = []
+        for pr in result["property"]:
+            p_copy = dict(pr) if isinstance(pr, dict) else {"type": str(pr)}
+            if p_copy.get("type") and len(str(p_copy["type"]).strip()) > 1:
+                t_type = await translate_text(str(p_copy["type"]), target_lang=target_lang, request=request)
+                if t_type.get("success"):
+                    p_copy["type"] = t_type.get("translated_text")
+            translated_prop.append(p_copy)
+        result["property"] = translated_prop
+
     return result
+
+
+async def translate_batch(texts: list, target_lang: str = "en", source_lang: str = "auto", request=None) -> dict:
+    """Translates a list of strings efficiently in batch."""
+    if not texts:
+        return {"success": True, "translations": {}}
+    
+    unique_texts = [t for t in set(texts) if t and isinstance(t, str) and t.strip()]
+    if target_lang in ["en", "original"]:
+        return {"success": True, "translations": {t: t for t in unique_texts}}
+
+    # Delimiter batching
+    delimiter = "\n---SENTINAL_BREAK---\n"
+    # Chunk into groups of 25 to respect token limits
+    trans_map = {}
+    chunk_size = 25
+    
+    for i in range(0, len(unique_texts), chunk_size):
+        sub_chunk = unique_texts[i:i + chunk_size]
+        joined = delimiter.join(sub_chunk)
+        t_res = await translate_text(joined, source_lang=source_lang, target_lang=target_lang, request=request)
+        if t_res.get("success") and t_res.get("translated_text"):
+            parts = t_res["translated_text"].split("---SENTINAL_BREAK---")
+            if len(parts) == len(sub_chunk):
+                for orig, tr in zip(sub_chunk, parts):
+                    trans_map[orig] = tr.strip()
+        
+        # Fallback for any missed
+        for t in sub_chunk:
+            if t not in trans_map:
+                ind = await translate_text(t, source_lang=source_lang, target_lang=target_lang, request=request)
+                trans_map[t] = ind.get("translated_text", t)
+                
+    return {"success": True, "translations": trans_map}
 
 
 

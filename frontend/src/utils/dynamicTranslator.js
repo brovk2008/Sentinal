@@ -103,22 +103,58 @@ async function translateString(text, targetLang) {
 }
 
 /**
- * Batch translate an array of unique strings.
- * Sends one-by-one (backend doesn't have batch endpoint).
- * Uses Promise.all with concurrency limit.
+ * Batch translate an array of unique strings via Catalyst batch translation endpoint.
  */
-async function batchTranslate(texts, targetLang, concurrency = 8) {
+async function batchTranslate(texts, targetLang) {
   const results = new Map()
   const unique = [...new Set(texts.map(t => t.trim()).filter(t => t.length > 1 && /[a-zA-Z]{2,}/.test(t)))]
+  if (unique.length === 0 || targetLang === 'en') {
+    unique.forEach(t => results.set(t, t))
+    return results
+  }
 
-  // Process in chunks to avoid overwhelming the API
-  for (let i = 0; i < unique.length; i += concurrency) {
-    const chunk = unique.slice(i, i + concurrency)
-    const promises = chunk.map(async text => {
-      const translated = await translateString(text, targetLang)
-      results.set(text, translated)
+  // Check cache first
+  const missing = []
+  for (const text of unique) {
+    const key = `${targetLang}:${text}`
+    if (translationCache.has(key)) {
+      results.set(text, translationCache.get(key))
+    } else {
+      missing.push(text)
+    }
+  }
+
+  if (missing.length === 0) return results
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/v1/nlp/translate-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        texts: missing,
+        source_lang: 'auto',
+        target_lang: targetLang
+      })
     })
-    await Promise.all(promises)
+    if (res.ok) {
+      const data = await res.json()
+      if (data && data.translations) {
+        for (const [orig, tr] of Object.entries(data.translations)) {
+          const key = `${targetLang}:${orig}`
+          translationCache.set(key, tr)
+          results.set(orig, tr)
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[PageTranslator] Batch translation failed:', err)
+  }
+
+  // Fallback for any text not found in batch results
+  for (const text of missing) {
+    if (!results.has(text)) {
+      results.set(text, text)
+    }
   }
 
   return results

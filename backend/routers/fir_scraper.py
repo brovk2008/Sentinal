@@ -1029,10 +1029,11 @@ async def translate_ocr_content(req: TranslateOCRRequest, request: Request = Non
 async def translate_pdf_full(body: dict, request: Request = None):
     """
     Translates full extracted FIR PDF record:
-    Translates both raw extracted text AND individual structured fields.
+    Translates raw extracted text, individual structured fields, AND HTML layout if provided.
     """
     raw_text = body.get("text") or body.get("extracted_text") or ""
     parsed_data = body.get("parsed_data") or {}
+    html_content = body.get("html") or body.get("firHtml") or ""
     target_lang = body.get("target_lang") or "en"
     record_id = body.get("record_id")
 
@@ -1045,6 +1046,12 @@ async def translate_pdf_full(body: dict, request: Request = None):
     translated_fields = {}
     if parsed_data:
         translated_fields = await zia.translate_fir_fields(parsed_data, target_lang=target_lang, request=request)
+
+    translated_html = html_content
+    if html_content and len(html_content.strip()) > 10:
+        h_res = await zia.translate_html_content(html_content, target_lang=target_lang, request=request)
+        if h_res and h_res.get("success"):
+            translated_html = h_res.get("translated_html", html_content)
 
     # Optionally persist update into database
     if record_id:
@@ -1060,6 +1067,16 @@ async def translate_pdf_full(body: dict, request: Request = None):
         "success": True,
         "translated_text": translated_text,
         "translated_parsed_data": translated_fields or parsed_data,
+        "translated_html": translated_html,
         "target_lang": target_lang,
         "engine": "catalyst-nlp-multi-engine"
     }
+
+
+@router.post("/translate-html")
+async def translate_html_endpoint(body: dict, request: Request = None):
+    """Translates entire HTML document while preserving layout and tables."""
+    html_content = body.get("html") or body.get("firHtml") or ""
+    target_lang = body.get("target_lang") or "en"
+    source_lang = body.get("source_lang") or "auto"
+    return await zia.translate_html_content(html_content, target_lang=target_lang, source_lang=source_lang, request=request)
