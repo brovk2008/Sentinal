@@ -224,26 +224,63 @@ export default function FIRSearch() {
     setShowLangPicker(false)
     setTranslatedFIRText('')
 
-    const rawText = parsedData?.fir_contents
-    if (!rawText || rawText.trim().length < 10) {
-      setMsg('Run OCR first to extract text before translating.', 'warn')
+    let currentParsed = parsedData
+    let rawText = currentParsed?.fir_contents
+
+    // If OCR hasn't been run yet, trigger OCR first
+    if (!currentParsed || !rawText) {
+      setMsg('Running OCR before translation...', 'info')
+      const payload = {
+        pdf_b64: pdfB64 || '',
+        fir_metadata: {
+          district_id: districtId, station_id: stationId,
+          district_name: DISTRICTS.find(d => d.id === districtId)?.name || '',
+          station_name: stations.find(s => s.id === stationId)?.name || pdfMeta?.station_name || '',
+          fir_number: firNum, year,
+        },
+      }
+      try {
+        const ocrRes = await fetch(`${BASE_URL}/api/v1/fir/ocr`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const ocrData = await ocrRes.json()
+        if (ocrData && ocrData.parsed_data) {
+          currentParsed = ocrData.parsed_data
+          setParsedData(currentParsed)
+          rawText = currentParsed.fir_contents
+        }
+      } catch (e) {
+        console.warn('Auto-OCR before translate failed:', e)
+      }
+    }
+
+    if (!rawText || rawText.trim().length < 5) {
+      setMsg('Could not extract text to translate — ensure document is loaded.', 'warn')
       setTranslatingFIR(false)
       return
     }
 
     try {
-      const res = await fetch(`${SCRAPER_URL}/ocr/translate`, {
+      const res = await fetch(`${BASE_URL}/api/v1/fir/translate-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: rawText, source_lang: 'auto', target_lang: lang }),
+        body: JSON.stringify({
+          text: rawText,
+          parsed_data: currentParsed || {},
+          target_lang: lang
+        }),
       })
       const data = await res.json()
-      if (data && data.translated_text && data.translated_text !== rawText) {
+      if (data && data.translated_text) {
         setTranslatedFIRText(data.translated_text)
-        setMsg(`Translated to ${TRANSLATE_LANGS.find(l => l.code === lang)?.label || lang} via ${data.engine || 'Google Translate'}.`, 'success')
+        if (data.translated_parsed_data) {
+          setParsedData(data.translated_parsed_data)
+        }
+        setMsg(`Translated to ${TRANSLATE_LANGS.find(l => l.code === lang)?.label || lang} via Catalyst NLP.`, 'success')
       } else {
-        setTranslatedFIRText(data?.translated_text || rawText)
-        setMsg('Translation returned same text — source may already be in target language.', 'warn')
+        setTranslatedFIRText(rawText)
+        setMsg('Translation returned same text.', 'warn')
       }
     } catch (err) {
       setMsg(`Translation error: ${err.message}`, 'error')
@@ -414,14 +451,15 @@ export default function FIRSearch() {
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
             {/* Translate button */}
-            {parsedData && (
+            {(parsedData || pdfB64 || pdfUrl) && (
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowLangPicker(p => !p)}
+                  disabled={translatingFIR}
                   style={{
                     background: 'rgba(200,129,74,0.15)', border: '1px solid var(--copper-400)',
                     color: 'var(--copper-300)', padding: '4px 10px', borderRadius: 4,
-                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    fontSize: 11, fontWeight: 600, cursor: translatingFIR ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', gap: 5,
                   }}
                 >

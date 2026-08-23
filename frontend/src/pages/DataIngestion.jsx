@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Eye, Download, FolderArchive, RefreshCw, Check, X, FileText, Loader2 } from 'lucide-react';
+import { Eye, Download, FolderArchive, RefreshCw, Check, X, FileText, Loader2, Languages } from 'lucide-react';
 import {
   startScraper,
   fetchScraperStatus,
@@ -268,8 +268,16 @@ export default function DataIngestion() {
           setPdfModal({
             title: `FIR ${firNum}/${yr} — ${meta.station_name || stnStr}`,
             firHtml: html,
+            originalHtml: html,
+            meta,
+            firNum,
+            yr,
+            distStr,
+            stnStr,
             blobUrl: url,
             filename,
+            activeLang: 'original',
+            translating: false,
             loading: false
           });
         }
@@ -283,6 +291,53 @@ export default function DataIngestion() {
       setPdfModal(null);
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const handleTranslateModalPdf = async (targetLang) => {
+    if (!pdfModal || !pdfModal.meta) return;
+    if (targetLang === 'original') {
+      setPdfModal(prev => ({
+        ...prev,
+        firHtml: prev.originalHtml,
+        activeLang: 'original',
+        translating: false
+      }));
+      return;
+    }
+
+    try {
+      setPdfModal(prev => ({ ...prev, translating: true, activeLang: targetLang }));
+      const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${BASE_URL}/api/v1/fir/translate-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parsed_data: pdfModal.meta,
+          text: pdfModal.meta.fir_contents || pdfModal.meta.fir_narrative || '',
+          target_lang: targetLang
+        })
+      });
+      const data = await res.json();
+      if (data && data.translated_parsed_data) {
+        const translatedHtml = generateFirHtml(
+          data.translated_parsed_data,
+          pdfModal.firNum,
+          pdfModal.yr,
+          pdfModal.distStr,
+          pdfModal.stnStr
+        );
+        setPdfModal(prev => ({
+          ...prev,
+          firHtml: translatedHtml,
+          translating: false
+        }));
+      } else {
+        setPdfModal(prev => ({ ...prev, translating: false }));
+      }
+    } catch (err) {
+      console.error('Modal PDF translation error:', err);
+      setPdfModal(prev => ({ ...prev, translating: false }));
     }
   };
 
@@ -879,9 +934,42 @@ export default function DataIngestion() {
             flexDirection: 'column',
             position: 'relative'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <span style={{ fontWeight: 700, color: 'var(--copper-400)', fontSize: 14 }}>{pdfModal.title}</span>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Dynamic Language Switcher */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-primary)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border-subtle)' }}>
+                  <Languages size={13} color="var(--copper-400)" />
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Translate:</span>
+                  {[
+                    { code: 'original', label: 'Original' },
+                    { code: 'en', label: 'English' },
+                    { code: 'kn', label: 'Kannada' },
+                    { code: 'hi', label: 'Hindi' },
+                    { code: 'te', label: 'Telugu' },
+                    { code: 'ta', label: 'Tamil' },
+                  ].map(lang => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleTranslateModalPdf(lang.code)}
+                      disabled={pdfModal.translating}
+                      style={{
+                        background: (pdfModal.activeLang || 'original') === lang.code ? 'var(--copper-500)' : 'transparent',
+                        color: (pdfModal.activeLang || 'original') === lang.code ? '#000' : 'var(--text-secondary)',
+                        border: 'none',
+                        borderRadius: 3,
+                        padding: '2px 6px',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        cursor: pdfModal.translating ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                  {pdfModal.translating && <Loader2 size={11} className="spin" color="var(--copper-400)" />}
+                </div>
+
                 {pdfModal.blobUrl && (
                   <a
                     href={pdfModal.blobUrl}
@@ -900,7 +988,7 @@ export default function DataIngestion() {
                     }}
                   >
                     <Download size={12} />
-                    <span>Download PDF File</span>
+                    <span>Download PDF</span>
                   </a>
                 )}
                 <button onClick={() => setPdfModal(null)}

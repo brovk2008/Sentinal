@@ -165,3 +165,46 @@ async def list_districts():
             for did, name in sorted(DISTRICT_NAMES.items())
         ]
     }
+
+
+# ── Translation & OCR Aliases ──────────────────────────────────────────────────
+
+@router.post("/translate-fir")
+@router.post("/ocr/translate")
+async def translate_fir_scraper_alias(payload: dict):
+    """Translate FIR text via Catalyst NLP & Google Translate."""
+    from services import zia_nlp_service as zia
+    text = payload.get("text") or payload.get("extracted_text") or ""
+    source_lang = payload.get("source_lang", "auto")
+    target_lang = payload.get("target_lang", "en")
+    return await zia.translate_text(text, source_lang=source_lang, target_lang=target_lang)
+
+
+@router.get("/ocr-records")
+@router.get("/ocr/records")
+async def get_ocr_records_scraper_alias(q: Optional[str] = None, year: Optional[str] = None):
+    """Retrieve stored OCR records across all cases and stations."""
+    from database import query
+    import json
+    sql = "SELECT * FROM ocr_records WHERE 1=1"
+    params = []
+    if year:
+        sql += " AND year = ?"
+        params.append(year)
+    if q:
+        sql += " AND (fir_number LIKE ? OR district_name LIKE ? OR station_name LIKE ? OR extracted_text LIKE ? OR parsed_data LIKE ?)"
+        params.extend([f"%{q}%", f"%{q}%", f"%{q}%", f"%{q}%", f"%{q}%"])
+    sql += " ORDER BY created_at DESC LIMIT 100"
+    
+    rows = query(sql, tuple(params))
+    results = []
+    for r in rows:
+        item = dict(r)
+        if item.get("parsed_data"):
+            try:
+                item["parsed_data"] = json.loads(item["parsed_data"])
+            except Exception:
+                pass
+        results.append(item)
+    return {"status": "ok", "total": len(results), "records": results}
+

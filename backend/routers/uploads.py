@@ -346,36 +346,87 @@ async def _run_real_zia_analysis(content: bytes, file_type: str, filename: str) 
             print(f"[Uploads] Catalyst Vision failed: {vis_err}")
 
     # 2. Run Text/OCR/NLP Intelligence
-
-    # Run OCR if it's an image or document
-    if file_type == 'document' or file_type == 'image':
+    if file_type == 'document':
+        # 2a. Primary PDF extractor: PyMuPDF (fitz)
         try:
-            with tempfile.NamedTemporaryFile(delete=False) as tmp:
-                tmp.write(content)
-                tmp_name = tmp.name
-            try:
-                with open(tmp_name, 'rb') as f_read:
-                    ocr_res = zia_service.extract_optical_characters(f_read)
-                if ocr_res and ocr_res.get("text"):
-                    extracted_text = ocr_res.get("text")
-                    summary_parts.append(f"Zia OCR Text Found:\n{extracted_text[:600]}")
-                    tags.append("OCR Scanned")
-            finally:
-                os.remove(tmp_name)
-        except Exception as ocr_err:
-            print(f"[Zia OCR] failed: {ocr_err}")
-
-    # Fallback to Plumber for PDFs
-    if not extracted_text and file_type == 'document':
-        try:
-            import pdfplumber
-            with pdfplumber.open(io.BytesIO(content)) as pdf:
-                text = "\n".join(p.extract_text() or '' for p in pdf.pages[:5])
-            if text:
-                extracted_text = text
-                summary_parts.append(f"PDF parsed text:\n{extracted_text[:600]}")
+            import fitz
+            doc = fitz.open(stream=content, filetype="pdf")
+            extracted_pages = []
+            for p in doc:
+                t = p.get_text() or ""
+                if t.strip():
+                    extracted_pages.append(t)
+            if extracted_pages:
+                extracted_text = "\n".join(extracted_pages).strip()
+                summary_parts.append(f"PDF Document Text Extracted ({len(doc)} pages):\n{extracted_text[:600]}")
                 tags.append("PDF Parsed")
-        except:
+            
+            # If PDF is scanned / raster images, render first pages and run OCR
+            if (not extracted_text or len(extracted_text) < 40) and len(doc) > 0:
+                try:
+                    import pytesseract
+                    from PIL import Image
+                    for i in range(min(len(doc), 3)):
+                        pix = doc[i].get_pixmap(dpi=180)
+                        img = Image.open(io.BytesIO(pix.tobytes("png")))
+                        t_text = pytesseract.image_to_string(img, lang="kan+eng", config="--psm 6")
+                        if t_text.strip():
+                            extracted_pages.append(t_text)
+                    if extracted_pages:
+                        extracted_text = "\n".join(extracted_pages).strip()
+                        summary_parts.append(f"Scanned PDF OCR Text Found:\n{extracted_text[:600]}")
+                        tags.append("OCR Scanned")
+                except Exception:
+                    pass
+
+            # Vision VLM fallback for scanned PDF
+            if not extracted_text or len(extracted_text) < 30:
+                try:
+                    from services.quickml_service import call_vision
+                    pix = doc[0].get_pixmap(dpi=150)
+                    img_b64 = base64.b64encode(pix.tobytes("png")).decode("utf-8")
+                    v_res = await call_vision(
+                        "You are an expert police document OCR model. Transcribe all text, numbers, names, and details from this scanned police document accurately.",
+                        "Extract all text and tabular information from this document.",
+                        img_b64,
+                        request=request
+                    )
+                    if v_res and len(v_res) > 30 and "error" not in v_res.lower():
+                        extracted_text = v_res
+                        summary_parts.append(f"Catalyst Vision Document Transcription:\n{extracted_text[:600]}")
+                        tags.append("Vision Transcribed")
+                except Exception:
+                    pass
+        except Exception as doc_err:
+            print(f"[Uploads] PDF text extraction failed: {doc_err}")
+
+        # 2b. Fallback to pdfplumber for non-standard PDF streams
+        if not extracted_text:
+            try:
+                import pdfplumber
+                with pdfplumber.open(io.BytesIO(content)) as pdf:
+                    p_text = "\n".join(p.extract_text() or '' for p in pdf.pages[:5])
+                if p_text.strip():
+                    extracted_text = p_text.strip()
+                    summary_parts.append(f"PDF parsed text:\n{extracted_text[:600]}")
+                    tags.append("PDF Parsed")
+            except Exception:
+                pass
+
+    elif file_type == 'image':
+        try:
+            import pytesseract
+            from PIL import Image
+            img = Image.open(io.BytesIO(content))
+            try:
+                img_text = pytesseract.image_to_string(img, lang="kan+eng", config="--psm 6")
+            except Exception:
+                img_text = pytesseract.image_to_string(img, lang="eng", config="--psm 6")
+            if img_text.strip():
+                extracted_text = img_text.strip()
+                summary_parts.append(f"Image OCR Text Found:\n{extracted_text[:600]}")
+                tags.append("OCR Scanned")
+        except Exception:
             pass
 
     # Run Zia Text Analytics (NER, Keywords, Sentiment) if any text is found

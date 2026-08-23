@@ -28,8 +28,8 @@ export default function OCRRecords() {
     try {
       setLoading(true)
       const url = query 
-        ? `${SCRAPER_URL}/ocr-records?query=${encodeURIComponent(query)}`
-        : `${SCRAPER_URL}/ocr-records`
+        ? `${BASE_URL}/api/v1/fir/ocr/records?q=${encodeURIComponent(query)}`
+        : `${BASE_URL}/api/v1/fir/ocr/records`
       
       const res = await fetch(url)
       const data = await res.json()
@@ -55,16 +55,23 @@ export default function OCRRecords() {
   }
 
   const handleTranslateRecord = async (record, lang) => {
-    if (!record || !record.extracted_text) return
+    if (!record) return
+    const textToTranslate = record.extracted_text || (record.parsed_data && record.parsed_data.fir_contents) || ''
+    if (!textToTranslate || textToTranslate.trim().length < 5) {
+      setTranslatedText('No text content available to translate.')
+      return
+    }
+
     try {
       setTranslating(true)
       setTargetLang(lang)
       
-      const res = await fetch(`${BASE_URL}/api/v1/scraper/translate-fir`, {
+      const res = await fetch(`${BASE_URL}/api/v1/fir/ocr/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: record.extracted_text,
+          text: textToTranslate,
+          source_lang: 'auto',
           target_lang: lang
         })
       })
@@ -76,7 +83,7 @@ export default function OCRRecords() {
       }
     } catch (e) {
       console.error('Translation error:', e)
-      setTranslatedText('Translation failed.')
+      setTranslatedText(`Translation failed: ${e.message || e}`)
     } finally {
       setTranslating(false)
     }
