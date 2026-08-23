@@ -1,4 +1,9 @@
 import { useState, useRef } from 'react'
+import {
+  Search, Globe, FileText, CheckCircle2, AlertCircle, XCircle,
+  Download, Languages, RotateCw, Database, Sparkles, Check, X,
+  Shield, User, Users, MapPin, Calendar, DollarSign, FileEdit, Brain
+} from 'lucide-react'
 
 const BASE_URL    = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const SCRAPER_URL = (import.meta.env.VITE_SCRAPER_URL || `${BASE_URL}/api/v1/fir`).replace(/\/$/, '')
@@ -25,14 +30,14 @@ const DISTRICTS = [
 ]
 
 const TRANSLATE_LANGS = [
-  { code: 'en', label: '🇬🇧 English' },
-  { code: 'hi', label: '🇮🇳 Hindi' },
-  { code: 'kn', label: 'ಕ Kannada' },
-  { code: 'ta', label: 'த Tamil' },
-  { code: 'te', label: 'తె Telugu' },
-  { code: 'mr', label: 'म Marathi' },
-  { code: 'ur', label: 'اردو Urdu' },
-  { code: 'ml', label: 'മ Malayalam' },
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'mr', label: 'Marathi' },
+  { code: 'ur', label: 'Urdu' },
+  { code: 'ml', label: 'Malayalam' },
 ]
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -46,42 +51,42 @@ const inp = { ...sel }
 const btn_s = {
   background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-strong)',
   borderRadius: 4, padding: '3px 8px', color: 'var(--text-secondary)',
-  fontSize: 11, cursor: 'pointer',
+  fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
 }
 const badge = (color) => ({
   display: 'inline-flex', alignItems: 'center', gap: 4,
-  padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 600,
-  background: `${color}18`, border: `1px solid ${color}`, color,
+  padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 600,
+  background: `${color}18`, color, border: `1px solid ${color}40`,
 })
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function FIRSearch() {
-  const [districtId, setDistrictId] = useState('')
-  const [stationId, setStationId]   = useState('')
-  const [firNum, setFirNum]         = useState('')
-  const [year, setYear]             = useState('2024')
-  const [stations, setStations]     = useState([])
+  const [districtId, setDistrictId]   = useState('')
+  const [stationId,  setStationId]    = useState('')
+  const [firNum,     setFirNum]       = useState('')
+  const [year,       setYear]         = useState('2024')
+  const [stations,   setStations]     = useState([])
   const [stationsLoading, setStationsLoading] = useState(false)
 
-  const [searching, setSearching]   = useState(false)
-  const [pdfUrl, setPdfUrl]         = useState(null)
-  const [pdfMeta, setPdfMeta]       = useState(null)
-  const iframeRef                   = useRef(null)
+  // Results
+  const [searching,  setSearching]    = useState(false)
+  const [ocrRunning, setOcrRunning]   = useState(false)
+  const [pdfUrl,     setPdfUrl]       = useState(null)
+  const [pdfMeta,    setPdfMeta]      = useState(null)
+  const [pdfB64,     setPdfB64]       = useState(null)
+  const [parsedData, setParsedData]   = useState(null)
+  const [status,     setStatus]       = useState({ msg: '', type: '' })
+  const [saved,      setSaved]        = useState(false)
 
-  const [ocrRunning, setOcrRunning] = useState(false)
-  const [parsedData, setParsedData] = useState(null)
-  const [saved, setSaved]           = useState(false)
-  const [pdfB64, setPdfB64]         = useState(null)
-
-  const [translatingFIR, setTranslatingFIR]     = useState(false)
+  // Language translation
+  const [translatingFIR,   setTranslatingFIR]   = useState(false)
   const [translatedFIRText, setTranslatedFIRText] = useState('')
-  const [targetFIRLang, setTargetFIRLang]       = useState('en')
-  const [showLangPicker, setShowLangPicker]     = useState(false)
+  const [targetFIRLang,    setTargetFIRLang]    = useState('en')
+  const [showLangPicker,   setShowLangPicker]   = useState(false)
 
-  const [status, setStatus] = useState({ msg: '', type: 'info' })
+  const iframeRef = useRef(null)
+
   const setMsg = (msg, type = 'info') => setStatus({ msg, type })
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
   const loadStations = async (did) => {
     setDistrictId(did)
     setStationId('')
@@ -93,7 +98,7 @@ export default function FIRSearch() {
       const d = await r.json()
       setStations(d.stations || [])
     } catch {
-      setMsg('⚠️ Could not load stations — scraper may be cold starting.', 'warn')
+      setMsg('Could not load stations — scraper may be cold starting.', 'warn')
     }
     setStationsLoading(false)
   }
@@ -104,7 +109,7 @@ export default function FIRSearch() {
     setPdfUrl(null); setPdfMeta(null); setPdfB64(null)
     setParsedData(null); setSaved(false)
     setTranslatedFIRText(''); setShowLangPicker(false)
-    setMsg('🔗 Connecting to KSP portal via SmartBrowz...', 'info')
+    setMsg('Connecting to KSP portal via SmartBrowz...', 'info')
 
     try {
       const res = await fetch(`${SCRAPER_URL}/fetch`, {
@@ -114,13 +119,13 @@ export default function FIRSearch() {
       })
 
       if (res.status === 404) {
-        setMsg('❌ FIR not found in KSP records. Verify FIR number and year.', 'error')
+        setMsg('FIR not found in KSP records. Verify FIR number and year.', 'error')
         setSearching(false); return
       }
 
       let data
       try { data = await res.json() }
-      catch { setMsg('❌ Server returned invalid response.', 'error'); setSearching(false); return }
+      catch { setMsg('Server returned invalid response.', 'error'); setSearching(false); return }
 
       if (data.status === 'found' && data.pdf_b64) {
         setPdfB64(data.pdf_b64)
@@ -133,19 +138,19 @@ export default function FIRSearch() {
         } catch {
           setPdfUrl(`data:application/pdf;base64,${data.pdf_b64}`)
         }
-        setMsg('✅ Real FIR PDF retrieved from KSP portal. Click "⚙️ OCR & Save" to extract all fields.', 'success')
+        setMsg('Real FIR PDF retrieved from KSP portal. Click "OCR & Save" to extract all fields.', 'success')
       } else {
-        setMsg(`⚠️ ${data.message || data.detail || 'Unknown response from scraper'}`, 'warn')
+        setMsg(data.message || data.detail || 'Unknown response from scraper', 'warn')
       }
     } catch (err) {
-      setMsg(`❌ Network error: ${err.message}`, 'error')
+      setMsg(`Network error: ${err.message}`, 'error')
     }
     setSearching(false)
   }
 
   const runOCR = async () => {
     setOcrRunning(true)
-    setMsg('🔬 Extracting all FIR fields via OCR pipeline...', 'info')
+    setMsg('Extracting all FIR fields via OCR pipeline...', 'info')
 
     const payload = {
       pdf_b64: pdfB64 || '',
@@ -159,7 +164,6 @@ export default function FIRSearch() {
 
     try {
       let data = null
-      // Try cloud function first
       if (OCR_FUNC_URL) {
         try {
           const res = await fetch(OCR_FUNC_URL, {
@@ -170,7 +174,6 @@ export default function FIRSearch() {
         } catch { /* fall through */ }
       }
 
-      // Fallback: AppSail backend
       if (!data || !data.parsed_data) {
         const res = await fetch(`${SCRAPER_URL}/mock-ocr`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -183,7 +186,6 @@ export default function FIRSearch() {
         setParsedData(data.parsed_data)
         setSaved(true)
 
-        // Persist to SQLite account store
         try {
           const distName = DISTRICTS.find(d => d.id === districtId)?.name || pdfMeta?.district_name || districtId
           const statName = stations.find(s => s.id === stationId)?.name || pdfMeta?.station_name || stationId
@@ -204,18 +206,17 @@ export default function FIRSearch() {
         }
 
         const accusedCount = data.parsed_data?.accused?.length || 0
-        setMsg(`✅ OCR complete — ${accusedCount} accused, all fields extracted & saved to DB.`, 'success')
+        setMsg(`OCR complete — ${accusedCount} accused, all fields extracted & saved to DB.`, 'success')
       } else {
         const errMsg = data?.error || data?.detail || data?.message || 'OCR extraction failed'
-        setMsg(`❌ OCR failed: ${errMsg}`, 'error')
+        setMsg(`OCR failed: ${errMsg}`, 'error')
       }
     } catch (err) {
-      setMsg(`❌ OCR error: ${err.message}`, 'error')
+      setMsg(`OCR error: ${err.message}`, 'error')
     }
     setOcrRunning(false)
   }
 
-  // Translate using the actual extracted fir_contents (raw Kannada text from PDF)
   const translateFIRDocument = async (langCode) => {
     const lang = langCode || targetFIRLang
     setTranslatingFIR(true)
@@ -223,10 +224,9 @@ export default function FIRSearch() {
     setShowLangPicker(false)
     setTranslatedFIRText('')
 
-    // Use full OCR raw text; refuse to translate if nothing is available
     const rawText = parsedData?.fir_contents
     if (!rawText || rawText.trim().length < 10) {
-      setMsg('⚠️ Run OCR first to extract text before translating.', 'warn')
+      setMsg('Run OCR first to extract text before translating.', 'warn')
       setTranslatingFIR(false)
       return
     }
@@ -240,13 +240,13 @@ export default function FIRSearch() {
       const data = await res.json()
       if (data && data.translated_text && data.translated_text !== rawText) {
         setTranslatedFIRText(data.translated_text)
-        setMsg(`✅ Translated to ${TRANSLATE_LANGS.find(l => l.code === lang)?.label || lang} via ${data.engine || 'Google Translate'}.`, 'success')
+        setMsg(`Translated to ${TRANSLATE_LANGS.find(l => l.code === lang)?.label || lang} via ${data.engine || 'Google Translate'}.`, 'success')
       } else {
         setTranslatedFIRText(data?.translated_text || rawText)
-        setMsg('⚠️ Translation returned same text — source may already be in target language.', 'warn')
+        setMsg('Translation returned same text — source may already be in target language.', 'warn')
       }
     } catch (err) {
-      setMsg(`❌ Translation error: ${err.message}`, 'error')
+      setMsg(`Translation error: ${err.message}`, 'error')
       setTranslatedFIRText('')
     }
     setTranslatingFIR(false)
@@ -258,23 +258,24 @@ export default function FIRSearch() {
       const bs = atob(pdfB64)
       const bytes = new Uint8Array(bs.length)
       for (let i = 0; i < bs.length; i++) bytes[i] = bs.charCodeAt(i)
-      const url  = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }))
-      const link = document.createElement('a')
-      link.href  = url
-      const dist = (pdfMeta?.district_name || districtId).replace(/[^a-zA-Z0-9]/g, '_')
-      const stn  = (pdfMeta?.station_name  || stationId).replace(/[^a-zA-Z0-9]/g, '_')
-      link.download = `FIR_${dist}_${stn}_${firNum}_${year}.pdf`
-      document.body.appendChild(link); link.click(); document.body.removeChild(link)
-      setTimeout(() => URL.revokeObjectURL(url), 5000)
-    } catch (e) { console.error('PDF download failed', e) }
+      const blob = new Blob([bytes], { type: 'application/pdf' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `FIR_${districtId}_${stationId}_${firNum}_${year}.pdf`
+      a.click()
+    } catch (err) {
+      alert(`Download error: ${err.message}`)
+    }
   }
 
   const statusColor = {
-    success: 'var(--status-success)', error: 'var(--status-danger)',
-    warn: 'var(--copper-400)', info: 'var(--text-secondary)',
-  }[status.type]
+    error:   'var(--status-danger)',
+    warn:    'var(--status-warning)',
+    success: 'var(--status-success)',
+    info:    'var(--copper-400)',
+  }[status.type] || 'var(--text-secondary)'
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: '240px 1fr 300px',
@@ -285,8 +286,9 @@ export default function FIRSearch() {
       {/* ── Left Panel — Search Controls ──────────────────────────────────────── */}
       <div style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-secondary)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-400)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-            🔍 Live FIR Search
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-400)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Search size={13} />
+            <span>Live FIR Search</span>
           </div>
           <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Real-time KSP portal lookup</div>
         </div>
@@ -303,8 +305,9 @@ export default function FIRSearch() {
 
           {/* Station */}
           <div>
-            <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Police Station {stationsLoading && <span style={{ color: 'var(--copper-400)' }}>↻</span>}
+            <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span>Police Station</span>
+              {stationsLoading && <RotateCw size={10} className="spin" color="var(--copper-400)" />}
             </label>
             <select style={sel} value={stationId} onChange={e => setStationId(e.target.value)} disabled={!stations.length}>
               <option value="">Select Station</option>
@@ -331,9 +334,9 @@ export default function FIRSearch() {
             className="btn btn-copper"
             onClick={searchFIR}
             disabled={searching || !districtId || !stationId || !firNum}
-            style={{ width: '100%', justifyContent: 'center', height: 36, fontSize: 12, fontWeight: 600 }}
+            style={{ width: '100%', justifyContent: 'center', height: 36, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            {searching ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="live-dot" /> Fetching FIR...</span> : 'Search FIR →'}
+            {searching ? <><span className="live-dot" /> Fetching FIR...</> : <><Search size={13} /> Search FIR</>}
           </button>
 
           {/* OCR */}
@@ -345,10 +348,25 @@ export default function FIRSearch() {
               style={{
                 width: '100%', justifyContent: 'center', height: 36, fontSize: 12, fontWeight: 600,
                 background: 'rgba(72,199,142,0.1)', border: '1px solid var(--status-success)',
-                color: 'var(--status-success)',
+                color: 'var(--status-success)', display: 'flex', alignItems: 'center', gap: 6
               }}
             >
-              {ocrRunning ? '🔬 Extracting fields...' : saved ? '✅ Saved to DB' : '⚙️ OCR & Save to DB'}
+              {ocrRunning ? (
+                <>
+                  <RotateCw size={13} className="spin" />
+                  <span>Extracting fields...</span>
+                </>
+              ) : saved ? (
+                <>
+                  <CheckCircle2 size={13} />
+                  <span>Saved to DB</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} />
+                  <span>OCR &amp; Save to DB</span>
+                </>
+              )}
             </button>
           )}
 
@@ -357,9 +375,13 @@ export default function FIRSearch() {
             <div style={{
               padding: '8px 10px', borderRadius: 6, fontSize: 11,
               background: `${statusColor}10`, border: `1px solid ${statusColor}40`,
-              color: statusColor, lineHeight: 1.4,
+              color: statusColor, lineHeight: 1.4, display: 'flex', alignItems: 'flex-start', gap: 6
             }}>
-              {status.msg}
+              {status.type === 'error' && <XCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} />}
+              {status.type === 'warn' && <AlertCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} />}
+              {status.type === 'success' && <CheckCircle2 size={13} style={{ flexShrink: 0, marginTop: 1 }} />}
+              {status.type === 'info' && <Search size={13} style={{ flexShrink: 0, marginTop: 1 }} />}
+              <span>{status.msg}</span>
             </div>
           )}
 
@@ -372,7 +394,7 @@ export default function FIRSearch() {
             <div>3. Enter FIR number &amp; year</div>
             <div>4. Click Search — PDF loads</div>
             <div>5. Click OCR &amp; Save to extract all 20+ fields</div>
-            <div>6. Click 🌐 Translate to read in any language</div>
+            <div>6. Click Translate to read in any language</div>
           </div>
         </div>
       </div>
@@ -391,7 +413,7 @@ export default function FIRSearch() {
               : 'PDF Viewer'}
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
-            {/* Translate button — only shows after OCR is done */}
+            {/* Translate button */}
             {parsedData && (
               <div style={{ position: 'relative' }}>
                 <button
@@ -403,7 +425,8 @@ export default function FIRSearch() {
                     display: 'flex', alignItems: 'center', gap: 5,
                   }}
                 >
-                  {translatingFIR ? '⏳ Translating...' : '🌐 Translate FIR ▾'}
+                  <Languages size={12} />
+                  <span>{translatingFIR ? 'Translating...' : 'Translate FIR ▾'}</span>
                 </button>
                 {showLangPicker && (
                   <div style={{
@@ -429,7 +452,12 @@ export default function FIRSearch() {
                 )}
               </div>
             )}
-            {pdfB64 && <button onClick={downloadPDF} style={btn_s}>⬇ Download PDF</button>}
+            {pdfB64 && (
+              <button onClick={downloadPDF} style={btn_s}>
+                <Download size={11} />
+                <span>Download PDF</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -438,7 +466,7 @@ export default function FIRSearch() {
           {searching ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
+                <RotateCw size={28} className="spin" color="var(--copper-400)" style={{ margin: '0 auto 10px' }} />
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--copper-400)' }}>Fetching real FIR PDF from KSP portal...</div>
               </div>
             </div>
@@ -446,16 +474,16 @@ export default function FIRSearch() {
             <iframe ref={iframeRef} src={pdfUrl} title="Official KSP FIR Document" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
           ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                <FileText size={40} color="var(--border-strong)" />
                 <div style={{ fontSize: 13, fontWeight: 500 }}>Live FIR PDF Viewer</div>
-                <div style={{ fontSize: 11, marginTop: 4 }}>Select district → station → FIR number, then click Search</div>
+                <div style={{ fontSize: 11 }}>Select district → station → FIR number, then click Search</div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Translation Drawer — shows translated content */}
+        {/* Translation Drawer */}
         {(translatingFIR || translatedFIRText) && (
           <div style={{
             height: 220, borderTop: '1px solid var(--border-subtle)',
@@ -463,18 +491,22 @@ export default function FIRSearch() {
             display: 'flex', flexDirection: 'column', gap: 6,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-400)' }}>
-                🌐 Translation → {TRANSLATE_LANGS.find(l => l.code === targetFIRLang)?.label || targetFIRLang.toUpperCase()}
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-400)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Globe size={12} />
+                <span>Translation → {TRANSLATE_LANGS.find(l => l.code === targetFIRLang)?.label || targetFIRLang.toUpperCase()}</span>
               </div>
               <button
                 onClick={() => { setTranslatedFIRText(''); setShowLangPicker(false) }}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
               >
-                ✕ Close
+                <X size={12} /> Close
               </button>
             </div>
             {translatingFIR ? (
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>🔄 Translating full FIR text via Google Translate...</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <RotateCw size={12} className="spin" />
+                <span>Translating full FIR text via Google Translate...</span>
+              </div>
             ) : (
               <div style={{ fontSize: 11, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-sans)', lineHeight: 1.5 }}>
                 {translatedFIRText}
@@ -491,20 +523,21 @@ export default function FIRSearch() {
           background: 'var(--bg-secondary)',
           fontSize: 11, fontWeight: 700, color: 'var(--copper-400)',
           textTransform: 'uppercase', letterSpacing: '0.1em',
+          display: 'flex', alignItems: 'center', gap: 6
         }}>
-          🧠 FIR Intelligence
+          <Brain size={13} />
+          <span>FIR Intelligence</span>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {parsedData ? (
             <>
-              {/* Meta badge */}
               <div style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic' }}>
                 Engine: {parsedData._raw_pages ? `pdfplumber • ${parsedData._raw_pages} pages • ${parsedData._raw_chars} chars extracted` : 'OCR'}
               </div>
 
               {/* Case Details */}
-              <Section title="📋 Case Details">
+              <Section title="Case Details" icon={<FileText size={12} />}>
                 <Row label="Crime No"   val={parsedData.crime_number} />
                 <Row label="FIR Date"   val={parsedData.fir_date} />
                 <Row label="District"   val={parsedData.district} />
@@ -515,7 +548,7 @@ export default function FIRSearch() {
               </Section>
 
               {/* Occurrence */}
-              <Section title="📍 Occurrence">
+              <Section title="Occurrence" icon={<MapPin size={12} />}>
                 <Row label="Day"        val={parsedData.occurrence_day} />
                 <Row label="From"       val={`${parsedData.occurrence_from_date || ''} ${parsedData.occurrence_from_time || ''}`.trim()} />
                 <Row label="To"         val={`${parsedData.occurrence_to_date || ''} ${parsedData.occurrence_to_time || ''}`.trim()} />
@@ -523,7 +556,7 @@ export default function FIRSearch() {
               </Section>
 
               {/* Complainant */}
-              <Section title="🙋 Complainant / Informant">
+              <Section title="Complainant / Informant" icon={<User size={12} />}>
                 <Row label="Name"       val={parsedData.complainant_name} />
                 <Row label="Father/Husband" val={parsedData.complainant_father} />
                 <Row label="Age"        val={parsedData.complainant_age?.toString()} />
@@ -533,7 +566,7 @@ export default function FIRSearch() {
               </Section>
 
               {/* Accused */}
-              <Section title={`👥 Accused (${parsedData.accused?.length || 0})`}>
+              <Section title={`Accused (${parsedData.accused?.length || 0})`} icon={<Users size={12} />}>
                 {parsedData.accused?.length > 0
                   ? parsedData.accused.map((a, i) => (
                     <div key={i} style={{
@@ -554,7 +587,7 @@ export default function FIRSearch() {
 
               {/* Victims */}
               {parsedData.victims?.length > 0 && (
-                <Section title={`🩹 Victims (${parsedData.victims.length})`}>
+                <Section title={`Victims (${parsedData.victims.length})`} icon={<Users size={12} />}>
                   {parsedData.victims.map((v, i) => (
                     <div key={i} style={{
                       padding: '5px 8px', background: 'rgba(72,199,142,0.06)',
@@ -568,7 +601,7 @@ export default function FIRSearch() {
 
               {/* Property */}
               {parsedData.property?.length > 0 && (
-                <Section title={`💰 Property (${parsedData.property.length})`}>
+                <Section title={`Property (${parsedData.property.length})`} icon={<DollarSign size={12} />}>
                   {parsedData.property.map((p, i) => (
                     <Row key={i} label={p.type} val={`₹${p.value}`} />
                   ))}
@@ -577,7 +610,7 @@ export default function FIRSearch() {
 
               {/* FIR Narrative */}
               {parsedData.fir_narrative && (
-                <Section title="📝 Brief Facts">
+                <Section title="Brief Facts" icon={<FileEdit size={12} />}>
                   <div style={{
                     fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1.6,
                     background: 'rgba(255,255,255,0.02)', borderRadius: 4,
@@ -591,20 +624,20 @@ export default function FIRSearch() {
               )}
 
               {/* SHO */}
-              <Section title="👮 Investigating Officer">
+              <Section title="Investigating Officer" icon={<Shield size={12} />}>
                 <Row label="Name"       val={parsedData.sho_name} />
                 <Row label="Rank"       val={parsedData.sho_rank} />
                 <Row label="Action Taken" val={parsedData.action_taken} multiline />
               </Section>
 
               {/* Signatures */}
-              <Section title="✍️ Signatures">
+              <Section title="Signatures" icon={<FileText size={12} />}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <span style={badge(parsedData.has_complainant_signature ? 'var(--status-success)' : 'var(--status-danger)')}>
-                    {parsedData.has_complainant_signature ? '✅' : '❌'} Complainant
+                    {parsedData.has_complainant_signature ? <Check size={11} /> : <X size={11} />} Complainant
                   </span>
                   <span style={badge(parsedData.has_sho_signature ? 'var(--status-success)' : 'var(--status-danger)')}>
-                    {parsedData.has_sho_signature ? '✅' : '❌'} IO/SHO
+                    {parsedData.has_sho_signature ? <Check size={11} /> : <X size={11} />} IO/SHO
                   </span>
                 </div>
               </Section>
@@ -613,18 +646,19 @@ export default function FIRSearch() {
                 <div style={{
                   padding: '8px 10px', borderRadius: 6, fontSize: 11, textAlign: 'center',
                   background: 'rgba(72,199,142,0.08)', border: '1px solid var(--status-success)',
-                  color: 'var(--status-success)', fontWeight: 600,
+                  color: 'var(--status-success)', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                 }}>
-                  ✅ Saved to Catalyst Data Store
+                  <Database size={13} />
+                  <span>Saved to Catalyst Data Store</span>
                 </div>
               )}
             </>
           ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', paddingTop: 40 }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>🔬</div>
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', paddingTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <Brain size={32} color="var(--border-strong)" />
               <div style={{ fontSize: 13, fontWeight: 500 }}>OCR Analysis</div>
-              <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.5 }}>
-                Fetch a FIR and click<br />"⚙️ OCR &amp; Save" to extract all fields
+              <div style={{ fontSize: 11, lineHeight: 1.5 }}>
+                Fetch a FIR and click<br />"OCR &amp; Save" to extract all fields
               </div>
             </div>
           )}
@@ -635,15 +669,17 @@ export default function FIRSearch() {
 }
 
 // ── Helper Components ─────────────────────────────────────────────────────────
-function Section({ title, children }) {
+function Section({ title, icon, children }) {
   return (
     <div>
       <div style={{
         fontSize: 10, fontWeight: 700, color: 'var(--copper-400)',
         textTransform: 'uppercase', letterSpacing: '0.1em',
         marginBottom: 6, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 4,
+        display: 'flex', alignItems: 'center', gap: 6
       }}>
-        {title}
+        {icon}
+        <span>{title}</span>
       </div>
       {children}
     </div>

@@ -1,5 +1,5 @@
-// v2.4.1 — DataIngestion: pdfLoading/pdfModal state fix, blob PDF modal
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { Eye, Download, FolderArchive, RefreshCw, Check, X, FileText, Loader2 } from 'lucide-react';
 import {
   startScraper,
   fetchScraperStatus,
@@ -525,8 +525,8 @@ export default function DataIngestion() {
               ) : (
                 status.log.map((line, idx) => (
                   <div key={idx} style={{
-                    color: line.includes('✗') || line.includes('error') ? '#f87171' : 
-                           line.includes('✓') ? '#34d399' : '#9ca3af'
+                    color: line.toLowerCase().includes('fail') || line.toLowerCase().includes('error') ? '#f87171' : 
+                           line.toLowerCase().includes('success') || line.toLowerCase().includes('done') || line.toLowerCase().includes('found') ? '#34d399' : '#9ca3af'
                   }}>
                     {line}
                   </div>
@@ -692,10 +692,14 @@ export default function DataIngestion() {
                               padding: '4px 8px',
                               fontSize: 11,
                               fontWeight: 600,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
                             }}
                           >
-                            👁 View PDF
+                            <Eye size={11} />
+                            <span>View PDF</span>
                           </button>
                           <button
                             onClick={() => handleViewPdf(row, true)}
@@ -707,10 +711,14 @@ export default function DataIngestion() {
                               padding: '4px 8px',
                               fontSize: 11,
                               fontWeight: 600,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
                             }}
                           >
-                            ↓ Download
+                            <Download size={11} />
+                            <span>Download</span>
                           </button>
                         </div>
                       ) : (
@@ -734,7 +742,7 @@ export default function DataIngestion() {
         padding: 20
       }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--copper-400)', marginTop: 0, marginBottom: 16 }}>
-          MANUAL EVIDENCE UPLOAD & OCR INGESTION
+          MANUAL EVIDENCE UPLOAD &amp; OCR INGESTION
         </h2>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
           Upload any file — suspect photos, CDR CSVs, CCTV frames, PDFs.
@@ -745,8 +753,9 @@ export default function DataIngestion() {
         {/* Persisted Uploads & OCR Records */}
         <div style={{ marginTop: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-mono)' }}>
-              📁 PERSISTED EVIDENCE & OCR ARCHIVE ({uploadedFiles.length})
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <FolderArchive size={14} color="var(--copper-400)" />
+              <span>PERSISTED EVIDENCE &amp; OCR ARCHIVE ({uploadedFiles.length})</span>
             </h3>
             <button
               onClick={loadUploadedFiles}
@@ -758,10 +767,14 @@ export default function DataIngestion() {
                 borderRadius: 4,
                 fontSize: 11,
                 cursor: 'pointer',
-                fontWeight: 600
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5
               }}
             >
-              🔄 Refresh Archive
+              <RefreshCw size={11} />
+              <span>Refresh Archive</span>
             </button>
           </div>
 
@@ -822,13 +835,20 @@ export default function DataIngestion() {
                               padding: '4px 8px',
                               fontSize: 11,
                               fontWeight: 600,
-                              textDecoration: 'none'
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
                             }}
                           >
-                            👁 View File
+                            <Eye size={11} />
+                            <span>View File</span>
                           </a>
                         ) : (
-                          <span style={{ color: '#10b981', fontSize: 11, fontWeight: 600 }}>✓ Stored</span>
+                          <span style={{ color: '#10b981', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Check size={11} />
+                            <span>Stored</span>
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -873,19 +893,27 @@ export default function DataIngestion() {
                       borderRadius: 4,
                       fontSize: 12,
                       fontWeight: 700,
-                      textDecoration: 'none'
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
                     }}
                   >
-                    ↓ Download PDF File
+                    <Download size={12} />
+                    <span>Download PDF File</span>
                   </a>
                 )}
                 <button onClick={() => setPdfModal(null)}
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>✕ Close</button>
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <X size={12} />
+                  <span>Close</span>
+                </button>
               </div>
             </div>
             {pdfModal.loading ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--copper-400)', fontSize: 14 }}>
-                ⏳ Loading FIR PDF Document...
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--copper-400)', fontSize: 14, gap: 8 }}>
+                <Loader2 size={16} className="spin" />
+                <span>Loading FIR PDF Document...</span>
               </div>
             ) : pdfModal.firHtml ? (
               <iframe
@@ -901,7 +929,7 @@ export default function DataIngestion() {
                 style={{ flex: 1, width: '100%', border: 'none', borderRadius: 4 }}
               >
                 <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
+                  <FileText size={32} color="var(--border-strong)" style={{ marginBottom: 12 }} />
                   <a href={pdfModal.blobUrl} download={pdfModal.filename || 'FIR.pdf'}
                     style={{ color: 'var(--copper-400)', fontWeight: 600 }}>Click to download PDF File</a>
                 </div>

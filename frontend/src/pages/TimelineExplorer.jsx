@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Brain, FileText, Sparkles, Sliders, BarChart2, RefreshCw } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import { fetchCases, fetchCaseDetail, searchCases, enhanceDiagram, downloadCaseReport, fetchCaseResolution, reconstructTimeline } from '../api'
 import CaseActionPanel from '../components/timeline/CaseActionPanel'
 import CaseCompareModal from '../components/timeline/CaseCompareModal'
 import AITimelineReconstruction from '../components/timeline/AITimelineReconstruction'
+import CognitiveInvestigationView from '../components/timeline/CognitiveInvestigationView'
 import FileUploader from '../components/FileUploader'
 
 export default function TimelineExplorer() {
@@ -19,6 +21,7 @@ export default function TimelineExplorer() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [showActionPanel, setShowActionPanel] = useState(false)
+  const [showCognitiveAgent, setShowCognitiveAgent] = useState(false)
   const [compareIds, setCompareIds] = useState([])
   const [showCompareModal, setShowCompareModal] = useState(false)
 
@@ -87,32 +90,31 @@ export default function TimelineExplorer() {
   }, [page])
 
   // Load case detail if caseId in URL
+  const [diagramTypology, setDiagramTypology] = useState('CHRONOLOGICAL')
+
   useEffect(() => {
     if (caseId) {
       setDetailLoading(true)
       fetchCaseDetail(caseId).then(data => {
         setSelectedCase(data)
         setDetailLoading(false)
-        
-        // Generate base flowchart
-        const caseDetail = data.case
-        if (caseDetail) {
-          const complainant = data.complainants?.[0]?.ComplainantName || 'Unknown Complainant'
-          const baseCode = `graph TD
-  C["Complainant: ${complainant}"] --> FIR["FIR Registered"]
-  FIR --> PS["Station: ${caseDetail.StationName || 'Police Station'}"]
-  PS --> INV["Investigation"]
-`
-          setFlowchartCode(baseCode)
-        }
       }).catch(() => setDetailLoading(false))
+
+      // Automatically fetch 100% real database-grounded flowchart
+      fetchCaseFlowchart(caseId, diagramTypology).then(res => {
+        if (res && res.mermaid_code) {
+          setFlowchartCode(res.mermaid_code)
+        }
+      }).catch(err => {
+        console.warn('Flowchart fetch failed:', err)
+      })
     }
-  }, [caseId])
+  }, [caseId, diagramTypology])
 
   // Render mermaid when code changes
   useEffect(() => {
     if (!window.mermaid || !flowchartCode) return
-    const id = 'mermaid-diagram-' + Date.now()
+    const id = 'mermaid-diagram-' + Math.floor(Math.random() * 100000)
     const container = document.getElementById('mermaid-container')
     if (!container) return
     try {
@@ -120,16 +122,16 @@ export default function TimelineExplorer() {
         container.innerHTML = svg
       }).catch(e => {
         console.error('Mermaid render error:', e)
-        container.innerHTML = `<pre style="font-size:10px;color:#5a5855">${flowchartCode}</pre>`
+        container.innerHTML = `<pre style="font-size:11px;color:#8a8885;text-align:left;white-space:pre-wrap;padding:10px;">${flowchartCode}</pre>`
       })
     } catch (e) {
       console.error('Mermaid sync error:', e)
     }
   }, [flowchartCode])
 
-  // AI enhance diagram click
+  // AI enhance / reconstruct diagram click
   const handleEnhance = async () => {
-    if (!caseId || !flowchartCode) return
+    if (!caseId) return
     setEnhancing(true)
     try {
       const res = await enhanceDiagram(flowchartCode, caseId)
@@ -212,9 +214,10 @@ export default function TimelineExplorer() {
             <button
               className="btn btn-copper btn-sm animate-pulse"
               onClick={() => setShowCompareModal(true)}
-              style={{ width: '100%', justifyContent: 'center' }}
+              style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              📊 Compare {compareIds.length} Cases
+              <BarChart2 size={13} />
+              <span>Compare {compareIds.length} Cases</span>
             </button>
           )}
         </div>
@@ -233,40 +236,29 @@ export default function TimelineExplorer() {
                 gap: 8,
                 alignItems: 'center'
               }}
+              onClick={() => navigate(`/timeline/${c.CaseMasterID}`)}
             >
               <input
                 type="checkbox"
                 checked={compareIds.includes(c.CaseMasterID)}
                 onChange={(e) => {
                   e.stopPropagation()
-                  const isChecked = e.target.checked
-                  setCompareIds(prev => {
-                    if (isChecked) {
-                      if (prev.length >= 3) {
-                        alert("You can compare up to 3 cases at a time.")
-                        return prev
-                      }
-                      return [...prev, c.CaseMasterID]
-                    } else {
-                      return prev.filter(id => id !== c.CaseMasterID)
-                    }
-                  })
+                  toggleCompare(c.CaseMasterID)
                 }}
-                style={{
-                  accentColor: 'var(--copper-500)',
-                  cursor: 'pointer'
-                }}
+                style={{ cursor: 'pointer', accentColor: 'var(--copper-400)' }}
               />
-              <div style={{ flex: 1 }} onClick={() => selectCase(c.CaseMasterID)}>
-                <div className="mono" style={{ fontSize: 11, marginBottom: 3 }}>
-                  {c.CrimeNo}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-300)', fontFamily: 'var(--font-mono)' }}>
+                    #{c.CaseMasterID}
+                  </span>
+                  <Badge variant={c.CaseStatusName} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Badge text={c.CaseStatusName} />
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{c.CrimeGroupName}</span>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {c.CrimeGroupName || 'General Offence'}
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
-                  {c.DistrictName} · {c.CrimeRegisteredDate}
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                  {c.DistrictName || 'Karnataka'} · {c.CrimeRegisteredDate ? new Date(c.CrimeRegisteredDate).toLocaleDateString() : ''}
                 </div>
               </div>
             </div>
@@ -284,65 +276,92 @@ export default function TimelineExplorer() {
         </div>
       </div>
 
-      {/* Center — Timeline */}
+      {/* Main Detail Area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-        {!caseId ? (
-          <div style={{
-            height: '100%', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}>
-            <div style={{ fontSize: 32, opacity: 0.2 }}>◈</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-              Select a case from the list to view timeline
-            </div>
+        {detailLoading ? (
+          <LoadingPulse height={400} />
+        ) : !caseDetail ? (
+          <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
+            Select a case from the list to view its complete timeline.
           </div>
-        ) : detailLoading ? (
-          <LoadingPulse text="Loading case details..." />
-        ) : caseDetail ? (
-          <div className="fade-in">
-            {/* Case header */}
-            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        ) : (
+          <div>
+            {/* Header */}
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+              marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border-subtle)',
+              gap: 16, flexWrap: 'wrap',
+            }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                  <span className="mono" style={{ fontSize: 16 }}>{caseDetail.CrimeNo}</span>
-                  <Badge text={caseDetail.CaseStatusName} />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', fontFamily: 'var(--font-mono)' }}>
+                    CASE #{caseDetail.CaseMasterID}
+                  </span>
+                  <span style={{ color: 'var(--text-muted)' }}>·</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    FIR: {caseDetail.CrimeNo}
+                  </span>
+                  <Badge variant={caseDetail.CaseStatusName} />
+                  {caseDetail.GravityOffenceID === 1 && (
+                    <span style={{
+                      fontSize: 10, padding: '2px 6px', borderRadius: 3,
+                      background: 'rgba(239, 68, 68, 0.15)', color: '#f87171',
+                      border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600,
+                    }}>
+                      HEINOUS
+                    </span>
+                  )}
                 </div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{caseDetail.CrimeGroupName}</h2>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {caseDetail.DistrictName} · {caseDetail.StationName} · IO: {caseDetail.OfficerName}
+                <h1 style={{ fontSize: 18, fontWeight: 700, margin: '4px 0', color: 'var(--text-primary)' }}>
+                  {caseDetail.CrimeGroupName || 'Crime Investigation'}
+                </h1>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {caseDetail.StationName} · {caseDetail.DistrictName}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-sm btn-copper"
+                  onClick={() => setShowCognitiveAgent(true)}
+                  style={{ fontSize: 12, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Brain size={13} />
+                  <span>Cognitive AI Agent (ACH)</span>
+                </button>
                 <button
                   className="btn btn-sm"
                   disabled={reportLoading}
                   onClick={handleDownloadReport}
-                  style={{ borderColor: 'var(--copper-400)', background: 'transparent', color: 'var(--copper-200)' }}
+                  style={{ borderColor: 'var(--copper-400)', background: 'transparent', color: 'var(--copper-200)', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  {reportLoading ? 'Generating...' : '📄 Generate Report'}
+                  <FileText size={13} />
+                  <span>{reportLoading ? 'Generating...' : 'Generate Report'}</span>
                 </button>
                 <button
                   className="btn btn-sm"
                   disabled={resolutionPredicting}
                   onClick={handlePredictResolution}
-                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
+                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  {resolutionPredicting ? '🔮 Analyzing...' : '🔮 Predict Resolution'}
+                  <Sparkles size={13} />
+                  <span>{resolutionPredicting ? 'Analyzing...' : 'Predict Resolution'}</span>
                 </button>
                 <button
                   className="btn btn-sm"
                   disabled={reconstructing}
                   onClick={handleReconstructTimeline}
-                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
+                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  {reconstructing ? '🔮 Reconstructing...' : '🔮 Reconstruct Timeline'}
+                  <RefreshCw size={13} className={reconstructing ? 'animate-spin' : ''} />
+                  <span>{reconstructing ? 'Reconstructing...' : 'Reconstruct Timeline'}</span>
                 </button>
                 <button
                   className="btn btn-sm"
                   onClick={() => setShowActionPanel(true)}
-                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)' }}
+                  style={{ borderColor: 'var(--copper-400)', background: 'rgba(200,129,74,0.05)', color: 'var(--copper-200)', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  ⚙ Actions
+                  <Sliders size={13} />
+                  <span>Actions</span>
                 </button>
               </div>
             </div>
@@ -355,25 +374,36 @@ export default function TimelineExplorer() {
               </p>
             </div>
 
-            {/* Attach Evidence Files */}
+            {/* Reconstructed Sequence Diagram */}
             <div className="card" style={{ marginBottom: 20 }}>
-              <div className="section-label">ATTACH EVIDENCE FILES</div>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
-                Upload case file evidence, suspect photos, CDR logs, or financial records. Zia and Catalyst LLM will auto-analyze the contents.
-              </p>
-              <FileUploader caseId={caseId} onUploadComplete={(f) => console.log('Uploaded to case:', f)} />
-            </div>
-
-            {/* Interactive Flowchart (Mermaid) (7D) */}
-            <div className="card" style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div className="section-label" style={{ marginBottom: 0 }}>Investigation Flowchart</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                <div>
+                  <div className="section-label" style={{ marginBottom: 4 }}>RECONSTRUCTED FORENSIC FLOWCHART</div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                    <button
+                      className={`btn btn-xs ${diagramTypology === 'CHRONOLOGICAL' ? 'btn-copper' : 'btn-ghost'}`}
+                      onClick={() => setDiagramTypology('CHRONOLOGICAL')}
+                      style={{ fontSize: 10, padding: '2px 8px' }}
+                    >
+                      Crime Sequence
+                    </button>
+                    <button
+                      className={`btn btn-xs ${diagramTypology === 'FINANCIAL' ? 'btn-copper' : 'btn-ghost'}`}
+                      onClick={() => setDiagramTypology('FINANCIAL')}
+                      style={{ fontSize: 10, padding: '2px 8px' }}
+                    >
+                      Money Trail
+                    </button>
+                  </div>
+                </div>
                 <button
                   className="btn btn-sm btn-copper"
                   onClick={handleEnhance}
                   disabled={enhancing}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  {enhancing ? 'Enhancing...' : '✦ AI Enhance'}
+                  <RefreshCw size={13} className={enhancing ? 'animate-spin' : ''} />
+                  <span>{enhancing ? 'Reconstructing...' : 'Reconstruct Sequence'}</span>
                 </button>
               </div>
               
@@ -450,7 +480,7 @@ export default function TimelineExplorer() {
               </div>
             )}
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Case Action Slide-in Panel */}
@@ -577,6 +607,13 @@ export default function TimelineExplorer() {
         <AITimelineReconstruction
           data={reconstructionData}
           onClose={() => setReconstructionData(null)}
+        />
+      )}
+
+      {showCognitiveAgent && (
+        <CognitiveInvestigationView
+          caseId={caseId}
+          onClose={() => setShowCognitiveAgent(false)}
         />
       )}
     </div>

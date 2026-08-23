@@ -245,9 +245,8 @@ function showTranslatingIndicator() {
     font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     color: #c8814a; display: flex; align-items: center; gap: 8px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    animation: fadeIn 0.2s ease;
   `
-  el.innerHTML = `<span style="animation: spin 1s linear infinite; display:inline-block">🌐</span> Translating page...`
+  el.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Translating page...`
   document.body.appendChild(el)
   return el
 }

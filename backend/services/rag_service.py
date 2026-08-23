@@ -55,23 +55,25 @@ class RAGService:
             except Exception as e:
                 print(f"[RAG] Error loading metadata: {e}")
 
-        # In production (AppSail), do NOT load SentenceTransformer synchronously at startup!
-        # Use TF-IDF query vector fallback so container boots in < 0.5 seconds.
-        if not (os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("CATALYST_ENV")):
+        # Defer SentenceTransformer loading until first actual inference call
+        self.model = None
+        self._model_loaded = False
+        print("[RAG] Vector index ready (lazy model inference enabled).")
+
+    def _ensure_model(self):
+        if not self._model_loaded:
+            self._model_loaded = True
             try:
                 from sentence_transformers import SentenceTransformer
-                print("[RAG] Loading local SentenceTransformer model...")
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
-                print("[RAG] Model loaded successfully.")
+                print("[RAG] Local SentenceTransformer loaded on-demand.")
             except Exception as e:
-                print(f"[RAG] SentenceTransformer not available ({e}). Will use TF-IDF query vectors.")
+                print(f"[RAG] SentenceTransformer offline ({e}). Using fast TF-IDF vectors.")
                 self.model = None
-        else:
-            print("[RAG] Running inside Catalyst AppSail — using fast TF-IDF query vectors for instant startup.")
-            self.model = None
 
     async def get_embedding(self, text: str):
         """Get embedding for a query text."""
+        self._ensure_model()
         if self.model is not None:
             try:
                 return self.model.encode(text)

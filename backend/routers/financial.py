@@ -89,3 +89,23 @@ async def financial_summary():
         ORDER BY total DESC
     """)
     return {"summary": total[0] if total else {}, "by_type": by_type}
+
+
+# ─── Advanced Hawala & Circular Flow Forensics ──────────────────────────────
+
+@router.get("/forensics-audit")
+async def financial_forensics_audit():
+    """
+    Executes deep financial forensic analytics:
+      - Circular Hawala round-tripping cycles (A -> B -> C -> A)
+      - Structuring / Smurfing detection (< ₹50,000 sub-threshold splits)
+      - High-velocity mule drain ratio scoring
+    """
+    try:
+        from services.financial_forensics import get_financial_forensics
+        forensics = get_financial_forensics()
+        return forensics.generate_full_forensic_report()
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(500, f"Financial Forensics Audit failed: {e}")
+

@@ -5,9 +5,7 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// ── Backend warm-up state ──────────────────────────────────────────────
-// AppSail dev tier sleeps after inactivity. We detect 503s and show a
-// "Backend warming up..." notice instead of an infinite spinner.
+// ── Backend warm-up state & Proactive Wake-up ──────────────────────────────
 let _warmingUp = false;
 export function isWarmingUp() { return _warmingUp; }
 
@@ -17,8 +15,15 @@ function _setWarmingUp(v) {
   window.dispatchEvent(new CustomEvent('backend-wakeup', { detail: { warming: v } }));
 }
 
-// ── request() with 503 retry ───────────────────────────────────────────
-export async function request(endpoint, options = {}, _retries = 5) {
+// Proactive instant wake-up trigger on application launch
+(function triggerInstantWakeup() {
+  if (typeof window !== 'undefined') {
+    fetch(`${BASE_URL}/`, { method: 'GET', mode: 'cors' }).catch(() => {});
+  }
+})();
+
+// ── request() with ultra-fast retry & SWR caching ─────────────────────────
+export async function request(endpoint, options = {}, _retries = 8) {
   const url = `${BASE_URL}${endpoint}`;
   const config = {
     headers: { 'Content-Type': 'application/json', ...options.headers },
@@ -29,8 +34,8 @@ export async function request(endpoint, options = {}, _retries = 5) {
     const res = await fetch(url, config);
     if (res.status === 503 && _retries > 0) {
       _setWarmingUp(true);
-      // Exponential backoff: 2s, 4s, 6s, 8s, 10s
-      const delay = (6 - _retries) * 2000;
+      // Fast polling: 400ms, 600ms, 800ms, 1000ms...
+      const delay = Math.min(400 + (8 - _retries) * 250, 2000);
       await new Promise(r => setTimeout(r, delay));
       return request(endpoint, options, _retries - 1);
     }
@@ -38,9 +43,9 @@ export async function request(endpoint, options = {}, _retries = 5) {
     _setWarmingUp(false);
     return await res.json();
   } catch (err) {
-    if (_retries > 0 && (err.message?.includes('Failed to fetch') || err.message?.includes('503'))) {
+    if (_retries > 0 && (err.message?.includes('Failed to fetch') || err.message?.includes('503') || err.name === 'TypeError')) {
       _setWarmingUp(true);
-      const delay = (6 - _retries) * 2000;
+      const delay = Math.min(400 + (8 - _retries) * 250, 2000);
       await new Promise(r => setTimeout(r, delay));
       return request(endpoint, options, _retries - 1);
     }
@@ -326,6 +331,10 @@ export const generateSitrep = (payload) => request('/api/v1/brain/generate-sitre
   method: 'POST',
   body: JSON.stringify(payload)
 });
+export const autonomousInvestigate = (caseId, customFacts = null) => request('/api/v1/brain/autonomous-investigate', {
+  method: 'POST',
+  body: JSON.stringify({ case_id: caseId, custom_facts: customFacts })
+});
 
 // ── Dark Web ──
 export const fetchDarkWebFeed = () => request('/api/v1/darkweb/feed');
@@ -333,6 +342,10 @@ export const fetchThreatAssessment = (syndicateName) =>
   request(`/api/v1/darkweb/assessment/${encodeURIComponent(syndicateName)}`);
 
 export const uploadToRag = (formData) => uploadRequest('/api/v1/intelligence/upload-to-rag', formData);
+
+// ── Forensic Flowchart Reconstruction ──
+export const fetchCaseFlowchart = (caseId, typology = 'CHRONOLOGICAL') =>
+  request(`/api/v1/intelligence/case-flowchart/${caseId}?typology=${typology}`);
 
 // ── Catalyst NLP (Zia / QuickML) ──
 export const fetchNlpStatus = () => request('/api/v1/nlp/status');
@@ -394,4 +407,19 @@ export const fetchFir = (payload) =>
 export const fetchUploads = (params = {}) => {
   const qs = new URLSearchParams(params).toString();
   return request(`/api/v1/uploads/list?${qs}`);
+};
+
+export const fetchPatternIntel = async () => {
+  const [mo, nr, syn, spree] = await Promise.all([
+    fetchMoClusters().catch(() => ({ mo_clusters: [] })),
+    fetchNearRepeatRisk().catch(() => ({ risk_zones: [] })),
+    fetchSyndicateGraph().catch(() => ({ syndicates: [] })),
+    fetchSpreeAlerts().catch(() => ({ sprees: [] }))
+  ]);
+  return {
+    mo_clusters: mo.mo_clusters || [],
+    near_repeat_risk: nr.risk_zones || nr || [],
+    syndicates: syn.syndicates || syn || [],
+    spree_alerts: spree.sprees || spree.spree_alerts || []
+  };
 };

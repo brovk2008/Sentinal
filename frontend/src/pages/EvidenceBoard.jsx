@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Search, AlertTriangle, FileText, Brain, Sparkles, Plus, X } from 'lucide-react'
 import {
   fetchBoards,
   loadBoard,
@@ -776,8 +777,9 @@ export default function EvidenceBoard() {
         }}>
           <div className="card" style={{ width: 440, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)' }}>
-                🔍 Zia Suspect Face Match
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Search size={13} />
+                <span>Zia Suspect Face Match</span>
               </div>
               <button className="btn btn-sm" onClick={() => { setShowMatchModal(false); setMatchResults(null); }}>×</button>
             </div>
@@ -808,14 +810,15 @@ export default function EvidenceBoard() {
                       <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{m.reasoning}</div>
                       <button
                         className="btn btn-xs btn-copper"
-                        style={{ alignSelf: 'flex-start', fontSize: 8, padding: '2px 6px', marginTop: 2 }}
+                        style={{ alignSelf: 'flex-start', fontSize: 8, padding: '2px 6px', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}
                         onClick={() => {
                           handleCreateNode(m.name, 'Suspect Profile', `Match confidence: ${m.confidence}`, null, { accusedId: m.accused_id, tags: ['Accused', 'ZIA MATCH'] })
                           setShowMatchModal(false)
                           setMatchResults(null)
                         }}
                       >
-                        + Add suspect to corkboard
+                        <Plus size={9} />
+                        <span>Add suspect to corkboard</span>
                       </button>
                     </div>
                   ))}
@@ -823,8 +826,9 @@ export default function EvidenceBoard() {
               </div>
             )}
 
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)', paddingTop: 8 }}>
-              ⚠️ AI matching is probabilistic. Always verify with official records.
+            <div style={{ fontSize: 9, color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)', paddingTop: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <AlertTriangle size={11} color="var(--copper-400)" />
+              <span>AI matching is probabilistic. Always verify with official records.</span>
             </div>
           </div>
         </div>
@@ -838,8 +842,9 @@ export default function EvidenceBoard() {
         }}>
           <div className="card" style={{ width: 400, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)' }}>
-                📋 Generate Situation Report (SITREP)
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FileText size={13} />
+                <span>Generate Situation Report (SITREP)</span>
               </div>
               <button className="btn btn-sm" onClick={() => setShowSitrepModal(false)}>×</button>
             </div>
@@ -894,8 +899,9 @@ export default function EvidenceBoard() {
           overflowY: 'auto'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.05em' }}>
-              🤖 SENTINAL AI BRAIN
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Brain size={14} />
+              <span>SENTINAL AI BRAIN</span>
             </div>
             <button className="btn btn-sm" onClick={() => setAiSidebar(false)}>×</button>
           </div>

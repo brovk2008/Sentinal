@@ -130,3 +130,116 @@ async def get_investigation_notes(case_id: int):
         ORDER BY n.created_at DESC
     """, (case_id,))
     return notes
+
+
+# ─── Immutable AI Action Log — Audit Trail ─────────────────────────────────
+
+from typing import Optional as _OptType
+
+class AnalystDecisionRequest(BaseModel):
+    rec_id: str
+    decision: str          # CONFIRMED | REJECTED | ESCALATED
+    analyst_id: str = "system"
+    note: _OptType[str] = None
+    entity_ids: _OptType[list] = None
+
+
+@router.get("/audit-trail")
+async def get_audit_trail(
+    analyst_id: str = None,
+    decision: str = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    """
+    Query the immutable AI action log.
+    Returns all AI recommendations and analyst decisions with full audit chain.
+    This table is append-only — no modifications are possible.
+    """
+    conditions = []
+    params = []
+    if analyst_id:
+        conditions.append("analyst_id = ?")
+        params.append(analyst_id)
+    if decision:
+        conditions.append("analyst_decision = ?")
+        params.append(decision.upper())
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    rows = query(f"""
+        SELECT rec_id, analyst_id, ai_prompt_summary, analyst_decision,
+               analyst_note, outcome_written_back, model_name, entity_ids,
+               created_at, decided_at
+        FROM ai_action_log
+        {where}
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+    """, tuple(params) + (limit, offset))
+    total = query(f"SELECT COUNT(*) as cnt FROM ai_action_log {where}", tuple(params))
+    return {
+        "total": total[0]["cnt"] if total else 0,
+        "limit": limit,
+        "offset": offset,
+        "records": rows,
+        "integrity_note": "This log is append-only. No records can be modified or deleted.",
+    }
+
+
+@router.patch("/audit-trail/decide")
+async def record_analyst_decision(req: AnalystDecisionRequest):
+    """
+    Record an analyst's decision on an AI recommendation (CONFIRMED/REJECTED/ESCALATED).
+    This UPDATE is the ONLY permitted modification to ai_action_log
+    (updating the analyst_decision and decided_at columns only).
+    All other columns remain immutable.
+    """
+    valid_decisions = {"CONFIRMED", "REJECTED", "ESCALATED", "PENDING"}
+    if req.decision.upper() not in valid_decisions:
+        raise HTTPException(400, f"Decision must be one of: {valid_decisions}")
+
+    # Verify the rec_id exists
+    existing = query_one("SELECT rec_id, analyst_decision FROM ai_action_log WHERE rec_id = ?", (req.rec_id,))
+    if not existing:
+        raise HTTPException(404, f"AI recommendation {req.rec_id} not found in audit log")
+
+    if existing["analyst_decision"] != "PENDING":
+        raise HTTPException(409, f"Decision already recorded: {existing['analyst_decision']}. Cannot overwrite a committed decision.")
+
+    execute("""
+        UPDATE ai_action_log
+        SET analyst_decision = ?,
+            analyst_note = ?,
+            decided_at = datetime('now'),
+            outcome_written_back = 1
+        WHERE rec_id = ? AND analyst_decision = 'PENDING'
+    """, (req.decision.upper(), req.note or "", req.rec_id))
+
+    return {
+        "rec_id":   req.rec_id,
+        "decision": req.decision.upper(),
+        "analyst":  req.analyst_id,
+        "recorded": True,
+        "note": "Decision permanently committed to audit log.",
+    }
+
+
+@router.get("/audit-trail/entity/{entity_id}")
+async def get_entity_audit_trail(entity_id: str):
+    """
+    Return full audit trail for a specific entity (person, case, etc.)
+    Shows every AI recommendation and analyst decision that referenced this entity.
+    """
+    rows = query("""
+        SELECT rec_id, analyst_id, ai_prompt_summary, ai_recommendation,
+               analyst_decision, analyst_note, outcome_written_back,
+               created_at, decided_at
+        FROM ai_action_log
+        WHERE entity_ids LIKE ?
+        ORDER BY created_at DESC
+        LIMIT 50
+    """, (f"%{entity_id}%",))
+    return {
+        "entity_id": entity_id,
+        "ai_interactions": len(rows),
+        "records": rows,
+    }
+

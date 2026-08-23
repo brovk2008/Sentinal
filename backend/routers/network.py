@@ -244,3 +244,26 @@ async def list_syndicates():
         ORDER BY total_cases DESC
     """)
     return rows
+
+
+# ─── Social Network Analysis & Syndicate Hierarchy Inversion ─────────────────
+
+@router.get("/sna-hierarchy")
+async def get_sna_hierarchy(
+    district_id: Optional[int] = Query(None),
+    limit: int = Query(100, ge=10, le=500),
+):
+    """
+    Executes Military/Intelligence-Grade Social Network Analysis (SNA):
+      - Betweenness Centrality (Brandes' Algorithm) to locate communication brokers
+      - Tarjan's Cut-Vertex Detection to find single points of failure
+      - k-Core Decomposition to peel disposable mules and isolate kingpins
+      - Actionable Network Fracture Recommendations
+    """
+    try:
+        from services.sna_engine import get_sna_engine
+        engine = get_sna_engine()
+        return engine.analyze_syndicate_hierarchy(district_id=district_id, limit=limit)
+    except Exception as e:
+        raise HTTPException(500, f"SNA Hierarchy Analysis failed: {e}")
+

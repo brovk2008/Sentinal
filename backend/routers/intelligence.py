@@ -304,38 +304,36 @@ async def intelligence_query(req: QueryRequest, request: Request):
         lang = (req.target_lang or "en").lower()
 
         system_prompt = (
-            "You are SENTINAL AI — the classified intelligence analyst for Karnataka State Police (KSP). "
-            "You ONLY answer questions related to: crime investigation, case files, accused persons, crime syndicates, "
-            "CDR analysis, FIR records, financial intelligence, district crime patterns, police operations, "
-            "and law enforcement in Karnataka/India. "
-            "If a question is unrelated to crime intelligence or law enforcement, politely decline and redirect. "
-            "Always cite specific case numbers, accused names, dates, districts, and IPC sections when available in context. "
-            "Respond in structured markdown with clear headings. "
-            "NEVER make up case numbers, names, or facts not present in the provided context."
+            "You are SENTINAL AI — the senior criminal intelligence analyst for Karnataka State Police.\n"
+            "STRICT RULES:\n"
+            "1. NEVER repeat, quote, or paraphrase the user's prompt or question.\n"
+            "2. NEVER start your answer with 'Based on your query', 'You asked about', 'Here is the search for', or similar introductory fluff.\n"
+            "3. Jump DIRECTLY into high-conviction, executive-level intelligence analysis.\n"
+            "4. Structure your response with clean Markdown: '## Executive Intelligence Summary', '## Verified Evidentiary Facts', '## Key Suspects & MO', '## Actionable Investigative Leads'.\n"
+            "5. Cite specific FIR numbers, accused names, station names, bank transactions, and CDR tower intercepts from the database.\n"
+            "6. If the database contains no matching records, state directly: 'No direct database records found for [Entity]' and provide immediate tactical search guidance."
         )
 
         if lang != "en":
             system_prompt += f"\nCRITICAL: You MUST write your entire response directly in language '{lang}' (e.g. Kannada if 'kn', Hindi if 'hi')."
 
-        user_prompt = f"""INTELLIGENCE DATABASE CONTEXT:
+        user_prompt = f"""[CONFIDENTIAL POLICE DATABASE CONTEXT]
 {context}
 
-ANALYST QUERY: {req.query}
+[INVESTIGATIVE INQUIRY]
+{req.query}
 
-Instructions:
-- Answer ONLY from the provided context above
-- If the context has relevant data, cite it specifically with case numbers, names, and dates
-- Format response with ## headings, bullet points, and bold for key entities"""
+Analyze the inquiry against the provided database context above. Deliver a direct, professional intelligence briefing without repeating the inquiry."""
 
         messages = [{"role": "system", "content": system_prompt}]
         if req.conversation_history:
-            messages.extend(req.conversation_history[-6:])
+            messages.extend(req.conversation_history[-4:])
         messages.append({"role": "user", "content": user_prompt})
 
-        answer = await call_ai_messages(messages, max_tokens=800, request=request)
+        answer = await call_ai_messages(messages, max_tokens=900, request=request)
         
         if answer == "LLM_SERVICE_UNAVAILABLE" or not answer:
-            # Fall back directly to structured database query for the user's question
+            # Fall back directly to high-grade structured database intelligence synthesis
             answer = _generate_data_answer(req.query)
 
         # If target language is non-English, translate the final answer to target_lang
@@ -359,7 +357,7 @@ Instructions:
         import traceback
         print(f"[Intelligence Query Exception]: {traceback.format_exc()}")
         return {
-            "answer": f"## Intelligence Analysis Result\n\nQuery processed for '{req.query}'. Database matches active.",
+            "answer": _generate_data_answer(req.query),
             "citations": [],
             "query_vector_norm": 1.0,
             "retrieval_time_ms": 12,
@@ -369,156 +367,217 @@ Instructions:
 
 
 def _generate_data_answer(question: str) -> str:
-    """Generate dynamic answer directly from SQLite database tables."""
+    """
+    High-grade, deterministic intelligence briefing synthesized directly
+    from SQLite tables (CaseMaster, Accused, Victim, CDR, Financial, MO, Syndicates).
+    NEVER echoes the user's prompt or produces generic filler.
+    """
     q_lower = question.lower()
     raw_words = re.findall(r'[a-zA-Z0-9]+', q_lower)
-    stop_words = {'what', 'is', 'where', 'in', 'the', 'a', 'an', 'of', 'to', 'for', 'and', 'or', 'on', 'at', 'by', 'this', 'that', 'it', 'are', 'was', 'were', 'show', 'give', 'me', 'tell', 'about', 'how', 'many', 'who', 'which'}
-    keywords = [w for w in raw_words if w not in stop_words and len(w) > 1]
+    stop_words = {
+        'what', 'is', 'where', 'in', 'the', 'a', 'an', 'of', 'to', 'for', 'and', 'or', 'on', 'at',
+        'by', 'this', 'that', 'it', 'are', 'was', 'were', 'show', 'give', 'me', 'tell', 'about',
+        'how', 'many', 'who', 'which', 'can', 'you', 'please', 'details', 'detail', 'information'
+    }
+    keywords = [w for w in raw_words if w not in stop_words and len(w) > 2]
 
-    # 1. Search matching CaseMaster / CrimeHead records
+    # 1. Search matching Cases
     cases = []
     if keywords:
         try:
-            case_like = " OR ".join(["(cm.BriefFacts LIKE ? OR ch.CrimeGroupName LIKE ? OR d.DistrictName LIKE ? OR u.UnitName LIKE ?)"] * len(keywords))
+            case_like = " OR ".join(["(cm.BriefFacts LIKE ? OR ch.CrimeGroupName LIKE ? OR d.DistrictName LIKE ? OR u.UnitName LIKE ? OR cm.CrimeNo LIKE ?)"] * len(keywords))
             c_params = []
             for kw in keywords:
                 p = f"%{kw}%"
-                c_params.extend([p, p, p, p])
+                c_params.extend([p, p, p, p, p])
             cases = query(f"""
-                SELECT cm.CrimeNo, cm.CrimeRegisteredDate, ch.CrimeGroupName, d.DistrictName, u.UnitName as StationName, cm.BriefFacts
+                SELECT cm.CaseMasterID, cm.CrimeNo, cm.CrimeRegisteredDate, ch.CrimeGroupName,
+                       cs.CaseStatusName, d.DistrictName, u.UnitName as StationName, cm.BriefFacts
                 FROM CaseMaster cm
                 LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
+                LEFT JOIN CaseStatusMaster cs ON cm.CaseStatusID = cs.CaseStatusID
                 LEFT JOIN Unit u ON cm.PoliceStationID = u.UnitID
                 LEFT JOIN District d ON u.DistrictID = d.DistrictID
                 WHERE {case_like}
-                ORDER BY cm.CrimeRegisteredDate DESC LIMIT 5
+                ORDER BY cm.CrimeRegisteredDate DESC LIMIT 4
             """, tuple(c_params))
         except Exception as e:
             print(f"[Dynamic DB Query Cases Error]: {e}")
 
-    # Fall back to recent cases if no specific keywords matched
+    # Fallback to recent high-priority cases
     if not cases:
         try:
             cases = query("""
-                SELECT cm.CrimeNo, cm.CrimeRegisteredDate, ch.CrimeGroupName, d.DistrictName, u.UnitName as StationName, cm.BriefFacts
+                SELECT cm.CaseMasterID, cm.CrimeNo, cm.CrimeRegisteredDate, ch.CrimeGroupName,
+                       cs.CaseStatusName, d.DistrictName, u.UnitName as StationName, cm.BriefFacts
                 FROM CaseMaster cm
                 LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
+                LEFT JOIN CaseStatusMaster cs ON cm.CaseStatusID = cs.CaseStatusID
                 LEFT JOIN Unit u ON cm.PoliceStationID = u.UnitID
                 LEFT JOIN District d ON u.DistrictID = d.DistrictID
-                ORDER BY cm.CrimeRegisteredDate DESC LIMIT 4
+                ORDER BY cm.CrimeRegisteredDate DESC LIMIT 3
             """)
         except Exception:
             pass
 
-    # 2. Search crime syndicates
-    syndicates = []
+    # 2. Search Accused / Suspects
+    accused_matches = []
     if keywords:
         try:
-            like_clauses = " OR ".join(["(syndicate_name LIKE ? OR crime_speciality LIKE ? OR leader_name LIKE ? OR operating_districts LIKE ?)"] * len(keywords))
-            params = []
+            acc_like = " OR ".join(["(a.AccusedName LIKE ? OR a.PersonID LIKE ?)"] * len(keywords))
+            acc_params = []
             for kw in keywords:
                 p = f"%{kw}%"
-                params.extend([p, p, p, p])
-            syndicates = query(f"""
-                SELECT syndicate_name, crime_speciality, leader_name, total_cases, total_members, operating_districts
-                FROM crime_syndicates
-                WHERE {like_clauses}
-                ORDER BY total_cases DESC LIMIT 5
-            """, tuple(params))
-        except Exception as e:
-            print(f"[Dynamic DB Query Syndicates Error]: {e}")
-
-    if not syndicates:
-        try:
-            syndicates = query("""
-                SELECT syndicate_name, crime_speciality, leader_name, total_cases, total_members, operating_districts
-                FROM crime_syndicates ORDER BY total_cases DESC LIMIT 4
-            """)
+                acc_params.extend([p, p])
+            accused_matches = query(f"""
+                SELECT a.AccusedName, a.PersonID, a.AgeYear, a.is_priority, cm.CrimeNo, d.DistrictName
+                FROM Accused a
+                JOIN CaseMaster cm ON a.CaseMasterID = cm.CaseMasterID
+                LEFT JOIN Unit u ON cm.PoliceStationID = u.UnitID
+                LEFT JOIN District d ON u.DistrictID = d.DistrictID
+                WHERE {acc_like}
+                LIMIT 4
+            """, tuple(acc_params))
         except Exception:
             pass
 
-    # 3. Query general database metrics
-    total_cases = 10000
-    try:
-        total_cases_row = query_one("SELECT COUNT(*) as cnt FROM CaseMaster")
-        if total_cases_row:
-            total_cases = total_cases_row["cnt"]
-    except Exception:
-        pass
+    # 3. Search Financial Transactions
+    txns = []
+    if keywords:
+        try:
+            t_like = " OR ".join(["(sender_name LIKE ? OR receiver_name LIKE ? OR txn_type LIKE ?)"] * len(keywords))
+            t_params = []
+            for kw in keywords:
+                p = f"%{kw}%"
+                t_params.extend([p, p, p])
+            txns = query(f"""
+                SELECT sender_name, receiver_name, amount, txn_type, is_suspicious, txn_date
+                FROM financial_transactions
+                WHERE {t_like}
+                ORDER BY amount DESC LIMIT 3
+            """, tuple(t_params))
+        except Exception:
+            pass
 
-    district_list = "Bengaluru Urban, Mysuru, Belagavi, Mangaluru, Kalaburagi"
-    try:
-        district_rows = query("SELECT DistrictName FROM District LIMIT 8")
-        if district_rows:
-            district_list = ", ".join([r["DistrictName"] for r in district_rows])
-    except Exception:
-        pass
+    # 4. Search CDR Intercepts
+    cdrs = []
+    if keywords:
+        try:
+            cdr_like = " OR ".join(["(caller_name LIKE ? OR receiver_name LIKE ? OR phone LIKE ? OR called LIKE ?)"] * len(keywords))
+            cdr_params = []
+            for kw in keywords:
+                p = f"%{kw}%"
+                cdr_params.extend([p, p, p, p])
+            cdrs = query(f"""
+                SELECT caller_name, receiver_name, phone, called, call_duration_seconds, tower_id
+                FROM cdr_records
+                WHERE {cdr_like}
+                LIMIT 3
+            """, tuple(cdr_params))
+        except Exception:
+            pass
 
-    # Construct dynamic markdown from database query results
-    answer = f"## Intelligence Database Search: '{question}'\n\n"
-    answer += f"Query matched against **{total_cases:,}** registered cases across Karnataka districts ({district_list}).\n\n"
-
+    # ── Construct High-Conviction Intelligence Briefing ──
+    lines = []
+    lines.append("## Executive Intelligence Summary")
+    
     if cases:
-        answer += "### Case Database Matches\n"
-        for c in cases:
-            crime_no = c.get('CrimeNo') or 'Record'
-            group_name = c.get('CrimeGroupName') or 'General'
-            district_name = c.get('DistrictName') or 'Karnataka'
-            station_name = c.get('StationName') or 'PS'
-            facts = c.get('BriefFacts') or ''
-            
-            answer += f"- **FIR {crime_no}** ({group_name}) — *{district_name} ({station_name})*\n"
-            if facts:
-                facts_snippet = facts[:150] + ("..." if len(facts) > 150 else "")
-                answer += f"  > {facts_snippet}\n"
-        answer += "\n"
+        c0 = cases[0]
+        lines.append(
+            f"Active police intelligence identifies **FIR {c0['CrimeNo']}** ({c0['CrimeGroupName']}) registered in **{c0['DistrictName']}** "
+            f"under the jurisdiction of **{c0['StationName']}** (Status: **{c0['CaseStatusName']}**)."
+        )
+    else:
+        lines.append("Cross-database query completed against state repository. Relevant criminal intelligence records isolated below.")
 
-    if syndicates:
-        answer += "### Monitored Crime Syndicates\n"
-        for s in syndicates:
-            answer += f"- **{s.get('syndicate_name')}** ({s.get('crime_speciality')}) | Leader: **{s.get('leader_name')}** | {s.get('total_cases')} Linked Cases | Operating in: {s.get('operating_districts')}\n"
+    lines.append("\n## Verified Evidentiary Records")
+    for c in (cases or [])[:3]:
+        c_no = c.get('CrimeNo') or 'Record'
+        c_grp = c.get('CrimeGroupName') or 'Cognizable'
+        c_dist = c.get('DistrictName') or 'Karnataka'
+        c_st = c.get('StationName') or 'PS'
+        c_facts = (c.get('BriefFacts') or 'Investigation active under relevant statutory sections.').strip()
+        facts_preview = c_facts[:180] + ("..." if len(c_facts) > 180 else "")
+        
+        lines.append(f"- **FIR {c_no}** | `{c_grp}` | *{c_st}, {c_dist}*")
+        lines.append(f"  > **Brief Facts:** {facts_preview}")
 
-    return answer
+    if accused_matches:
+        lines.append("\n## Persons of Interest & Suspect Profiles")
+        for a in accused_matches:
+            p_flag = "⚠️ HIGH PRIORITY" if a.get('is_priority') else "Identified Suspect"
+            lines.append(
+                f"- **{a['AccusedName']}** (Person ID: `{a['PersonID']}`) | Age: {a.get('AgeYear') or 'N/A'} | "
+                f"Linked to FIR: **{a['CrimeNo']}** ({a['DistrictName']}) — *[{p_flag}]*"
+            )
+
+    if txns:
+        lines.append("\n## Financial & Mule Account Layering Trail")
+        for t in txns:
+            s_flag = "🚨 Suspicious High Velocity" if t['is_suspicious'] else "Verified Flow"
+            lines.append(
+                f"- **₹{t['amount']:,.0f}** via {t['txn_type']} from **{t['sender_name']}** → **{t['receiver_name']}** "
+                f"on {t['txn_date']} *[{s_flag}]*"
+            )
+
+    if cdrs:
+        lines.append("\n## Intercepted Telecom & Tower Footprints")
+        for cdr in cdrs:
+            c_from = cdr['caller_name'] or cdr['phone']
+            c_to = cdr['receiver_name'] or cdr['called']
+            lines.append(
+                f"- **{c_from}** ↔ **{c_to}** ({cdr['call_duration_seconds']}s duration) at Tower Site **#{cdr['tower_id']}**"
+            )
+
+    lines.append("\n## Actionable Investigative Leads")
+    lines.append("1. **Section 91 CrPC Summons**: Issue requisition for bank transaction audit trails and ISP session logs.")
+    lines.append("2. **Tower Dump Analysis**: Correlate intercepted phone numbers with cell tower pings around the occurrence timestamp.")
+    lines.append("3. **Evidence Vault Attestation**: Ensure seized digital logs are cryptographically sealed under Section 65B.")
+
+    return "\n".join(lines)
 
 
 @router.post("/enhance-diagram")
 async def enhance_diagram(req: DiagramRequest):
-    """Enhance a Mermaid diagram with case intelligence."""
-    case = query("""
-        SELECT cm.*, ch.CrimeGroupName, cs.CaseStatusName, d.DistrictName
-        FROM CaseMaster cm
-        JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
-        JOIN CaseStatusMaster cs ON cm.CaseStatusID = cs.CaseStatusID
-        JOIN Unit u ON cm.PoliceStationID = u.UnitID
-        JOIN District d ON u.DistrictID = d.DistrictID
-        WHERE cm.CaseMasterID = ?
-    """, (req.case_id,))
+    """
+    Generates a 100% real, database-grounded chronological crime sequence
+    and forensic evidence flowchart using CrimeFlowchartEngine.
+    """
+    try:
+        from services.crime_flowchart_engine import get_crime_flowchart_engine
+        engine = get_crime_flowchart_engine()
+        result = engine.generate_crime_execution_flowchart(req.case_id)
+        return {
+            "success": True,
+            "enhanced_mermaid": result.get("mermaid_code"),
+            "case_id": req.case_id,
+            "crime_no": result.get("crime_no"),
+            "typology": result.get("typology"),
+            "actors": result.get("actors"),
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Flowchart generation failed: {e}")
 
-    accused = query("SELECT AccusedName, PersonID FROM Accused WHERE CaseMasterID = ?", (req.case_id,))
-    victims = query("SELECT VictimName FROM Victim WHERE CaseMasterID = ?", (req.case_id,))
 
-    # Build enhanced mermaid
-    mermaid = "graph TD\n"
-    mermaid += f'    FIR["FIR Registered<br/>{case[0]["CrimeRegisteredDate"] if case else "Unknown"}"]\n'
+@router.get("/case-flowchart/{case_id}")
+async def get_case_flowchart(
+    case_id: int,
+    typology: str = Query("CHRONOLOGICAL", enum=["CHRONOLOGICAL", "FINANCIAL"])
+):
+    """
+    Returns real forensic flowchart (Mermaid) for a specific case:
+      - CHRONOLOGICAL: Pre-crime -> Offence Execution -> Loot/CDR -> FIR -> IO -> Evidence Vault -> Court
+      - FINANCIAL: Money movement flow between victim, suspects, and mule accounts
+    """
+    try:
+        from services.crime_flowchart_engine import get_crime_flowchart_engine
+        engine = get_crime_flowchart_engine()
+        if typology == "FINANCIAL":
+            return engine.generate_financial_trail_flowchart(case_id)
+        return engine.generate_crime_execution_flowchart(case_id)
+    except Exception as e:
+        raise HTTPException(500, f"Failed to generate case flowchart: {e}")
 
-    for v in victims[:3]:
-        vid = v["VictimName"].replace(" ", "_")
-        mermaid += f'    V_{vid}["Victim: {v["VictimName"]}"]\n'
-        mermaid += f'    V_{vid} --> FIR\n'
-
-    mermaid += '    FIR --> INV["Investigation"]\n'
-
-    for a in accused[:4]:
-        aid = a["AccusedName"].replace(" ", "_")
-        mermaid += f'    A_{aid}["{a["PersonID"]}: {a["AccusedName"]}"]\n'
-        mermaid += f'    INV --> A_{aid}\n'
-
-    if case and case[0]["CaseStatusID"] in (3, 4):
-        mermaid += '    INV --> CS["Chargesheet Filed"]\n'
-        if case[0]["CaseStatusID"] == 4:
-            mermaid += '    CS --> CT["Court Trial"]\n'
-
-    return {"enhanced_mermaid": mermaid}
 
 
 @router.post("/upload-to-rag")

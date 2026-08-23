@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Check, X, AlertCircle } from 'lucide-react'
 import {
   updateCaseStatus,
   addInvestigationNote,
@@ -145,13 +146,12 @@ export default function CaseActionPanel({ caseId, currentStatusId, accused = [],
             border: 'none',
             color: 'var(--text-muted)',
             cursor: 'pointer',
-            fontSize: 16,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}
         >
-          ✕
+          <X size={16} />
         </button>
       </div>
 
@@ -378,12 +378,18 @@ export default function CaseActionPanel({ caseId, currentStatusId, accused = [],
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite'
               }} />
-              Saving Changes...
+              <span>Saving Changes...</span>
             </>
           ) : saveResult === 'success' ? (
-            '✓ Changes Saved'
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+              <Check size={14} />
+              <span>Changes Saved</span>
+            </span>
           ) : saveResult === 'error' ? (
-            '✕ Error Saving'
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+              <AlertCircle size={14} />
+              <span>Error Saving</span>
+            </span>
           ) : (
             'Save All Changes'
           )}

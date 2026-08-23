@@ -1,6 +1,10 @@
 """
-Prediction API Router
-All ML-powered crime prediction endpoints.
+Prediction API Router — Sentinal Advanced Architecture v2
+
+All ML-powered crime prediction endpoints with:
+  - ETAS Contagion Model (Hawkes self-exciting point process)
+  - SHAP Feature Attribution (per-prediction explanations)
+  - Composite risk scoring (ETAS + sklearn model ensemble)
 """
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel
@@ -14,6 +18,23 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 router = APIRouter()
+
+# Lazy-loaded advanced services (no import at top level — preserves AppSail boot time)
+def _get_etas():
+    try:
+        from services.etas_engine import get_etas_engine
+        return get_etas_engine()
+    except Exception as e:
+        print(f"[Predict] ETAS engine unavailable: {e}")
+        return None
+
+def _get_explainer():
+    try:
+        from services.shap_explainer import get_explainer
+        return get_explainer()
+    except Exception as e:
+        print(f"[Predict] SHAP explainer unavailable: {e}")
+        return None
 
 # Dynamic absolute models directory
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "ml" / "saved"
@@ -52,15 +73,20 @@ def load_models():
                 print(f"  Self-healing error for {name}: {train_err}")
 
 
-# ─── 1. HOTSPOT PREDICTION ──────────────────────────────────────────
+# ─── 1. HOTSPOT PREDICTION (with ETAS + SHAP) ──────────────────────────────
 @router.get("/hotspots")
 def predict_hotspots(
     days_ahead: int = Query(7, ge=1, le=30),
-    district_id: Optional[int] = None
+    district_id: Optional[int] = None,
+    include_etas: bool = Query(True, description="Include ETAS contagion risk in composite score"),
+    include_shap: bool = Query(True, description="Include SHAP feature attribution in response"),
 ):
     """
-    Predict which police station zones will be crime hotspots
-    in the next N days. Returns geospatial points with risk scores.
+    Predict crime hotspots for the next N days.
+    Uses a composite of:
+      - sklearn Random Forest (historical patterns)
+      - ETAS Contagion Model (self-exciting Hawkes process)
+    SHAP attribution explains top contributing factors per zone.
     """
     if 'hotspot' not in _models:
         raise HTTPException(503, "Hotspot model not loaded — run train_hotspot_v2.py first")
@@ -107,6 +133,27 @@ def predict_hotspots(
 
     target_month = (datetime.now() + timedelta(days=days_ahead)).month
 
+    # Pre-compute ETAS risk surface
+    etas_map: dict = {}  # station_id → ETASRiskPoint
+    etas_summary = None
+    if include_etas:
+        etas_engine = _get_etas()
+        if etas_engine:
+            try:
+                station_coords = [
+                    {"station_id": s["station_id"], "station_name": s["station_name"],
+                     "lat": s["center_lat"], "lng": s["center_lng"]}
+                    for s in stations if s["center_lat"] and s["center_lng"]
+                ]
+                etas_surface = etas_engine.compute_risk_surface(station_coords)
+                etas_map = {rp.entity_id: rp for rp in etas_surface}
+                etas_summary = etas_engine.get_risk_summary()
+            except Exception as etas_err:
+                print(f"[Predict] ETAS computation error: {etas_err}")
+
+    # Get SHAP explainer
+    explainer = _get_explainer() if include_shap else None
+
     results = []
     for s in stations:
         features = pd.DataFrame([{
@@ -121,34 +168,61 @@ def predict_hotspots(
             'is_weekend_rate':    0.28
         }])
 
-        prob = float(model.predict_proba(features)[0][1])
+        sklearn_prob = float(model.predict_proba(features)[0][1])
+
+        # Composite score: blend sklearn (70%) + ETAS normalized (30%)
+        etas_rp = etas_map.get(str(s['station_id']))
+        etas_score = etas_rp.normalized_score if etas_rp else 0.0
+        etas_excitation = etas_rp.etas_excitation if etas_rp else 0.0
+        composite_prob = round(0.70 * sklearn_prob + 0.30 * etas_score, 4)
+
         risk_level = (
-            'CRITICAL' if prob >= 0.80 else
-            'HIGH'     if prob >= 0.60 else
-            'MEDIUM'   if prob >= 0.40 else
+            'CRITICAL' if composite_prob >= 0.80 else
+            'HIGH'     if composite_prob >= 0.60 else
+            'MEDIUM'   if composite_prob >= 0.40 else
             'LOW'
         )
 
-        results.append({
-            'station_id':     s['station_id'],
-            'station_name':   s['station_name'],
-            'district_id':    s['district_id'],
-            'district_name':  s['district_name'],
-            'lat':            s['center_lat'],
-            'lng':            s['center_lng'],
-            'hotspot_prob':   round(prob, 4),
-            'risk_level':     risk_level,
-            'recent_cases':   s['recent_cases'] or 0,
-            'days_ahead':     days_ahead
-        })
+        # SHAP explanation
+        explanation = None
+        if explainer:
+            try:
+                shap_exp = explainer.explain_hotspot(model, features, composite_prob)
+                explanation = explainer.to_dict(shap_exp)
+            except Exception as shap_err:
+                print(f"[Predict] SHAP failed for station {s['station_id']}: {shap_err}")
+
+        result = {
+            'station_id':         s['station_id'],
+            'station_name':       s['station_name'],
+            'district_id':        s['district_id'],
+            'district_name':      s['district_name'],
+            'lat':                s['center_lat'],
+            'lng':                s['center_lng'],
+            'hotspot_prob':       composite_prob,
+            'sklearn_prob':       round(sklearn_prob, 4),
+            'etas_score':         round(etas_score, 4),
+            'etas_excitation':    round(etas_excitation, 4),
+            'risk_level':         risk_level,
+            'recent_cases':       s['recent_cases'] or 0,
+            'days_ahead':         days_ahead,
+        }
+        if explanation:
+            result['explanation'] = explanation
+        if etas_rp and etas_rp.contributing_events:
+            result['etas_triggers'] = etas_rp.contributing_events
+
+        results.append(result)
 
     results.sort(key=lambda x: x['hotspot_prob'], reverse=True)
     return {
-        'predictions': results,
-        'total_stations': len(results),
-        'high_risk_count': sum(1 for r in results if r['hotspot_prob'] >= 0.60),
-        'prediction_window': f"Next {days_ahead} days",
-        'model_version': 'hotspot_v2'
+        'predictions':        results,
+        'total_stations':     len(results),
+        'high_risk_count':    sum(1 for r in results if r['hotspot_prob'] >= 0.60),
+        'prediction_window':  f"Next {days_ahead} days",
+        'model_version':      'composite_v2_etas+rf',
+        'etas_model_summary': etas_summary,
+        'scoring_weights':    {'sklearn_rf': 0.70, 'etas_contagion': 0.30},
     }
 
 
@@ -269,6 +343,16 @@ def predict_reoffend_risk(accused_id: int):
     model = model_bundle['model']
     risk_score = float(model.predict_proba(features)[0][1])
 
+    # ── SHAP Explainability ───────────────────────────────────────────
+    explanation = None
+    explainer = _get_explainer()
+    if explainer:
+        try:
+            shap_exp = explainer.explain_reoffend(model, features, risk_score)
+            explanation = explainer.to_dict(shap_exp)
+        except Exception as shap_err:
+            print(f"[Predict] SHAP reoffend failed: {shap_err}")
+
     risk_factors = []
     if total_cases >= 5:
         risk_factors.append(f"Prior record: {total_cases} cases")
@@ -281,22 +365,38 @@ def predict_reoffend_risk(accused_id: int):
     if (accused.get('AgeYear') or 30) < 30:
         risk_factors.append("Young offender — higher recidivism rate")
 
-    return {
-        'accused_id':     accused_id,
-        'accused_name':   accused.get('AccusedName'),
-        'risk_score':     round(risk_score, 4),
-        'risk_percent':   f"{risk_score * 100:.1f}%",
-        'risk_level':     (
+    # ── Escalation Chain Lookup ───────────────────────────────────────
+    escalation_warning = None
+    try:
+        from services.criminology_engine import build_escalation_matrix
+        # Only run for high-risk to avoid latency on every call
+        if risk_score >= 0.60:
+            matrix_data = build_escalation_matrix(limit=2000)
+            escalation_warning = matrix_data.get('escalation_chains', [])[:3]
+    except Exception:
+        pass
+
+    response = {
+        'accused_id':          accused_id,
+        'accused_name':        accused.get('AccusedName'),
+        'risk_score':          round(risk_score, 4),
+        'risk_percent':        f"{risk_score * 100:.1f}%",
+        'risk_level':          (
             'CRITICAL' if risk_score >= 0.80 else
             'HIGH'     if risk_score >= 0.60 else
             'MEDIUM'   if risk_score >= 0.40 else
             'LOW'
         ),
-        'risk_factors':   risk_factors,
-        'total_cases':    total_cases,
-        'arrest_count':   h.get('arrest_count') or 0,
-        'model_version':  'reoffend_v1'
+        'risk_factors':        risk_factors,
+        'total_cases':         total_cases,
+        'arrest_count':        h.get('arrest_count') or 0,
+        'model_version':       'reoffend_v2+shap',
     }
+    if explanation:
+        response['explanation'] = explanation
+    if escalation_warning:
+        response['escalation_risk'] = escalation_warning
+    return response
 
 
 # ─── 4. CASE RESOLUTION PREDICTOR ─────────────────────────────────
@@ -456,6 +556,15 @@ def get_live_risk_scores():
         print(f"[Predict Live Score] Temporal query failed: {e}")
         today_pattern = {}
 
+    # ETAS Risk Summary
+    etas_risk_summary = {}
+    try:
+        etas_engine = _get_etas()
+        if etas_engine:
+            etas_risk_summary = etas_engine.get_risk_summary()
+    except Exception as e:
+        print(f"[Predict Live Score] ETAS summary failed: {e}")
+
     # High risk accused (appear in 5+ cases)
     high_risk_accused = query("""
         SELECT
@@ -484,15 +593,219 @@ def get_live_risk_scores():
                 'station_id': h['station_id']
             })
 
+    # ETAS contagion alerts
+    if etas_risk_summary and etas_risk_summary.get('critical_zones', 0) > 0:
+        alerts.append({
+            'type':     'ETAS_CONTAGION_ALERT',
+            'severity': 'CRITICAL',
+            'message':  (
+                f"ETAS Model: {etas_risk_summary['critical_zones']} zones at CRITICAL contagion risk. "
+                f"Top hotspot: {etas_risk_summary.get('top_hotspot', {}).get('name', 'Unknown')} "
+                f"(excitation={etas_risk_summary.get('top_hotspot', {}).get('risk', 0):.3f})"
+            ),
+        })
+
     return {
         'generated_at':      now.isoformat(),
         'top_hotspots':      top_hotspots,
         'temporal_insights': today_pattern,
+        'etas_summary':      etas_risk_summary,
         'high_risk_accused': [dict(a) for a in high_risk_accused],
         'alerts':            alerts,
         'summary': {
-            'total_high_risk_zones': len([h for h in top_hotspots if h['hotspot_prob'] >= 0.60]),
-            'total_critical_zones':  len([h for h in top_hotspots if h['hotspot_prob'] >= 0.80]),
-            'high_risk_accused_count': len(high_risk_accused)
+            'total_high_risk_zones':   len([h for h in top_hotspots if h['hotspot_prob'] >= 0.60]),
+            'total_critical_zones':    len([h for h in top_hotspots if h['hotspot_prob'] >= 0.80]),
+            'high_risk_accused_count': len(high_risk_accused),
+            'etas_critical_zones':     etas_risk_summary.get('critical_zones', 0),
+            'etas_events_tracked':     etas_risk_summary.get('model_events_cached', 0),
+        },
+        'model_versions': {
+            'hotspot':  'composite_v2_etas+rf',
+            'reoffend': 'reoffend_v2+shap',
+            'etas':     'hawkes_process_v1',
         }
     }
+
+
+# ─── 7. ETAS REAL-TIME CONTAGION ENDPOINT ────────────────────────────────
+class ETASTriggerRequest(BaseModel):
+    lat: float
+    lng: float
+    crime_type: str
+    magnitude: float = 1.0
+    event_id: Optional[str] = None
+
+@router.post("/etas-contagion")
+def trigger_etas_contagion(req: ETASTriggerRequest):
+    """
+    Simulate a triggering crime event and compute real-time reactive
+    contagion risk for all adjacent police station zones.
+
+    Uses the Hawkes self-exciting point process (ETAS model).
+    Call this endpoint immediately after a high-severity incident is registered
+    to generate reactive deployment recommendations.
+    """
+    etas_engine = _get_etas()
+    if etas_engine is None:
+        raise HTTPException(503, "ETAS engine not available")
+    try:
+        alert = etas_engine.trigger_event(
+            lat=req.lat,
+            lng=req.lng,
+            crime_type=req.crime_type,
+            magnitude=req.magnitude,
+            event_id=req.event_id,
+        )
+        return {
+            'trigger': {
+                'lat':         alert.trigger_lat,
+                'lng':         alert.trigger_lng,
+                'crime_type':  alert.trigger_crime_type,
+                'time':        alert.trigger_time,
+            },
+            'alert_message':     alert.alert_message,
+            'decay_hours_50pct': alert.decay_hours_50pct,
+            'affected_zones': [
+                {
+                    'station_name':      z.entity_name,
+                    'lat':               z.lat,
+                    'lng':               z.lng,
+                    'total_risk':        z.total_risk,
+                    'background_rate':   z.background_rate,
+                    'etas_excitation':   z.etas_excitation,
+                    'risk_level':        z.risk_level,
+                    'normalized_score':  z.normalized_score,
+                }
+                for z in alert.affected_zones
+            ],
+            'model': 'etas_hawkes_process_v1',
+        }
+    except Exception as e:
+        raise HTTPException(500, f"ETAS contagion computation failed: {e}")
+
+
+# ─── 8. NEAR-REPEAT VICTIMIZATION RISK ─────────────────────────────────
+@router.get("/near-repeat-risk")
+def near_repeat_risk(
+    lat: float = Query(...),
+    lng: float = Query(...),
+    radius_km: float = Query(2.0, ge=0.5, le=10.0),
+    days_window: int = Query(30, ge=7, le=90),
+):
+    """
+    Bowers & Johnson (2004) near-repeat victimization forecasting.
+    Returns time-decay weighted victimization risk at a given lat/lng
+    based on recent crimes within the specified radius.
+    """
+    try:
+        from services.criminology_engine import compute_near_repeat_risk
+        result = compute_near_repeat_risk(lat, lng, radius_km, days_window)
+        return result
+    except Exception as e:
+        raise HTTPException(500, f"Near-repeat computation failed: {e}")
+
+
+# ─── 9. ZOHO CATALYST ZIA AUTOML & FORECASTING PIPELINES ─────────────────
+
+@router.get("/automl/pipelines")
+def get_automl_pipelines():
+    """
+    Returns the operational status, dataset readiness, and evaluation metrics
+    for all 4 Zoho Catalyst Zia AutoML / QuickML pipelines:
+      1. Hotspot Classification
+      2. Recidivism Predictor
+      3. Case Resolution Probability
+      4. Crime Volume Time-Series Forecasting
+    """
+    try:
+        from services.quickml_automl_service import get_automl_manager
+        mgr = get_automl_manager()
+        return {
+            "pipelines": mgr.get_all_pipelines(),
+            "total_pipelines": 4,
+            "platform": "Zoho Catalyst Zia QuickML",
+            "environment": "Development",
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Failed to retrieve AutoML pipelines: {e}")
+
+
+@router.get("/automl/forecast")
+def get_crime_forecast(months_ahead: int = Query(6, ge=1, le=12)):
+    """
+    Executes time-series forecasting using the Zia Crime Volume Forecasting model.
+    Returns monthly projected incident volume with confidence intervals.
+    """
+    try:
+        from services.quickml_automl_service import get_automl_manager
+        mgr = get_automl_manager()
+        return mgr.forecast_crime_volume(months_ahead=months_ahead)
+    except Exception as e:
+        raise HTTPException(500, f"Forecasting failed: {e}")
+
+
+class AutoMLHotspotReq(BaseModel):
+    PoliceStationID: int = 1
+    case_count: int = 5
+    avg_gravity: float = 1.0
+
+@router.post("/automl/hotspot")
+def predict_hotspot_automl(req: AutoMLHotspotReq):
+    """Predicts hotspot status using Zia AutoML Classification Pipeline."""
+    try:
+        from services.quickml_automl_service import get_automl_manager
+        mgr = get_automl_manager()
+        return mgr.predict_hotspot_automl(req.dict())
+    except Exception as e:
+        raise HTTPException(500, f"AutoML prediction failed: {e}")
+
+
+# ─── 10. TACTICAL PURSUIT & PATROL ALLOCATION OPTIMIZER ──────────────────
+
+class EscapeContainmentReq(BaseModel):
+    origin_lat: float
+    origin_lng: float
+    elapsed_minutes: int = 10
+    vehicle_speed_kmh: float = 65.0
+
+@router.post("/escape-containment")
+def calculate_escape_containment(req: EscapeContainmentReq):
+    """
+    Computes dynamic pursuit isochrone reachability envelopes (5m, 15m, 30m)
+    and ranks optimal barricade checkpoints for suspect interception.
+    """
+    try:
+        from services.tactical_optimizer import get_tactical_optimizer
+        opt = get_tactical_optimizer()
+        return opt.calculate_escape_containment_plan(
+            origin_lat=req.origin_lat,
+            origin_lng=req.origin_lng,
+            elapsed_minutes=req.elapsed_minutes,
+            vehicle_speed_kmh=req.vehicle_speed_kmh
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Escape containment optimization failed: {e}")
+
+
+class PatrolAllocationReq(BaseModel):
+    total_patrol_units: int = 25
+    target_district_id: Optional[int] = None
+
+@router.post("/patrol-allocation")
+def optimize_patrol_allocation(req: PatrolAllocationReq):
+    """
+    Solves bounded knapsack resource allocation matching available patrol units
+    to station sectors based on live ETAS self-exciting point process risk.
+    """
+    try:
+        from services.tactical_optimizer import get_tactical_optimizer
+        opt = get_tactical_optimizer()
+        return opt.optimize_patrol_dispatch(
+            total_patrol_units=req.total_patrol_units,
+            target_district_id=req.target_district_id
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Patrol allocation optimization failed: {e}")
+
+
+

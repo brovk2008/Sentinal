@@ -11,6 +11,12 @@ import ReactFlow, {
   Handle, Position,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
+import {
+  User, Folder, MapPin, Smartphone, Car,
+  FileSearch, Coins, Sparkles, Brain, Plus,
+  Trash2, ArrowRight, Link2, Download, Save,
+  Info, Paperclip, Check, FolderOpen
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { connectDots, analyzeBoard, queryIntelligence } from '../api'
 import FileUploader from '../components/FileUploader'
@@ -32,27 +38,40 @@ async function saveCanvas(caseId, nodes, edges) {
   })
 }
 
+function NodeIcon({ type, size = 12 }) {
+  switch (type) {
+    case 'person':    return <User size={size} />
+    case 'case':      return <Folder size={size} />
+    case 'location':  return <MapPin size={size} />
+    case 'phone':     return <Smartphone size={size} />
+    case 'vehicle':   return <Car size={size} />
+    case 'evidence':  return <FileSearch size={size} />
+    case 'financial': return <Coins size={size} />
+    default:          return <FileSearch size={size} />
+  }
+}
+
 // ── Node type colours ───────────────────────────────────────────────
 const NODE_TYPES = {
-  person:    { color: '#e05252', icon: '👤', label: 'Person' },
-  case:      { color: 'var(--copper-500,#c8814a)', icon: '📁', label: 'Case' },
-  location:  { color: '#52b0e0', icon: '📍', label: 'Location' },
-  phone:     { color: '#52e07a', icon: '📱', label: 'Phone' },
-  vehicle:   { color: '#b452e0', icon: '🚗', label: 'Vehicle' },
-  evidence:  { color: '#e0c852', icon: '🔬', label: 'Evidence' },
-  financial: { color: '#52e0cc', icon: '💰', label: 'Financial' },
+  person:    { color: '#e05252', label: 'Person' },
+  case:      { color: 'var(--copper-500,#c8814a)', label: 'Case' },
+  location:  { color: '#52b0e0', label: 'Location' },
+  phone:     { color: '#52e07a', label: 'Phone' },
+  vehicle:   { color: '#b452e0', label: 'Vehicle' },
+  evidence:  { color: '#e0c852', label: 'Evidence' },
+  financial: { color: '#52e0cc', label: 'Financial' },
 }
 
 // ── Custom Node renderer ─────────────────────────────────────────────
 function SentinalNode({ data, selected }) {
   const colors = {
-    person:    { border: '#e05252', bg: 'rgba(224,82,82,0.08)',   icon: '👤' },
-    case:      { border: 'var(--copper-500,#c8814a)', bg: 'rgba(200,129,74,0.08)',  icon: '📁' },
-    location:  { border: '#52b0e0', bg: 'rgba(82,176,224,0.08)',  icon: '📍' },
-    phone:     { border: '#52e07a', bg: 'rgba(82,224,122,0.08)',  icon: '📱' },
-    vehicle:   { border: '#b452e0', bg: 'rgba(180,82,224,0.08)',  icon: '🚗' },
-    evidence:  { border: '#e0c852', bg: 'rgba(224,200,82,0.08)',  icon: '🔬' },
-    financial: { border: '#52e0cc', bg: 'rgba(82,224,204,0.08)',  icon: '💰' },
+    person:    { border: '#e05252', bg: 'rgba(224,82,82,0.08)' },
+    case:      { border: 'var(--copper-500,#c8814a)', bg: 'rgba(200,129,74,0.08)' },
+    location:  { border: '#52b0e0', bg: 'rgba(82,176,224,0.08)' },
+    phone:     { border: '#52e07a', bg: 'rgba(82,224,122,0.08)' },
+    vehicle:   { border: '#b452e0', bg: 'rgba(180,82,224,0.08)' },
+    evidence:  { border: '#e0c852', bg: 'rgba(224,200,82,0.08)' },
+    financial: { border: '#52e0cc', bg: 'rgba(82,224,204,0.08)' },
   };
   const c = colors[data.type] || colors.evidence;
 
@@ -98,8 +117,9 @@ function SentinalNode({ data, selected }) {
 
       <div style={{ fontSize: 10, color: c.border, fontWeight: 700,
                     textTransform: 'uppercase', letterSpacing: '0.1em',
-                    marginBottom: 4, display: 'flex', gap: 4, alignItems: 'center' }}>
-        <span>{c.icon}</span><span>{data.type}</span>
+                    marginBottom: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
+        <NodeIcon type={data.type} size={11} />
+        <span>{data.type}</span>
       </div>
       <div style={{ fontSize: 13, color: '#fff', fontWeight: 600,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -255,8 +275,9 @@ function AIPanel({ content, loading, onClose }) {
       zIndex: 100, overflowY: 'auto',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--copper-300,#e8a87c)' }}>
-          🧠 AI Analysis
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--copper-300,#e8a87c)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Brain size={14} />
+          <span>AI Analysis</span>
         </span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 16 }}>×</button>
       </div>
@@ -393,7 +414,7 @@ export default function ConnectionsBoard() {
     saveTimer.current = setTimeout(async () => {
       try {
         await saveCanvas(CANVAS_CASE, nodes, edges)
-        setSaveStatus('Saved ✓')
+        setSaveStatus('Saved')
         setTimeout(() => setSaveStatus(''), 2000)
       } catch { setSaveStatus('Save failed') }
     }, 2000)
@@ -493,7 +514,7 @@ export default function ConnectionsBoard() {
     clearTimeout(saveTimer.current)
     try {
       await saveCanvas(CANVAS_CASE, nodes, edges)
-      setSaveStatus('Saved ✓')
+      setSaveStatus('Saved')
       setTimeout(() => setSaveStatus(''), 2000)
     } catch { setSaveStatus('Save failed') }
   }
@@ -515,8 +536,9 @@ export default function ConnectionsBoard() {
         background: 'rgba(255,255,255,0.02)',
         flexWrap: 'wrap',
       }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginRight: 4 }}>
-          🔗 {t('canvas.title')}
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginRight: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Link2 size={15} color="var(--copper-400)" />
+          <span>{t('canvas.title')}</span>
         </div>
         <div style={{ flex: 1 }} />
 
@@ -537,34 +559,50 @@ export default function ConnectionsBoard() {
             ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
             background: 'rgba(74,158,255,0.1)',
             borderColor: 'rgba(74,158,255,0.4)',
-            color: '#4a9eff',
+            color: '#4a9eff', display: 'flex', alignItems: 'center', gap: 5
           }}
         >
-          📂 Load Demo Case
+          <FolderOpen size={12} />
+          <span>Load Demo Case</span>
         </button>
 
         <button onClick={() => setShowAddModal(true)} style={{
-          ...btnPrimary, flex: 'none', padding: '7px 14px', fontSize: 11,
-        }}>+ {t('canvas.addNode')}</button>
+          ...btnPrimary, flex: 'none', padding: '7px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5
+        }}>
+          <Plus size={12} />
+          <span>{t('canvas.addNode')}</span>
+        </button>
 
         <button onClick={handleAIConnect} style={{
           ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-          borderColor: '#52e07a44', color: '#52e07a',
-        }}>🤖 {t('canvas.connectDots')}</button>
+          borderColor: '#52e07a44', color: '#52e07a', display: 'flex', alignItems: 'center', gap: 5
+        }}>
+          <Sparkles size={12} />
+          <span>{t('canvas.connectDots')}</span>
+        </button>
 
         <button onClick={handleAIAnalyze} style={{
           ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-          borderColor: 'rgba(200,129,74,0.4)', color: 'var(--copper-300,#e8a87c)',
-        }}>🧠 {t('canvas.analyzeBoard')}</button>
+          borderColor: 'rgba(200,129,74,0.4)', color: 'var(--copper-300,#e8a87c)', display: 'flex', alignItems: 'center', gap: 5
+        }}>
+          <Brain size={12} />
+          <span>{t('canvas.analyzeBoard')}</span>
+        </button>
 
         <button onClick={handleSaveNow} style={{
-          ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-        }}>💾 {t('canvas.saveBoard')}</button>
+          ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5
+        }}>
+          <Save size={12} />
+          <span>{t('canvas.saveBoard')}</span>
+        </button>
 
         <button onClick={handleClear} style={{
           ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-          borderColor: '#e0525244', color: '#e05252',
-        }}>🗑 {t('canvas.clearBoard')}</button>
+          borderColor: '#e0525244', color: '#e05252', display: 'flex', alignItems: 'center', gap: 5
+        }}>
+          <Trash2 size={12} />
+          <span>{t('canvas.clearBoard')}</span>
+        </button>
 
         {saveStatus && (
           <span style={{ fontSize: 10, color: '#52e07a', marginLeft: 4 }}>{saveStatus}</span>
@@ -578,11 +616,14 @@ export default function ConnectionsBoard() {
       <div style={{
         padding: '6px 16px', background: 'rgba(74,158,255,0.06)',
         borderBottom: '1px solid rgba(74,158,255,0.15)',
-        fontSize: 11, color: 'var(--text-muted)',
+        fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6
       }}>
-        💡 Drag from the <span style={{ color: '#e05252' }}>red/orange dot</span> (right side of node)
-        to the <span style={{ color: '#4a9eff' }}>blue dot</span> (left side) to connect two nodes.
-        Press Backspace or Delete to remove a selected node/edge.
+        <Info size={13} color="#4a9eff" />
+        <span>
+          Drag from the <span style={{ color: '#e05252' }}>red/orange dot</span> (right side of node)
+          to the <span style={{ color: '#4a9eff' }}>blue dot</span> (left side) to connect two nodes.
+          Press Backspace or Delete to remove a selected node/edge.
+        </span>
       </div>
 
       {/* Attach Evidence Files Collapsible */}
@@ -590,9 +631,10 @@ export default function ConnectionsBoard() {
         <summary style={{
           padding: '8px 16px', cursor: 'pointer', fontSize: 11,
           color: 'rgba(255,255,255,0.6)',
-          userSelect: 'none', fontWeight: 600
+          userSelect: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
         }}>
-          📎 Attach Evidence Files to Investigation
+          <Paperclip size={12} />
+          <span>Attach Evidence Files to Investigation</span>
         </summary>
         <div style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)' }}>
           <FileUploader
@@ -679,7 +721,7 @@ export default function ConnectionsBoard() {
             flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'none',
           }}>
-            <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.2 }}>🔗</div>
+            <Link2 size={40} style={{ marginBottom: 12, opacity: 0.2 }} color="var(--copper-400)" />
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
               Click <strong style={{ color: 'rgba(200,129,74,0.6)' }}>+ Add Node</strong> to start the investigation canvas.<br/>
               Connect nodes by dragging between their handles.

@@ -1,3 +1,6 @@
+"""
+routers/criminology.py — Criminology, MO Series, and Near-Repeat Analysis API
+"""
 import os
 import sqlite3
 from fastapi import APIRouter, HTTPException, Query
@@ -5,55 +8,99 @@ from typing import List, Dict, Any, Optional
 
 from services.criminology_engine import (
     analyze_mo_clusters,
-    calculate_near_repeat_risk,
-    analyze_syndicate_intersect,
-    detect_spree_alerts
+    compute_near_repeat_risk,
+    find_similar_cases,
+    detect_crime_sprees,
+    detect_repeat_victimization,
+    build_escalation_matrix,
 )
 
 router = APIRouter()
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "sentinal.db")
 
 @router.get("/mo-clusters")
-async def get_mo_clusters():
+async def get_mo_clusters(limit: int = Query(200, ge=10, le=1000)):
     """
-    Returns Modus Operandi (MO) series linking clusters across FIRs.
+    Returns Modus Operandi (MO) series linking clusters across FIRs using TF-IDF n-grams
+    and single-linkage agglomerative clustering.
     """
     try:
-        data = analyze_mo_clusters(DB_PATH)
-        return {"status": "ok", "total_series": len(data), "mo_clusters": data}
+        clusters = analyze_mo_clusters(limit=limit)
+        return {
+            "status": "ok",
+            "total_series": len(clusters),
+            "mo_clusters": clusters
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/near-repeat-risk")
-async def get_near_repeat_risk():
+async def get_near_repeat_risk(
+    target_lat: float = Query(12.9716, ge=-90.0, le=90.0),
+    target_lng: float = Query(77.5946, ge=-180.0, le=180.0),
+    radius_km: float = Query(2.0, ge=0.2, le=20.0),
+    days_window: int = Query(30, ge=1, le=180)
+):
     """
-    Returns Bowers & Johnson Near Repeat Spatial-Temporal Risk Forecasting zones.
+    Evaluates Bowers-Johnson Near-Repeat crime risk surface.
     """
     try:
-        data = calculate_near_repeat_risk(DB_PATH)
-        return {"status": "ok", "total_zones": len(data), "risk_zones": data}
+        result = compute_near_repeat_risk(
+            target_lat=target_lat,
+            target_lng=target_lng,
+            radius_km=radius_km,
+            days_window=days_window
+        )
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/syndicate-graph")
-async def get_syndicate_graph():
+
+@router.get("/similar-cases/{case_id}")
+async def get_similar_cases(case_id: int, top_k: int = Query(5, ge=1, le=20)):
     """
-    Returns cross-FIR entity matching and criminal syndicate rosters.
+    Finds top-k MO-similar cases using TF-IDF cosine similarity.
     """
     try:
-        data = analyze_syndicate_intersect(DB_PATH)
-        return {"status": "ok", "total_syndicates": len(data), "syndicates": data}
+        return find_similar_cases(case_id=case_id, top_k=top_k)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/spree-alerts")
-async def get_spree_alerts():
+
+@router.get("/spree-detection")
+async def get_spree_detection(
+    days_window: int = Query(14, ge=1, le=60),
+    min_events: int = Query(3, ge=2, le=10)
+):
     """
-    Detects active crime sprees and repeat victimization patterns.
+    Detects rapid crime sprees: clusters of 3+ crimes by the same accused.
     """
     try:
-        data = detect_spree_alerts(DB_PATH)
-        return {"status": "ok", "total_alerts": len(data), "spree_alerts": data}
+        sprees = detect_crime_sprees(days_window=days_window, min_events=min_events)
+        return {"status": "ok", "sprees_detected": len(sprees), "sprees": sprees}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/repeat-victims")
+async def get_repeat_victims(days_window: int = Query(90, ge=7, le=365)):
+    """
+    Finds repeat victimizations with exponential temporal risk decay.
+    """
+    try:
+        victims = detect_repeat_victimization(days_window=days_window)
+        return {"status": "ok", "repeat_victims_count": len(victims), "victims": victims}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/escalation-matrix")
+async def get_escalation_matrix(limit: int = Query(5000, ge=100, le=10000)):
+    """
+    Returns Markov crime escalation transition probabilities and high-risk trajectories.
+    """
+    try:
+        return build_escalation_matrix(limit=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

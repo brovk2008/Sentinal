@@ -7,60 +7,48 @@
  * - Crime Spree & Repeat Victimization Detection
  * - Predictive Next-Crime Forecasting
  */
-import { useEffect, useState } from 'react';
-import {
-  fetchPatterns,
-  fetchPredictNext,
-  fetchMoClusters,
-  fetchNearRepeatRisk,
-  fetchSyndicateGraph,
-  fetchSpreeAlerts
-} from '../api';
+import { useState, useEffect } from 'react';
+import { fetchPatternIntel, predictNextCrime } from '../api';
 import Badge from '../components/shared/Badge';
+import { Dna, Target, MapPin, Users, Zap, User, ShieldAlert, Clock, Compass } from 'lucide-react';
 
 export default function PatternIntel() {
   const [activeTab, setActiveTab] = useState('mo');
   const [loading, setLoading] = useState(true);
-  const [patterns, setPatterns] = useState(null);
-  const [prediction, setPrediction] = useState(null);
   const [moClusters, setMoClusters] = useState([]);
   const [nearRepeatRisk, setNearRepeatRisk] = useState([]);
   const [syndicates, setSyndicates] = useState([]);
   const [spreeAlerts, setSpreeAlerts] = useState([]);
+  const [prediction, setPrediction] = useState(null);
 
   useEffect(() => {
-    async function loadAllIntelligence() {
-      setLoading(true);
+    async function loadData() {
       try {
-        const [p, n, moRes, nrRes, synRes, spreeRes] = await Promise.all([
-          fetchPatterns().catch(() => null),
-          fetchPredictNext().catch(() => null),
-          fetchMoClusters().catch(() => ({ mo_clusters: [] })),
-          fetchNearRepeatRisk().catch(() => ({ risk_zones: [] })),
-          fetchSyndicateGraph().catch(() => ({ syndicates: [] })),
-          fetchSpreeAlerts().catch(() => ({ spree_alerts: [] }))
+        setLoading(true);
+        const [intelRes, predRes] = await Promise.all([
+          fetchPatternIntel(),
+          predictNextCrime(),
         ]);
-        setPatterns(p);
-        setPrediction(n);
-        setMoClusters(moRes.mo_clusters || []);
-        setNearRepeatRisk(nrRes.risk_zones || []);
-        setSyndicates(synRes.syndicates || []);
-        setSpreeAlerts(spreeRes.spree_alerts || []);
+        if (intelRes?.success) {
+          setMoClusters(intelRes.data.mo_clusters || []);
+          setNearRepeatRisk(intelRes.data.near_repeat_risk || []);
+          setSyndicates(intelRes.data.syndicates || []);
+          setSpreeAlerts(intelRes.data.spree_alerts || []);
+        }
+        if (predRes?.success) {
+          setPrediction(predRes.data);
+        }
       } catch (err) {
-        console.error('Failed to load pattern intelligence data:', err);
+        console.error('Failed to load pattern intel:', err);
       } finally {
         setLoading(false);
       }
     }
-    loadAllIntelligence();
-  }, []);
+    loadData();
 
-  // Listen to demo mode auto-triggers
-  useEffect(() => {
+    // Listen for custom tab trigger events from demo scenario switcher
     const handleDemoTab = (e) => {
-      if (e.detail?.tab) {
-        setActiveTab(e.detail.tab);
-      }
+      if (e.detail?.tab) setActiveTab(e.detail.tab);
     };
     window.addEventListener('demo-trigger-pattern-tab', handleDemoTab);
     return () => window.removeEventListener('demo-trigger-pattern-tab', handleDemoTab);
@@ -72,7 +60,8 @@ export default function PatternIntel() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--copper-400)', margin: 0, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>🧬</span> CRIME PATTERN &amp; PREDICTIVE AI HUB
+            <Dna size={22} color="var(--copper-400)" />
+            <span>CRIME PATTERN &amp; PREDICTIVE AI HUB</span>
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>
             Multi-District Modus Operandi (MO) Linking • Bowers &amp; Johnson Near-Repeat Risk • Syndicate Auto-Extraction
@@ -107,8 +96,9 @@ export default function PatternIntel() {
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
               Likely Time Window
             </div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--copper-400)' }}>
-              {prediction.predicted_time || 'Weekend (22:00 - 04:00)'}
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--copper-400)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Clock size={16} />
+              <span>{prediction.predicted_time || 'Weekend (22:00 - 04:00)'}</span>
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               Day-of-week &amp; festival period correlation
@@ -121,8 +111,9 @@ export default function PatternIntel() {
             <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>
               {prediction.confidence || 88}% Confidence
             </div>
-            <div style={{ fontSize: 11, color: 'var(--copper-400)', marginTop: 6, fontWeight: 600 }}>
-              ⚡ {prediction.recommended_action || 'Deploy night patrols & cyber cell monitoring'}
+            <div style={{ fontSize: 11, color: 'var(--copper-400)', marginTop: 6, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Zap size={13} />
+              <span>{prediction.recommended_action || 'Deploy night patrols & cyber cell monitoring'}</span>
             </div>
           </div>
         </div>
@@ -136,10 +127,12 @@ export default function PatternIntel() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'mo' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'mo' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'mo' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          🎯 MO Series Linking ({moClusters.length})
+          <Target size={14} />
+          <span>MO Series Linking ({moClusters.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('nearRepeat')}
@@ -147,10 +140,12 @@ export default function PatternIntel() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'nearRepeat' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'nearRepeat' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'nearRepeat' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          📍 Near-Repeat Risk ({nearRepeatRisk.length})
+          <MapPin size={14} />
+          <span>Near-Repeat Risk ({nearRepeatRisk.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('syndicates')}
@@ -158,10 +153,12 @@ export default function PatternIntel() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'syndicates' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'syndicates' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'syndicates' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          🕸️ Syndicate Roster ({syndicates.length})
+          <Users size={14} />
+          <span>Syndicate Roster ({syndicates.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('spree')}
@@ -169,10 +166,12 @@ export default function PatternIntel() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'spree' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'spree' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'spree' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          ⚡ Spree Alerts ({spreeAlerts.length})
+          <Zap size={14} />
+          <span>Spree Alerts ({spreeAlerts.length})</span>
         </button>
       </div>
 
@@ -239,8 +238,9 @@ export default function PatternIntel() {
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
                     <strong>Category:</strong> {zone.crime_group} &nbsp;|&nbsp; <strong>Window:</strong> {zone.timeframe}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.25)', padding: 10, borderRadius: 6, borderLeft: '3px solid var(--copper-500)' }}>
-                    🎯 <strong>Tactical Action:</strong> {zone.recommended_action}
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.25)', padding: 10, borderRadius: 6, borderLeft: '3px solid var(--copper-500)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Target size={13} color="var(--copper-400)" />
+                    <div><strong>Tactical Action:</strong> {zone.recommended_action}</div>
                   </div>
                 </div>
               ))}
@@ -261,8 +261,9 @@ export default function PatternIntel() {
                       {syn.risk_level} THREAT
                     </span>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                    👤 {syn.primary_suspect}
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <User size={15} color="#38bdf8" />
+                    <span>{syn.primary_suspect}</span>
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--copper-400)', fontWeight: 600, marginBottom: 8 }}>
                     Role: {syn.role}
@@ -285,8 +286,9 @@ export default function PatternIntel() {
                   borderRadius: 8, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444', marginBottom: 4 }}>
-                      ⚡ {alt.alert_type} — {alt.district} ({alt.station})
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Zap size={14} color="#ef4444" />
+                      <span>{alt.alert_type} — {alt.district} ({alt.station})</span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>
                       <strong>Crime Group:</strong> {alt.crime_group} &nbsp;|&nbsp; <strong>Cluster:</strong> {alt.frequency_cluster}

@@ -378,6 +378,174 @@ def seed_crime_syndicates():
     print(f"[init_db] Seeded {len(rows)} crime syndicates.")
 
 
+# ─── Phase 1 Advanced Architecture Tables ───────────────────────────────────
+
+def create_entity_aliases():
+    """
+    Entity disambiguation alias index.
+    Maps all raw name variants → canonical entity IDs.
+    This is the core deduplication table for the ELP ontology.
+    """
+    _exec("""
+        CREATE TABLE IF NOT EXISTS entity_aliases (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            alias_raw           TEXT NOT NULL,
+            alias_normalized    TEXT NOT NULL,
+            canonical_id        TEXT NOT NULL,
+            entity_type         TEXT NOT NULL DEFAULT 'PERSON',
+            similarity_score    REAL DEFAULT 1.0,
+            merged_at           TEXT DEFAULT (datetime('now')),
+            UNIQUE(alias_normalized, entity_type)
+        )
+    """)
+    _exec("CREATE INDEX IF NOT EXISTS idx_alias_norm ON entity_aliases(alias_normalized, entity_type)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_alias_canon ON entity_aliases(canonical_id)")
+
+
+def create_ontology_links():
+    """
+    Explicit ELP link storage for graph edges that can't be derived
+    purely from existing relational tables (e.g., analyst-asserted links,
+    AI-inferred links, cross-source links).
+    Core table traversal still uses SQLite recursive CTEs against CaseMaster,
+    Accused, etc. This table supplements with explicit/inferred links.
+    """
+    _exec("""
+        CREATE TABLE IF NOT EXISTS ontology_links (
+            link_id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            src_entity_type     TEXT NOT NULL,
+            src_entity_id       TEXT NOT NULL,
+            link_type           TEXT NOT NULL,
+            dst_entity_type     TEXT NOT NULL,
+            dst_entity_id       TEXT NOT NULL,
+            weight              REAL DEFAULT 1.0,
+            confidence          REAL DEFAULT 1.0,
+            properties_json     TEXT DEFAULT '{}',
+            source              TEXT DEFAULT 'ANALYST',
+            rec_id              TEXT,               -- AI recommendation that created this link
+            created_at          TEXT DEFAULT (datetime('now')),
+            created_by          TEXT DEFAULT 'system'
+        )
+    """)
+    _exec("""
+        CREATE INDEX IF NOT EXISTS idx_ontology_src
+        ON ontology_links(src_entity_type, src_entity_id)
+    """)
+    _exec("""
+        CREATE INDEX IF NOT EXISTS idx_ontology_dst
+        ON ontology_links(dst_entity_type, dst_entity_id)
+    """)
+    _exec("""
+        CREATE INDEX IF NOT EXISTS idx_ontology_type
+        ON ontology_links(link_type)
+    """)
+
+
+def create_ai_action_log():
+    """
+    Immutable append-only audit log for all AI recommendations and analyst decisions.
+    This is the core accountability table — no rows are ever updated or deleted.
+
+    Lifecycle:
+      INSERT when: AI generates a recommendation (GraphRAG, predict, brain)
+      UPDATE analyst_decision when: analyst confirms, rejects, or escalates
+      INSERT outcome_written_back when: analyst action has a measurable result
+    """
+    _exec("""
+        CREATE TABLE IF NOT EXISTS ai_action_log (
+            id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+            rec_id                  TEXT NOT NULL UNIQUE,       -- UUID for this AI recommendation
+            analyst_id              TEXT DEFAULT 'system',
+            ai_prompt_hash          TEXT,                       -- SHA-256 of the original prompt
+            ai_prompt_summary       TEXT,                       -- First 300 chars of prompt
+            ai_recommendation       TEXT,                       -- Full AI output (capped 2000 chars)
+            analyst_decision        TEXT DEFAULT 'PENDING',     -- PENDING | CONFIRMED | REJECTED | ESCALATED
+            analyst_note            TEXT,
+            outcome_written_back    INTEGER DEFAULT 0,          -- 1 if analyst action was applied to DB
+            model_name              TEXT,                       -- Which model generated this
+            entity_ids              TEXT DEFAULT '[]',          -- JSON array of affected entity IDs
+            created_at              TEXT NOT NULL,
+            decided_at              TEXT,
+            expires_at              TEXT                        -- For time-boxed recommendations
+        )
+    """)
+    _exec("CREATE INDEX IF NOT EXISTS idx_ailog_rec ON ai_action_log(rec_id)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_ailog_analyst ON ai_action_log(analyst_id)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_ailog_decision ON ai_action_log(analyst_decision)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_ailog_created ON ai_action_log(created_at)")
+
+
+def create_etas_events_cache():
+    """
+    Persistent event cache for ETAS contagion model.
+    Allows the ETAS engine to survive container restarts without re-loading from DB.
+    Synced with CaseMaster via a background job on each new incident INSERT.
+    """
+    _exec("""
+        CREATE TABLE IF NOT EXISTS etas_event_cache (
+            event_id            TEXT PRIMARY KEY,
+            lat                 REAL NOT NULL,
+            lng                 REAL NOT NULL,
+            timestamp           TEXT NOT NULL,
+            crime_type          TEXT,
+            magnitude           REAL DEFAULT 1.0,
+            cached_at           TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    _exec("CREATE INDEX IF NOT EXISTS idx_etas_ts ON etas_event_cache(timestamp)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_etas_type ON etas_event_cache(crime_type)")
+
+
+def create_mo_fingerprints():
+    """
+    Stores computed Modus Operandi TF-IDF fingerprint vectors for cases.
+    Used by the MO clustering engine to find series linkages without
+    re-computing vectors on every query.
+    """
+    _exec("""
+        CREATE TABLE IF NOT EXISTS mo_fingerprints (
+            case_master_id      INTEGER PRIMARY KEY,
+            mo_cluster_id       INTEGER,                -- Which MO series this case belongs to
+            mo_vector_json      TEXT,                   -- JSON-serialized sparse TF-IDF vector
+            target_category     TEXT,
+            execution_method    TEXT,
+            time_window         TEXT,
+            crime_type_bucket   TEXT,
+            fingerprinted_at    TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    _exec("CREATE INDEX IF NOT EXISTS idx_mo_cluster ON mo_fingerprints(mo_cluster_id)")
+
+
+def create_evidence_chain_of_custody():
+    """
+    Forensic proof & chain-of-custody table compliant with Sec 65B of Indian Evidence Act.
+    Stores SHA-256 / SHA-512 cryptographic digests, Merkle leaf hashes, officer IDs,
+    and storage URLs for every piece of uploaded evidence.
+    """
+    _exec("""
+        CREATE TABLE IF NOT EXISTS evidence_chain_of_custody (
+            certificate_id      TEXT PRIMARY KEY,
+            file_id             TEXT NOT NULL,
+            filename            TEXT NOT NULL,
+            file_size_bytes     INTEGER NOT NULL,
+            mime_type           TEXT NOT NULL,
+            sha256_hash         TEXT NOT NULL,
+            sha512_hash         TEXT NOT NULL,
+            merkle_leaf_hash    TEXT NOT NULL,
+            officer_id          TEXT DEFAULT 'system',
+            case_id             TEXT,
+            stratus_url         TEXT NOT NULL,
+            evidence_category   TEXT DEFAULT 'DOCUMENT',
+            created_at          TEXT NOT NULL,
+            is_verified         INTEGER DEFAULT 1
+        )
+    """)
+    _exec("CREATE INDEX IF NOT EXISTS idx_ev_sha256 ON evidence_chain_of_custody(sha256_hash)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_ev_file ON evidence_chain_of_custody(file_id)")
+    _exec("CREATE INDEX IF NOT EXISTS idx_ev_case ON evidence_chain_of_custody(case_id)")
+
+
 # ─── Main entry point ───────────────────────────────────────────────────────
 
 def init_all_tables():
@@ -399,7 +567,7 @@ def init_all_tables():
                 else:
                     print(f"[init_db] WARNING: Bundled database not found at {bundled_db}")
 
-
+        # ── Core tables (pre-existing) ────────────────────────────────────
         create_financial_transactions()
         create_cdr_records()
         create_evidence_boards()
@@ -409,13 +577,50 @@ def init_all_tables():
         create_scrape_table()
         create_ocr_records_table()
 
+        # ── Advanced Architecture v2 tables (Phase 1 overhaul) ────────────
+        create_entity_aliases()
+        create_ontology_links()
+        create_ai_action_log()
+        create_etas_events_cache()
+        create_mo_fingerprints()
+        create_evidence_chain_of_custody()
+
         # Seed synthetic data if tables are empty
         seed_financial_transactions()
         seed_cdr_records()
         seed_evidence_boards()
         seed_crime_syndicates()
 
-        print("[init_db] All tables ready.")
+        # ── Lazy alias index build (background thread) ─────────────────────
+        try:
+            import threading
+            def _build_alias_index():
+                try:
+                    from services.entity_resolver import get_resolver
+                    resolver = get_resolver()
+                    resolver.build_alias_index(limit=5000)
+                    print("[init_db] Entity alias index built successfully.")
+                except Exception as e:
+                    print(f"[init_db] Alias index build error: {e}")
+            threading.Thread(target=_build_alias_index, daemon=True).start()
+        except Exception as bg_err:
+            print(f"[init_db] Background alias index build failed to start: {bg_err}")
+
+        # ── ETAS: Pre-warm event cache ─────────────────────────────────────
+        try:
+            import threading
+            def _prewarm_etas():
+                try:
+                    from services.etas_engine import get_etas_engine
+                    engine = get_etas_engine()
+                    print(f"[init_db] ETAS engine pre-warmed: {len(engine._recent_events)} events cached.")
+                except Exception as e:
+                    print(f"[init_db] ETAS pre-warm error: {e}")
+            threading.Thread(target=_prewarm_etas, daemon=True).start()
+        except Exception as etas_err:
+            print(f"[init_db] ETAS pre-warm failed to start: {etas_err}")
+
+        print("[init_db] All tables ready (v2 advanced architecture).")
     except Exception as e:
         import traceback
         print(f"[init_db] ERROR: {e}\n{traceback.format_exc()}")

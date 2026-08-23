@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
+import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2 } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import { queryIntelligence, uploadToRag, textToSpeech } from '../api'
@@ -191,7 +192,7 @@ Type your query below or select a suggestion to begin.`,
       console.error('[AI Assistant] Query failed:', err)
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: '⚠️ Intelligence query failed. Please try again.' },
+        { role: 'assistant', content: 'Intelligence query failed. Please try again.' },
       ])
     } finally {
       setLoading(false)
@@ -257,7 +258,7 @@ Type your query below or select a suggestion to begin.`,
             ...prev,
             {
               role: 'system',
-              content: `📎 **File Uploaded**: \`${result.filename}\`\n\n${result.message}`,
+              content: `**File Uploaded**: \`${result.filename}\`\n\n${result.message}`,
             }
           ])
           setTimeout(() => setUploadStatus(''), 3000)
@@ -291,9 +292,10 @@ Type your query below or select a suggestion to begin.`,
           border: '1px solid var(--copper-400)',
           color: voiceMode ? '#000' : 'var(--copper-400)',
           padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
-          outline: 'none', marginRight: 16
+          outline: 'none', marginRight: 16, display: 'flex', alignItems: 'center', gap: 6
         }}>
-          🎙️ {voiceMode ? 'VOICE ON' : 'VOICE'}
+          <Mic size={12} />
+          <span>{voiceMode ? 'VOICE ON' : 'VOICE'}</span>
         </button>
         <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
           KNOWLEDGE BASE: 500 narratives · 2,384 chunks · 113K records · Last indexed: Jul 5, 2026
@@ -397,9 +399,10 @@ Type your query below or select a suggestion to begin.`,
             padding: '8px 16px', borderRadius: 6,
             background: 'var(--bg-overlay)', border: '1px solid var(--copper-500)',
             color: 'var(--copper-400)', fontSize: 11, fontWeight: 'bold',
-            animation: 'pulse 1.5s infinite',
+            animation: 'pulse 1.5s infinite', display: 'flex', alignItems: 'center', gap: 6
           }}>
-            📎 {uploadStatus}
+            <Paperclip size={12} />
+            <span>{uploadStatus}</span>
           </div>
         )}
 
@@ -464,12 +467,12 @@ Type your query below or select a suggestion to begin.`,
 
         <button
           className="btn"
-          style={{ padding: '8px 12px', fontSize: 14 }}
+          style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => fileInputRef.current?.click()}
           title="Upload file to RAG context"
           disabled={loading || !!uploadStatus}
         >
-          📎
+          <Paperclip size={14} />
         </button>
 
         <input

@@ -6,7 +6,7 @@ export default function LiveFeed() {
   // Format events for ticker display
   const tickerItems = events.map(e =>
     `${new Date(e.timestamp).toLocaleTimeString('en-IN')} · ` +
-    `${e.severity === 'CRITICAL' ? '🔴 CRITICAL — ' : ''}` +
+    `${e.severity === 'CRITICAL' ? '[CRITICAL] — ' : ''}` +
     `${e.crime_type} · ${e.district} · ${e.station} · ` +
     `Case ${e.crime_no?.slice(-8)}`
   )

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Dna, Search, Target, Users, Zap, User, Clock, ShieldAlert, Sparkles } from 'lucide-react';
 import { fetchMoClusters, fetchNearRepeatRisk, fetchSyndicateGraph, fetchSpreeAlerts } from '../api';
 import Badge from '../components/shared/Badge';
 
@@ -39,7 +40,8 @@ export default function PatternIntelligence() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>🧬</span> Pattern &amp; Predictive Criminology AI
+            <Dna size={22} color="var(--copper-400)" />
+            <span>Pattern &amp; Predictive Criminology AI</span>
           </h1>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
             Automated Modus Operandi (MO) Series Linking • Near-Repeat Spatial Risk • Syndicate Cross-Matching
@@ -59,10 +61,12 @@ export default function PatternIntelligence() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'mo' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'mo' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'mo' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          🔍 MO Series Linking ({moClusters.length})
+          <Search size={14} />
+          <span>MO Series Linking ({moClusters.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('nearRepeat')}
@@ -70,10 +74,12 @@ export default function PatternIntelligence() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'nearRepeat' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'nearRepeat' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'nearRepeat' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          🎯 Near-Repeat Risk ({nearRepeatRisk.length})
+          <Target size={14} />
+          <span>Near-Repeat Risk ({nearRepeatRisk.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('syndicates')}
@@ -81,10 +87,12 @@ export default function PatternIntelligence() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'syndicates' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'syndicates' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'syndicates' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          🕸️ Syndicate Roster ({syndicates.length})
+          <Users size={14} />
+          <span>Syndicate Roster ({syndicates.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('spree')}
@@ -92,16 +100,19 @@ export default function PatternIntelligence() {
             padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
             border: 'none', background: 'none',
             color: activeTab === 'spree' ? 'var(--copper-400)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'spree' ? '2px solid var(--copper-400)' : 'none'
+            borderBottom: activeTab === 'spree' ? '2px solid var(--copper-400)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          ⚡ Spree Alerts ({spreeAlerts.length})
+          <Zap size={14} />
+          <span>Spree Alerts ({spreeAlerts.length})</span>
         </button>
       </div>
 
       {loading ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--copper-400)', fontSize: 14 }}>
-          ⏳ Analyzing crime patterns &amp; spatial risks across 41 districts...
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--copper-400)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Clock size={16} />
+          <span>Analyzing crime patterns &amp; spatial risks across 41 districts...</span>
         </div>
       ) : (
         <div>
@@ -118,34 +129,24 @@ export default function PatternIntelligence() {
                       {cluster.series_id}
                     </span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: 4 }}>
-                      {cluster.confidence_score}% Confidence
+                      Score: {cluster.confidence_score}
                     </span>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
-                    {cluster.crime_group}
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+                    {cluster.crime_title}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-                    <div><strong>Execution Method:</strong> {cluster.execution_method}</div>
-                    <div><strong>Target Asset:</strong> {cluster.target_category}</div>
-                    <div><strong>Time Window:</strong> {cluster.time_window}</div>
-                    <div><strong>Affected Districts:</strong> {cluster.districts_affected?.join(', ')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                    <strong>Signature:</strong> {cluster.signature_pattern}
                   </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>Linked Sample FIRs ({cluster.cases_count} total):</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {cluster.sample_cases?.map((sc, j) => (
-                        <span key={j} style={{ fontSize: 10, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', padding: '2px 6px', borderRadius: 4 }}>
-                          FIR {sc.crime_no} ({sc.station})
-                        </span>
-                      ))}
-                    </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    <strong>Connected Cases:</strong> {cluster.case_count} incidents ({cluster.districts_affected?.join(', ')})
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* TAB 2: NEAR REPEAT RISK */}
+          {/* TAB 2: NEAR-REPEAT RISK */}
           {activeTab === 'nearRepeat' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 16 }}>
               {nearRepeatRisk.map((zone, i) => (
@@ -162,8 +163,9 @@ export default function PatternIntelligence() {
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
                     <strong>Category:</strong> {zone.crime_group} &nbsp;|&nbsp; <strong>Window:</strong> {zone.timeframe}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.2)', padding: 10, borderRadius: 6, borderLeft: '3px solid var(--copper-500)' }}>
-                    🎯 <strong>Tactical Action:</strong> {zone.recommended_action}
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.2)', padding: 10, borderRadius: 6, borderLeft: '3px solid var(--copper-500)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Target size={13} color="var(--copper-400)" />
+                    <div><strong>Tactical Action:</strong> {zone.recommended_action}</div>
                   </div>
                 </div>
               ))}
@@ -184,8 +186,9 @@ export default function PatternIntelligence() {
                       {syn.risk_level} THREAT
                     </span>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                    👤 {syn.primary_suspect}
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <User size={15} />
+                    <span>{syn.primary_suspect}</span>
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--copper-400)', fontWeight: 600, marginBottom: 8 }}>
                     Role: {syn.role}
@@ -208,8 +211,9 @@ export default function PatternIntelligence() {
                   borderRadius: 8, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444', marginBottom: 4 }}>
-                      ⚡ {alt.alert_type} — {alt.district} ({alt.station})
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Zap size={14} />
+                      <span>{alt.alert_type} — {alt.district} ({alt.station})</span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>
                       <strong>Crime Group:</strong> {alt.crime_group} &nbsp;|&nbsp; <strong>Cluster:</strong> {alt.frequency_cluster}

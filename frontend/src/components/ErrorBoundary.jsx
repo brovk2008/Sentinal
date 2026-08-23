@@ -3,6 +3,7 @@
  * instead of a blank white screen. All major pages are wrapped in this.
  */
 import { Component } from 'react'
+import { AlertTriangle, RotateCw } from 'lucide-react'
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -27,7 +28,7 @@ export default class ErrorBoundary extends Component {
         justifyContent: 'center', height: '100%', minHeight: 300,
         gap: 16, padding: 40, textAlign: 'center',
       }}>
-        <div style={{ fontSize: 36 }}>⚠️</div>
+        <AlertTriangle size={40} color="#e05252" />
         <div style={{ fontSize: 16, fontWeight: 700, color: '#e05252' }}>
           Page Render Error
         </div>
@@ -48,10 +49,12 @@ export default class ErrorBoundary extends Component {
             padding: '10px 24px', borderRadius: 8, cursor: 'pointer',
             background: 'rgba(200,129,74,0.85)', color: '#fff',
             border: 'none', fontWeight: 700, fontSize: 13,
-            fontFamily: 'var(--font-sans)',
+            fontFamily: 'var(--font-sans)', display: 'inline-flex',
+            alignItems: 'center', gap: 8
           }}
         >
-          🔄 Reload Page
+          <RotateCw size={14} />
+          <span>Reload Page</span>
         </button>
       </div>
     )

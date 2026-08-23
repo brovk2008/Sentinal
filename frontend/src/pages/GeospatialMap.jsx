@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, CircleMarker, Circle, Polyline, Popup, useMap } from 'react-leaflet'
+import { Plus, Minus, Crosshair, Play, Pause, Cloud, Globe, Zap, FileText, Hexagon, Sparkles, Smartphone, Check, MapPin, RotateCcw } from 'lucide-react'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
 import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases, downloadDistrictReport, fetchHeatmapTimelapse, fetchDbscanClusters, fetchPredictNext, fetchMovementTrail } from '../api'
@@ -394,14 +395,20 @@ function ThreeGlobe({ points }) {
         background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)',
         padding: 8, borderRadius: 10, backdropFilter: 'blur(10px)', zIndex: 10
       }}>
-        <button onClick={() => handleZoom(-30)} title="Zoom In" style={toolBtnStyle}>➕</button>
-        <button onClick={() => handleZoom(30)} title="Zoom Out" style={toolBtnStyle}>➖</button>
-        <button onClick={resetIndiaFocus} title="Focus Karnataka / India" style={toolBtnStyle}>🎯</button>
-        <button onClick={() => setAutoRotate(!autoRotate)} title="Toggle Auto Rotation" style={{ ...toolBtnStyle, background: autoRotate ? 'rgba(200,129,74,0.3)' : 'transparent' }}>
-          {autoRotate ? '⏸️' : '▶️'}
+        <button onClick={() => handleZoom(-30)} title="Zoom In" style={{ ...toolBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Plus size={14} />
         </button>
-        <button onClick={() => setShowClouds(!showClouds)} title="Toggle Cloud Layer" style={{ ...toolBtnStyle, background: showClouds ? 'rgba(59,130,246,0.3)' : 'transparent' }}>
-          ☁️
+        <button onClick={() => handleZoom(30)} title="Zoom Out" style={{ ...toolBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Minus size={14} />
+        </button>
+        <button onClick={resetIndiaFocus} title="Focus Karnataka / India" style={{ ...toolBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Crosshair size={14} />
+        </button>
+        <button onClick={() => setAutoRotate(!autoRotate)} title="Toggle Auto Rotation" style={{ ...toolBtnStyle, background: autoRotate ? 'rgba(200,129,74,0.3)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {autoRotate ? <Pause size={13} /> : <Play size={13} />}
+        </button>
+        <button onClick={() => setShowClouds(!showClouds)} title="Toggle Cloud Layer" style={{ ...toolBtnStyle, background: showClouds ? 'rgba(59,130,246,0.3)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Cloud size={14} />
         </button>
       </div>
 
@@ -411,8 +418,9 @@ function ThreeGlobe({ points }) {
         background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)',
         padding: '8px 18px', borderRadius: 8, backdropFilter: 'blur(8px)', zIndex: 10
       }}>
-        <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.1em' }}>
-          🌍 GOOGLE EARTH SATELLITE GLOBE
+        <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <Globe size={13} />
+          <span>SATELLITE GLOBE INTELLIGENCE</span>
         </div>
         <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 12, justifyContent: 'center' }}>
           <span>Alt: <strong>{Math.round((zoomLevel - 75) * 50)} km</strong></span>
@@ -697,12 +705,22 @@ export default function GeospatialMap() {
                   border: '1px solid var(--copper-400)',
                   padding: '6px 12px',
                   borderRadius: 6,
-                  fontSize: 12,
-                  cursor: 'pointer',
-                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
                 }}
               >
-                {predictionMode ? '⚡ PREDICTIVE ACTIVE' : '◉ Switch to Predictive'}
+                {predictionMode ? (
+                  <>
+                    <Zap size={12} />
+                    <span>PREDICTIVE ACTIVE</span>
+                  </>
+                ) : (
+                  <>
+                    <Radio size={12} />
+                    <span>Switch to Predictive</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -834,10 +852,14 @@ export default function GeospatialMap() {
             borderColor: 'var(--copper-400)',
             background: 'transparent',
             color: 'var(--copper-200)',
-            marginBottom: 12
+            marginBottom: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          {districtReportLoading ? 'Generating...' : '📄 District Report'}
+          <FileText size={12} />
+          <span>{districtReportLoading ? 'Generating...' : 'District Report'}</span>
         </button>
 
         {!globeMode && (
@@ -889,9 +911,12 @@ export default function GeospatialMap() {
                 background: showDbscan ? 'rgba(82,224,122,0.1)' : 'transparent',
                 color: '#52e07a', fontSize: 11, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
-                marginBottom: 6,
+                marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
               }}
-            >{dbscanLoading ? 'Clustering...' : showDbscan ? `✓ ${dbscanClusters.length} Clusters` : '⬡ DBSCAN Clusters'}</button>
+            >
+              <Hexagon size={12} />
+              <span>{dbscanLoading ? 'Clustering...' : showDbscan ? `${dbscanClusters.length} Clusters` : 'DBSCAN Clusters'}</span>
+            </button>
 
             <button
               onClick={() => { setShowNextCrime(v => !v); if (!nextCrime) loadDbscan() }}
@@ -901,8 +926,12 @@ export default function GeospatialMap() {
                 background: showNextCrime ? 'rgba(200,129,74,0.1)' : 'transparent',
                 color: 'var(--copper-300,#e8a87c)', fontSize: 11, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
               }}
-            >🔮 Next Crime Prediction</button>
+            >
+              <Sparkles size={12} />
+              <span>Next Crime Prediction</span>
+            </button>
 
             {/* CDR movement trail control panel */}
             <div style={{
@@ -911,8 +940,9 @@ export default function GeospatialMap() {
               paddingTop: 10
             }}>
               <div style={{ fontSize: 10, color: 'var(--copper-400)', fontWeight: 700,
-                           letterSpacing: '0.1em', marginBottom: 8 }}>
-                📱 CDR MOVEMENT TRAIL
+                           letterSpacing: '0.1em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Smartphone size={12} />
+                <span>CDR MOVEMENT TRAIL</span>
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                 <input
@@ -940,8 +970,8 @@ export default function GeospatialMap() {
               </div>
               {showTrail && cdrTrail.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, color: 'var(--status-success)' }}>
-                    ✓ {cdrTrail.length} points plotted
+                  <span style={{ fontSize: 10, color: 'var(--status-success)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Check size={11} /> {cdrTrail.length} points plotted
                   </span>
                   <button
                     onClick={() => { setShowTrail(false); setCdrTrail([]); setCdrPhone('') }}
@@ -971,8 +1001,9 @@ export default function GeospatialMap() {
           boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--copper-300,#e8a87c)' }}>
-              🔮 Next Crime Prediction
+            <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--copper-300,#e8a87c)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Sparkles size={13} />
+              <span>Next Crime Prediction</span>
             </span>
             <button onClick={() => setShowNextCrime(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>×</button>
           </div>
@@ -999,8 +1030,10 @@ export default function GeospatialMap() {
               <div style={{
                 marginTop: 8, fontSize: 10, color: '#52e07a',
                 borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8,
+                display: 'flex', alignItems: 'center', gap: 5
               }}>
-                ⚡ {nextCrime.recommended_action}
+                <Zap size={12} />
+                <span>{nextCrime.recommended_action}</span>
               </div>
             )}
             {nextCrime.top_5_crimes?.length > 0 && (
@@ -1202,8 +1235,9 @@ export default function GeospatialMap() {
           </div>
 
           {/* Details */}
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            📍 {selectedCasePin.DistrictName} District · Registered: {selectedCasePin.CrimeRegisteredDate}
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <MapPin size={12} color="var(--copper-400)" />
+            <span>{selectedCasePin.DistrictName} District · Registered: {selectedCasePin.CrimeRegisteredDate}</span>
           </div>
 
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '6px 0' }}>
@@ -1275,9 +1309,9 @@ export default function GeospatialMap() {
               <button
                 className="btn btn-sm"
                 onClick={() => setIsTimelapsePlaying(!isTimelapsePlaying)}
-                style={{ minWidth: 70 }}
+                style={{ minWidth: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                {isTimelapsePlaying ? '❚❚ Pause' : '▶ Play'}
+                {isTimelapsePlaying ? <><Pause size={12} /> Pause</> : <><Play size={12} /> Play</>}
               </button>
               <button
                 className="btn btn-sm"
@@ -1285,8 +1319,9 @@ export default function GeospatialMap() {
                   setIsTimelapsePlaying(false)
                   setCurrentFrameIndex(0)
                 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                ■ Reset
+                <RotateCcw size={12} /> Reset
               </button>
             </div>
 

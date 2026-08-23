@@ -127,14 +127,22 @@ export default function SignupPage() {
           {error && (
             <div style={{
               background: 'rgba(224,82,82,0.08)', border: '1px solid var(--status-danger)',
-              borderRadius: 6, padding: 10, fontSize: 12, color: 'var(--status-danger)', textAlign: 'center',
-            }}>⚠️ {error}</div>
+              borderRadius: 6, padding: '8px 12px', fontSize: 12, color: 'var(--status-danger)', textAlign: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+            }}>
+              <AlertCircle size={14} />
+              {error}
+            </div>
           )}
           {success && (
             <div style={{
               background: 'rgba(72,199,142,0.08)', border: '1px solid var(--status-success)',
-              borderRadius: 6, padding: 10, fontSize: 12, color: 'var(--status-success)', textAlign: 'center',
-            }}>✅ {success}</div>
+              borderRadius: 6, padding: '8px 12px', fontSize: 12, color: 'var(--status-success)', textAlign: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+            }}>
+              <CheckCircle2 size={14} />
+              {success}
+            </div>
           )}
 
           {[

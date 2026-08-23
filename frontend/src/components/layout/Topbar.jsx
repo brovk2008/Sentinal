@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Mic, Bell, Globe, User, LogOut, Search } from 'lucide-react'
 import { fetchAlerts, searchCases } from '../../api'
 import { logoutUser } from '../../lib/catalystAuth'
 import { useTranslation } from 'react-i18next'
@@ -206,16 +207,16 @@ export default function Topbar() {
             outline: 'none'
           }}
         >
-          🎙️
+          <Mic size={14} />
         </button>
 
         {/* Alert Bell and Sliding Notification Panel (7B) */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <div
             onClick={() => setShowAlerts(!showAlerts)}
-            style={{ position: 'relative', cursor: 'pointer', fontSize: 16 }}
+            style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
-            🔔
+            <Bell size={16} color="var(--text-secondary)" />
             {alertCount > 0 && (
               <span style={{
                 position: 'absolute', top: -4, right: -6,
@@ -292,10 +293,11 @@ export default function Topbar() {
               color: 'var(--text-primary)', fontSize: 11, fontWeight: 700,
               cursor: 'pointer', outline: 'none', fontFamily: 'var(--font-sans)',
               letterSpacing: '0.01em', transition: 'background 0.2s',
-              display: 'flex', alignItems: 'center', gap: 4,
+              display: 'flex', alignItems: 'center', gap: 5,
             }}
           >
-            🌐 {LANGS.find(l => l.code === i18n.language)?.label || 'EN'}
+            <Globe size={13} color="var(--copper-400)" />
+            <span>{LANGS.find(l => l.code === i18n.language)?.label || 'EN'}</span>
           </button>
           {showLang && (
             <div style={{

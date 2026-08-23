@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { FileText, RefreshCw, Search, Languages, X } from 'lucide-react'
 import Icon from '../components/Icons'
 
 const BASE_URL    = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -18,24 +19,30 @@ export default function OCRRecords() {
     { code: 'en', name: 'English' },
     { code: 'kn', name: 'Kannada (ಕನ್ನಡ)' },
     { code: 'hi', name: 'Hindi (हिंदी)' },
-    { code: 'ta', name: 'Tamil (தமிழ்)' },
     { code: 'te', name: 'Telugu (తెలుగు)' },
+    { code: 'ta', name: 'Tamil (தமிழ்)' },
     { code: 'ur', name: 'Urdu (اردو)' },
   ]
 
-  const loadRecords = async () => {
-    setLoading(true)
+  const loadRecords = async (query = '') => {
     try {
-      const qStr = search.trim() ? `?q=${encodeURIComponent(search.trim())}` : ''
-      const res = await fetch(`${SCRAPER_URL}/ocr/records${qStr}`)
+      setLoading(true)
+      const url = query 
+        ? `${SCRAPER_URL}/ocr-records?query=${encodeURIComponent(query)}`
+        : `${SCRAPER_URL}/ocr-records`
+      
+      const res = await fetch(url)
       const data = await res.json()
       if (data && data.records) {
         setRecords(data.records)
+      } else {
+        setRecords([])
       }
-    } catch (err) {
-      console.error('Failed to load OCR records:', err)
+    } catch (e) {
+      console.error('Failed to fetch OCR records:', e)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -44,38 +51,39 @@ export default function OCRRecords() {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
-    loadRecords()
+    loadRecords(search)
   }
 
-  const handleTranslateRecord = async (rec, langCode) => {
-    setTranslating(true)
-    setTargetLang(langCode)
-    const textToTranslate = rec.extracted_text || JSON.stringify(rec.parsed_data || {}, null, 2)
-    
+  const handleTranslateRecord = async (record, lang) => {
+    if (!record || !record.extracted_text) return
     try {
-      const res = await fetch(`${SCRAPER_URL}/ocr/translate`, {
+      setTranslating(true)
+      setTargetLang(lang)
+      
+      const res = await fetch(`${BASE_URL}/api/v1/scraper/translate-fir`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToTranslate, target_lang: langCode }),
+        body: JSON.stringify({
+          text: record.extracted_text,
+          target_lang: lang
+        })
       })
       const data = await res.json()
       if (data && data.translated_text) {
         setTranslatedText(data.translated_text)
       } else {
-        setTranslatedText(`[${langCode.toUpperCase()}] ${textToTranslate}`)
+        setTranslatedText('Translation returned empty.')
       }
-    } catch {
-      setTranslatedText(`[${langCode.toUpperCase()}] ${textToTranslate}`)
+    } catch (e) {
+      console.error('Translation error:', e)
+      setTranslatedText('Translation failed.')
+    } finally {
+      setTranslating(false)
     }
-    setTranslating(false)
   }
 
   return (
-    <div style={{
-      padding: 24, height: '100%', overflowY: 'auto',
-      background: 'var(--bg-primary)', color: 'var(--text-primary)',
-      fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column', gap: 20
-    }}>
+    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -83,8 +91,9 @@ export default function OCRRecords() {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <FileText size={20} color="var(--copper-400)" />
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
-              📄 Stored OCR Intelligence Records
+              Stored OCR Intelligence Records
             </h2>
             <span className="badge badge-warning" style={{ fontSize: 10 }}>
               ACCOUNT STORE
@@ -98,9 +107,10 @@ export default function OCRRecords() {
         <button
           onClick={loadRecords}
           className="btn btn-outline"
-          style={{ fontSize: 12, padding: '6px 12px' }}
+          style={{ fontSize: 12, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          🔄 Refresh Records
+          <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+          <span>Refresh Records</span>
         </button>
       </div>
 
@@ -114,8 +124,9 @@ export default function OCRRecords() {
           placeholder="Search by FIR Number, Station, District, Accused Name, or IPC Section..."
           style={{ flex: 1, fontSize: 13, padding: '8px 14px' }}
         />
-        <button type="submit" className="btn btn-copper" style={{ padding: '8px 16px', fontSize: 12 }}>
-          Search Records
+        <button type="submit" className="btn btn-copper" style={{ padding: '8px 16px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Search size={13} />
+          <span>Search Records</span>
         </button>
       </form>
 
@@ -160,22 +171,28 @@ export default function OCRRecords() {
                   </span>
                 </div>
 
-                {rec.act_section && (
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 4 }}>
-                    <b style={{ color: 'var(--copper-300)' }}>Act / Sections:</b> {rec.act_section}
-                  </div>
-                )}
+                {/* Accused & Sections Chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {accusedList.length > 0 ? accusedList.map((acc, idx) => (
+                    <span key={idx} className="badge badge-danger" style={{ fontSize: 10 }}>
+                      Accused: {acc.name}
+                    </span>
+                  )) : (
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>No explicit accused</span>
+                  )}
+                  {pData.sections && pData.sections.length > 0 && (
+                    <span className="badge badge-info" style={{ fontSize: 10 }}>
+                      {pData.sections.join(', ')}
+                    </span>
+                  )}
+                </div>
 
-                {accusedList.length > 0 && (
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                    <b style={{ color: 'var(--text-primary)' }}>Accused Suspects ({accusedList.length}):</b>{' '}
-                    {accusedList.map(a => a.name || a.AccusedName).join(', ')}
-                  </div>
-                )}
-
+                {/* Extracted snippet */}
                 <div style={{
-                  fontSize: 11, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.2)',
-                  padding: 8, borderRadius: 4, maxHeight: 60, overflow: 'hidden', textOverflow: 'ellipsis'
+                  fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-secondary)',
+                  padding: 8, borderRadius: 4, maxHeight: 60, overflow: 'hidden',
+                  textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical'
                 }}>
                   {rec.extracted_text || 'No raw text stored.'}
                 </div>
@@ -187,9 +204,10 @@ export default function OCRRecords() {
                       setTranslatedText('')
                     }}
                     className="btn btn-outline"
-                    style={{ flex: 1, fontSize: 11, padding: '4px 8px' }}
+                    style={{ flex: 1, fontSize: 11, padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
                   >
-                    🔍 View Full Details
+                    <Search size={12} />
+                    <span>View Details</span>
                   </button>
                   <button
                     onClick={() => {
@@ -197,9 +215,10 @@ export default function OCRRecords() {
                       handleTranslateRecord(rec, 'en')
                     }}
                     className="btn btn-copper"
-                    style={{ fontSize: 11, padding: '4px 8px' }}
+                    style={{ flex: 1, fontSize: 11, padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
                   >
-                    🌐 Translate
+                    <Languages size={12} />
+                    <span>Translate</span>
                   </button>
                 </div>
               </div>
@@ -237,9 +256,9 @@ export default function OCRRecords() {
               </div>
               <button
                 onClick={() => setSelectedRecord(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
@@ -252,8 +271,9 @@ export default function OCRRecords() {
                 background: 'var(--bg-secondary)', padding: 12, borderRadius: 6,
                 border: '1px solid var(--border-subtle)'
               }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--copper-300)' }}>
-                  🌐 Catalyst NLP Dynamic Translation Engine
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--copper-300)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Languages size={14} />
+                  <span>Catalyst NLP Dynamic Translation Engine</span>
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {LANGS.map(l => (

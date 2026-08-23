@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { User } from 'lucide-react'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
 import { request } from '../api'
@@ -201,12 +202,15 @@ export default function AccusedProfile() {
                 key={idx}
                 to={`/accused/${ass.accused_id}`}
                 style={{
-                  display: 'flex', justifyContent: 'space-between', padding: 8,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8,
                   background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)',
                   borderRadius: 4, textDecoration: 'none', fontSize: 11, color: 'var(--text-primary)'
                 }}
               >
-                <span>👤 {ass.name}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <User size={12} color="var(--copper-400)" />
+                  <span>{ass.name}</span>
+                </span>
                 <span style={{ color: 'var(--copper-400)' }}>{ass.shared_cases} shared cases</span>
               </Link>
             ))}

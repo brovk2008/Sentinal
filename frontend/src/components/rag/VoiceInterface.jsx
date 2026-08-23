@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { Mic, Radio, Zap, Volume2, VolumeX, AlertTriangle } from 'lucide-react'
 import { queryIntelligence, speechToText, textToSpeech, fetchNlpStatus } from '../../api'
 
 export default function VoiceInterface({ onTranscript, onResponse }) {
@@ -171,11 +172,11 @@ export default function VoiceInterface({ onTranscript, onResponse }) {
   }, [])
 
   const stateConfig = {
-    idle:       { icon: '🎙️', label: useCatalystNlp ? 'Hold to Speak (Catalyst)' : 'Hold to Speak', color: 'var(--copper-400)', pulse: false },
-    listening:  { icon: '👂', label: 'Listening...', color: 'var(--status-danger)', pulse: true },
-    processing: { icon: '⚡', label: 'Processing...', color: 'var(--status-info)', pulse: true },
-    speaking:   { icon: '🔊', label: 'Speaking...', color: 'var(--status-success)', pulse: true },
-    error:      { icon: '⚠️', label: 'Error — try again', color: 'var(--status-warning)', pulse: false },
+    idle:       { icon: <Mic size={22} />, label: useCatalystNlp ? 'Hold to Speak (Catalyst)' : 'Hold to Speak', color: 'var(--copper-400)', pulse: false },
+    listening:  { icon: <Radio size={22} />, label: 'Listening...', color: 'var(--status-danger)', pulse: true },
+    processing: { icon: <Zap size={22} />, label: 'Processing...', color: 'var(--status-info)', pulse: true },
+    speaking:   { icon: <Volume2 size={22} />, label: 'Speaking...', color: 'var(--status-success)', pulse: true },
+    error:      { icon: <AlertTriangle size={22} />, label: 'Error — try again', color: 'var(--status-warning)', pulse: false },
   }
   const cfg = stateConfig[state]
 
@@ -196,7 +197,7 @@ export default function VoiceInterface({ onTranscript, onResponse }) {
           onClick={state === 'speaking' ? stopSpeaking : undefined}
           style={{
             width: 56, height: 56, borderRadius: '50%',
-            background: cfg.color, color: '#1a110a', border: 'none', cursor: 'pointer', fontSize: 20,
+            background: cfg.color, color: '#1a110a', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: cfg.pulse ? `0 0 0 8px ${cfg.color}33, 0 0 0 16px ${cfg.color}11` : 'none',
             transition: 'box-shadow 0.3s, transform 0.15s',
@@ -222,10 +223,20 @@ export default function VoiceInterface({ onTranscript, onResponse }) {
             border: `1px solid ${isMuted ? 'var(--status-warning)' : 'var(--border-default)'}`,
             borderRadius: 6, padding: '4px 10px',
             color: isMuted ? 'var(--status-warning)' : 'var(--text-muted)',
-            fontSize: 11, cursor: 'pointer',
+            fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
           }}
         >
-          {isMuted ? '🔇 Muted' : '🔊 Audio On'}
+          {isMuted ? (
+            <>
+              <VolumeX size={13} />
+              <span>Muted</span>
+            </>
+          ) : (
+            <>
+              <Volume2 size={13} />
+              <span>Audio On</span>
+            </>
+          )}
         </button>
       </div>
 

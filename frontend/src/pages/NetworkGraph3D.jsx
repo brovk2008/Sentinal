@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FolderOpen, FileText } from 'lucide-react'
 import * as d3 from 'd3'
 import { fetchNetworkGraph } from '../api'
 
@@ -280,25 +281,27 @@ export default function NetworkGraph3D() {
               {selectedNode.type === 'person' && (
                 <button
                   className="btn btn-xs btn-copper"
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
                   onClick={() => {
                     const pid = selectedNode.id.replace('p_', '')
                     navigate(`/accused/${pid}`)
                   }}
                 >
-                  📁 Open Criminal Dossier
+                  <FolderOpen size={12} />
+                  <span>Open Criminal Dossier</span>
                 </button>
               )}
               {selectedNode.type === 'case' && (
                 <button
                   className="btn btn-xs btn-copper"
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
                   onClick={() => {
                     const cid = selectedNode.id.replace('c_', '')
                     navigate(`/timeline/${cid}`)
                   }}
                 >
-                  📂 Open Case File
+                  <FileText size={12} />
+                  <span>Open Case File</span>
                 </button>
               )}
               {!['person', 'case'].includes(selectedNode.type) && (

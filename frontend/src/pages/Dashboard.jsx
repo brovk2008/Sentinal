@@ -1,3 +1,4 @@
+import { Swords } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import KpiCard from '../components/shared/KpiCard'
@@ -124,32 +125,6 @@ export default function Dashboard() {
     return () => { active = false; };
   }, [retryKey])
 
-  if (loading) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, gap: 16 }}>
-      <div style={{ width: 40, height: 40, border: '3px solid rgba(200,129,74,0.3)', borderTopColor: '#c8814a', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Loading command center...</div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>If this takes too long, the backend may be warming up (~30s)</div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  )
-
-  if (backendDown && !kpis) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, gap: 16, padding: 40 }}>
-      <div style={{ fontSize: 40 }}>⚡</div>
-      <div style={{ color: '#e8a87c', fontWeight: 700, fontSize: 16 }}>Backend is waking up</div>
-      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center', maxWidth: 400 }}>
-        AppSail (dev tier) sleeps after inactivity. The first request after idle takes 20–40s to respond.
-      </div>
-      <button
-        className="btn btn-copper"
-        onClick={() => { setKpis(null); setBackendDown(false); setLoading(true); setRetryKey(k => k + 1); }}
-        style={{ padding: '10px 24px', fontWeight: 600 }}
-      >
-        🔄 Retry Now
-      </button>
-    </div>
-  )
-
   return (
     <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -162,9 +137,10 @@ export default function Dashboard() {
         <button
           className="btn btn-copper"
           onClick={() => navigate('/warroom')}
-          style={{ padding: '8px 16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ padding: '8px 16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          ⚔️ ENTER WAR ROOM
+          <Swords size={15} />
+          <span>ENTER WAR ROOM</span>
         </button>
       </div>
 

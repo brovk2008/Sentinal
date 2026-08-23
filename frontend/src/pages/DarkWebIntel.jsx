@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Satellite, Search, AlertTriangle, Radio, Lock, ShieldAlert, Terminal, X } from 'lucide-react'
 import { fetchDarkWebFeed, fetchThreatAssessment } from '../api'
 import LoadingPulse from '../components/shared/LoadingPulse'
 
@@ -126,8 +127,9 @@ export default function DarkWebIntel() {
         borderBottom: `1px solid ${DW.border}`, paddingBottom: 10, marginBottom: 14, zIndex: 20
       }}>
         <div>
-          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: DW.text }}>
-            🛰️ DARK WEB THREAT MONITORING
+          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: DW.text, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Satellite size={16} />
+            <span>DARK WEB THREAT MONITORING</span>
           </h2>
           <div style={{ fontSize: 9, color: DW.textDim, marginTop: 2 }}>
             Karnataka Cyber Defense Division · Proxy Active
@@ -317,12 +319,15 @@ export default function DarkWebIntel() {
             padding: 20, color: DW.text, fontFamily: 'var(--font-mono)', display: 'flex', flexDirection: 'column', gap: 14
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${DW.border}`, paddingBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700 }}>🔍 Dossier: {assessmentModal}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Search size={13} />
+                <span>Dossier: {assessmentModal}</span>
+              </div>
               <button
                 onClick={() => setAssessmentModal(null)}
-                style={{ background: 'none', border: 'none', color: DW.danger, fontSize: 18, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: DW.danger, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                ×
+                <X size={16} />
               </button>
             </div>
 
@@ -341,8 +346,9 @@ export default function DarkWebIntel() {
               </div>
             )}
             
-            <div style={{ fontSize: 8, color: DW.warning }}>
-              ⚠️ Classification: CONFIDENTIAL · AI-inferred projection report
+            <div style={{ fontSize: 9, color: DW.warning, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <ShieldAlert size={12} />
+              <span>Classification: CONFIDENTIAL · AI-inferred projection report</span>
             </div>
           </div>
         </div>
@@ -352,9 +358,10 @@ export default function DarkWebIntel() {
       <div style={{
         textAlign: 'center', padding: '6px 10px', background: 'rgba(255,204,0,0.08)',
         border: '1px solid rgba(255,204,0,0.3)', borderRadius: 4, fontSize: 9, color: '#ffcc00',
-        zIndex: 20
+        zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
       }}>
-        ⚠️ CLASSIFIED DEMO MODE: SIMULATED INTELLIGENCE — For demonstration purposes only
+        <AlertTriangle size={12} />
+        <span>CLASSIFIED DEMO MODE: SIMULATED INTELLIGENCE — For demonstration purposes only</span>
       </div>
 
     </div>

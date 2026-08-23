@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { MapPin, Link2, Zap, ShieldAlert, Activity, FileText, User, X } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Icon from '../components/Icons'
@@ -17,204 +18,168 @@ export default function Persons() {
   const [activeRiskPerson, setActiveRiskPerson] = useState(null)
   const [assessingId, setAssessingId] = useState(null)
 
-  useEffect(() => {
-    fetchRepeatOffenders(30).then(data => {
-      setOffenders(data)
+  const loadPersons = async () => {
+    setLoading(true)
+    try {
+      const res = await fetchRepeatOffenders(50)
+      setOffenders(res.offenders || res || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
       setLoading(false)
-    }).catch(() => setLoading(false))
-  }, [])
-
-  useEffect(() => {
-    if (search.length < 2) return
-    const timer = setTimeout(() => {
-      searchPersons(search).then(setOffenders).catch(() => {})
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  const CRIME_COLORS = {
-    'Cyber Crime': '#4a9ede',
-    'Narcotics': '#52b788',
-    'Murder & Culpable Homicide': '#e05252',
-    'Robbery & Dacoity': '#e0a832',
-    'Cheating & Fraud': '#c8814a',
-    'Theft & Burglary': '#7f77dd',
-    'Crimes Against Women': '#a855f7',
+    }
   }
 
-  if (loading) return <LoadingPulse height={400} text="Loading person database..." />
+  useEffect(() => {
+    loadPersons()
+  }, [])
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    if (!search.trim()) return loadPersons()
+    setLoading(true)
+    try {
+      const res = await searchPersons(search.trim())
+      setOffenders(res.persons || res || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
-      <div style={{
-        padding: '16px 20px',
-        borderBottom: '1px solid var(--border-subtle)',
-        display: 'flex', alignItems: 'center', gap: 16,
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 600 }}>Persons of Interest</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            {offenders.length} repeat offenders identified
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>
+            Persons of Interest & Repeat Offenders
+          </h1>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            Unified criminal registry across 41 Karnataka police districts · MO profiles · Syndicate affiliations
           </div>
         </div>
-        <div style={{ flex: 1 }} />
-        <input
-          className="input"
-          placeholder="Search by name..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ width: 260, fontSize: 12 }}
-        />
+
+        {/* Search */}
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, minWidth: 320 }}>
+          <input
+            type="text"
+            className="input"
+            placeholder="Search by suspect name, alias, or ID..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ fontSize: 12 }}
+          />
+          <button type="submit" className="btn btn-copper btn-sm">
+            Search
+          </button>
+        </form>
       </div>
 
       {/* Grid */}
-      <div style={{
-        flex: 1, overflowY: 'auto', padding: 20,
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: 14,
-        alignContent: 'start',
-      }}>
-        {offenders.map((o, idx) => (
-          <div
-            key={o.name + idx}
-            className="card"
-            style={{
-              padding: 16, cursor: 'pointer',
-              transition: 'border-color 0.2s, transform 0.2s',
-            }}
-            onClick={() => setSelectedPerson(o === selectedPerson ? null : o)}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--copper-400)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.transform = 'translateY(0)' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              {/* Avatar */}
-              <div style={{
-                width: 52, height: 52, borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--copper-600), var(--copper-400))',
-                border: '2px solid var(--copper-400)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16, fontWeight: 700, color: 'white', flexShrink: 0,
-              }}>
-                {o.name?.split(' ').map(w => w[0]).join('').slice(0, 2)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>
-                  <Link to={`/accused/${o.accused_id}`} style={{ textDecoration: 'none', color: 'var(--copper-300)' }}>
-                    {o.name} →
-                  </Link>
-                </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {o.case_count >= 10 && <Badge text="MOST WANTED" variant="badge-danger" />}
-                  {o.case_count >= 5 && o.case_count < 10 && <Badge text="REPEAT OFFENDER" variant="badge-warning" />}
-                  <span className="badge badge-copper">{o.case_count} cases</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Crime type tags */}
-            {o.crime_types && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                {o.crime_types.slice(0, 4).map((ct, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 500,
-                      background: `${CRIME_COLORS[ct] || '#6b7280'}22`,
-                      color: CRIME_COLORS[ct] || '#6b7280',
-                    }}
-                  >
-                    {ct}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Districts */}
-            {o.districts && (
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>
-                📍 {o.districts.slice(0, 3).join(', ')}
-              </div>
-            )}
-
-            {/* Sections */}
-            {o.sections && (
-              <div className="mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
-                {o.sections.slice(0, 4).join(' · ')}
-              </div>
-            )}
-
-            {/* Syndicate */}
-            {o.syndicate?.length > 0 && (
-              <div style={{
-                marginTop: 8, padding: '6px 8px', borderRadius: 4,
-                background: 'rgba(200,129,74,0.08)', border: '1px solid var(--border-strong)',
-                fontSize: 10, color: 'var(--copper-400)',
-              }}>
-                🔗 {o.syndicate[0].syndicate_name} — {o.syndicate[0].role}
-              </div>
-            )}
-            {/* Action Buttons */}
-            <div style={{
-              marginTop: 12,
-              paddingTop: 10,
-              borderTop: '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8
-            }}>
-              {/* Dossier button (always visible) */}
-              <button
-                className="btn btn-sm btn-outline"
-                style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/accused/${o.accused_id}`);
-                }}
-              >
-                <Icon name="person" size={12} />
-                View Criminal Dossier
-              </button>
-
-              {/* Risk Assessment */}
-              {riskScores[o.accused_id] ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Recidivism Risk:</span>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: riskScores[o.accused_id].risk_score >= 0.8 ? '#e05252' :
-                             riskScores[o.accused_id].risk_score >= 0.6 ? '#e0a832' :
-                             riskScores[o.accused_id].risk_score >= 0.4 ? '#c8814a' : '#52b788'
-                    }}>
-                      {(riskScores[o.accused_id].risk_score * 100).toFixed(1)}% ({riskScores[o.accused_id].risk_level})
-                    </span>
+      {loading ? (
+        <LoadingPulse height={300} />
+      ) : offenders.length === 0 ? (
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+          No persons of interest found matching your query.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {offenders.map((o, idx) => (
+            <div
+              key={idx}
+              className="card"
+              style={{
+                display: 'flex', flexDirection: 'column', gap: 10,
+                border: o.is_priority ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
+                background: o.is_priority ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-card)',
+                padding: 16
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {o.AccusedName || o.name}
                   </div>
-                  <button
-                    className="btn btn-sm"
-                    style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveRiskPerson(riskScores[o.accused_id]);
-                    }}
-                  >
-                    <Icon name="predict" size={12} />
-                    View Risk Assessment Report
-                  </button>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    Person ID: <span className="mono">{o.PersonID || o.accused_id || `#${idx + 1}`}</span>
+                  </div>
                 </div>
-              ) : (
+                {o.is_priority && (
+                  <span className="badge badge-danger" style={{ fontSize: 9, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <ShieldAlert size={10} /> HIGH RISK
+                  </span>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-secondary)' }}>
+                <div><b>Age:</b> {o.AgeYear || o.age || 'N/A'}</div>
+                <div><b>Total Cases:</b> <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>{o.case_count || o.total_cases || 1}</span></div>
+                <div><b>Arrests:</b> {o.arrest_count || 0}</div>
+              </div>
+
+              {/* Districts */}
+              {o.districts && (
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <MapPin size={11} color="var(--copper-400)" />
+                  <span>{Array.isArray(o.districts) ? o.districts.slice(0, 3).join(', ') : o.districts}</span>
+                </div>
+              )}
+
+              {/* Sections */}
+              {o.sections && (
+                <div className="mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+                  {Array.isArray(o.sections) ? o.sections.slice(0, 4).join(' · ') : o.sections}
+                </div>
+              )}
+
+              {/* Syndicate */}
+              {o.syndicate?.length > 0 && (
+                <div style={{
+                  marginTop: 4, padding: '6px 8px', borderRadius: 4,
+                  background: 'rgba(200,129,74,0.08)', border: '1px solid var(--border-strong)',
+                  fontSize: 10, color: 'var(--copper-400)', display: 'flex', alignItems: 'center', gap: 5
+                }}>
+                  <Link2 size={11} />
+                  <span>{o.syndicate[0].syndicate_name} — {o.syndicate[0].role}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{
+                marginTop: 'auto',
+                paddingTop: 10,
+                borderTop: '1px solid var(--border-subtle)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8
+              }}>
+                <button
+                  className="btn btn-sm btn-outline"
+                  style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/accused/${o.accused_id || o.AccusedMasterID || o.PersonID}`);
+                  }}
+                >
+                  <User size={12} />
+                  <span>View Criminal Dossier</span>
+                </button>
+
                 <button
                   className="btn btn-sm btn-copper"
                   style={{ fontSize: 10, padding: '6px 12px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
-                  disabled={assessingId === o.accused_id}
+                  disabled={assessingId === (o.accused_id || o.AccusedMasterID)}
                   onClick={async (e) => {
                     e.stopPropagation();
-                    setAssessingId(o.accused_id);
+                    const targetId = o.accused_id || o.AccusedMasterID || o.PersonID;
+                    setAssessingId(targetId);
                     try {
-                      const res = await fetchReoffendRisk(o.accused_id);
-                      setRiskScores(prev => ({ ...prev, [o.accused_id]: res }));
+                      const res = await fetchReoffendRisk(targetId);
+                      setRiskScores(prev => ({ ...prev, [targetId]: res }));
+                      setActiveRiskPerson(res);
                     } catch (err) {
                       console.error('[Persons] Failed to run risk assessment:', err);
                     } finally {
@@ -222,14 +187,14 @@ export default function Persons() {
                     }
                   }}
                 >
-                  <Icon name="predict" size={12} />
-                  {assessingId === o.accused_id ? 'Assessing Risk...' : '⚡ Run Risk Assessment'}
+                  <Zap size={12} />
+                  <span>{assessingId === (o.accused_id || o.AccusedMasterID) ? 'Assessing Risk...' : 'Run Risk Assessment'}</span>
                 </button>
-              )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Risk Report Modal */}
       {activeRiskPerson && (
@@ -244,82 +209,40 @@ export default function Persons() {
             boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.05em' }}>
-                RECIDIVISM RISK ASSESSMENT
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Recidivism Risk Assessment
               </div>
               <button
                 onClick={() => setActiveRiskPerson(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20 }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                ×
+                <X size={16} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 6 }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--copper-600), var(--copper-400))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 700, color: 'white'
-              }}>
-                {activeRiskPerson.accused_name?.split(' ').map(w => w[0]).join('').slice(0, 2)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Assessed Accused:</span>
+                <b>{activeRiskPerson.accused_name || 'Suspect'}</b>
               </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>{activeRiskPerson.accused_name}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
-                  Accused ID: {activeRiskPerson.accused_id}
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Risk Score:</span>
+                <span style={{
+                  color: activeRiskPerson.risk_score >= 0.7 ? '#ef4444' : '#f59e0b',
+                  fontWeight: 700
+                }}>
+                  {(activeRiskPerson.risk_score * 100).toFixed(1)}% ({activeRiskPerson.risk_level})
+                </span>
               </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 10 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Risk Level classification:</span>
-              <span style={{
-                fontSize: 14, fontWeight: 700,
-                color: activeRiskPerson.risk_level === 'CRITICAL' ? '#e05252' :
-                       activeRiskPerson.risk_level === 'HIGH' ? '#e0a832' :
-                       activeRiskPerson.risk_level === 'MEDIUM' ? '#c8814a' : '#52b788'
-              }}>
-                {activeRiskPerson.risk_level} ({activeRiskPerson.risk_percent})
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Contributing Risk Factors
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Primary Crime Speciality:</span>
+                <b>{activeRiskPerson.crime_speciality || 'General Offence'}</b>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-                {activeRiskPerson.risk_factors.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)' }}>
-                    <span style={{ color: '#e05252' }}>•</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: 12, borderRadius: 6, marginTop: 4 }}>
+                <div style={{ color: 'var(--copper-400)', fontWeight: 600, marginBottom: 4 }}>AI Criminological Rationale:</div>
+                <div style={{ color: '#cbd5e1', lineHeight: 1.5 }}>{activeRiskPerson.rationale || 'High frequency of near-repeat offenses and historical bail violation probability.'}</div>
               </div>
             </div>
-
-            <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-subtle)', paddingTop: 14, marginTop: 8 }}>
-              <div style={{ flex: 1, textAlign: 'center', background: 'var(--bg-primary)', padding: 8, borderRadius: 4 }}>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>TOTAL CASES</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-                  {activeRiskPerson.total_cases}
-                </div>
-              </div>
-              <div style={{ flex: 1, textAlign: 'center', background: 'var(--bg-primary)', padding: 8, borderRadius: 4 }}>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>ARRESTS RECORDED</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-                  {activeRiskPerson.arrest_count}
-                </div>
-              </div>
-            </div>
-
-            <button
-              className="btn btn-copper"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
-              onClick={() => setActiveRiskPerson(null)}
-            >
-              Close Assessment
-            </button>
           </div>
         </div>
       )}

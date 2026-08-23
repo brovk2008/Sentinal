@@ -11,114 +11,107 @@ export default function Sidebar() {
     {
       label: t('Command Center'),
       items: [
-        { path: '/warroom', icon: <Icon name="warroom" size={13} />, label: t('nav.warroom') },
-        { path: '/dashboard', icon: <Icon name="dashboard" size={13} />, label: t('nav.dashboard') },
-        { path: '/upload', icon: <Icon name="ingestion" size={13} />, label: 'Upload Intel' },
-        { path: '/ingestion', icon: <Icon name="fir" size={13} />, label: t('nav.dataingestion') },
+        { path: '/warroom', icon: <Icon name="warroom" size={14} />, label: t('nav.warroom') },
+        { path: '/dashboard', icon: <Icon name="dashboard" size={14} />, label: t('nav.dashboard') },
+        { path: '/upload', icon: <Icon name="ingestion" size={14} />, label: 'Upload Intel' },
+        { path: '/ingestion', icon: <Icon name="fir" size={14} />, label: t('nav.dataingestion') },
       ],
     },
     {
       label: t('Investigations'),
       items: [
-        { path: '/timeline', icon: <Icon name="cases" size={13} />, label: t('nav.cases') },
-        { path: '/connections', icon: <Icon name="canvas" size={13} />, label: t('nav.canvas') },
-        { path: '/patterns', icon: <Icon name="pattern" size={13} />, label: 'Pattern Intel' },
-        { path: '/board', icon: <Icon name="evidence" size={13} />, label: t('nav.evidence') },
-        { path: '/network-3d', icon: <Icon name="network" size={13} />, label: '3D Network' },
-        { path: '/map', icon: <Icon name="map" size={13} />, label: t('nav.map') },
-        { path: '/persons', icon: <Icon name="persons" size={13} />, label: t('nav.persons') },
-        { path: '/fir-search', icon: <Icon name="fir" size={13} />, label: t('nav.firsearch') },
-        { path: '/ocr-records', icon: <Icon name="evidence" size={13} />, label: 'OCR Intelligence Store' },
+        { path: '/timeline', icon: <Icon name="cases" size={14} />, label: t('nav.cases') },
+        { path: '/connections', icon: <Icon name="canvas" size={14} />, label: t('nav.canvas') },
+        { path: '/patterns', icon: <Icon name="pattern" size={14} />, label: 'Pattern Intel' },
+        { path: '/board', icon: <Icon name="evidence" size={14} />, label: t('nav.evidence') },
+        { path: '/network-3d', icon: <Icon name="network" size={14} />, label: '3D Network' },
+        { path: '/map', icon: <Icon name="map" size={14} />, label: t('nav.map') },
+        { path: '/persons', icon: <Icon name="persons" size={14} />, label: t('nav.persons') },
+        { path: '/fir-search', icon: <Icon name="fir" size={14} />, label: t('nav.firsearch') },
+        { path: '/ocr-records', icon: <Icon name="evidence" size={14} />, label: 'OCR Store' },
       ],
     },
     {
       label: t('Intelligence'),
       items: [
-        { path: '/financial', icon: <Icon name="financial" size={13} />, label: t('nav.financial') },
-        { path: '/cdr', icon: <Icon name="cdr" size={13} />, label: t('nav.cdr') },
-        { path: '/predict', icon: <Icon name="predict" size={13} />, label: t('nav.predictive') },
-        { path: '/assistant', icon: <Icon name="ai" size={13} />, label: t('nav.ai') },
-        { path: '/darkweb', icon: <Icon name="darkweb" size={13} />, label: t('nav.darkweb') },
+        { path: '/financial', icon: <Icon name="financial" size={14} />, label: t('nav.financial') },
+        { path: '/cdr', icon: <Icon name="cdr" size={14} />, label: t('nav.cdr') },
+        { path: '/predict', icon: <Icon name="predict" size={14} />, label: t('nav.predictive') },
+        { path: '/assistant', icon: <Icon name="ai" size={14} />, label: t('nav.ai') },
+        { path: '/darkweb', icon: <Icon name="darkweb" size={14} />, label: t('nav.darkweb') },
       ],
     },
   ]
-
 
   return (
     <aside style={{
       gridColumn: '1',
       gridRow: '1 / 4',
-      background: 'var(--bg-secondary)',
-      borderRight: '1px solid var(--border-subtle)',
+      background: 'rgba(9, 10, 16, 0.95)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      borderRight: '1px solid rgba(255, 255, 255, 0.08)',
       overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 100,
     }}>
-      {/* Logo */}
+      {/* Brand Header */}
       <div style={{
-        padding: '10px 16px',
-        borderBottom: '1px solid var(--border-subtle)',
+        padding: '12px 18px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         height: 'var(--topbar-height)',
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        justifyContent: 'space-between',
+        background: 'rgba(15, 17, 26, 0.6)',
       }}>
-        <img
-          src={logoImg}
-          alt="Sentinal"
-          style={{
-            height: 28,
-            width: 'auto',
-            objectFit: 'contain',
-            flexShrink: 0,
-          }}
-        />
-        <div
-          style={{
-            display: 'none',
-            width: 28,
-            height: 28,
-            borderRadius: 6,
-            background: 'var(--copper-500)',
-            color: '#000',
-            fontWeight: 900,
-            fontSize: 14,
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          🛡️
-        </div>
-        <div>
-          <div style={{
-            fontSize: 13,
-            fontWeight: 800,
-            color: 'var(--copper-400)',
-            letterSpacing: '0.12em',
-            fontFamily: 'var(--font-mono)',
-            lineHeight: 1,
-          }}>
-            SENTINAL
-          </div>
-          <div style={{
-            fontSize: 8,
-            color: 'var(--text-muted)',
-            letterSpacing: '0.1em',
-            marginTop: 2,
-            textTransform: 'uppercase',
-          }}>
-            KSP INTELLIGENCE
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img
+            src={logoImg}
+            alt="Sentinal"
+            style={{
+              height: 30,
+              width: 'auto',
+              objectFit: 'contain',
+              flexShrink: 0,
+              filter: 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.3))',
+            }}
+          />
+          <div>
+            <div style={{
+              fontSize: 14,
+              fontWeight: 800,
+              color: 'var(--copper-400)',
+              letterSpacing: '0.12em',
+              fontFamily: 'var(--font-heading)',
+              lineHeight: 1,
+            }}>
+              SENTINAL
+            </div>
+            <div style={{
+              fontSize: 8,
+              color: 'var(--cyan-accent)',
+              letterSpacing: '0.12em',
+              marginTop: 3,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+            }}>
+              KSP COMMAND CENTER
+            </div>
           </div>
         </div>
+        <span className="badge badge-copper" style={{ fontSize: 9, padding: '2px 6px' }}>
+          v1.4
+        </span>
       </div>
 
-      {/* Navigation sections */}
-      <div style={{ flex: 1, paddingTop: 8 }}>
+      {/* Navigation Sections */}
+      <div style={{ flex: 1, paddingTop: 12, paddingBottom: 12 }}>
         {sections.map(section => (
-          <div key={section.label} style={{ padding: '8px 0' }}>
-            <div className="section-label" style={{ padding: '0 16px 6px' }}>
+          <div key={section.label} style={{ padding: '6px 0' }}>
+            <div className="section-label" style={{ padding: '0 18px 6px' }}>
+              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--copper-400)' }} />
               {section.label}
             </div>
             {section.items.map(item => {
@@ -131,19 +124,28 @@ export default function Sidebar() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
-                    padding: '8px 16px',
+                    gap: 12,
+                    padding: '9px 18px',
+                    margin: '2px 8px',
+                    borderRadius: 8,
                     color: isActive ? 'var(--copper-400)' : 'var(--text-secondary)',
                     textDecoration: 'none',
                     fontSize: 13,
-                    fontWeight: isActive ? 500 : 400,
-                    borderLeft: isActive ? '2px solid var(--copper-400)' : '2px solid transparent',
-                    background: isActive ? 'rgba(200,129,74,0.08)' : 'transparent',
-                    transition: 'all 0.15s',
+                    fontWeight: isActive ? 600 : 400,
+                    background: isActive ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
+                    border: isActive ? '1px solid rgba(245, 158, 11, 0.25)' : '1px solid transparent',
+                    boxShadow: isActive ? '0 0 16px rgba(245, 158, 11, 0.15)' : 'none',
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 >
-                  <span style={{ fontSize: 10, opacity: 0.7 }}>{item.icon}</span>
-                  {item.label}
+                  <span style={{
+                    color: isActive ? 'var(--copper-400)' : 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
                 </NavLink>
               )
             })}
@@ -151,22 +153,29 @@ export default function Sidebar() {
         ))}
       </div>
 
-      {/* System status */}
+      {/* System Status Footer */}
       <div style={{
-        padding: '12px 16px',
-        borderTop: '1px solid var(--border-subtle)',
+        padding: '14px 18px',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(12, 14, 22, 0.8)',
       }}>
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: 11, color: 'var(--status-success)',
+          display: 'flex', alignItems: 'center', gap: 8,
+          fontSize: 11, color: 'var(--status-success)', fontWeight: 600,
         }}>
           <span className="live-dot" />
-          All systems operational
+          <span>Catalyst Live System</span>
         </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-          DB: Connected · 113,115 records
+        <div style={{
+          fontSize: 10,
+          color: 'var(--text-muted)',
+          marginTop: 4,
+          fontFamily: 'var(--font-mono)',
+        }}>
+          AppSail: Active · 113k FIRs
         </div>
       </div>
     </aside>
   )
 }
+

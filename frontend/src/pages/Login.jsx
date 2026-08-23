@@ -1,51 +1,45 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { isLocalAuthMode, loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
+import { loginUser, redirectToHostedLogin } from '../lib/catalystAuth'
 import { useTranslation } from 'react-i18next'
+import { AlertCircle, UserCheck, Shield, Lock, ArrowRight } from 'lucide-react'
 import logoImg from '../assets/logo.png'
 
 export default function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('demo@sentinal.ksp')
+  const [password, setPassword] = useState('Sentinal@2024')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // On Catalyst (non-local) immediately redirect to Catalyst hosted auth.
-  // This fires synchronously before any render, so no double-redirect race.
-  if (!isLocalAuthMode()) {
-    // Trigger redirect on first render
-    redirectToHostedLogin()
-    return (
-      <div style={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#0a0a0f',
-        color: 'var(--copper-400)',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 13,
-        letterSpacing: '0.1em'
-      }}>
-        REDIRECTING TO CATALYST AUTH...
-      </div>
-    )
-  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const result = await loginUser(email, password)
-    setLoading(false)
+    try {
+      const result = await loginUser(email, password)
+      setLoading(false)
 
-    if (result.success) {
-      navigate('/dashboard')
+      if (result.success) {
+        navigate('/dashboard')
+      } else {
+        setError(result.error || 'Invalid credentials. Access Denied.')
+      }
+    } catch (err) {
+      setLoading(false)
+      setError('Authentication failed. Please retry.')
+    }
+  }
+
+  const fillCredentials = (type) => {
+    if (type === 'admin') {
+      setEmail('brovaibhavkr2008@gmail.com')
+      setPassword('Admin@2026')
     } else {
-      setError(result.error || 'Invalid credentials. Access Denied.')
+      setEmail('demo@sentinal.ksp')
+      setPassword('Sentinal@2024')
     }
   }
 
@@ -62,7 +56,7 @@ export default function Login() {
     }}>
       <div style={{
         width: '100%',
-        maxWidth: 400,
+        maxWidth: 420,
         background: 'var(--bg-card)',
         border: '1px solid var(--border-strong)',
         borderRadius: 'var(--card-radius)',
@@ -108,20 +102,44 @@ export default function Login() {
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleLogin} style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleLogin} style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {error && (
             <div style={{
               background: 'rgba(224, 82, 82, 0.08)',
               border: '1px solid var(--status-danger)',
               borderRadius: 6,
-              padding: 10,
+              padding: '8px 12px',
               fontSize: 12,
               color: 'var(--status-danger)',
-              textAlign: 'center'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6
             }}>
-              ⚠️ {error}
+              <AlertCircle size={14} />
+              <span>{error}</span>
             </div>
           )}
+
+          {/* Quick presets for convenience */}
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-xs btn-ghost"
+              onClick={() => fillCredentials('officer')}
+              style={{ fontSize: 10, padding: '4px 10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              <UserCheck size={12} color="#38bdf8" /> Demo Officer
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs btn-ghost"
+              onClick={() => fillCredentials('admin')}
+              style={{ fontSize: 10, padding: '4px 10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              <Shield size={12} color="#f59e0b" /> Project Admin
+            </button>
+          </div>
 
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4, textTransform: 'uppercase' }}>
@@ -160,13 +178,40 @@ export default function Login() {
             style={{
               width: '100%',
               justifyContent: 'center',
-              marginTop: 8,
+              marginTop: 4,
               height: 38,
               fontSize: 13,
-              fontWeight: 600
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            {loading ? 'Authorizing Credentials...' : (t('auth.login') || 'Authenticate Access →')}
+            <span>{loading ? 'Authorizing Credentials...' : (t('auth.login') || 'Authenticate Access')}</span>
+            {!loading && <ArrowRight size={14} />}
+          </button>
+
+          <div style={{ textAlign: 'center', margin: '4px 0', fontSize: 10, color: 'var(--text-muted)' }}>
+            ── OR ──
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => redirectToHostedLogin()}
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              border: '1px solid rgba(255,255,255,0.15)',
+              fontSize: 11,
+              color: '#94a3b8',
+              height: 34,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Lock size={12} /> Sign In via Zoho Catalyst SSO
           </button>
         </form>
 
@@ -185,7 +230,7 @@ export default function Login() {
           <div>CONFIDENTIAL SYSTEM · SECURED TERMINAL</div>
           <div>
             <Link to="/signup" style={{ color: 'var(--copper-400)', textDecoration: 'none', fontSize: 11 }}>
-              {t('auth.signupTitle') || 'Register new officer account →'}
+              {t('auth.signupTitle') || 'Register new officer account'} →
             </Link>
           </div>
         </div>

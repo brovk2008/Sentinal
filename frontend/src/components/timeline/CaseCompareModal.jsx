@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { AlertTriangle, X } from 'lucide-react'
 import { compareCases } from '../../api'
 import LoadingPulse from '../shared/LoadingPulse'
 
@@ -72,11 +73,12 @@ export default function CaseCompareModal({ caseIds = [], onClose }) {
               border: 'none',
               color: 'var(--text-muted)',
               fontSize: 20,
-              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
               outline: 'none'
             }}
           >
-            ×
+            <X size={18} />
           </button>
         </div>
 
@@ -87,8 +89,9 @@ export default function CaseCompareModal({ caseIds = [], onClose }) {
               <LoadingPulse text="Synthesizing connection patterns via Catalyst QuickML..." />
             </div>
           ) : error ? (
-            <div style={{ color: 'var(--status-danger)', textAlign: 'center', padding: 30 }}>
-              ⚠️ {error}
+            <div style={{ color: 'var(--status-danger)', textAlign: 'center', padding: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <AlertTriangle size={14} />
+              <span>{error}</span>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

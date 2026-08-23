@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
+import { Globe, Radio } from 'lucide-react'
 import { fetchLiveRiskScore, fetchSyndicates, fetchCases } from '../api'
 import useLiveFeed from '../hooks/useLiveFeed'
 import 'leaflet/dist/leaflet.css'
@@ -259,9 +260,11 @@ export default function WarRoom() {
         <div style={{
           position: 'absolute', top: 12, left: 12, zIndex: 1000,
           background: 'rgba(4,4,6,0.9)', border: '1px solid var(--border-strong)',
-          borderRadius: 4, padding: '6px 12px', fontSize: 10
+          borderRadius: 4, padding: '6px 12px', fontSize: 10,
+          display: 'flex', alignItems: 'center', gap: 6, color: 'var(--copper-400)'
         }}>
-          🌍 TACTICAL GEOSPATIAL MAP FEED OVERLAY · PREDICTIVE ACTIVE
+          <Globe size={13} />
+          <span>TACTICAL GEOSPATIAL MAP FEED OVERLAY · PREDICTIVE ACTIVE</span>
         </div>
         <MapContainer
           center={[12.97, 77.59]}
@@ -311,9 +314,15 @@ export default function WarRoom() {
         }}>
           <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>UNIT LOGISTICS DEPLOYMENTS</div>
           <div style={{ display: 'flex', gap: 16, fontSize: 10, marginTop: 4 }}>
-            <div>🚨 Bengaluru HQ: <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>18 units</span></div>
-            <div>🚨 Mysuru Command: <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>12 units</span></div>
-            <div>🚨 Belagavi Border: <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>8 units</span></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Radio size={12} color="#f59e0b" /> Bengaluru HQ: <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>18 units</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Radio size={12} color="#f59e0b" /> Mysuru Command: <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>12 units</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Radio size={12} color="#f59e0b" /> Belagavi Border: <span style={{ color: 'var(--copper-400)', fontWeight: 700 }}>8 units</span>
+            </div>
           </div>
         </div>
       </div>

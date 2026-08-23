@@ -9,6 +9,20 @@ from services.quickml_service import call_ai
 
 router = APIRouter()
 
+# Lazy-load GraphRAG to preserve AppSail boot time
+def _get_graphrag():
+    try:
+        from services.graphrag_service import get_graphrag
+        return get_graphrag()
+    except Exception as e:
+        print(f"[Brain] GraphRAG unavailable: {e}")
+        return None
+
+class IntelligenceQueryRequest(BaseModel):
+    query: str
+    analyst_id: Optional[str] = "system"
+    hops: Optional[int] = 3
+
 # Check PDF engines availability
 try:
     from weasyprint import HTML
@@ -230,204 +244,124 @@ async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Req
 @router.post("/connect-dots")
 async def connect_dots(request: ConnectDotsRequest, http_request: Request):
     """
-    Find connections between entities using DB queries + AI.
-    Handles requests from both ConnectionsBoard and EvidenceBoard.
+    Find real and AI-inferred connections between arbitrary canvas entities
+    using deterministic multi-hop SQL graph traversal + GraphRAG synthesis.
     """
     try:
         nodes = request.nodes or []
         entity_names = request.entity_names or []
-        node_id_map = {}  # label.lower() -> node_id
-        person_nodes = []
-        case_nodes = []
 
-        if nodes:
-            for n in nodes:
-                data = n.get("data", {})
-                label = data.get("label") or n.get("title") or n.get("id")
-                node_type = data.get("type") or n.get("type") or "person"
-                node_id = n.get("id")
-                if label:
-                    node_id_map[label.lower()] = node_id
-                    if node_type == "person":
-                        person_nodes.append(label)
-                    elif node_type == "case":
-                        case_nodes.append(label)
-                    entity_names.append(label)
-        else:
-            person_nodes = [name for name in entity_names]
+        # If entity_names given without node objects, construct dummy node list
+        if not nodes and entity_names:
+            nodes = [{"id": f"node_{i}", "type": "person", "data": {"label": name}} for i, name in enumerate(entity_names)]
 
-        # Database queries to find direct links
-        real_connections = []
-        connections_list = []
-        suggested_connections = []
+        # ── 1. Deterministic Multi-Table Graph Linking Engine ─────────────────
+        from services.graph_canvas_linker import get_canvas_linker
+        linker = get_canvas_linker()
+        deterministic_res = linker.link_canvas_nodes(nodes)
 
-        # Find shared cases between person entities
-        for i in range(len(person_nodes)):
-            for j in range(i + 1, len(person_nodes)):
-                p1 = person_nodes[i]
-                p2 = person_nodes[j]
-                
-                try:
-                    # Query CaseMaster and Accused tables for co-accused links
-                    shared = query("""
-                        SELECT DISTINCT a1.CaseMasterID, cm.CrimeGroupName
-                        FROM Accused a1
-                        JOIN Accused a2 ON a1.CaseMasterID = a2.CaseMasterID
-                        JOIN CaseMaster cm ON cm.CaseMasterID = a1.CaseMasterID
-                        LEFT JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
-                        WHERE a1.AccusedName LIKE ? AND a2.AccusedName LIKE ?
-                    """, (f"%{p1}%", f"%{p2}%"))
-                except Exception as db_err:
-                    print(f"Database query error: {db_err}")
-                    shared = []
-                
-                if shared:
-                    cases_str = ", ".join([f"Case {r['CaseMasterID']} ({r.get('CrimeGroupName', 'Unknown')})" for r in shared])
-                    real_connections.append(f"{p1} and {p2} are co-accused in: {cases_str}")
-                    
-                    connections_list.append({
-                        "entity_a": p1,
-                        "entity_b": p2,
-                        "connection_type": "Co-Accused",
-                        "evidence": f"Shared case(s): {cases_str}",
-                        "confidence": "95%"
-                    })
-                    
-                    id1 = node_id_map.get(p1.lower())
-                    id2 = node_id_map.get(p2.lower())
-                    if id1 and id2:
-                        suggested_connections.append({
-                            "from_node_id": id1,
-                            "to_node_id": id2,
-                            "relationship_type": "Co-Accused",
-                            "reasoning": f"Co-accused in {len(shared)} shared case(s)"
-                        })
+        connections_list = deterministic_res.get("connections", [])
+        suggested_connections = deterministic_res.get("suggested_connections", [])
+        suggested_edges = deterministic_res.get("suggested_edges", [])
 
-        # Find suspects associated with case nodes
-        for cname in case_nodes:
-            import re
-            match = re.search(r'\d+', cname)
-            if match:
-                cid = match.group()
-                try:
-                    accused_rows = query("SELECT AccusedName FROM Accused WHERE CaseMasterID = ?", (cid,))
-                except Exception:
-                    accused_rows = []
-                for row in accused_rows:
-                    pname = row["AccusedName"]
-                    real_connections.append(f"Case {cid} involves accused suspect {pname}")
-                    
-                    for p in person_nodes:
-                        if p.lower() in pname.lower() or pname.lower() in p.lower():
-                            connections_list.append({
-                                "entity_a": p,
-                                "entity_b": cname,
-                                "connection_type": "Accused Suspect",
-                                "evidence": f"Listed as accused suspect in official Case Record",
-                                "confidence": "100%"
-                            })
-                            id1 = node_id_map.get(p.lower())
-                            id2 = node_id_map.get(cname.lower())
-                            if id1 and id2:
-                                suggested_connections.append({
-                                    "from_node_id": id1,
-                                    "to_node_id": id2,
-                                    "relationship_type": "Accused Suspect",
-                                    "reasoning": "Listed as accused suspect in Case Master file."
-                                })
+        # ── 2. GraphRAG Multi-Hop LLM Synthesis for narrative briefing ────────
+        graphrag = _get_graphrag()
+        graphrag_result = None
+        graphrag_context = ""
 
-        db_context = "\n".join(real_connections) if real_connections else "No direct case/co-accused links found in database."
-
-        # Query RAG for all entities to discover hidden document connections (OCR text, RAG profiles, etc.)
-        rag_context = ""
-        if entity_names:
+        all_labels = [n.get("data", {}).get("label") or n.get("title") or n.get("id") for n in nodes if n]
+        if graphrag and all_labels:
             try:
-                from services.rag_service import rag_service
-                rag_docs = []
-                # Query RAG exactly once with combined search terms
-                combined_query = " ".join(entity_names)
-                retrieved = await rag_service.retrieve(combined_query, top_k=3)
-                for r in retrieved:
-                    sum_text = r.get("summary", "")
-                    title = r.get("title", "Doc")
-                    if sum_text and sum_text not in rag_docs:
-                        rag_docs.append(f"Document: {title} | Content: {sum_text}")
-                if rag_docs:
-                    rag_context = "\n".join(rag_docs)
-            except Exception as rag_err:
-                print(f"[Connect Dots RAG] retrieval error: {rag_err}")
+                entity_query = f"Analyze relationships and operational hierarchy between: {', '.join(all_labels[:8])}"
+                graphrag_result = await graphrag.query(
+                    text=entity_query,
+                    analyst_id="connect_dots",
+                    hops=3,
+                    request=http_request,
+                )
+                graphrag_context = graphrag_result.answer[:800]
+            except Exception as grag_err:
+                print(f"[Connect Dots GraphRAG] error: {grag_err}")
 
-        system_prompt = (
-            "You are a Senior Police Intelligence Analyst for Karnataka Police. "
-            "Analyze the given entities, database query findings, and uploaded evidence documents (from RAG context) to find hidden links. "
-            "Output must be a valid JSON object ONLY. Do not wrap in markdown. Keep response extremely brief."
-        )
+        # Synthesize succinct analyst briefing
+        evidence_summary_lines = [f"• {c['relationship_type']}: {c['evidence']}" for c in connections_list[:5]]
+        if evidence_summary_lines:
+            analysis = "KEY CONNECTIONS (DB Grounded):\n" + "\n".join(evidence_summary_lines)
+            if graphrag_context:
+                analysis += f"\n\nINTELLIGENCE BRIEFING:\n{graphrag_context[:300]}..."
+        else:
+            analysis = graphrag_context or "No direct connections found across database tables. Entities cataloged as separate operational cells."
 
-        user_prompt = f"""
-        Investigation board nodes list (with ids):
-        {json.dumps(nodes)}
-        
-        Database query findings:
-        {db_context}
-        
-        Uploaded Evidence & Case Records (RAG context):
-        {rag_context}
-        
-        Tasks:
-        1. Identify hidden connections between the nodes. Keep the analysis field extremely concise (at most 2 sentences).
-        2. Format your response as a JSON object matching this schema:
-        {{
-           "analysis": "KEY CONNECTIONS:\n• Short bullet point summarizing a critical finding",
-           "suggested_connections": [
-              {{
-                 "from_node_id": "source_node_id",
-                 "to_node_id": "target_node_id",
-                 "relationship_type": "Brief label (e.g. Mule Owner)",
-                 "reasoning": "Brief reason"
-              }}
-           ]
-         }}
-        """
-        
-        analysis = ""
-        try:
-            ai_response = await call_ai(system_prompt, user_prompt, max_tokens=600, request=http_request)
-            cleaned = ai_response.strip().replace("```json", "").replace("```", "").strip()
-            ai_data = json.loads(cleaned)
-            analysis = ai_data.get("analysis") or ""
-            
-            # Merge AI suggested connections into suggested_connections
-            ai_inferred = ai_data.get("suggested_connections") or []
-            for item in ai_inferred:
-                f_id = item.get("from_node_id") or item.get("fromNodeId")
-                t_id = item.get("to_node_id") or item.get("toNodeId")
-                rel = item.get("relationship_type") or item.get("label") or "AI Link"
-                reason = item.get("reasoning") or item.get("reason") or ""
-                if f_id and t_id:
-                    # Avoid duplicates
-                    if not any(x.get("from_node_id") == f_id and x.get("to_node_id") == t_id for x in suggested_connections):
-                        suggested_connections.append({
-                            "from_node_id": f_id,
-                            "to_node_id": t_id,
-                            "relationship_type": rel,
-                            "reasoning": reason
-                        })
-        except Exception as e:
-            print(f"[Connect Dots AI] failed to parse AI suggested connections: {e}")
-            if not analysis:
-                analysis = f"KEY CONNECTIONS:\n" + "\n".join([f"• {c}" for c in real_connections]) if real_connections else "No connections found."
+        first_actor = all_labels[0] if all_labels else "Unknown Subject"
 
         return {
-            "success": True,
-            "connections": connections_list,
+            "success":               True,
+            "total_links":           len(connections_list),
+            "connections":           connections_list,
             "suggested_connections": suggested_connections,
-            "suggested_edges": suggested_connections, # For frontend compatibility
-            "analysis": analysis,
-            "network_summary": "Syndicate cells sharing target locations.",
-            "key_actor": person_nodes[0] if person_nodes else "Unknown"
+            "suggested_edges":       suggested_edges,
+            "analysis":              analysis,
+            "graphrag_summary": {
+                "entity_count":   graphrag_result.entity_count if graphrag_result else 0,
+                "link_count":     graphrag_result.link_count if graphrag_result else 0,
+                "hops_traversed": graphrag_result.hops_traversed if graphrag_result else 0,
+                "grounded":       graphrag_result.grounded if graphrag_result else False,
+            },
+            "network_summary":       f"Verified {len(connections_list)} cross-table linkages.",
+            "key_actor":             first_actor,
         }
     except Exception as e:
         raise HTTPException(500, f"Connect dots failed: {e}")
+
+
+# ─── GraphRAG Intelligence Query ─────────────────────────────────────────────
+@router.post("/intelligence-query")
+async def intelligence_query(request: IntelligenceQueryRequest, http_request: Request):
+    """
+    Primary GraphRAG intelligence synthesis endpoint.
+
+    Unlike /query (which uses flat vector RAG), this endpoint:
+    1. Resolves entity names in the query via entity_resolver (Jaro-Winkler disambiguation)
+    2. Performs multi-hop graph traversal (up to 3 hops) across the ELP ontology
+    3. Constructs a verified SubgraphContext from actual DB data
+    4. Injects the structured subgraph into GLM-4.7 for grounded synthesis
+    5. Applies hallucination guard to strip unverified claims
+    6. Writes AI recommendation to immutable ai_action_log
+
+    Returns a fully grounded intelligence briefing with:
+    - Structured entity relationships from the graph
+    - Intelligence gap flags for missing data
+    - AI recommendation ID for analyst audit trail
+    """
+    graphrag = _get_graphrag()
+    if graphrag is None:
+        raise HTTPException(503, "GraphRAG service not available")
+
+    try:
+        result = await graphrag.query(
+            text=request.query,
+            analyst_id=request.analyst_id or "system",
+            hops=min(request.hops or 3, 4),   # Cap at 4 hops
+            request=http_request,
+        )
+        return {
+            "rec_id":           result.rec_id,
+            "query":            result.query,
+            "answer":           result.answer,
+            "grounded":         result.grounded,
+            "fallback_used":    result.fallback_used,
+            "subgraph": {
+                "entity_count":   result.entity_count,
+                "link_count":     result.link_count,
+                "hops_traversed": result.hops_traversed,
+                "summary":        result.subgraph_summary,
+                "seed_entities":  result.seed_entities,
+            },
+            "content_gaps":     result.content_gaps,
+            "model":            "graphrag_v1 + glm-4.7",
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Intelligence query failed: {e}")
 
 @router.post("/reconstruct-timeline")
 async def reconstruct_timeline(request: ReconstructTimelineRequest, http_request: Request):
@@ -661,3 +595,32 @@ def generate_reportlab_sitrep_pdf(request: SitrepRequest, data: dict) -> bytes:
     pdf_bytes = buffer.getvalue()
     buffer.close()
     return pdf_bytes
+
+
+# ─── Autonomous Cognitive Investigation Pipeline (ACH & Tree-of-Thoughts) ────
+
+class AutonomousInvestigateRequest(BaseModel):
+    case_id: int | str
+    custom_facts: Optional[str] = None
+
+@router.post("/autonomous-investigate")
+async def autonomous_investigate(req: AutonomousInvestigateRequest, http_request: Request):
+    """
+    Executes the 4-stage Cognitive Investigation Agent:
+      1. Tree-of-Thoughts Hypothesis Formulation (3-4 competing theories)
+      2. Autonomous Evidence Probing across SQL, CDR, Financial, MO, and Vault
+      3. Cross-Examination & Falsification (ACH Matrix eliminating contradictions)
+      4. Deductive Strategy Synthesis & Statutory Legal CrPC Directives
+    """
+    try:
+        from services.investigative_reasoner import get_cognitive_reasoner
+        engine = get_cognitive_reasoner()
+        result = await engine.run_autonomous_investigation(
+            case_id=req.case_id,
+            custom_facts=req.custom_facts,
+            request=http_request
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(500, f"Autonomous investigation reasoning failed: {e}")
+
