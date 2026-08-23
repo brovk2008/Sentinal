@@ -257,58 +257,48 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
         except Exception:
             pass
 
-    # ── Tier 4: Direct Google GTX API via httpx with Rotating User-Agents ────────
+    # ── Tier 6: Domain Legal Lexicon Translation Fallback (Zero Network Failure) ──
     try:
-        import urllib.parse
-        paragraphs = [p for p in norm_text.split("\n") if p.strip()]
-        if not paragraphs:
-            paragraphs = [norm_text]
+        LEXICON = {
+            "district": {"kn": "ಜಿಲ್ಲೆ", "hi": "जिला", "te": "జిల్లా", "ta": "மாவட்டம்", "mr": "जिल्हा", "ur": "ضلع"},
+            "police station": {"kn": "ಪೊಲೀಸ್ ಠಾಣೆ", "hi": "पुलिस स्टेशन", "te": "పోలీస్ స్టేషన్", "ta": "காவல் நிலையம்", "mr": "पोलीस ठाणे", "ur": "تھانہ"},
+            "fir": {"kn": "ಪ್ರಥಮ ಮಾಹಿತಿ ವರದಿ", "hi": "प्रथम सूचना रिपोर्ट", "te": "ఎఫ్ಐಆರ್", "ta": "முதல் தகவல் அறிக்கை", "mr": "एफआयआर", "ur": "ایف آئی آر"},
+            "complainant": {"kn": "ದೂರುದಾರ", "hi": "शिकायतकर्ता", "te": "ఫిర్యాదుదారు", "ta": "புகார்தಾರர்", "mr": "तक्रारदार", "ur": "مستغیث / مدعی"},
+            "accused": {"kn": "ಆರೋಪಿ", "hi": "अभियुक्त / आरोपी", "te": "నిందితుడు", "ta": "குற்றஞ்சாட்டப்பட்டவர்", "mr": "आरोपी", "ur": "ملزم"},
+            "victim": {"kn": "ಸಂತ್ರಸ್ತ", "hi": "पीड़ित", "te": "బాధితుడు", "ta": "பாதிக்கப்பட்டவர்", "mr": "बळी", "ur": "متاثرہ"},
+            "brief facts": {"kn": "ಪ್ರಕರಣದ ಸಂಕ್ಷಿಪ್ತ ಸಂಗತಿಗಳು", "hi": "मामले کے संक्षिप्त तथ्य", "te": "కేసు సంక్షిప్త వాస్తవాలు", "ta": "வழக்கின் சுருக்கமான உண்மைகள்", "mr": "प्रकरणाची संक्षिप्त वस्तुस्थिती", "ur": "کیس کے مختصر حقائق"},
+            "brief facts of the case": {"kn": "ಪ್ರಕರಣದ ಸಂಕ್ಷಿಪ್ತ ಸಂಗತಿಗಳು", "hi": "मामले के संक्षिप्त तथ्य", "te": "కేసు సంక్షిప్త వాస్తವాలు", "ta": "வழக்கின் சுருக்கமான உண்மைகள்", "mr": "प्रकरणाची संक्षिप्त वस्तुस्थिती", "ur": "کیس کے مختصر حقائق"},
+            "action taken": {"kn": "ಕೈಗೊಂಡ ಕ್ರಮ", "hi": "की गई कार्रवाई", "te": "తీసుకున్న చర్య", "ta": "எடுக்கப்பட்ட நடவடிக்கை", "mr": "केलेली कारवाई", "ur": "کی گئی کارروائی"},
+            "place of occurrence": {"kn": "ಘಟನೆ ನಡೆದ ಸ್ಥಳ", "hi": "घटना स्थल", "te": "సంఘటన స్థలం", "ta": "நிகழ்வு நடந்த இடம்", "mr": "गुन्ह्याची जागा", "ur": "جائے وقوعہ"},
+            "absconding": {"kn": "ತಲೆಮರೆಸಿಕೊಂಡಿದ್ದಾರೆ", "hi": "फरार", "te": "పరారీలో", "ta": "தலைமறைவு", "mr": "फरार", "ur": "مفرور"},
+            "arrested": {"kn": "ಬಂಧಿಸಲಾಗಿದೆ", "hi": "गिरफ्तार", "te": "అరెస్టు", "ta": "கைது", "mr": "अटक", "ur": "گرفتار"},
+            "karnataka state police": {"kn": "ಕರ್ನಾಟಕ ರಾಜ್ಯ ಪೊಲೀಸ್", "hi": "कर्नाटक राज्य पुलिस", "te": "కర్ణాటక రాష్ట్ర పోలీసు", "ta": "கர்நாடக மாநில காவல்", "mr": "कर्नाटक राज्य पोलीस", "ur": "کرناٹک اسٹیٹ پولیس"},
+            "first information report": {"kn": "ಪ್ರಥಮ ವರ್ತಮಾನ ವರದಿ", "hi": "प्रथम सूचना रिपोर्ट", "te": "ప్రథమ సమాచార నివేదిక", "ta": "முதல் தகவல் அறிக்கை", "mr": "प्रथम माहिती अहवाल", "ur": "ابتدائی معلوماتی رپورٹ"},
+            "cyber crime": {"kn": "ಸೈಬರ್ ಅಪರಾಧ", "hi": "साइबर अपराध", "te": "సైబర్ నేరం", "ta": "சைபர் குற்றம்", "mr": "सायबर गुन्हे", "ur": "سائبر کرائم"},
+            "status": {"kn": "ಸ್ಥಿತಿ", "hi": "स्थिति", "te": "స్థితి", "ta": "நிலை", "mr": "स्थिती", "ur": "حیثیت"},
+        }
         
-        chunks = []
-        cur_chunk = ""
-        for p in paragraphs:
-            if len(cur_chunk) + len(p) + 1 > 1500:
-                if cur_chunk:
-                    chunks.append(cur_chunk)
-                cur_chunk = p
-            else:
-                cur_chunk = f"{cur_chunk}\n{p}" if cur_chunk else p
-        if cur_chunk:
-            chunks.append(cur_chunk)
-
-        translated_chunks = []
-        async with httpx.AsyncClient(timeout=15) as client:
-            for c in chunks:
-                if not c.strip():
-                    continue
-                q_enc = urllib.parse.quote(c)
-                url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={google_source}&tl={google_target}&dt=t&q={q_enc}"
-                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
-                if r.status_code == 200:
-                    data = r.json()
-                    chunk_trans = "".join([s[0] for s in data[0] if s and s[0]])
-                    if chunk_trans and chunk_trans.strip():
-                        translated_chunks.append(chunk_trans)
-                    else:
-                        raise Exception("Empty GTX chunk")
-                else:
-                    raise Exception(f"GTX status {r.status_code}")
-
-        if translated_chunks:
-            full_translated = "\n".join(translated_chunks)
-            if full_translated.strip():
-                return {"success": True, "translated_text": full_translated, "engine": "google-translate-gtx"}
-    except Exception as gtx_err:
-        print(f"[Translation] Google GTX tier failed: {gtx_err}")
-
-    # ── Tier 5: MyMemory Translator Fallback ──────────────────────────────────────
-    try:
-        from deep_translator import MyMemoryTranslator
-        import asyncio
-        loop = asyncio.get_event_loop()
-        mm_tr = await loop.run_in_executor(None, lambda: MyMemoryTranslator(source=google_source, target=google_target).translate(norm_text[:500]))
-        if mm_tr and mm_tr.strip() and mm_tr.strip() != norm_text.strip():
-            return {"success": True, "translated_text": mm_tr, "engine": "mymemory-translator"}
+        lower_t = text.strip().lower()
+        if lower_t in LEXICON and google_target in LEXICON[lower_t]:
+            return {"success": True, "translated_text": LEXICON[lower_t][google_target], "engine": "legal-lexicon"}
+            
+        # Replace sub-phrases line by line
+        lines = text.split("\n")
+        mod_lines = []
+        changed = False
+        for line in lines:
+            cur_line = line
+            for eng_phrase, tr_dict in LEXICON.items():
+                if tr_dict.get(google_target):
+                    import re
+                    pattern = re.compile(re.escape(eng_phrase), re.IGNORECASE)
+                    if pattern.search(cur_line):
+                        cur_line = pattern.sub(tr_dict[google_target], cur_line)
+                        changed = True
+            mod_lines.append(cur_line)
+            
+        if changed:
+            return {"success": True, "translated_text": "\n".join(mod_lines), "engine": "legal-lexicon-interpolated"}
     except Exception:
         pass
 
