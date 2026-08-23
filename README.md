@@ -23,7 +23,7 @@
 
 ---
 
-## ⚡ What's New in Sentinal v2.0 (Peak Intelligence Edition)
+## What's New in Sentinal v2.0 (Peak Intelligence Edition)
 
 Sentinal v2.0 introduces a comprehensive overhaul of both backend analytical cognition and frontend tactical interfaces:
 
@@ -38,7 +38,7 @@ Sentinal v2.0 introduces a comprehensive overhaul of both backend analytical cog
 │ • Fuzzy Entity Merge  │ • ETAS Hawkes Contagion    │ • SNA Betweenness Centrality│
 │ • Anti-Hallucination  │ • SHAP Local Feature Attr  │ • Hawala Smurfing Detector  │
 │ • Causal Flowcharts   │ • Time-Series Forecasting  │ • Pursuit Escape Isochrones │
-│ • Zero-Emoji UI Pass  │ • Provenance Guard Shield  │ • Knapsack Patrol Optimizer │
+│ • Zero-Emoji Standard │ • Provenance Guard Shield  │ • Knapsack Patrol Optimizer │
 └───────────────────────┴────────────────────────────┴─────────────────────────────┘
 ```
 
@@ -71,12 +71,12 @@ Sentinal v2.0 introduces a comprehensive overhaul of both backend analytical cog
 - **Pursuit Escape Containment & Patrol Routing**: Calculates vehicle escape isochrones along Karnataka highway corridors and optimizes patrol deployment via knapsack algorithms.
 
 ### 6. Zero-Emoji Modern Interface Standard
-- Completely purged all unicode emoji glyphs across the entire application (40+ pages and components).
-- Replaced with clean, lightweight Lucide vector icons (`lucide-react`) aligned with military and intelligence design aesthetics.
+- Completely purged all unicode emoji glyphs across the entire application (40+ pages, components, and documentation).
+- Replaced with clean, lightweight Lucide vector icons (`lucide-react`) aligned with modern military and intelligence design aesthetics.
 
 ---
 
-## 🔐 Platform Access
+## Platform Access
 
 > Access the live platform instantly — no registration needed.
 
@@ -88,7 +88,7 @@ Sentinal v2.0 introduces a comprehensive overhaul of both backend analytical cog
 
 ---
 
-## 📌 The Problem
+## The Problem
 
 Karnataka State Police (KSP) manages thousands of FIR records across 41 districts and 800+ police stations:
 
@@ -100,7 +100,7 @@ Karnataka State Police (KSP) manages thousands of FIR records across 41 district
 
 ---
 
-## 💡 The Solution
+## The Solution
 
 Sentinal is a full-stack, cloud-native crime analytics and intelligence platform built on Zoho Catalyst:
 
@@ -113,7 +113,7 @@ Sentinal is a full-stack, cloud-native crime analytics and intelligence platform
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -140,7 +140,7 @@ Sentinal is a full-stack, cloud-native crime analytics and intelligence platform
 
 ---
 
-## 🛠️ Catalyst Services Used
+## Catalyst Services Used
 
 | # | Service | Operational Usage in Sentinal |
 |---|---|---|
@@ -155,7 +155,7 @@ Sentinal is a full-stack, cloud-native crime analytics and intelligence platform
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 sentinal/
@@ -213,7 +213,7 @@ sentinal/
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 ### Prerequisites
 - **Python 3.11**
@@ -239,7 +239,7 @@ Frontend runs on `http://localhost:5173`.
 
 ---
 
-## ☁️ Deploying to Catalyst
+## Deploying to Catalyst
 
 To deploy the entire project (backend AppSail, frontend Web Client, and Advanced I/O functions) to Zoho Catalyst:
 
@@ -249,7 +249,7 @@ $env:PATH += ";C:\Users\techp\AppData\Roaming\npm"; cmd /c "call catalyst deploy
 
 ---
 
-## 👤 Team
+## Team
 
 * **Team MECH** — Solo Project (Zoho Catalyst Hackathon 2026)
 
@@ -257,7 +257,7 @@ $env:PATH += ";C:\Users\techp\AppData\Roaming\npm"; cmd /c "call catalyst deploy
 
 <div align="center">
 
-Built with 🔥 on [Catalyst by Zoho](https://catalyst.zoho.com)
+Built on [Catalyst by Zoho](https://catalyst.zoho.com)
 
 **[Primary App URL](https://sentinal-60073535541.development.catalystserverless.in/app/index.html)**  
 **[Slate App URL](https://sentinal-peak.onslate.in)**
@@ -266,7 +266,7 @@ Built with 🔥 on [Catalyst by Zoho](https://catalyst.zoho.com)
 
 ---
 
-## 📄 License & Attribution
+## License & Attribution
 
 This project is licensed under the **Creative Commons Attribution 4.0 International (CC BY 4.0)** license.
 
