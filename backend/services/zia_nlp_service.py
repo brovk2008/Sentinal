@@ -107,7 +107,51 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
     # Normalize all-caps titles
     norm_text = text.title() if (text.isupper() and len(text) > 3) else text
 
-    # ── Tier 1: deep-translator GoogleTranslator (Robust, Proxy & Rate-Limit Resilient) ──
+    # ── Tier 1: Direct Google GTX API via Async httpx (Fastest & Non-Blocking) ──
+    try:
+        import urllib.parse
+        paragraphs = [p for p in norm_text.split("\n") if p.strip()]
+        if not paragraphs:
+            paragraphs = [norm_text]
+        
+        chunks = []
+        cur_chunk = ""
+        for p in paragraphs:
+            if len(cur_chunk) + len(p) + 1 > 1500:
+                if cur_chunk:
+                    chunks.append(cur_chunk)
+                cur_chunk = p
+            else:
+                cur_chunk = f"{cur_chunk}\n{p}" if cur_chunk else p
+        if cur_chunk:
+            chunks.append(cur_chunk)
+
+        translated_chunks = []
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            for c in chunks:
+                if not c.strip():
+                    continue
+                q_enc = urllib.parse.quote(c)
+                url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={google_source}&tl={google_target}&dt=t&q={q_enc}"
+                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                if r.status_code == 200:
+                    data = r.json()
+                    chunk_trans = "".join([s[0] for s in data[0] if s and s[0]])
+                    if chunk_trans and chunk_trans.strip():
+                        translated_chunks.append(chunk_trans)
+                    else:
+                        raise Exception("Empty GTX chunk")
+                else:
+                    raise Exception(f"GTX status {r.status_code}")
+
+        if translated_chunks:
+            full_translated = "\n".join(translated_chunks)
+            if full_translated.strip():
+                return {"success": True, "translated_text": full_translated, "engine": "google-translate-gtx"}
+    except Exception as gtx_err:
+        print(f"[Translation] Google GTX tier failed: {gtx_err}")
+
+    # ── Tier 2: deep-translator GoogleTranslator (Robust Fallback) ───────────────
     try:
         from deep_translator import GoogleTranslator
         import asyncio
@@ -142,23 +186,23 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
                         translated_chunks.append(chunk)
             return "\n".join(translated_chunks)
 
-        translated = await loop.run_in_executor(None, _do_deep_translate)
+        translated = await asyncio.wait_for(loop.run_in_executor(None, _do_deep_translate), timeout=5.0)
         if translated and translated.strip():
             return {"success": True, "translated_text": translated, "engine": "google-deep-translator"}
     except Exception as deep_err:
         print(f"[Translation] deep-translator tier failed: {deep_err}")
 
-    # ── Tier 2: Catalyst QuickML AI LLM (Legal Context Translator) ───────────────
+    # ── Tier 3: Catalyst QuickML AI LLM (Legal Context Translator) ───────────────
     try:
         from services.quickml_service import call_ai
         llm_prompt = f"Translate the following Indian police FIR and legal text into {target_lang}. Translate ALL headers, labels, and text faithfully into {target_lang}. Return ONLY the direct translation without any explanation or commentary:\n\n{norm_text[:2500]}"
-        llm_out = await call_ai("You are an expert multilingual Indian legal translator.", llm_prompt, request=request)
+        llm_out = await asyncio.wait_for(call_ai("You are an expert multilingual Indian legal translator.", llm_prompt, request=request), timeout=5.0)
         if llm_out and len(llm_out) > 5 and "error" not in llm_out.lower() and llm_out.strip() != norm_text.strip():
             return {"success": True, "translated_text": llm_out.strip(), "engine": "catalyst-quickml-llm"}
     except Exception as qml_err:
         print(f"[Translation] QuickML LLM tier failed: {qml_err}")
 
-    # ── Tier 3: Catalyst Zia Text Analytics Translation API ───────────────────────
+    # ── Tier 4: Catalyst Zia Text Analytics Translation API ───────────────────────
     headers = _headers(request)
     urls = [
         f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
@@ -166,7 +210,7 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
     ]
     for url in urls:
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with httpx.AsyncClient(timeout=4.0) as client:
                 r = await client.post(
                     url, headers=headers,
                     json={"text": norm_text, "source_language": google_source, "target_language": google_target, "text_list": [norm_text]},
