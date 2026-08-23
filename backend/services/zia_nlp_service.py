@@ -87,6 +87,48 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
         return {"success": True, "translated_text": text}
 
     # 1. Try Catalyst Zia first (when creds are available)
+    # 1. Direct Google GTX API via httpx (fastest, universally accessible)
+    try:
+        import urllib.parse
+        paragraphs = [p for p in text.split("\n") if p.strip()]
+        if not paragraphs:
+            paragraphs = [text]
+        
+        chunks = []
+        cur_chunk = ""
+        for p in paragraphs:
+            if len(cur_chunk) + len(p) + 1 > 1500:
+                if cur_chunk:
+                    chunks.append(cur_chunk)
+                cur_chunk = p
+            else:
+                cur_chunk = f"{cur_chunk}\n{p}" if cur_chunk else p
+        if cur_chunk:
+            chunks.append(cur_chunk)
+
+        translated_chunks = []
+        async with httpx.AsyncClient(timeout=15) as client:
+            for c in chunks:
+                if not c.strip():
+                    continue
+                q_enc = urllib.parse.quote(c)
+                url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={google_source}&tl={google_target}&dt=t&q={q_enc}"
+                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+                if r.status_code == 200:
+                    data = r.json()
+                    chunk_trans = "".join([s[0] for s in data[0] if s and s[0]])
+                    translated_chunks.append(chunk_trans if chunk_trans else c)
+                else:
+                    translated_chunks.append(c)
+
+        if translated_chunks:
+            full_translated = "\n".join(translated_chunks)
+            if full_translated.strip():
+                return {"success": True, "translated_text": full_translated, "engine": "google-translate-gtx"}
+    except Exception as gtx_err:
+        print(f"[Translation] Google GTX failed: {gtx_err}")
+
+    # 2. Zia Text Analytics Translation via Catalyst API
     headers = _headers(request)
     urls = [
         f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
@@ -113,7 +155,7 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
         except Exception:
             pass
 
-    # 2. Real fallback: Google Translate via deep-translator (no API key needed)
+    # 3. Fallback: Google Translate via deep-translator
     try:
         from deep_translator import GoogleTranslator
         import asyncio
@@ -121,7 +163,6 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
         
         def _do_translate():
             src = google_source if google_source != "auto" else "auto"
-            # Split text safely along paragraph or sentence breaks up to 3500 chars
             paragraphs = [p for p in text.split("\n") if p.strip()]
             if not paragraphs:
                 paragraphs = [text]
@@ -154,7 +195,17 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
     except Exception as e:
         print(f"[Translation] deep-translator failed: {e}")
 
-    # 3. Last resort: LibreTranslate public endpoint
+    # 4. Catalyst QuickML LLM Translation
+    try:
+        from services.quickml_service import call_llm
+        llm_prompt = f"Translate the following Indian police document text into {target_lang}. Return ONLY the direct translation without any explanation or conversational filler:\n\n{text[:3000]}"
+        llm_out = await call_llm("You are an expert multilingual legal and police translator.", llm_prompt, request=request)
+        if llm_out and len(llm_out) > 5 and "error" not in llm_out.lower():
+            return {"success": True, "translated_text": llm_out.strip(), "engine": "catalyst-quickml-llm"}
+    except Exception as qml_err:
+        print(f"[Translation] QuickML LLM failed: {qml_err}")
+
+    # 5. Last resort: LibreTranslate public endpoint
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.post(
