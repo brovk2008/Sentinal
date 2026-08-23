@@ -9,6 +9,7 @@
 [![Live Serverless App](https://img.shields.io/badge/🚀_Primary_App-catalystserverless.in-copper?style=for-the-badge)](https://sentinal-60073535541.development.catalystserverless.in/app/index.html)
 [![Live Slate App](https://img.shields.io/badge/🌐_Slate_App-sentinal--peak.onslate.in-darkred?style=for-the-badge)](https://sentinal-peak.onslate.in)
 [![Powered by](https://img.shields.io/badge/Powered_by-Catalyst_by_Zoho-blue?style=for-the-badge)](https://catalyst.zoho.com)
+[![Version](https://img.shields.io/badge/Version-v1.4-purple?style=for-the-badge)]()
 [![Status](https://img.shields.io/badge/Status-Live_&_Verified-brightgreen?style=for-the-badge)]()
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-orange?style=for-the-badge)](https://creativecommons.org/licenses/by/4.0/)
 

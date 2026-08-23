@@ -96,7 +96,7 @@ async def fetch_fir(req: FIRRequest):
         )
     except Exception as e:
         log.error(f"fetch_fir executor error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 
 
     if result["status"] == "not_found":
         raise HTTPException(status_code=404, detail="FIR not found in KSP records")
