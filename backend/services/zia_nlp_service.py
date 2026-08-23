@@ -151,7 +151,35 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
     except Exception as gtx_err:
         print(f"[Translation] Google GTX tier failed: {gtx_err}")
 
-    # ── Tier 2: deep-translator GoogleTranslator (Robust Fallback) ───────────────
+    # ── Tier 2: MyMemory Async REST Translation API (Cloud/Datacenter Resilient) ──
+    try:
+        import urllib.parse
+        paragraphs = [p for p in norm_text.split("\n") if p.strip()]
+        if not paragraphs:
+            paragraphs = [norm_text]
+            
+        src_mm = google_source if google_source != "auto" else "en"
+        mm_chunks = []
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            for p in paragraphs:
+                q_enc = urllib.parse.quote(p[:500])
+                url = f"https://api.mymemory.translated.net/get?q={q_enc}&langpair={src_mm}|{google_target}"
+                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+                if r.status_code == 200:
+                    data = r.json()
+                    t_text = data.get("responseData", {}).get("translatedText")
+                    if t_text and "MYMEMORY WARNING" not in t_text.upper():
+                        mm_chunks.append(t_text)
+                    else:
+                        mm_chunks.append(p)
+                else:
+                    mm_chunks.append(p)
+        if mm_chunks and any(c != p for c, p in zip(mm_chunks, paragraphs)):
+            return {"success": True, "translated_text": "\n".join(mm_chunks), "engine": "mymemory-api"}
+    except Exception as mm_err:
+        print(f"[Translation] MyMemory API tier failed: {mm_err}")
+
+    # ── Tier 3: deep-translator GoogleTranslator (Robust Fallback) ───────────────
     try:
         from deep_translator import GoogleTranslator
         import asyncio
@@ -192,17 +220,17 @@ async def translate_text(text: str, source_lang: str = "auto", target_lang: str 
     except Exception as deep_err:
         print(f"[Translation] deep-translator tier failed: {deep_err}")
 
-    # ── Tier 3: Catalyst QuickML AI LLM (Legal Context Translator) ───────────────
+    # ── Tier 4: Catalyst QuickML AI LLM (Legal Context Translator) ───────────────
     try:
         from services.quickml_service import call_ai
         llm_prompt = f"Translate the following Indian police FIR and legal text into {target_lang}. Translate ALL headers, labels, and text faithfully into {target_lang}. Return ONLY the direct translation without any explanation or commentary:\n\n{norm_text[:2500]}"
-        llm_out = await asyncio.wait_for(call_ai("You are an expert multilingual Indian legal translator.", llm_prompt, request=request), timeout=5.0)
+        llm_out = await asyncio.wait_for(call_ai("You are an expert multilingual Indian legal translator.", llm_prompt, request=request), timeout=15.0)
         if llm_out and len(llm_out) > 5 and "error" not in llm_out.lower() and llm_out.strip() != norm_text.strip():
             return {"success": True, "translated_text": llm_out.strip(), "engine": "catalyst-quickml-llm"}
     except Exception as qml_err:
         print(f"[Translation] QuickML LLM tier failed: {qml_err}")
 
-    # ── Tier 4: Catalyst Zia Text Analytics Translation API ───────────────────────
+    # ── Tier 5: Catalyst Zia Text Analytics Translation API ───────────────────────
     headers = _headers(request)
     urls = [
         f"https://api.catalyst.zoho.in/baas/v1/project/{PROJECT_ID}/ml/text-analytics/translation",
