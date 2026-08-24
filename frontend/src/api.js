@@ -6,13 +6,21 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // ── Backend warm-up state & Proactive Wake-up ──────────────────────────────
+let _activeRetries = 0;
 let _warmingUp = false;
 export function isWarmingUp() { return _warmingUp; }
 
-function _setWarmingUp(v) {
-  if (_warmingUp === v) return;
-  _warmingUp = v;
-  window.dispatchEvent(new CustomEvent('backend-wakeup', { detail: { warming: v } }));
+function _updateWarmingState(isRetrying) {
+  if (isRetrying) {
+    _activeRetries++;
+  } else if (_activeRetries > 0) {
+    _activeRetries--;
+  }
+  const shouldWarm = _activeRetries > 0;
+  if (_warmingUp !== shouldWarm) {
+    _warmingUp = shouldWarm;
+    window.dispatchEvent(new CustomEvent('backend-wakeup', { detail: { warming: shouldWarm } }));
+  }
 }
 
 // Proactive instant wake-up trigger on application launch
@@ -23,7 +31,7 @@ function _setWarmingUp(v) {
 })();
 
 // ── request() with ultra-fast retry & SWR caching ─────────────────────────
-export async function request(endpoint, options = {}, _retries = 8) {
+export async function request(endpoint, options = {}, _retries = 3) {
   const url = `${BASE_URL}${endpoint}`;
   const config = {
     headers: { 'Content-Type': 'application/json', ...options.headers },
@@ -33,27 +41,34 @@ export async function request(endpoint, options = {}, _retries = 8) {
   try {
     const res = await fetch(url, config);
     if (res.status === 503 && _retries > 0) {
-      _setWarmingUp(true);
-      // Fast polling: 400ms, 600ms, 800ms, 1000ms...
-      const delay = Math.min(400 + (8 - _retries) * 250, 2000);
+      _updateWarmingState(true);
+      const delay = Math.min(500 + (3 - _retries) * 400, 2000);
       await new Promise(r => setTimeout(r, delay));
-      return request(endpoint, options, _retries - 1);
+      const result = await request(endpoint, options, _retries - 1);
+      _updateWarmingState(false);
+      return result;
     }
     if (!res.ok) throw new Error(`API Error: ${res.status}`);
-    _setWarmingUp(false);
     return await res.json();
   } catch (err) {
     if (_retries > 0 && (err.message?.includes('Failed to fetch') || err.message?.includes('503') || err.name === 'TypeError')) {
-      _setWarmingUp(true);
-      const delay = Math.min(400 + (8 - _retries) * 250, 2000);
+      _updateWarmingState(true);
+      const delay = Math.min(500 + (3 - _retries) * 400, 2000);
       await new Promise(r => setTimeout(r, delay));
-      return request(endpoint, options, _retries - 1);
+      try {
+        const result = await request(endpoint, options, _retries - 1);
+        _updateWarmingState(false);
+        return result;
+      } catch (retryErr) {
+        _updateWarmingState(false);
+        throw retryErr;
+      }
     }
-    _setWarmingUp(false);
     console.error(`[API] ${endpoint}:`, err);
     throw err;
   }
 }
+
 
 
 // ── Analytics ──

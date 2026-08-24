@@ -110,7 +110,7 @@ app.post("/", async (req, res) => {
       record_id: rowId,
       parsed_data: parsed,
     });
-
+// ─ aint working ─────────────────────────────────────────────────────────
   } catch (err) {
     console.error("[fir_ocr_processor] Fatal error:", err);
     return res.status(500).json({ success: false, error: err.message });
