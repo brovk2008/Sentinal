@@ -1,25 +1,36 @@
 /**
  * useBackendKeepAlive.js
- * Pings the backend every 4 minutes to prevent AppSail dev-tier cold-starts.
- * Should be called once in the root App component.
+ * Pings the backend every 2 minutes to prevent AppSail dev-tier cold-starts.
+ * Also triggers an instant wake-up ping whenever the browser tab becomes active.
  */
 import { useEffect } from 'react'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const PING_INTERVAL_MS = 4 * 60 * 1000 // 4 minutes (AppSail sleeps after 5-10min idle)
+const PING_INTERVAL_MS = 2 * 60 * 1000 // 2 minutes (keeps AppSail alive)
 
 export default function useBackendKeepAlive() {
   useEffect(() => {
-    // Initial ping to warm up immediately
     const ping = () => {
-      fetch(`${BASE_URL}/api/v1/auth/ping`, { method: 'GET' })
-        .then(() => console.log('[KeepAlive] Backend ping OK'))
-        .catch(() => console.log('[KeepAlive] Backend ping failed (may be cold-starting)'))
+      fetch(`${BASE_URL}/health`, { method: 'GET', mode: 'cors' })
+        .then(() => console.log('[KeepAlive] Backend health ping OK'))
+        .catch(() => console.log('[KeepAlive] Backend ping cold-starting...'))
     }
 
-    ping() // ping on mount
+    // Ping on mount
+    ping()
+
+    // Ping whenever user returns to tab
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        ping()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     const interval = setInterval(ping, PING_INTERVAL_MS)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   }, [])
 }

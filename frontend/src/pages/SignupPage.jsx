@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import { isLocalAuthMode, redirectToHostedSignup, signupUser } from '../lib/catalystAuth'
 import logoImg from '../assets/logo.png'
 

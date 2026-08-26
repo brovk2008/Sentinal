@@ -106,19 +106,25 @@ export default function App() {
           <Route path="/timeline/:caseId?"  element={<TimelineExplorer />} />
           <Route path="/persons"            element={<Persons />} />
           <Route path="/assistant"          element={<AIAssistant />} />
+          <Route path="/ai"                 element={<Navigate to="/assistant" replace />} />
           <Route path="/financial"          element={<FinancialIntel />} />
           <Route path="/cdr"                element={<CDRAnalytics />} />
           <Route path="/predict"            element={<PredictiveIntelligence />} />
+          <Route path="/predictions"        element={<Navigate to="/predict" replace />} />
           <Route path="/board"              element={<EvidenceBoard />} />
+          <Route path="/evidence"           element={<Navigate to="/board" replace />} />
           <Route path="/network-3d"         element={<NetworkGraph3D />} />
           <Route path="/accused/:accusedId" element={<AccusedProfile />} />
           <Route path="/darkweb"            element={<DarkWebIntel />} />
           <Route path="/warroom"            element={<WarRoom />} />
+          <Route path="/war-room"           element={<Navigate to="/warroom" replace />} />
           <Route path="/fir-search"         element={<FIRSearch />} />
           <Route path="/ingestion"          element={<DataIngestion />} />
           <Route path="/patterns"           element={<PatternIntel />} />
+          <Route path="/pattern-intel"      element={<Navigate to="/patterns" replace />} />
           <Route path="/profile"            element={<Profile />} />
           <Route path="/upload"             element={<DataUploadIntel />} />
+          <Route path="/data-upload"        element={<Navigate to="/upload" replace />} />
           <Route path="/ocr-records"        element={<OCRRecords />} />
         </Route>
       </Routes>
