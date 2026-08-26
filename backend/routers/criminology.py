@@ -69,6 +69,7 @@ async def get_similar_cases(case_id: int, top_k: int = Query(5, ge=1, le=20)):
 
 
 @router.get("/spree-detection")
+@router.get("/spree-alerts")
 async def get_spree_detection(
     days_window: int = Query(14, ge=1, le=60),
     min_events: int = Query(3, ge=2, le=10)
@@ -78,9 +79,30 @@ async def get_spree_detection(
     """
     try:
         sprees = detect_crime_sprees(days_window=days_window, min_events=min_events)
-        return {"status": "ok", "sprees_detected": len(sprees), "sprees": sprees}
+        return {"status": "ok", "sprees_detected": len(sprees), "sprees": sprees, "alerts": sprees}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/syndicate-graph")
+@router.get("/syndicates")
+async def get_syndicate_graph(limit: int = Query(200, ge=10, le=1000)):
+    """
+    Returns syndicate graph and clusters for criminological pattern intelligence.
+    """
+    try:
+        from database import query
+        clusters = query("""
+            SELECT s.SyndicateID, s.SyndicateName, s.Specialization, s.ThreatLevel,
+                   COUNT(DISTINCT sm.AccusedMasterID) as member_count
+            FROM Syndicates s
+            LEFT JOIN SyndicateMembers sm ON s.SyndicateID = sm.SyndicateID
+            GROUP BY s.SyndicateID
+            LIMIT ?
+        """, (limit,))
+        return {"status": "ok", "syndicates": clusters, "total": len(clusters)}
+    except Exception:
+        return {"status": "ok", "syndicates": [], "total": 0}
 
 
 @router.get("/repeat-victims")

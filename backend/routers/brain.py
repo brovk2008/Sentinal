@@ -49,9 +49,9 @@ class AnalyzeBoardRequest(BaseModel):
     case_ids: Optional[List[int]] = []
 
 class PredictNextCrimeRequest(BaseModel):
-    suspect_name: str
-    district_ids: List[int] = []
-    days_ahead: int = 14
+    suspect_name: Optional[str] = None
+    district_ids: Optional[List[int]] = []
+    days_ahead: Optional[int] = 14
 
 class ConnectDotsRequest(BaseModel):
     entity_names: Optional[List[str]] = None
@@ -185,6 +185,11 @@ async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Req
     Suspect-centric crime forecasting.
     """
     try:
+        suspect = request.suspect_name
+        if not suspect:
+            top_accused = query_one("SELECT AccusedName FROM Accused GROUP BY AccusedName ORDER BY COUNT(DISTINCT CaseMasterID) DESC LIMIT 1")
+            suspect = top_accused["AccusedName"] if top_accused else "Unknown Suspect"
+
         # Load suspect records
         cases = query("""
             SELECT cm.CaseMasterID, cm.CrimeNo, cm.BriefFacts, cm.Latitude, cm.Longitude, 
@@ -194,7 +199,7 @@ async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Req
             WHERE cm.CaseMasterID IN (
                 SELECT CaseMasterID FROM Accused WHERE AccusedName LIKE ?
             )
-        """, (f"%{request.suspect_name}%",))
+        """, (f"%{suspect}%",))
 
         system_prompt = (
             "You are a predictive crime mapping engine for KSP. "

@@ -15,6 +15,7 @@ class CompareRequest(BaseModel):
     case_ids: List[int]
 
 
+@router.get("")
 @router.get("/")
 async def list_cases(
     page: int = Query(1, ge=1),
