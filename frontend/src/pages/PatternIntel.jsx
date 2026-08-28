@@ -1,3 +1,4 @@
+import TacticalCaseSolverModal from '../components/investigation/TacticalCaseSolverModal'
 /**
  * PatternIntel.jsx — Advanced Criminology & Pattern AI Hub
  * Displays real-world criminological pattern analysis:
@@ -21,6 +22,7 @@ export default function PatternIntel() {
   const [spreeAlerts, setSpreeAlerts] = useState([]);
   const [escalationChains, setEscalationChains] = useState([]);
   const [prediction, setPrediction] = useState(null);
+  const [solverModalOpen, setSolverModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -70,6 +72,17 @@ export default function PatternIntel() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => setSolverModalOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, #c8814a, #9e5b2b)',
+              color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 6,
+              fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+            }}
+          >
+            <Zap size={14} />
+            <span>RUN MULTI-MODAL AI CASE SOLVER</span>
+          </button>
           <Badge type="info">Catalyst QuickML &amp; Zia AI</Badge>
           <Badge type="success">Live FIR Stream</Badge>
         </div>

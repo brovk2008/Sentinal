@@ -126,3 +126,39 @@ async def get_escalation_matrix(limit: int = Query(5000, ge=100, le=10000)):
         return build_escalation_matrix(limit=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+from pydantic import BaseModel
+from typing import Optional
+
+class SolveCaseRequest(BaseModel):
+    case_id: int = 1
+    image_base64: Optional[str] = None
+
+class FaceMatchRequest(BaseModel):
+    image_base64: str
+    top_k: int = 5
+
+@router.post("/solve-case")
+async def post_solve_case(req: SolveCaseRequest):
+    """
+    Multi-modal AI case solver. Fuses facial similarity, MO pattern matching,
+    CDR tower co-presence, and financial transfers.
+    """
+    try:
+        from services.case_solver_engine import solve_case_with_ai
+        return solve_case_with_ai(case_id=req.case_id, image_base64=req.image_base64)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/match-face")
+async def post_match_face(req: FaceMatchRequest):
+    """
+    Scans suspect photo/CCTV image and matches against stored accused database.
+    """
+    try:
+        from services.facial_evidence_matcher import match_face_against_database
+        matches = match_face_against_database(image_base64=req.image_base64, top_k=req.top_k)
+        return {"status": "ok", "total_matches": len(matches), "matches": matches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -469,3 +469,16 @@ export const saveOCRRecord = (payload) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
+
+
+export const solveCaseWithAI = (caseId = 1, imageBase64 = null) =>
+  request('/api/v1/criminology/solve-case', {
+    method: 'POST',
+    body: JSON.stringify({ case_id: caseId, image_base64: imageBase64 })
+  });
+
+export const matchSuspectFace = (imageBase64, topK = 5) =>
+  request('/api/v1/criminology/match-face', {
+    method: 'POST',
+    body: JSON.stringify({ image_base64: imageBase64, top_k: topK })
+  });
