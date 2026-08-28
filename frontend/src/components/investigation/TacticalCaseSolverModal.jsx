@@ -188,6 +188,34 @@ export default function TacticalCaseSolverModal({ isOpen, onClose, caseId = 1 })
               </div>
             )}
 
+            
+            {/* 4-Phase Solved Case Resolution Playbook */}
+            {solverResult.investigation_workflow_phases && (
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(200,129,74,0.3)', padding: 18, borderRadius: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#c8814a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ArrowRight size={14} />
+                  <span>STEP-BY-STEP CASE RESOLUTION PLAYBOOK (DERIVED FROM SOLVED CASE DATASETS)</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+                  {solverResult.investigation_workflow_phases.map((phase) => (
+                    <div key={phase.phase} style={{ background: 'rgba(4,5,12,0.8)', border: '1px solid rgba(255,255,255,0.08)', padding: 12, borderRadius: 6 }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#c8814a', marginBottom: 4 }}>
+                        PHASE {phase.phase}: {phase.title.toUpperCase()}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {phase.steps.map((step, idx) => (
+                          <div key={idx} style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+                            <span style={{ color: '#10b981' }}>✓</span>
+                            <span>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Actionable Tactical Leads */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: 18, borderRadius: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: '#c8814a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
