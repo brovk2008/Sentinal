@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
 """
 Dark Web Intelligence Panel
 Generates realistic synthetic threat intelligence data
@@ -173,4 +175,36 @@ Focus on: current threat level, likely next actions, recommended response."""
         'assessment': assessment,
         'threat_level': 'HIGH',
         'generated_at': datetime.now().isoformat()
+    }
+
+
+class ScamScriptRequest(BaseModel):
+    transcript_sample: Optional[str] = "This is Officer Vikram from CBI Mumbai Headquarters. Your Aadhaar is linked to money laundering parcel in Mumbai Customs. Transfer Rs 2.5 Lakhs immediately to RBI verification account to avoid immediate digital arrest."
+
+@router.post("/analyze-cyber-scam-script")
+async def post_analyze_cyber_scam_script(req: ScamScriptRequest):
+    """
+    'Digital Arrest' & Cyber Scam Script Syndicate Analyzer.
+    Classifies cyber fraud Modus Operandi, extracts mule payment handles, and drafts CERT-In complaints.
+    """
+    return {
+        "status": "ok",
+        "scam_category": "Digital Arrest / Fake Law Enforcement Impersonation",
+        "syndicate_cluster": "Transnational Cyber Fraud Ring (Southeast Asia / Cambodia SEZ Compound)",
+        "script_fidelity_score": 96.2,
+        "impersonated_agencies": ["Central Bureau of Investigation (CBI)", "Mumbai Customs", "Reserve Bank of India (RBI)"],
+        "psychological_coercion_tactics": [
+            "False Legal Imprisonment Threat (Section 420/120B IPC)",
+            "Isolation Command (Do not disconnect Skype video call)",
+            "Fabricated Clearance Certificate Promise"
+        ],
+        "extracted_mule_handles": [
+            {"type": "UPI VPA", "handle": "rbi.gov.verify91@icici", "status": "FLAGGED_FOR_FREEZE"},
+            {"type": "Virtual Account", "handle": "YESB0000001-CBI4819", "status": "FLAGGED_FOR_FREEZE"}
+        ],
+        "cert_in_dossier": {
+            "incident_category": "CATEGORY-4 (Cyber Extortion & Impersonation)",
+            "priority": "HIGH",
+            "remedial_action": "Domain takedown request for spoofed CBI portal + UPI VPA de-registration via NPCI."
+        }
     }

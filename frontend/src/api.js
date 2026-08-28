@@ -538,3 +538,34 @@ export const detectSmurfingRings = (payload = {}) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+// ── Next-Gen Forensic & Cyber Intelligence Engines ───────────────────────────
+export const runBiometricFaceMorph = (payload = {}) =>
+  request('/api/v1/criminology/biometric-face-morph', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const runInterrogationCopilot = (payload = {}) =>
+  request('/api/v1/criminology/interrogation-copilot', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const runRossmoGeographicProfiling = (payload = {}) =>
+  request('/api/v1/criminology/rossmo-geographic-profiling', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const runIMEISwitcherTracker = (payload = {}) =>
+  request('/api/v1/cdr/imei-switcher-tracker', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const analyzeCyberScamScript = (payload = {}) =>
+  request('/api/v1/darkweb/analyze-cyber-scam-script', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });

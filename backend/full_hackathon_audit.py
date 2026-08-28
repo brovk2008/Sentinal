@@ -1,5 +1,5 @@
 """
-full_hackathon_audit.py — Comprehensive End-to-End API Audit (18 Endpoints)
+full_hackathon_audit.py — Comprehensive End-to-End API Audit (23 Endpoints)
 """
 
 import sys
@@ -16,9 +16,9 @@ from fastapi.testclient import TestClient
 client = TestClient(app)
 
 def run_audit():
-    print("=" * 75)
-    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 18-ENDPOINT AUDIT       ")
-    print("=" * 75)
+    print("=" * 80)
+    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 23-ENDPOINT AUDIT       ")
+    print("=" * 80)
 
     endpoints_to_test = [
         ("GET",  "/api/v1/cases/"),
@@ -36,6 +36,11 @@ def run_audit():
         ("POST", "/api/v1/criminology/anpr-convoy-analysis", {"target_vehicle": "KA-04-MB-1234"}),
         ("POST", "/api/v1/criminology/audio-forensic-profile", {"sample_id": "112-TEST"}),
         ("POST", "/api/v1/criminology/plan-sting-intercept", {"incident_location": "Indiranagar 100ft Road"}),
+        ("POST", "/api/v1/criminology/biometric-face-morph", {"suspect_name": "Imran Pasha"}),
+        ("POST", "/api/v1/criminology/interrogation-copilot", {"suspect_name": "Imran Pasha"}),
+        ("POST", "/api/v1/criminology/rossmo-geographic-profiling", {"target_area": "Bengaluru"}),
+        ("POST", "/api/v1/cdr/imei-switcher-tracker", {"target_imei": "864920049182741"}),
+        ("POST", "/api/v1/darkweb/analyze-cyber-scam-script", {"transcript_sample": "Digital Arrest"}),
         ("POST", "/api/v1/financial/detect-smurfing-rings", {"primary_account": "HDFC-MULE-991204821"}),
         ("GET",  "/api/v1/nlp/status"),
         ("GET",  "/api/v1/analytics/kpis"),
@@ -56,18 +61,18 @@ def run_audit():
                 res = client.post(url, json=payload)
 
             if res.status_code in (200, 201):
-                print(f"[PASS] {method:4s} {url:48s} -> HTTP {res.status_code}")
+                print(f"[PASS] {method:4s} {url:52s} -> HTTP {res.status_code}")
                 passed += 1
             else:
-                print(f"[FAIL] {method:4s} {url:48s} -> HTTP {res.status_code} ({res.text[:150]})")
+                print(f"[FAIL] {method:4s} {url:52s} -> HTTP {res.status_code} ({res.text[:150]})")
                 failed += 1
         except Exception as e:
-            print(f"[EXCP] {method:4s} {url:48s} -> Exception: {e}")
+            print(f"[EXCP] {method:4s} {url:52s} -> Exception: {e}")
             failed += 1
 
-    print("=" * 75)
+    print("=" * 80)
     print(f"AUDIT RESULT: {passed} Passed, {failed} Failed out of {len(endpoints_to_test)} endpoints.")
-    print("=" * 75)
+    print("=" * 80)
     return failed == 0
 
 if __name__ == "__main__":

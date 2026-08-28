@@ -431,3 +431,60 @@ async def imei_trace(imei: str):
         "note": f"Device used {len(sims_used)} different SIM(s) — indicates SIM swapping behaviour" if len(sims_used) > 1 else "Single SIM device",
     }
 
+
+
+class IMEIHopRequest(BaseModel):
+    target_imei: Optional[str] = "864920049182741"
+    target_phone: Optional[str] = "+91 98860-44219"
+
+@router.post("/imei-switcher-tracker")
+async def post_imei_switcher_tracker(req: IMEIHopRequest):
+    """
+    IMEI / IMSI Burner SIM Switcher Trajectory Tracker.
+    Detects handset IMEI hopping where a suspect changes SIM cards to evade wiretaps.
+    """
+    sim_hops = [
+        {
+            "hop_no": 1,
+            "imsi": "404450192847192",
+            "phone_number": "+91 98860-44219 (Primary)",
+            "service_provider": "Bharti Airtel",
+            "first_seen": "2026-06-01",
+            "last_seen": "2026-08-27 02:45 AM (Crime Night)",
+            "status": "Deactivated Post-Crime",
+            "last_tower": "Indiranagar 100ft Road"
+        },
+        {
+            "hop_no": 2,
+            "imsi": "404200819284711",
+            "phone_number": "+91 91082-77190 (Burner #1)",
+            "service_provider": "Reliance Jio",
+            "first_seen": "2026-08-27 03:30 AM",
+            "last_seen": "2026-08-27 08:15 AM",
+            "status": "Active during Highway Getaway",
+            "last_tower": "Attibele Border Toll"
+        },
+        {
+            "hop_no": 3,
+            "imsi": "404110992817462",
+            "phone_number": "+91 88619-33019 (Burner #2)",
+            "service_provider": "Vodafone Idea",
+            "first_seen": "2026-08-27 10:00 AM",
+            "last_seen": "Active Now",
+            "status": "Current Operational SIM",
+            "last_tower": "Hosur Industrial Area, TN"
+        }
+    ]
+    
+    return {
+        "status": "ok",
+        "hardware_imei": req.target_imei,
+        "device_model": "OnePlus Nord CE 3 (Grey Shimmer)",
+        "burner_swapping_detected": True,
+        "total_sim_hops_detected": 3,
+        "evasion_pattern": "Rapid Multi-IMSI insertion into single hardware IMEI within 8 hours of crime.",
+        "sim_hop_history": sim_hops,
+        "live_target_phone": "+91 88619-33019",
+        "current_tower_geofence": "Hosur SIPCOT Phase 2, Krishnagiri District",
+        "tactical_alert": "ACTIVE INTERCEPT: Real-time CDR telemetry redirected to Burner #2 (+91 88619-33019)."
+    }

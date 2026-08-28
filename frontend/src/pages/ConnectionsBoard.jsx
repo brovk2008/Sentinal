@@ -1,7 +1,8 @@
 /**
  * ConnectionsBoard.jsx — Sentinal v2 Investigation Canvas
  * Infinite ReactFlow canvas with Multi-Canvas management, Custom IDs,
- * AI Forensic Detective, BNS Chargesheet Generator, ANPR Convoy Tracker, and Tactical Sting Planner.
+ * AI Forensic Detective, BNS Chargesheet Generator, ANPR Convoy Tracker, Tactical Sting Planner,
+ * Biometric Disguise Morph AI, and AI Interrogation Copilot.
  */
 import { useState, useCallback, useRef, useEffect } from 'react'
 import ReactFlow, {
@@ -17,7 +18,8 @@ import {
   Trash2, ArrowRight, Link2, Download, Save,
   Info, Paperclip, Check, FolderOpen, Search,
   ShieldAlert, Compass, ChevronRight, X, Layers,
-  FileText, Navigation, ShieldCheck, Printer, Radio
+  FileText, Navigation, ShieldCheck, Printer, Radio,
+  Smile, HelpCircle, Eye, EyeOff, MessageSquare
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -29,8 +31,8 @@ import {
   generateBNSChargesheet,
   runANPRConvoyAnalysis,
   planStingIntercept,
-  connectDots,
-  analyzeBoard
+  runBiometricFaceMorph,
+  runInterrogationCopilot
 } from '../api'
 
 function NodeIcon({ type, size = 12 }) {
@@ -321,7 +323,6 @@ function BNSChargesheetModal({ caseId, onClose }) {
           <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Compiling statutory sections, witness lists & Sec 65B hash certificates...</div>
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
-            {/* Header info */}
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8, fontSize: 11, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div><strong>Chargesheet No:</strong> {data.chargesheet_number}</div>
               <div><strong>Generated At:</strong> {data.generated_at}</div>
@@ -330,7 +331,6 @@ function BNSChargesheetModal({ caseId, onClose }) {
               <div style={{ gridColumn: 'span 2' }}><strong>Sec 65B Cryptographic Proof Hash:</strong> <span className="mono" style={{ color: 'var(--copper-300)' }}>{data.sec65b_certificate_hash}</span></div>
             </div>
 
-            {/* Statutory Charges */}
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--copper-400)', marginBottom: 6 }}>STATUTORY CHARGES & OFFENSES (BNS 2023):</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -344,7 +344,6 @@ function BNSChargesheetModal({ caseId, onClose }) {
               </div>
             </div>
 
-            {/* Brief of Case */}
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--copper-400)', marginBottom: 4 }}>BRIEF OF CASE & EVIDENCE CHAIN:</div>
               <div style={{ fontSize: 11, lineHeight: 1.6, color: '#ddd', background: 'rgba(255,255,255,0.02)', padding: 10, borderRadius: 6 }}>
@@ -352,7 +351,6 @@ function BNSChargesheetModal({ caseId, onClose }) {
               </div>
             </div>
 
-            {/* Accused & Witnesses */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#ff7875', marginBottom: 4 }}>ACCUSED ROSTER:</div>
@@ -419,7 +417,6 @@ function ANPRConvoyModal({ onClose }) {
           <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Scanning toll plaza cameras & detecting trailing escort vehicles...</div>
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
-            {/* Convoy Badge */}
             <div style={{ background: 'rgba(224,82,82,0.15)', border: '1px solid rgba(224,82,82,0.4)', padding: 12, borderRadius: 8 }}>
               <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>★ CONVOY ESCORT DETECTED ({data.convoy_confidence}% MATCH)</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginTop: 4 }}>
@@ -430,7 +427,6 @@ function ANPRConvoyModal({ onClose }) {
               </div>
             </div>
 
-            {/* Trajectory Timeline */}
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#52b0e0', marginBottom: 6 }}>CONSECUTIVE TOLL PLAZA PASSES:</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -520,6 +516,145 @@ function TacticalStingModal({ onClose }) {
   )
 }
 
+// ── Biometric Face Morph & Disguise Simulator Modal ──────────────────
+function BiometricMorphModal({ onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    runBiometricFaceMorph({ suspect_name: "Imran Pasha" })
+      .then(res => { setData(res); setLoading(false); })
+      .catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: '#0d0d1a', border: '1px solid #b452e0',
+        borderRadius: 14, padding: 24, width: 720, maxHeight: '85vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Smile size={18} color="#b452e0" />
+            <span style={{ fontWeight: 700, fontSize: 15 }}>BIOMETRIC FACE MORPH & DISGUISE SIMULATOR</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Reconstructing 3D biometric landmarks & simulating disguise evasion profiles...</div>
+        ) : data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+            <div style={{ background: 'rgba(180,82,224,0.12)', border: '1px solid rgba(180,82,224,0.35)', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#d482ff', fontWeight: 700 }}>★ BIOMETRIC LANDMARK RECONSTRUCTION ({data.facial_landmarks.biometric_confidence}% CONFIDENCE)</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 2 }}>Target: {data.suspect_name}</div>
+              <div style={{ fontSize: 11, color: '#ccc', marginTop: 4 }}>
+                Interpupillary Distance: {data.facial_landmarks.interpupillary_distance_px}px | Jawline Angularity: {data.facial_landmarks.jawline_angularity_deg}°
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#b452e0', marginBottom: 6 }}>SIMULATED FORENSIC DISGUISES:</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {data.disguise_simulations.map((d, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #b452e0', padding: 10, borderRadius: 6, fontSize: 11 }}>
+                    <div style={{ fontWeight: 700, color: '#fff' }}>{d.disguise_type}</div>
+                    <div style={{ color: '#aaa', marginTop: 2 }}>{d.altered_features}</div>
+                    <div style={{ color: '#ff7875', fontSize: 10, marginTop: 2 }}>Evasion Risk: {d.facial_recognition_evasion_risk}</div>
+                    <div style={{ color: '#52e0cc', fontSize: 10, marginTop: 2 }}>Note: {d.tactical_alert_note}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(224,82,82,0.1)', border: '1px solid rgba(224,82,82,0.3)', padding: 10, borderRadius: 6, fontSize: 11, color: '#ff7875' }}>
+              <strong>Border Bulletin:</strong> {data.border_control_bulletin}
+            </div>
+
+            <button onClick={onClose} style={btnSecondary}>Close</button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+// ── AI Interrogation Copilot Modal ──────────────────────────────────
+function InterrogationCopilotModal({ onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    runInterrogationCopilot({ suspect_name: "Imran Pasha" })
+      .then(res => { setData(res); setLoading(false); })
+      .catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: '#0d0d1a', border: '1px solid #52e07a',
+        borderRadius: 14, padding: 24, width: 720, maxHeight: '85vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <MessageSquare size={18} color="#52e07a" />
+            <span style={{ fontWeight: 700, fontSize: 15 }}>AI INTERROGATION COPILOT & CROSS-EXAMINATION STRATEGIST</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Auditing suspect statement against digital CDR & CCTV footprints...</div>
+        ) : data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+            <div style={{ background: 'rgba(224,82,82,0.15)', border: '1px solid rgba(224,82,82,0.4)', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>★ STATEMENT CREDIBILITY: {data.statement_credibility_score}% (EXTREME DECEPTION DETECTED)</div>
+              <div style={{ fontSize: 11, color: '#eee', marginTop: 4 }}>
+                Target Suspect: <strong>{data.suspect_name}</strong> | Tactic: {data.recommended_interrogation_tactic}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#ff7875', marginBottom: 6 }}>FALSIFIED ALIBIS & DIRECT CONTRADICTIONS:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {data.detected_contradictions.map((c, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #ff4d4f', padding: 8, borderRadius: 6, fontSize: 11 }}>
+                    <div>Claim: <strong style={{ color: '#fff' }}>"{c.claim}"</strong></div>
+                    <div style={{ color: '#52e0cc', marginTop: 2 }}>Evidence: {c.refuting_evidence} ({c.falsification_strength})</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#52e07a', marginBottom: 6 }}>5 PRECISION CROSS-EXAMINATION QUESTIONS:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {data.precision_cross_examination_questions.map((q, i) => (
+                  <div key={i} style={{ background: 'rgba(82,224,122,0.08)', borderLeft: '3px solid #52e07a', padding: 8, borderRadius: 6, fontSize: 11 }}>
+                    <div style={{ fontWeight: 700, color: '#fff' }}>Q{q.question_no} [{q.target_contradiction}]: {q.question_text}</div>
+                    <div style={{ color: '#aaa', fontSize: 10, marginTop: 2 }}>Intended Legal Outcome: {q.intended_legal_outcome}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={onClose} style={btnSecondary}>Close</button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 // ── Shared inline styles ────────────────────────────────────────────
 const inputStyle = {
   width: '100%', padding: '8px 12px', borderRadius: 8,
@@ -551,6 +686,8 @@ export default function ConnectionsBoard() {
   const [showChargesheetModal, setShowChargesheetModal] = useState(false)
   const [showANPRModal, setShowANPRModal] = useState(false)
   const [showStingModal, setShowStingModal] = useState(false)
+  const [showMorphModal, setShowMorphModal] = useState(false)
+  const [showInterrogationModal, setShowInterrogationModal] = useState(false)
   const [pendingEdge, setPendingEdge] = useState(null)
   const [saveStatus, setSaveStatus] = useState('')
   const [canvases, setCanvases] = useState([])
@@ -565,7 +702,6 @@ export default function ConnectionsBoard() {
   const nodeIdRef = useRef(10)
   const saveTimer = useRef(null)
 
-  // Fetch all available canvases
   const loadCanvasList = useCallback(async () => {
     try {
       const res = await fetchCanvasList()
@@ -577,7 +713,6 @@ export default function ConnectionsBoard() {
     }
   }, [])
 
-  // Load a canvas by ID
   const switchCanvas = useCallback(async (canvasId) => {
     setCurrentCanvasId(canvasId)
     setDetectiveVerdict(null)
@@ -597,13 +732,11 @@ export default function ConnectionsBoard() {
     }
   }, [setNodes, setEdges])
 
-  // Initial load
   useEffect(() => {
     loadCanvasList()
     switchCanvas('CANVAS-VEHICLE-THEFT-01')
   }, [loadCanvasList, switchCanvas])
 
-  // Auto-save on change (debounced 2s)
   useEffect(() => {
     if (nodes.length === 0) return
     clearTimeout(saveTimer.current)
@@ -765,14 +898,42 @@ export default function ConnectionsBoard() {
       {/* ── Tactical Action Toolbar (Right) ────────────────────────── */}
       <div style={{
         position: 'absolute', top: 12, right: 16, zIndex: 10,
-        display: 'flex', alignItems: 'center', gap: 8,
+        display: 'flex', alignItems: 'center', gap: 7,
       }}>
+        <button
+          onClick={() => setShowMorphModal(true)}
+          style={{
+            background: 'rgba(180,82,224,0.18)', color: '#d482ff',
+            border: '1px solid rgba(180,82,224,0.4)', borderRadius: 8,
+            padding: '7px 10px', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <Smile size={13} />
+          <span>🎭 Disguise Morph</span>
+        </button>
+
+        <button
+          onClick={() => setShowInterrogationModal(true)}
+          style={{
+            background: 'rgba(82,224,122,0.18)', color: '#52e07a',
+            border: '1px solid rgba(82,224,122,0.4)', borderRadius: 8,
+            padding: '7px 10px', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <MessageSquare size={13} />
+          <span>🕵️ Interrogation</span>
+        </button>
+
         <button
           onClick={() => setShowChargesheetModal(true)}
           style={{
             background: 'rgba(200,129,74,0.18)', color: 'var(--copper-300)',
             border: '1px solid rgba(200,129,74,0.4)', borderRadius: 8,
-            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            padding: '7px 10px', fontSize: 11, fontWeight: 600,
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             backdropFilter: 'blur(8px)'
           }}
@@ -786,7 +947,7 @@ export default function ConnectionsBoard() {
           style={{
             background: 'rgba(82,176,224,0.18)', color: '#52b0e0',
             border: '1px solid rgba(82,176,224,0.4)', borderRadius: 8,
-            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            padding: '7px 10px', fontSize: 11, fontWeight: 600,
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             backdropFilter: 'blur(8px)'
           }}
@@ -800,13 +961,13 @@ export default function ConnectionsBoard() {
           style={{
             background: 'rgba(224,82,82,0.18)', color: '#ff7875',
             border: '1px solid rgba(224,82,82,0.4)', borderRadius: 8,
-            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            padding: '7px 10px', fontSize: 11, fontWeight: 600,
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             backdropFilter: 'blur(8px)'
           }}
         >
           <Radio size={13} />
-          <span>🎯 Tactical Sting</span>
+          <span>🎯 Sting</span>
         </button>
 
         <button
@@ -814,7 +975,7 @@ export default function ConnectionsBoard() {
           style={{
             background: 'rgba(255,255,255,0.08)', color: '#fff',
             border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8,
-            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            padding: '7px 10px', fontSize: 11, fontWeight: 600,
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             backdropFilter: 'blur(8px)'
           }}
@@ -828,8 +989,8 @@ export default function ConnectionsBoard() {
           style={{
             background: 'linear-gradient(135deg, rgba(200,129,74,0.95), rgba(224,82,82,0.85))',
             color: '#fff', border: 'none', borderRadius: 8,
-            padding: '7px 14px', fontSize: 12, fontWeight: 700,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            padding: '7px 13px', fontSize: 11, fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             boxShadow: '0 0 16px rgba(200,129,74,0.5)'
           }}
         >
@@ -1000,6 +1161,8 @@ export default function ConnectionsBoard() {
       {showChargesheetModal && <BNSChargesheetModal caseId={currentCanvasId} onClose={() => setShowChargesheetModal(false)} />}
       {showANPRModal && <ANPRConvoyModal onClose={() => setShowANPRModal(false)} />}
       {showStingModal && <TacticalStingModal onClose={() => setShowStingModal(false)} />}
+      {showMorphModal && <BiometricMorphModal onClose={() => setShowMorphModal(false)} />}
+      {showInterrogationModal && <InterrogationCopilotModal onClose={() => setShowInterrogationModal(false)} />}
     </div>
   )
 }
