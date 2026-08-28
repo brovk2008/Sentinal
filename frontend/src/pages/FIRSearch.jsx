@@ -63,7 +63,7 @@ export default function FIRSearch() {
   const [districtId, setDistrictId]   = useState('')
   const [stationId,  setStationId]    = useState('')
   const [firNum,     setFirNum]       = useState('')
-  const [year,       setYear]         = useState('2024')
+  const [year,       setYear]         = useState('2026')
   const [stations,   setStations]     = useState([])
   const [stationsLoading, setStationsLoading] = useState(false)
 
@@ -396,7 +396,7 @@ export default function FIRSearch() {
           <div>
             <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Year</label>
             <select style={sel} value={year} onChange={e => setYear(e.target.value)}>
-              {['2025', '2024', '2023', '2022', '2021', '2020'].map(y => <option key={y}>{y}</option>)}
+              {['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'].map(y => <option key={y}>{y}</option>)}
             </select>
           </div>
 

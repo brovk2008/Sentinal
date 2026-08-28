@@ -23,7 +23,7 @@ const DEFAULT_SCRAPED_FIRS = [
 ];
 
 export default function DataIngestion() {
-  const [year, setYear] = useState('2024');
+  const [year, setYear] = useState('2026');
   const [districts, setDistricts] = useState([]);
   const [selectedDistricts, setSelectedDistricts] = useState([]);
   const [status, setStatus] = useState({
@@ -396,7 +396,7 @@ export default function DataIngestion() {
                     outline: 'none'
                   }}
                 >
-                  {Array.from({ length: 11 }, (_, i) => String(2015 + i)).map(y => (
+                  {['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'].map(y => (
                     <option key={y} value={y}>{y}</option>
                   ))}
                 </select>

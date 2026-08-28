@@ -848,8 +848,10 @@ export default function GeospatialMap() {
             style={{ fontSize: 12 }}
           >
             <option value="">All Years</option>
-            <option value="2023">2023</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
             <option value="2024">2024</option>
+            <option value="2023">2023</option>
           </select>
         </div>
 
