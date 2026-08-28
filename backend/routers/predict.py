@@ -90,7 +90,8 @@ def predict_hotspots(
       - ETAS Contagion Model (self-exciting Hawkes process)
     SHAP attribution explains top contributing factors per zone.
     """
-    model = _models.get('hotspot', {}).get('model')
+    raw_m = _models.get('hotspot')
+    model = raw_m.get('model') if isinstance(raw_m, dict) else raw_m
 
     district_filter = "WHERE u.DistrictID = ?" if district_id else ""
     params = (district_id,) if district_id else ()
