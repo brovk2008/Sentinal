@@ -44,7 +44,7 @@ Sentinal bridges the critical intelligence gap between frontline Station House O
 
 ## Complete Exhaustive Platform Feature Catalog
 
-Sentinal encompasses **30+ fully integrated capabilities** organized into 6 operational pillars:
+Sentinal encompasses **38 fully integrated capabilities** organized into 7 operational pillars:
 
 ### Pillar 1: Command Center, Situational Awareness & Operational Feeds
 1. **State-Wide Command Center Dashboard**: Real-time aggregation of **10,000 FIRs**, **21,722 accused profiles**, **5,202 arrests**, **3,594 chargesheets**, and **1,369 pending court trials**.
@@ -95,6 +95,14 @@ ightarrow$ Vi) to defeat wiretap evasion.
 30. **Dark Web Threat Radar**: Monitors illicit onion forums, stolen vehicle marketplaces, and hacker leaks for proactive threat detection.
 31. **SmartBrowz Headless Scraper Grid**: 8 parallel headless browser instances crawling state police portals for automated real-time FIR downloads.
 32. **Role-Based Access Control (RBAC)**: Multi-tenant operational security for Station House Officers, District Superintendents, and CID State Administrators.
+
+### Pillar 7: OSINT & Public Web Scraper Suite (Real-Time Web Crawlers)
+33. **⚖️ e-Courts Judicial Bail & Warrant Scraper**: Automated crawler querying the National Judicial Data Grid (NJDG) and Karnataka District Courts for bail status (granted/rejected), active Non-Bailable Warrants (NBW), next hearing dates, and court order summaries.
+34. **🚗 MoRTH VAHAN Vehicle Registry Scraper**: Real-time scraper fetching vehicle particulars, registered owner names, chassis and engine numbers, RTO locations, and active police blacklist / stolen alert tags.
+35. **🚨 Interpol Red Notices & State CID Fugitives Scraper**: Automated crawler monitoring Interpol Red Corner Notices, CBI wanted lists, and Karnataka State CID Proclaimed Offender registries with reward bounties and physical descriptors.
+36. **🌐 NCRP & CERT-In Cyber Threat Radar**: Real-time scanner tracking active cyber fraud domains (`cbi-portal-verify-court.online`), malicious police impersonation APKs, and blacklisted UPI mule handles.
+37. **📰 OSINT Regional Crime News RSS Feeds**: Regional crime crawler ingesting breaking incidents from *Deccan Herald*, *Prajavani*, and *The Hindu* across all 41 Karnataka districts with automated sentiment urgency scoring.
+38. **🧠 Autonomous AI Web Tool Invocation**: If an investigator asks about a suspect's court bail or vehicle plate not yet stored locally, the AI Assistant autonomously triggers the web scraper tool on the fly, caches the record into SQLite, and enriches the RAG prompt with verified citations.
 
 ---
 
