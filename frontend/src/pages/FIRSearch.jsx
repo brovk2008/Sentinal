@@ -82,6 +82,8 @@ export default function FIRSearch() {
   const [translatedFIRText, setTranslatedFIRText] = useState('')
   const [targetFIRLang,    setTargetFIRLang]    = useState('en')
   const [showLangPicker,   setShowLangPicker]   = useState(false)
+  const [translatedPdfUrl, setTranslatedPdfUrl] = useState(null) // base64 blob URL of translated PDF
+  const [viewingTranslated, setViewingTranslated] = useState(false)
 
   const iframeRef = useRef(null)
 
@@ -223,6 +225,8 @@ export default function FIRSearch() {
     setTargetFIRLang(lang)
     setShowLangPicker(false)
     setTranslatedFIRText('')
+    setTranslatedPdfUrl(null)
+    setViewingTranslated(false)
 
     let currentParsed = parsedData
     let rawText = currentParsed?.fir_contents
@@ -255,6 +259,35 @@ export default function FIRSearch() {
       }
     }
 
+    // ── Attempt 1: Full PDF Translation (returns translated PDF as base64) ──
+    if (pdfB64 && lang !== 'en') {
+      try {
+        setMsg('Translating entire PDF document...', 'info')
+        const pdfRes = await fetch(`${BASE_URL}/api/v1/fir/pdf/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf_b64: pdfB64, target_lang: lang, source_lang: 'auto' }),
+        })
+        const pdfData = await pdfRes.json()
+        if (pdfData && pdfData.success && pdfData.translated_pdf_b64 && pdfData.translated_pdf_b64 !== pdfB64) {
+          // Convert base64 to a blob URL and show in iframe
+          const bytes = atob(pdfData.translated_pdf_b64)
+          const byteArr = new Uint8Array(bytes.length)
+          for (let i = 0; i < bytes.length; i++) byteArr[i] = bytes.charCodeAt(i)
+          const blob = new Blob([byteArr], { type: 'application/pdf' })
+          const blobUrl = URL.createObjectURL(blob)
+          setTranslatedPdfUrl(blobUrl)
+          setViewingTranslated(true)
+          setMsg(`PDF translated to ${TRANSLATE_LANGS.find(l => l.code === lang)?.label || lang} (${pdfData.pages || 0} pages, ${pdfData.words_translated || 0} words).`, 'success')
+          setTranslatingFIR(false)
+          return
+        }
+      } catch (pdfErr) {
+        console.warn('[PDF Translate] PDF translation failed, falling back to text:', pdfErr)
+      }
+    }
+
+    // ── Fallback: Text-only translation ──
     if (!rawText || rawText.trim().length < 5) {
       setMsg('Could not extract text to translate — ensure document is loaded.', 'warn')
       setTranslatingFIR(false)
@@ -262,6 +295,7 @@ export default function FIRSearch() {
     }
 
     try {
+      setMsg('Translating FIR text content...', 'info')
       const res = await fetch(`${BASE_URL}/api/v1/fir/translate-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -508,6 +542,15 @@ export default function FIRSearch() {
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--copper-400)' }}>Fetching real FIR PDF from KSP portal...</div>
               </div>
             </div>
+          ) : (translatedPdfUrl && viewingTranslated) ? (
+            <>
+              <div style={{ padding: '6px 14px', background: 'rgba(200,129,74,0.1)', borderBottom: '1px solid rgba(200,129,74,0.3)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+                <Languages size={12} color="var(--copper-400)" />
+                <span style={{ color: 'var(--copper-300)', fontWeight: 600 }}>Showing: Translated PDF ({TRANSLATE_LANGS.find(l => l.code === targetFIRLang)?.label || targetFIRLang})</span>
+                <button onClick={() => setViewingTranslated(false)} style={{ marginLeft: 'auto', background: 'none', border: '1px solid rgba(200,129,74,0.4)', color: 'var(--copper-400)', borderRadius: 4, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}>View Original</button>
+              </div>
+              <iframe src={translatedPdfUrl} title="Translated FIR Document" style={{ flex: 1, width: '100%', border: 'none', display: 'block', height: '100%' }} />
+            </>
           ) : pdfUrl ? (
             <iframe ref={iframeRef} src={pdfUrl} title="Official KSP FIR Document" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
           ) : (

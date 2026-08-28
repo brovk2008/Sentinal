@@ -36,7 +36,15 @@
           "idx": 1,
           "id": "60073535541",
           "name": "Development",
-          "type": 3
+          "type": 3,
+          "env_status": "Active",
+          "project_details": {
+            "project_name": "Sentinal",
+            "id": "50170000000065001",
+            "project_type": "Live"
+          },
+          "is_default": false,
+          "action_required": false
         }
       ]
     }

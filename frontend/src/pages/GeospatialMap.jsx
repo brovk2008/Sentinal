@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, CircleMarker, Circle, Polyline, Popup, useMap } from 'react-leaflet'
 import { Plus, Minus, Crosshair, Play, Pause, Cloud, Globe, Zap, FileText, Hexagon, Sparkles, Smartphone, Check, MapPin, RotateCcw, Radio } from 'lucide-react'
@@ -13,432 +13,401 @@ import 'leaflet/dist/leaflet.css'
 const KA_CENTER = [14.5, 76.0]
 const CRIME_TYPES = ['All', 'Murder & Culpable Homicide', 'Theft & Burglary', 'Cyber Crime', 'Narcotics', 'Cheating & Fraud', 'Crimes Against Women']
 
-// ── Google Earth-Style 3D Globe Component ──
-function ThreeGlobe({ points }) {
+// ── CesiumJS 3D Globe Component ──
+function CesiumGlobe({ points, casePins = [], hotspots = [] }) {
   const mountRef = useRef(null)
-  const [retry, setRetry] = useState(0)
-  const [autoRotate, setAutoRotate] = useState(true)
-  const [showClouds, setShowClouds] = useState(true)
-  const [zoomLevel, setZoomLevel] = useState(180) // Camera Z distance
-  const [hoveredPoint, setHoveredPoint] = useState(null)
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+  const viewerRef = useRef(null)
+  const [cesiumReady, setCesiumReady] = useState(false)
+  const [buildings3DEnabled, setBuildings3DEnabled] = useState(true)
 
-  const cameraRef = useRef(null)
-  const globeGroupRef = useRef(null)
-  const cloudsRef = useRef(null)
-
+  // Inject Cesium CSS + JS from CDN
   useEffect(() => {
-    if (!mountRef.current) return
-    if (!window.THREE) {
-      const t = setTimeout(() => setRetry(r => r + 1), 300)
-      return () => clearTimeout(t)
-    }
-
-    const THREE = window.THREE
-    const container = mountRef.current
-    const width = container.clientWidth || 800
-    const height = container.clientHeight || 500
-
-    // Scene
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x04050c)
-
-    // Camera
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 2000)
-    camera.position.z = zoomLevel
-    cameraRef.current = camera
-
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setSize(width, height)
-    container.innerHTML = ''
-    container.appendChild(renderer.domElement)
-
-    // Main Globe Group
-    const globeGroup = new THREE.Group()
-    scene.add(globeGroup)
-    globeGroupRef.current = globeGroup
-
-    const globeRadius = 75
-
-    // ── 1. High-Res Satellite Earth Texture ──
-    const textureLoader = new THREE.TextureLoader()
     
-    // Primary satellite texture + fallback procedural texture
-    const earthTexture = textureLoader.load(
-      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg',
-      undefined,
-      undefined,
-      () => {
-        // Fallback procedural canvas texture if offline
-        const canvas = document.createElement('canvas')
-        canvas.width = 1024
-        canvas.height = 512
-        const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#091428'
-        ctx.fillRect(0, 0, 1024, 512)
-        ctx.fillStyle = '#1e3a8a'
-        ctx.fillRect(200, 100, 300, 200)
-        return new THREE.CanvasTexture(canvas)
-      }
-    )
-
-    const bumpTexture = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_normal_2048.jpg')
-    const specularTexture = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_specular_2048.jpg')
-    const cloudsTexture = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_clouds_1024.png')
-
-    // Satellite Earth Sphere
-    const earthGeom = new THREE.SphereGeometry(globeRadius, 64, 64)
-    const earthMat = new THREE.MeshPhongMaterial({
-      map: earthTexture,
-      bumpMap: bumpTexture,
-      bumpScale: 0.8,
-      specularMap: specularTexture,
-      specular: new THREE.Color(0x333333),
-      shininess: 25
-    })
-    const earthMesh = new THREE.Mesh(earthGeom, earthMat)
-    globeGroup.add(earthMesh)
-
-    // ── 2. Rotatable Clouds Layer ──
-    const cloudsGeom = new THREE.SphereGeometry(globeRadius + 0.8, 48, 48)
-    const cloudsMat = new THREE.MeshPhongMaterial({
-      map: cloudsTexture,
-      transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending
-    })
-    const cloudsMesh = new THREE.Mesh(cloudsGeom, cloudsMat)
-    cloudsMesh.visible = showClouds
-    globeGroup.add(cloudsMesh)
-    cloudsRef.current = cloudsMesh
-
-    // ── 3. Tech Grid & Lat/Lng Rings ──
-    const wireGeom = new THREE.SphereGeometry(globeRadius + 0.2, 36, 18)
-    const wireMat = new THREE.MeshBasicMaterial({
-      color: 0x00d2ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.08
-    })
-    const wireSphere = new THREE.Mesh(wireGeom, wireMat)
-    globeGroup.add(wireSphere)
-
-    // Equator Ring
-    const eqGeom = new THREE.RingGeometry(globeRadius + 0.3, globeRadius + 0.7, 64)
-    const eqMat = new THREE.MeshBasicMaterial({ color: 0xc8814a, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
-    const eqRing = new THREE.Mesh(eqGeom, eqMat)
-    eqRing.rotation.x = Math.PI / 2
-    globeGroup.add(eqRing)
-
-    // ── 4. Outer Atmosphere Glow ──
-    const atmoGeom = new THREE.SphereGeometry(globeRadius + 3.5, 32, 32)
-    const atmoMat = new THREE.MeshBasicMaterial({
-      color: 0x3b82f6,
-      side: THREE.BackSide,
-      transparent: true,
-      opacity: 0.15
-    })
-    const atmoSphere = new THREE.Mesh(atmoGeom, atmoMat)
-    scene.add(atmoSphere)
-
-    // Helper: convert lat/lng to 3D Cartesian coordinates for Three.js SphereGeometry
-    const latLngToVector3 = (lat, lng, r) => {
-      const phi = (90 - lat) * (Math.PI / 180)
-      const theta = (lng + 180) * (Math.PI / 180)
-      const x = -(r * Math.sin(phi) * Math.cos(theta))
-      const y = r * Math.cos(phi)
-      const z = r * Math.sin(phi) * Math.sin(theta)
-      return new THREE.Vector3(x, y, z)
+    // Hide Cesium Ion notice banner
+    const creditStyleId = 'cesium-hide-credits'
+    if (!document.getElementById(creditStyleId)) {
+      const styleEl = document.createElement('style')
+      styleEl.id = creditStyleId
+      styleEl.innerHTML = '.cesium-widget-credits, .cesium-credit-textContainer, .cesium-credit-expand-link { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }'
+      document.head.appendChild(styleEl)
     }
 
-    // Default Karnataka / India crime clusters
+    const CESIUM_VERSION = '1.121'
+    const cssId = 'cesium-css'
+    const jsId = 'cesium-js'
+
+    if (!document.getElementById(cssId)) {
+      const link = document.createElement('link')
+      link.id = cssId
+      link.rel = 'stylesheet'
+      link.href = 'https://cesium.com/downloads/cesiumjs/releases/' + CESIUM_VERSION + '/Build/Cesium/Widgets/widgets.css'
+      document.head.appendChild(link)
+    }
+
+    if (!document.getElementById(jsId)) {
+      const script = document.createElement('script')
+      script.id = jsId
+      script.src = 'https://cesium.com/downloads/cesiumjs/releases/' + CESIUM_VERSION + '/Build/Cesium/Cesium.js'
+      script.async = true
+      script.onload = () => setCesiumReady(true)
+      document.head.appendChild(script)
+    } else if (window.Cesium) {
+      setCesiumReady(true)
+    }
+  }, [])
+
+  // Initialize Cesium viewer with 3D Terrain, Satellite & 3D Buildings
+  useEffect(() => {
+    if (!cesiumReady || !mountRef.current || viewerRef.current) return
+
+    const Cesium = window.Cesium
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYWE1OWUxNy1mMWZiLTQzYjYtYTQ4NS01NDI1OTM5MjQyNDMiLCJpZCI6NTc3MzMsImlhdCI6MTYyMjY0NDA3OX0.XcKpgANiY19MC4bdFUXMVEBToBmqS8kuYpUlxJHYZxk'
+
+    let viewer = null
+    try {
+      viewer = new Cesium.Viewer(mountRef.current, {
+        imageryProvider: new Cesium.TileMapServiceImageryProvider({
+          url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'),
+        }),
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        infoBox: false,
+        selectionIndicator: false,
+        creditContainer: document.createElement('div'),
+        skyBox: new Cesium.SkyBox({
+          sources: {
+            positiveX: 'https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_px.jpg',
+            negativeX: 'https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_mx.jpg',
+            positiveY: 'https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_py.jpg',
+            negativeY: 'https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_my.jpg',
+            positiveZ: 'https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_pz.jpg',
+            negativeZ: 'https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_mz.jpg',
+          }
+        }),
+        contextOptions: { webgl: { alpha: false } }
+      })
+
+      // Layer 1: High-res Esri Satellite Imagery
+      viewer.imageryLayers.removeAll()
+      viewer.imageryLayers.addImageryProvider(
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          maximumLevel: 19,
+          credit: 'Esri World Imagery'
+        })
+      )
+
+      // Layer 2: Boundaries and District/City Reference Labels
+      viewer.imageryLayers.addImageryProvider(
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+          maximumLevel: 19,
+        })
+      )
+
+      // Enable 3D World Terrain Mesh
+      try {
+        Cesium.createWorldTerrainAsync({ requestWaterMask: true, requestVertexNormals: true })
+          .then(terrainProvider => {
+            if (viewer && !viewer.isDestroyed()) {
+              viewer.terrainProvider = terrainProvider
+            }
+          })
+          .catch(() => {})
+      } catch (err) {
+        console.warn('[CesiumGlobe] World terrain init fallback:', err)
+      }
+
+      // Add 3D OSM City Buildings Extrusions
+      try {
+        Cesium.createOsmBuildingsAsync()
+          .then(buildingTileset => {
+            if (viewer && !viewer.isDestroyed()) {
+              buildingTileset.style = new Cesium.Cesium3DTileStyle({
+                color: {
+                  conditions: [
+                    ["${feature['building']} === 'hospital'", "color('#3b82f6', 0.8)"],
+                    ["${feature['building']} === 'government'", "color('#c8814a', 0.9)"],
+                    ["true", "color('#1e293b', 0.7)"]
+                  ]
+                }
+              })
+              viewer.scene.primitives.add(buildingTileset)
+            }
+          })
+          .catch(err => console.warn('[CesiumGlobe] 3D buildings fallback:', err))
+      } catch (err) {
+        console.warn('[CesiumGlobe] 3D buildings async exception:', err)
+      }
+
+      // Style scene atmosphere & lighting
+      viewer.scene.globe.enableLighting = true
+      viewer.scene.globe.showGroundAtmosphere = true
+      viewer.scene.skyAtmosphere.hueShift = -0.1
+      viewer.scene.backgroundColor = new Cesium.Color(0.016, 0.02, 0.047, 1.0)
+      viewer.scene.globe.depthTestAgainstTerrain = true
+
+      viewerRef.current = viewer
+
+      // Fly camera to Karnataka / India high overview
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(76.0, 14.5, 1200000),
+        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-48), roll: 0 },
+        duration: 2.5,
+      })
+
+    } catch (e) {
+      console.warn('[CesiumGlobe] Init error:', e)
+    }
+
+    return () => {
+      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+        viewerRef.current.destroy()
+        viewerRef.current = null
+      }
+    }
+  }, [cesiumReady])
+
+  // Plot 3D Crime Pillars, Pulsing Rings & Pins
+  useEffect(() => {
+    if (!viewerRef.current || !cesiumReady) return
+    const Cesium = window.Cesium
+    const viewer = viewerRef.current
+
+    viewer.entities.removeAll()
+
     const FALLBACK_POINTS = [
-      { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban', severity: 'high', count: 199 },
-      { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad', severity: 'medium', count: 73 },
-      { lat: 15.1394, lng: 76.9214, label: 'Ballari District', severity: 'critical', count: 114 },
-      { lat: 15.8497, lng: 74.4977, label: 'Belagavi Sector', severity: 'medium', count: 82 },
-      { lat: 12.2958, lng: 76.6394, label: 'Mysuru City', severity: 'high', count: 179 },
-      { lat: 14.4426, lng: 75.7218, label: 'Davanagere', severity: 'low', count: 47 },
-      { lat: 13.3409, lng: 77.1000, label: 'Tumakuru Hub', severity: 'high', count: 117 },
-      { lat: 12.8438, lng: 77.6624, label: 'Electronic City Cyber', severity: 'critical', count: 245 },
-      { lat: 14.2218, lng: 76.3978, label: 'Chitradurga', severity: 'medium', count: 60 },
-      { lat: 13.9299, lng: 75.5681, label: 'Shivamogga Arms', severity: 'low', count: 85 },
-      { lat: 16.2076, lng: 77.3463, label: 'Raichur Sector', severity: 'medium', count: 48 },
-      { lat: 12.9254, lng: 74.8237, label: 'Mangaluru Port', severity: 'high', count: 74 },
-      { lat: 13.3389, lng: 74.7451, label: 'Udupi Coastal', severity: 'medium', count: 95 },
-      { lat: 17.3297, lng: 76.8343, label: 'Kalaburagi Fraud', severity: 'high', count: 95 },
-      { lat: 16.8302, lng: 75.7100, label: 'Vijayapura Theft', severity: 'medium', count: 115 },
+      { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban HQ', severity: 'critical', count: 199, type: 'Theft & Cyber' },
+      { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad Sector', severity: 'medium', count: 73, type: 'Narcotics' },
+      { lat: 15.1394, lng: 76.9214, label: 'Ballari Mining Belt', severity: 'critical', count: 114, type: 'Mining Crimes' },
+      { lat: 15.8497, lng: 74.4977, label: 'Belagavi Sector', severity: 'medium', count: 82, type: 'Smuggling' },
+      { lat: 12.2958, lng: 76.6394, label: 'Mysuru City', severity: 'high', count: 179, type: 'Cheating & Fraud' },
+      { lat: 14.4426, lng: 75.7218, label: 'Davanagere Hub', severity: 'low', count: 47, type: 'Robbery' },
+      { lat: 13.3409, lng: 77.1000, label: 'Tumakuru Sector', severity: 'high', count: 117, type: 'Theft' },
+      { lat: 12.8438, lng: 77.6624, label: 'Electronic City Tech Hub', severity: 'critical', count: 245, type: 'Cyber Crime' },
+      { lat: 14.2218, lng: 76.3978, label: 'Chitradurga Sector', severity: 'medium', count: 60, type: 'Robbery' },
+      { lat: 13.9299, lng: 75.5681, label: 'Shivamogga Sector', severity: 'low', count: 85, type: 'Arms Smuggling' },
+      { lat: 16.2076, lng: 77.3463, label: 'Raichur Thermal Zone', severity: 'medium', count: 48, type: 'Murder' },
+      { lat: 12.9254, lng: 74.8237, label: 'Mangaluru Port', severity: 'high', count: 74, type: 'Drug Trafficking' },
+      { lat: 13.3389, lng: 74.7451, label: 'Udupi Coastal Line', severity: 'medium', count: 95, type: 'Smuggling' },
+      { lat: 17.3297, lng: 76.8343, label: 'Kalaburagi Belt', severity: 'high', count: 95, type: 'Cheating & Fraud' },
+      { lat: 16.8302, lng: 75.7100, label: 'Vijayapura District', severity: 'medium', count: 115, type: 'Theft' },
     ]
 
     const displayPoints = (points && points.length > 0) ? points.slice(0, 250) : FALLBACK_POINTS
 
-    // ── 5. Add Google Earth Style 3D Pins & Pulse Rings ──
-    const pinMeshes = []
-
     displayPoints.forEach(pt => {
-      if (pt.lat && pt.lng) {
-        const pos = latLngToVector3(pt.lat, pt.lng, globeRadius)
-        const isCritical = pt.severity === 'critical' || pt.severity === 'high'
-        const color = isCritical ? 0xef4444 : 0xf59e0b
+      const lat = parseFloat(pt.lat)
+      const lng = parseFloat(pt.lng)
+      if (isNaN(lat) || isNaN(lng)) return
 
-        // Glowing Pin Head
-        const headGeom = new THREE.SphereGeometry(1.4, 16, 16)
-        const headMat = new THREE.MeshBasicMaterial({ color })
-        const headMesh = new THREE.Mesh(headGeom, headMat)
-        
-        // Pin Stem
-        const stemHeight = isCritical ? 14 : 8
-        const stemGeom = new THREE.CylinderGeometry(0.3, 0.6, stemHeight, 8)
-        const stemMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 })
-        const stemMesh = new THREE.Mesh(stemGeom, stemMat)
+      const isCritical = pt.severity === 'critical' || pt.count > 150
+      const isHigh = pt.severity === 'high' || pt.count > 80
+      const pinColor = isCritical
+        ? Cesium.Color.fromCssColorString('#ef4444')
+        : isHigh
+          ? Cesium.Color.fromCssColorString('#f97316')
+          : Cesium.Color.fromCssColorString('#c8814a')
 
-        const normal = pos.clone().normalize()
-        headMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(stemHeight)))
-        stemMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(stemHeight / 2)))
-        stemMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)
+      const pulseColor = pinColor.withAlpha(0.35)
+      const count = pt.count || pt.incident_count || 1
+      const pillarHeight = Math.max(12000, count * 350)
+      const labelText = (pt.label || pt.district_name || 'Zone') + "\n" + count + " incidents";
 
-        // Pulsing Surface Ring
-        const ringGeom = new THREE.RingGeometry(0.8, 2.5, 32)
-        const ringMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
-        const ringMesh = new THREE.Mesh(ringGeom, ringMat)
-        ringMesh.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.2)))
-        ringMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal)
+      // 1. 3D Vertical Cylinder Pillar (Heat Density Beam)
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, pillarHeight / 2),
+        cylinder: {
+          length: pillarHeight,
+          topRadius: isCritical ? 6000 : 4000,
+          bottomRadius: isCritical ? 8000 : 5000,
+          material: new Cesium.ColorMaterialProperty(pinColor.withAlpha(0.55)),
+          outline: true,
+          outlineColor: pinColor.withAlpha(0.9),
+          outlineWidth: 2,
+        }
+      })
 
-        const pinGroup = new THREE.Group()
-        pinGroup.add(headMesh)
-        pinGroup.add(stemMesh)
-        pinGroup.add(ringMesh)
-        pinGroup.userData = { ...pt, worldPos: pos }
-        
-        globeGroup.add(pinGroup)
-        pinMeshes.push(headMesh)
-      }
+      // 2. Pulsing Ring on Terrain Surface
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lng, lat),
+        ellipse: {
+          semiMinorAxis: isCritical ? 24000 : isHigh ? 18000 : 12000,
+          semiMajorAxis: isCritical ? 24000 : isHigh ? 18000 : 12000,
+          height: 50,
+          material: new Cesium.ColorMaterialProperty(pulseColor),
+          outline: true,
+          outlineColor: pinColor.withAlpha(0.8),
+          outlineWidth: 2,
+        }
+      })
+
+      // 3. Floating 3D Billboard Pin with Label
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, pillarHeight + 2000),
+        billboard: {
+          image: (() => {
+            const canvas = document.createElement('canvas')
+            canvas.width = 36
+            canvas.height = 36
+            const ctx = canvas.getContext('2d')
+            const gradient = ctx.createRadialGradient(18, 18, 3, 18, 18, 16)
+            const hex = isCritical ? '#ef4444' : isHigh ? '#f97316' : '#c8814a'
+            gradient.addColorStop(0, hex)
+            gradient.addColorStop(1, hex + '44')
+            ctx.beginPath()
+            ctx.arc(18, 18, 15, 0, Math.PI * 2)
+            ctx.fillStyle = gradient
+            ctx.fill()
+            ctx.strokeStyle = '#ffffff'
+            ctx.lineWidth = 2.5
+            ctx.stroke()
+            return canvas
+          })(),
+          width: isCritical ? 30 : isHigh ? 24 : 18,
+          height: isCritical ? 30 : isHigh ? 24 : 18,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          scaleByDistance: new Cesium.NearFarScalar(1e5, 1.5, 2e6, 0.5),
+          translucencyByDistance: new Cesium.NearFarScalar(1e5, 1.0, 5e6, 0.3),
+        },
+        label: {
+          text: labelText,
+          font: 'bold 11px "Inter", sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2.5,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -36),
+          scaleByDistance: new Cesium.NearFarScalar(8e4, 1.0, 1.5e6, 0.0),
+          translucencyByDistance: new Cesium.NearFarScalar(8e4, 1.0, 1.5e6, 0.0),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          showBackground: true,
+          backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.88),
+          backgroundPadding: new Cesium.Cartesian2(8, 5),
+        }
+      })
     })
 
-    // ── 6. Lighting ──
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85)
-    scene.add(ambientLight)
+    // Plot Individual Case Pins
+    casePins.forEach(cp => {
+      const lat = parseFloat(cp.latitude)
+      const lng = parseFloat(cp.longitude)
+      if (isNaN(lat) || isNaN(lng)) return
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5)
-    sunLight.position.set(300, 200, 200)
-    scene.add(sunLight)
-
-    const fillLight = new THREE.DirectionalLight(0x00f0ff, 0.5)
-    fillLight.position.set(-200, -100, -100)
-    scene.add(fillLight)
-
-    // Initial orientation: Focus South India / Karnataka directly toward camera
-    globeGroup.rotation.y = Math.PI * 0.92
-    globeGroup.rotation.x = -0.25
-
-    // ── 7. Google Earth Controls: Mouse Drag & Smooth Inertia ──
-    let isDragging = false
-    let prevMousePosition = { x: 0, y: 0 }
-    let velX = 0
-    let velY = 0
-
-    const onMouseDown = (e) => {
-      if (e.button !== 0) return
-      isDragging = true
-      prevMousePosition = { x: e.clientX, y: e.clientY }
-    }
-
-    const onMouseMove = (e) => {
-      const rect = renderer.domElement.getBoundingClientRect()
-      setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
-
-      if (isDragging) {
-        const deltaX = e.clientX - prevMousePosition.x
-        const deltaY = e.clientY - prevMousePosition.y
-        velX = deltaX * 0.004
-        velY = deltaY * 0.004
-        globeGroup.rotation.y += velX
-        globeGroup.rotation.x += velY
-        prevMousePosition = { x: e.clientX, y: e.clientY }
-      }
-    }
-
-    const onMouseUp = () => { isDragging = false }
-
-    // ── 8. Smooth Mouse Wheel Zoom (Google Earth Zooming) ──
-    const onWheel = (e) => {
-      e.preventDefault()
-      const zoomFactor = e.deltaY * 0.15
-      camera.position.z = Math.min(Math.max(camera.position.z + zoomFactor, 85), 360)
-      setZoomLevel(Math.round(camera.position.z))
-    }
-
-    const domEl = renderer.domElement
-    domEl.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    domEl.addEventListener('wheel', onWheel, { passive: false })
-
-    // Touch Support for Mobile & Tablets
-    let touchStartDist = 0
-    const onTouchStart = (e) => {
-      if (e.touches.length === 1) {
-        isDragging = true
-        prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      } else if (e.touches.length === 2) {
-        isDragging = false
-        touchStartDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        )
-      }
-    }
-
-    const onTouchMove = (e) => {
-      if (e.touches.length === 1 && isDragging) {
-        const deltaX = e.touches[0].clientX - prevMousePosition.x
-        const deltaY = e.touches[0].clientY - prevMousePosition.y
-        globeGroup.rotation.y += deltaX * 0.005
-        globeGroup.rotation.x += deltaY * 0.005
-        prevMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      } else if (e.touches.length === 2) {
-        const dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        )
-        const deltaDist = touchStartDist - dist
-        camera.position.z = Math.min(Math.max(camera.position.z + deltaDist * 0.3, 85), 360)
-        touchStartDist = dist
-        setZoomLevel(Math.round(camera.position.z))
-      }
-    }
-
-    const onTouchEnd = () => { isDragging = false }
-
-    domEl.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchmove', onTouchMove, { passive: true })
-    window.addEventListener('touchend', onTouchEnd)
-
-    // Animation Loop with Smooth Inertia Coalescing
-    let reqId
-    const animate = () => {
-      reqId = requestAnimationFrame(animate)
-      
-      if (!isDragging) {
-        // Inertia damping
-        velX *= 0.92
-        velY *= 0.92
-        globeGroup.rotation.y += velX
-        globeGroup.rotation.x += velY
-
-        if (autoRotate && Math.abs(velX) < 0.0001 && Math.abs(velY) < 0.0001) {
-          globeGroup.rotation.y += 0.0012 // Continuous subtle Earth rotation
+      const caseNo = cp.FIRNo || cp.CaseMasterID || 'Case'
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, 4000),
+        point: {
+          pixelSize: 10,
+          color: Cesium.Color.fromCssColorString('#c8814a'),
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 2,
+        },
+        label: {
+          text: "FIR #" + caseNo,
+          font: '10px "Inter", sans-serif',
+          fillColor: Cesium.Color.fromCssColorString('#e8a87c'),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -20),
+          scaleByDistance: new Cesium.NearFarScalar(5e4, 1.0, 5e5, 0.0),
         }
-      }
+      })
+    })
+  }, [points, casePins, hotspots, cesiumReady])
 
-      if (cloudsRef.current && showClouds) {
-        cloudsRef.current.rotation.y += 0.0018 // Clouds revolve faster than surface
-      }
-
-      renderer.render(scene, camera)
-    }
-    animate()
-
-    // Resizing Handler
-    const handleResize = () => {
-      if (!container) return
-      const w = container.clientWidth
-      const h = container.clientHeight
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
-    }
-    window.addEventListener('resize', handleResize)
-
-    return () => {
-      cancelAnimationFrame(reqId)
-      domEl.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      domEl.removeEventListener('wheel', onWheel)
-      domEl.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchmove', onTouchMove)
-      window.removeEventListener('touchend', onTouchEnd)
-      window.removeEventListener('resize', handleResize)
-      if (container && container.contains(domEl)) {
-        container.removeChild(domEl)
-      }
-    }
-  }, [points, retry, autoRotate, showClouds])
-
-  // Quick Controls
-  const handleZoom = (delta) => {
-    if (cameraRef.current) {
-      cameraRef.current.position.z = Math.min(Math.max(cameraRef.current.position.z + delta, 85), 360)
-      setZoomLevel(Math.round(cameraRef.current.position.z))
-    }
+  const focusKarnataka = () => {
+    if (!viewerRef.current) return
+    viewerRef.current.camera.flyTo({
+      destination: window.Cesium.Cartesian3.fromDegrees(76.0, 14.5, 1200000),
+      orientation: { heading: 0, pitch: window.Cesium.Math.toRadians(-50), roll: 0 },
+      duration: 1.5,
+    })
   }
 
-  const resetIndiaFocus = () => {
-    if (globeGroupRef.current && cameraRef.current) {
-      globeGroupRef.current.rotation.y = Math.PI * 0.92
-      globeGroupRef.current.rotation.x = -0.25
-      cameraRef.current.position.z = 160
-      setZoomLevel(160)
-    }
+  const zoomIn = () => {
+    if (!viewerRef.current) return
+    const cam = viewerRef.current.camera
+    cam.zoomIn(cam.positionCartographic.height * 0.3)
+  }
+
+  const zoomOut = () => {
+    if (!viewerRef.current) return
+    const cam = viewerRef.current.camera
+    cam.zoomOut(cam.positionCartographic.height * 0.4)
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#04050c', userSelect: 'none' }}>
-      <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#04050c' }}>
+      {/* Cesium container */}
+      <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* Google Earth Control Toolbar (Top Right) */}
-      <div style={{
-        position: 'absolute', right: 20, top: 20, display: 'flex', flexDirection: 'column', gap: 8,
-        background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)',
-        padding: 8, borderRadius: 10, backdropFilter: 'blur(10px)', zIndex: 10
-      }}>
-        <button onClick={() => handleZoom(-30)} title="Zoom In" style={{ ...toolBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Plus size={14} />
-        </button>
-        <button onClick={() => handleZoom(30)} title="Zoom Out" style={{ ...toolBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Minus size={14} />
-        </button>
-        <button onClick={resetIndiaFocus} title="Focus Karnataka / India" style={{ ...toolBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Crosshair size={14} />
-        </button>
-        <button onClick={() => setAutoRotate(!autoRotate)} title="Toggle Auto Rotation" style={{ ...toolBtnStyle, background: autoRotate ? 'rgba(200,129,74,0.3)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {autoRotate ? <Pause size={13} /> : <Play size={13} />}
-        </button>
-        <button onClick={() => setShowClouds(!showClouds)} title="Toggle Cloud Layer" style={{ ...toolBtnStyle, background: showClouds ? 'rgba(59,130,246,0.3)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Cloud size={14} />
-        </button>
-      </div>
+      {/* Loading overlay */}
+      {!cesiumReady && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', background: '#04050c',
+          gap: 12, zIndex: 20
+        }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #c8814a33', borderTop: '3px solid #c8814a', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <span style={{ color: '#c8814a', fontSize: 12, letterSpacing: '0.1em', fontWeight: 700 }}>LOADING CESIUM 3D GLOBE...</span>
+        </div>
+      )}
 
-      {/* Earth Altitude & Info HUD (Bottom Center) */}
-      <div style={{
-        position: 'absolute', bottom: 20, pointerEvents: 'none', textAlign: 'center',
-        background: 'rgba(9,16,29,0.85)', border: '1px solid var(--border-subtle)',
-        padding: '8px 18px', borderRadius: 8, backdropFilter: 'blur(8px)', zIndex: 10
-      }}>
-        <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Globe size={13} />
-          <span>SATELLITE GLOBE INTELLIGENCE</span>
+      {/* Controls toolbar */}
+      {cesiumReady && (
+        <div style={{
+          position: 'absolute', right: 20, top: 20, display: 'flex', flexDirection: 'column', gap: 8,
+          background: 'rgba(9,16,29,0.9)', border: '1px solid rgba(200,129,74,0.3)',
+          padding: 8, borderRadius: 10, backdropFilter: 'blur(12px)', zIndex: 10
+        }}>
+          <button onClick={zoomIn} title="Zoom In" style={toolBtnStyle}>
+            <Plus size={14} />
+          </button>
+          <button onClick={zoomOut} title="Zoom Out" style={toolBtnStyle}>
+            <Minus size={14} />
+          </button>
+          <button onClick={focusKarnataka} title="Focus Karnataka" style={toolBtnStyle}>
+            <Crosshair size={14} />
+          </button>
         </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <span>Alt: <strong>{Math.round((zoomLevel - 75) * 50)} km</strong></span>
-          <span>•</span>
-          <span>Scroll wheel to zoom • Drag to orbit</span>
+      )}
+
+      {/* HUD */}
+      {cesiumReady && (
+        <div style={{
+          position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+          pointerEvents: 'none', textAlign: 'center',
+          background: 'rgba(9,16,29,0.88)', border: '1px solid rgba(200,129,74,0.3)',
+          padding: '8px 20px', borderRadius: 8, backdropFilter: 'blur(8px)', zIndex: 10
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#c8814a', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Globe size={13} />
+            <span>CESIUM 3D SATELLITE GLOBE - 3D BUILDINGS & TERRAIN ACTIVE</span>
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+            Drag to rotate | Scroll to zoom | Right-drag to tilt
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
 
 const toolBtnStyle = {
-  width: 34, height: 34, borderRadius: 6, border: '1px solid var(--border-subtle)',
-  background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13,
+  width: 34, height: 34, borderRadius: 6, border: '1px solid rgba(200,129,74,0.3)',
+  background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13,
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
   outline: 'none', transition: 'all 0.2s'
 }
-
 function MapRefTracker({ mapRef }) {
   const map = useMap()
   useEffect(() => {
@@ -454,21 +423,92 @@ const TILE_LAYERS = {
   dark: {
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; CartoDB',
-    label: 'Dark',
+    label: 'Dark Tactical',
+  },
+  topo: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+    label: 'Esri Topo (Super Detailed)',
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    label: 'Satellite',
+    attribution: 'Tiles &copy; Esri',
+    label: 'Satellite HD',
   },
   street: {
     url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     attribution: '&copy; OpenStreetMap &copy; CartoDB',
-    label: 'Street',
+    label: 'Street Vector',
   },
 }
 
+
+// ── Realistic Tactical Map Pointer Generator ──
+const createTacticalPinIcon = (cp) => {
+  const L = window.L
+  if (!L) return null
+
+  const isHeinous = cp.IsHeinous || cp.severity === 'critical' || (cp.ActSection && cp.ActSection.includes('302'))
+  const isHigh = cp.severity === 'high' || (cp.ActSection && (cp.ActSection.includes('395') || cp.ActSection.includes('397')))
+
+  const pinColor = isHeinous ? '#ef4444' : isHigh ? '#f97316' : '#c8814a'
+  const glowColor = isHeinous ? 'rgba(239, 68, 68, 0.45)' : 'rgba(200, 129, 74, 0.35)'
+  const labelText = cp.FIRNo ? 'FIR #' + cp.FIRNo : 'Case #' + (cp.CaseMasterID || '1')
+
+  const html = `
+    <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 46px; cursor: pointer;">
+      ${isHeinous ? `<div style="position: absolute; top: -4px; width: 44px; height: 44px; border-radius: 50%; background: ${glowColor}; animation: pulse-ring 1.8s infinite ease-out;"></div>` : ''}
+      <div style="
+        position: relative;
+        width: 32px;
+        height: 38px;
+        background: linear-gradient(145deg, ${pinColor}, #09101d);
+        border: 2px solid #ffffff;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease;
+      ">
+        <div style="
+          transform: rotate(45deg);
+          color: #ffffff;
+          font-weight: 800;
+          font-size: 10px;
+          font-family: 'Inter', sans-serif;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          ★
+        </div>
+      </div>
+      <div style="
+        position: absolute;
+        bottom: -2px;
+        width: 10px;
+        height: 4px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 50%;
+        filter: blur(1px);
+      "></div>
+    </div>
+  `
+
+  return L.divIcon({
+    className: 'tactical-map-pointer',
+    html: html,
+    iconSize: [36, 46],
+    iconAnchor: [18, 46],
+    popupAnchor: [0, -42],
+  })
+}
+
 export default function GeospatialMap() {
+
   const navigate = useNavigate()
   const mapRef = useRef(null)
   const [mapStyle, setMapStyle] = useState('dark')
@@ -675,7 +715,7 @@ export default function GeospatialMap() {
             style={{ width: '100%', justifyContent: 'center' }}
             onClick={() => setGlobeMode(!globeMode)}
           >
-            {globeMode ? '◈ View 2D Map' : '◎ View 3D Globe'}
+            {globeMode ? 'â—ˆ View 2D Map' : 'â—Ž View 3D Globe'}
           </button>
         </div>
 
@@ -688,7 +728,7 @@ export default function GeospatialMap() {
                 onClick={startTimelapse}
                 disabled={predictionMode}
               >
-                ⏱ Play Time-Lapse
+                â± Play Time-Lapse
               </button>
             </div>
 
@@ -1005,7 +1045,7 @@ export default function GeospatialMap() {
               <Sparkles size={13} />
               <span>Next Crime Prediction</span>
             </span>
-            <button onClick={() => setShowNextCrime(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>×</button>
+            <button onClick={() => setShowNextCrime(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>Ã—</button>
           </div>
           <div style={{ fontSize: 11, lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
@@ -1079,7 +1119,7 @@ export default function GeospatialMap() {
         {loading ? (
           <LoadingPulse height={400} text="Mapping coordinates..." />
         ) : globeMode ? (
-          <ThreeGlobe points={points} />
+          <CesiumGlobe points={activePoints} casePins={casePins} hotspots={hotspots} />
         ) : (
           <MapContainer
             center={KA_CENTER}
@@ -1230,14 +1270,14 @@ export default function GeospatialMap() {
               onClick={() => setSelectedCasePin(null)}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20 }}
             >
-              ×
+              Ã—
             </button>
           </div>
 
           {/* Details */}
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
             <MapPin size={12} color="var(--copper-400)" />
-            <span>{selectedCasePin.DistrictName} District · Registered: {selectedCasePin.CrimeRegisteredDate}</span>
+            <span>{selectedCasePin.DistrictName} District Â· Registered: {selectedCasePin.CrimeRegisteredDate}</span>
           </div>
 
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '6px 0' }}>
@@ -1365,3 +1405,5 @@ export default function GeospatialMap() {
     </div>
   )
 }
+
+

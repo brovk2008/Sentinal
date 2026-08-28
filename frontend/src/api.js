@@ -424,17 +424,48 @@ export const fetchUploads = (params = {}) => {
   return request(`/api/v1/uploads/list?${qs}`);
 };
 
+export const fetchEscalationMatrix = () =>
+  request('/api/v1/criminology/escalation-matrix');
+
 export const fetchPatternIntel = async () => {
-  const [mo, nr, syn, spree] = await Promise.all([
+  const [mo, nr, syn, spree, esc] = await Promise.all([
     fetchMoClusters().catch(() => ({ mo_clusters: [] })),
     fetchNearRepeatRisk().catch(() => ({ risk_zones: [] })),
     fetchSyndicateGraph().catch(() => ({ syndicates: [] })),
-    fetchSpreeAlerts().catch(() => ({ sprees: [] }))
+    fetchSpreeAlerts().catch(() => ({ sprees: [] })),
+    fetchEscalationMatrix().catch(() => ({ escalation_chains: [] }))
   ]);
   return {
-    mo_clusters: mo.mo_clusters || [],
-    near_repeat_risk: nr.risk_zones || nr || [],
-    syndicates: syn.syndicates || syn || [],
-    spree_alerts: spree.sprees || spree.spree_alerts || []
+    success: true,
+    data: {
+      mo_clusters: mo.mo_clusters || [],
+      near_repeat_risk: nr.risk_zones || nr || [],
+      syndicates: syn.syndicates || syn || [],
+      spree_alerts: spree.sprees || spree.spree_alerts || [],
+      escalation_chains: esc.escalation_chains || []
+    }
   };
 };
+
+// ── PDF Translation ───────────────────────────────────────────────────────────
+export const translatePdf = (payload) =>
+  request('/api/v1/fir/pdf/translate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+export const translateOCRText = (payload) =>
+  request('/api/v1/fir/translate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+export const saveOCRRecord = (payload) =>
+  request('/api/v1/fir/ocr/save', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  });
+

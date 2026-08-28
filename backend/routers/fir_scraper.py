@@ -799,7 +799,41 @@ async def real_ocr(body: dict, request: Request = None):
         "_ocr_engine":           engine_used,
     }
 
+    # ── Auto-persist OCR record to DB & RAG so every scraped FIR is searchable ──
+
+    try:
+        record_id = f"ocr-{uuid.uuid4().hex[:8]}"
+        parsed_json = json.dumps(parsed)
+        execute("""
+            INSERT INTO ocr_records (
+                id, fir_number, year, district_id, district_name,
+                station_id, station_name, act_section, crime_group,
+                extracted_text, translated_text, parsed_data
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                extracted_text=excluded.extracted_text,
+                parsed_data=excluded.parsed_data,
+                created_at=CURRENT_TIMESTAMP
+        """, (
+            record_id,
+            parsed.get("fir_number", meta.get("fir_number", "0001")),
+            parsed.get("fir_date", meta.get("year", "2024"))[:4],
+            meta.get("district_id", ""),
+            parsed.get("district_name", meta.get("district_name", "")),
+            meta.get("station_id", ""),
+            parsed.get("police_station", meta.get("station_name", "")),
+            parsed.get("act_section", ""),
+            parsed.get("crime_group", ""),
+            raw_text[:8000],
+            "",
+            parsed_json
+        ))
+        log.info(f"[OCR Auto-Persist] Saved OCR record {record_id} for FIR {parsed.get('fir_number')}/{parsed.get('fir_date', '')[:4]}")
+    except Exception as persist_err:
+        log.warning(f"[OCR Auto-Persist] Failed to auto-save: {persist_err}")
+
     return {"success": True, "parsed_data": parsed, "engine": engine_used}
+
 
 
 class SaveOCRRequest(BaseModel):
@@ -1079,4 +1113,150 @@ async def translate_html_endpoint(body: dict, request: Request = None):
     html_content = body.get("html") or body.get("firHtml") or ""
     target_lang = body.get("target_lang") or "en"
     source_lang = body.get("source_lang") or "auto"
-    return await zia.translate_html_content(html_content, target_lang=target_lang, source_lang=source_lang, request=request)
+    return await zia.translate_html_content(html_content, target_lang=target_lang, source_lang=source_lang, request=request)
+
+
+@router.post("/pdf/translate")
+async def translate_pdf_endpoint(body: dict, request: Request = None):
+    """
+    PDF Translation Engine — translates a complete PDF document while preserving layout.
+    
+    Uses PyMuPDF to extract text blocks with coordinates, translates them via the
+    multi-tier engine (Google GTX → MyMemory → deep-translator → Catalyst Zia),
+    then reconstructs a new PDF with translated text overlaid at the original positions.
+    
+    Returns the translated PDF as base64.
+    """
+    import base64, io, json as _json
+    
+    pdf_b64 = body.get("pdf_b64") or body.get("pdf") or ""
+    target_lang = body.get("target_lang", "en")
+    source_lang = body.get("source_lang", "auto")
+    
+    if not pdf_b64:
+        raise HTTPException(status_code=400, detail="pdf_b64 is required")
+    
+    try:
+        pdf_bytes = base64.b64decode(pdf_b64)
+    except Exception as decode_err:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 PDF: {decode_err}")
+    
+    # If target is English or same as source, try to just OCR and return text
+    if target_lang in ("en", "original"):
+        # Just return the original PDF as-is
+        return {
+            "success": True,
+            "translated_pdf_b64": pdf_b64,
+            "engine": "passthrough",
+            "target_lang": target_lang,
+            "pages": 0
+        }
+    
+    try:
+        import fitz  # PyMuPDF
+        
+        src_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        new_doc = fitz.open()  # New empty PDF to write translated content
+        
+        pages_translated = 0
+        total_words_translated = 0
+        
+        for page_num, page in enumerate(src_doc):
+            # Get page dimensions
+            rect = page.rect
+            new_page = new_doc.new_page(width=rect.width, height=rect.height)
+            
+            # Render the original page as background image
+            mat = fitz.Matrix(1.5, 1.5)  # 1.5x scale for quality
+            pix = page.get_pixmap(matrix=mat)
+            img_bytes = pix.tobytes("png")
+            
+            # Insert original page render as background
+            new_page.insert_image(rect, stream=img_bytes)
+            
+            # Extract text blocks with their positions
+            blocks = page.get_text("dict")["blocks"]
+            text_blocks = [b for b in blocks if b.get("type") == 0]  # type 0 = text
+            
+            for block in text_blocks:
+                for line in block.get("lines", []):
+                    for span in line.get("spans", []):
+                        orig_text = span.get("text", "").strip()
+                        if not orig_text or len(orig_text) < 2:
+                            continue
+                        
+                        # Skip pure numbers/punctuation
+                        import re as _re
+                        if _re.match(r'^[\d\s:\/\-\,\.\(\)\#\%\&\@\_\|]+$', orig_text):
+                            continue
+                        
+                        # Translate this span
+                        try:
+                            t_res = await zia.translate_text(
+                                orig_text,
+                                source_lang=source_lang,
+                                target_lang=target_lang,
+                                request=request
+                            )
+                            translated_text = t_res.get("translated_text") or orig_text
+                        except Exception:
+                            translated_text = orig_text
+                        
+                        if translated_text == orig_text:
+                            continue
+                        
+                        # Get span position
+                        span_rect = fitz.Rect(span["bbox"])
+                        font_size = max(span.get("size", 8), 6)
+                        
+                        # Draw a semi-opaque white box to cover original text
+                        new_page.draw_rect(span_rect, color=(1, 1, 1), fill=(1, 1, 1), fill_opacity=0.88)
+                        
+                        # Write translated text at same position
+                        try:
+                            new_page.insert_text(
+                                span_rect.tl,  # Top-left of span
+                                translated_text,
+                                fontsize=font_size,
+                                fontname="helv",
+                                color=(0.05, 0.05, 0.15),
+                            )
+                        except Exception as text_err:
+                            log.debug(f"[PDF Translate] insert_text failed: {text_err}")
+                        
+                        total_words_translated += len(orig_text.split())
+            
+            pages_translated += 1
+        
+        src_doc.close()
+        
+        # Save translated PDF to bytes
+        out_stream = io.BytesIO()
+        new_doc.save(out_stream)
+        new_doc.close()
+        
+        translated_b64 = base64.b64encode(out_stream.getvalue()).decode("utf-8")
+        
+        return {
+            "success": True,
+            "translated_pdf_b64": translated_b64,
+            "engine": "pymupdf-overlay-translation",
+            "target_lang": target_lang,
+            "pages": pages_translated,
+            "words_translated": total_words_translated
+        }
+    
+    except ImportError:
+        raise HTTPException(status_code=500, detail="PyMuPDF (fitz) not installed. Add PyMuPDF>=1.23.0 to requirements.txt")
+    except Exception as e:
+        log.error(f"[PDF Translate] Error: {e}")
+        # Fallback: return original PDF with metadata about translation failure
+        return {
+            "success": False,
+            "translated_pdf_b64": pdf_b64,
+            "engine": "fallback-original",
+            "target_lang": target_lang,
+            "error": str(e),
+            "pages": 0
+        }
+
