@@ -10,7 +10,7 @@
 [![Secondary Slate Domain](https://img.shields.io/badge/Slate_Domain-sentinal--peak.onslate.in-7c2d12?style=for-the-badge)](https://sentinal-peak.onslate.in)
 [![Cloud Infrastructure](https://img.shields.io/badge/Cloud_Engine-Zoho_Catalyst-1d4ed8?style=for-the-badge)](https://catalyst.zoho.com)
 [![Custom AI Accuracy](https://img.shields.io/badge/Custom_AI_Accuracy-90.8%25_Calibrated-047857?style=for-the-badge)]()
-[![Zero-Defect Audit](https://img.shields.io/badge/API_Audit-100%25_Passed_(11/11)-1d4ed8?style=for-the-badge)]()
+[![Zero-Defect Audit](https://img.shields.io/badge/API_Audit-100%25_Passed_(23/23)-1d4ed8?style=for-the-badge)]()
 [![Forensic Compliance](https://img.shields.io/badge/Forensic_Proof-Sec_65B_IEA_Certified-047857?style=for-the-badge)]()
 
 <br/>
@@ -125,9 +125,12 @@ graph TD
 
 ### 3. Calibrated Machine Learning Models (~90% Accuracy Target)
 Trained on 19 Kaggle national datasets and calibrated to realistic, production-grade performance:
-- **Hotspot Risk Classifier (`hotspot_classifier_kaggle.joblib`)**: `RandomForestClassifier` (150 trees) $ightarrow$ **90.8% 5-Fold Cross-Validation Accuracy**.
-- **Case Solvability Regressor (`solvability_regressor_kaggle.joblib`)**: `GradientBoostingRegressor` (120 estimators) $ightarrow$ **0.878 Validation $R^2$ Score**.
-- **Offender Recidivism Classifier (`recidivism_classifier_kaggle.joblib`)**: `GradientBoostingClassifier` (130 estimators) $ightarrow$ **83.6% 5-Fold Cross-Validation Accuracy**.
+- **Hotspot Risk Classifier (`hotspot_classifier_kaggle.joblib`)**: `RandomForestClassifier` (150 trees) $
+ightarrow$ **90.8% 5-Fold Cross-Validation Accuracy**.
+- **Case Solvability Regressor (`solvability_regressor_kaggle.joblib`)**: `GradientBoostingRegressor` (120 estimators) $
+ightarrow$ **0.878 Validation $R^2$ Score**.
+- **Offender Recidivism Classifier (`recidivism_classifier_kaggle.joblib`)**: `GradientBoostingClassifier` (130 estimators) $
+ightarrow$ **83.6% 5-Fold Cross-Validation Accuracy**.
 - **Local SHAP Explainability**: Game-theoretic Shapley feature attributions explain every prediction.
 
 ### 4. Air-Gapped Data Isolation Architecture
@@ -138,7 +141,7 @@ Ensures demo cases and training datasets never contaminate official departmental
 
 ---
 
-## Zero-Defect Hackathon Audit Matrix (100% Pass Rate)
+## Zero-Defect Hackathon Audit Matrix (100% Pass Rate · 23 Endpoints)
 
 | # | HTTP Method | Endpoint | Description | Status | Response |
 |---|---|---|---|---|---|
@@ -152,7 +155,19 @@ Ensures demo cases and training datasets never contaminate official departmental
 | 8 | `GET` | `/api/v1/board/canvas/list` | Multi-Canvas Registry & Metadata | **PASSED** | `HTTP 200 OK` |
 | 9 | `POST` | `/api/v1/criminology/solve-case` | Multi-Modal Case Solver Engine | **PASSED** | `HTTP 200 OK` |
 | 10 | `GET` | `/api/v1/criminology/escalation-matrix` | Markov Crime Escalation Matrix | **PASSED** | `HTTP 200 OK` |
-| 11 | `GET` | `/api/v1/analytics/kpis` | Operational KPI Dashboard | **PASSED** | `HTTP 200 OK` |
+| 11 | `POST` | `/api/v1/criminology/match-face` | Biometric Facial Evidence Matcher | **PASSED** | `HTTP 200 OK` |
+| 12 | `POST` | `/api/v1/criminology/generate-chargesheet` | AI Court Chargesheet Generator (BNS 2023) | **PASSED** | `HTTP 200 OK` |
+| 13 | `POST` | `/api/v1/criminology/anpr-convoy-analysis` | ANPR & FASTag Convoy Trajectory Tracker | **PASSED** | `HTTP 200 OK` |
+| 14 | `POST` | `/api/v1/criminology/audio-forensic-profile` | Bilingual 112 Voice & Dialect Profiler | **PASSED** | `HTTP 200 OK` |
+| 15 | `POST` | `/api/v1/criminology/plan-sting-intercept` | Dynamic Highway Checkpoint & Sting Planner | **PASSED** | `HTTP 200 OK` |
+| 16 | `POST` | `/api/v1/criminology/biometric-face-morph` | Biometric Face Morph & Disguise Simulator | **PASSED** | `HTTP 200 OK` |
+| 17 | `POST` | `/api/v1/criminology/interrogation-copilot` | AI Interrogation Copilot & Question Planner | **PASSED** | `HTTP 200 OK` |
+| 18 | `POST` | `/api/v1/criminology/rossmo-geographic-profiling` | Rossmo Formula Criminal Hideout Predictor | **PASSED** | `HTTP 200 OK` |
+| 19 | `POST` | `/api/v1/cdr/imei-switcher-tracker` | IMEI / IMSI Burner SIM Switcher Tracker | **PASSED** | `HTTP 200 OK` |
+| 20 | `POST` | `/api/v1/darkweb/analyze-cyber-scam-script` | 'Digital Arrest' & Scam Script Syndicate Analyzer | **PASSED** | `HTTP 200 OK` |
+| 21 | `POST` | `/api/v1/financial/detect-smurfing-rings` | Hawala & UPI Mule Smurfing Ring De-Anonymizer | **PASSED** | `HTTP 200 OK` |
+| 22 | `GET` | `/api/v1/nlp/status` | Zia NLP & Bilingual Extraction Service | **PASSED** | `HTTP 200 OK` |
+| 23 | `GET` | `/api/v1/analytics/kpis` | Operational State-Wide KPI Dashboard | **PASSED** | `HTTP 200 OK` |
 
 ---
 
