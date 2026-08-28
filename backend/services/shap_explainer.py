@@ -188,12 +188,19 @@ class ShapExplainer:
                     import numpy as np
                     shap_values = explainer.shap_values(features_df)
 
-                    # For classifiers, shap_values may be list (one per class)
-                    if isinstance(shap_values, list):
-                        # Use class 1 (positive class = HIGH RISK)
-                        sv = np.array(shap_values[1][0]) if len(shap_values) > 1 else np.array(shap_values[0][0])
+                    if hasattr(shap_values, "values"):
+                        shap_vals_arr = shap_values.values
                     else:
-                        sv = np.array(shap_values[0])
+                        shap_vals_arr = shap_values
+
+                    if isinstance(shap_vals_arr, list):
+                        shap_vals_arr = shap_vals_arr[1] if len(shap_vals_arr) > 1 else shap_vals_arr[0]
+
+                    shap_vals_arr = np.atleast_2d(shap_vals_arr)
+                    if shap_vals_arr.ndim == 3:
+                        sv = shap_vals_arr[0, :, 1] if shap_vals_arr.shape[2] > 1 else shap_vals_arr[0, :, 0]
+                    else:
+                        sv = shap_vals_arr[0]
 
                     contributions = self._build_contributions(
                         sv, feature_names, feature_values, label_map
