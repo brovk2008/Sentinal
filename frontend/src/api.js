@@ -490,3 +490,20 @@ export const fetchCustomAIInference = (payload = {}) =>
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   });
+
+
+// ── Multi-Canvas Management & AI Forensic Detective ────────────────────────
+export const fetchCanvasList = () => request('/api/v1/board/canvas/list');
+export const loadCanvasById = (caseId) => request(`/api/v1/board/canvas/load/${caseId}`);
+export const saveCanvasById = (caseId, nodes, edges) =>
+  request('/api/v1/board/canvas/save', {
+    method: 'POST',
+    body: JSON.stringify({ case_id: caseId, nodes, edges }),
+  });
+export const deleteCanvasById = (caseId) =>
+  request(`/api/v1/board/canvas/${caseId}`, { method: 'DELETE' });
+export const runCanvasDetective = (payload) =>
+  request('/api/v1/board/canvas/detective', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });

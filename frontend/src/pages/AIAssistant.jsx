@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2 } from 'lucide-react'
+import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence, uploadToRag, textToSpeech } from '../api'
+import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList } from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
 import { useTranslation } from 'react-i18next'
 
@@ -60,31 +60,27 @@ function MessageCitations({ citations = [], debugInfo = {} }) {
                     fontSize: 11,
                     color: 'var(--text-secondary)',
                     cursor: 'pointer',
-                    userSelect: 'none'
+                    background: isExpanded ? 'var(--bg-secondary)' : 'transparent',
+                    padding: '4px 6px',
+                    borderRadius: 4,
                   }}
                 >
-                  <span style={{ fontSize: 9 }}>{isExpanded ? '▼' : '▶'}</span>
-                  <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.source}</span>
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>({c.type})</span>
-                  <span className="mono" style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--status-success)' }}>
-                    {matchPercent}% match
-                  </span>
+                  <span style={{ color: 'var(--copper-400)', fontWeight: 600 }}>#{idx + 1}</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{c.document_title || c.crime_head || 'Report'}</span>
+                  {c.crime_no && <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>({c.crime_no})</span>}
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--copper-300)' }}>{matchPercent}% match</span>
                 </div>
                 {isExpanded && (
                   <div style={{
                     padding: '8px 10px',
                     background: 'var(--bg-secondary)',
+                    borderRadius: 4,
                     borderLeft: '2px solid var(--copper-400)',
-                    borderRadius: '0 4px 4px 0',
                     fontSize: 11,
-                    color: 'var(--text-secondary)',
-                    fontFamily: 'var(--font-mono)',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
                     lineHeight: 1.5,
-                    marginTop: 2,
+                    color: 'var(--text-secondary)',
                   }}>
-                    {c.chunk_text}
+                    {c.text || c.content}
                   </div>
                 )}
               </div>
@@ -96,45 +92,36 @@ function MessageCitations({ citations = [], debugInfo = {} }) {
   )
 }
 
-const SUGGESTIONS = [
-  'Show me the top crime syndicates operating in Karnataka',
-  'Which districts have the highest crime rates?',
-  'Give me a briefing on cyber crime trends',
-  'Who are the most connected accused across cases?',
-  'Summarize narcotics-related intelligence',
-  'What suspicious financial patterns have been detected?',
-]
-
 export default function AIAssistant() {
   const { t, i18n } = useTranslation()
+  const [searchParams] = useSearchParams()
   const [messages, setMessages] = useState([
     {
       role: 'system',
-      content: `## Welcome to SENTINAL Intelligence Terminal
-
-I am the AI Intelligence Analyst for Project Sentinal.
-
-I can help you with:
-- **Crime pattern analysis** across districts and time periods
-- **Syndicate briefings** and organized crime intelligence
-- **Financial intelligence** on suspicious transactions
-- **Case correlation** and network analysis
-- **CDR analysis** for communication patterns
-
-Type your query below or select a suggestion to begin.`,
+      content: t('ai.welcome') || 'Sentinal Cognitive Criminology Engine online. Connected to Karnataka State Police Records, Zia NLP, Kaggle National Crime AI models, and live multi-canvas investigation boards.',
     },
   ])
-  const [searchParams] = useSearchParams()
-  const [voiceMode, setVoiceMode] = useState(searchParams.get('voice') === 'true')
   const [input, setInput] = useState('')
+  const [voiceMode, setVoiceMode] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
+  const [canvasList, setCanvasList] = useState([])
+  const [selectedCanvas, setSelectedCanvas] = useState('CANVAS-VEHICLE-THEFT-01')
   const fileInputRef = useRef(null)
   const chatEndRef = useRef(null)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Load available canvases
+  useEffect(() => {
+    fetchCanvasList().then(res => {
+      if (Array.isArray(res)) {
+        setCanvasList(res)
+      }
+    }).catch(console.error)
+  }, [])
 
   useEffect(() => {
     const handleAutoType = (e) => {
@@ -143,7 +130,7 @@ Type your query below or select a suggestion to begin.`,
 
       let currentText = ''
       let index = 0
-      setLoading(true) // Disable while typing
+      setLoading(true)
 
       const interval = setInterval(() => {
         currentText += queryText[index]
@@ -152,7 +139,6 @@ Type your query below or select a suggestion to begin.`,
         if (index >= queryText.length) {
           clearInterval(interval)
           setLoading(false)
-          // Submit query after a small delay
           setTimeout(() => {
             sendQuery(queryText)
           }, 800)
@@ -174,7 +160,11 @@ Type your query below or select a suggestion to begin.`,
 
     try {
       const activeLang = i18n.language || 'en'
-      const res = await queryIntelligence({ query: q, target_lang: activeLang })
+      const res = await queryIntelligence({
+        query: q,
+        target_lang: activeLang,
+        board_id: selectedCanvas
+      })
       setMessages(prev => [
         ...prev,
         {
@@ -233,14 +223,11 @@ Type your query below or select a suggestion to begin.`,
     }
   }
 
-  // RAG File Upload handler (7G)
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     setUploadStatus('Extracting text...')
-
-    // Simulate pipeline status steps visually
     setTimeout(() => {
       setUploadStatus('Generating embeddings...')
     }, 1500)
@@ -250,7 +237,6 @@ Type your query below or select a suggestion to begin.`,
 
     try {
       const result = await uploadToRag(formData)
-
       if (result.status === 'success') {
         setTimeout(() => {
           setUploadStatus(`Added ${result.chunks_added} chunks to knowledge base`)
@@ -258,14 +244,11 @@ Type your query below or select a suggestion to begin.`,
             ...prev,
             {
               role: 'system',
-              content: `**File Uploaded**: \`${result.filename}\`\n\n${result.message}`,
+              content: `Uploaded file **${file.name}** processed successfully. ${result.chunks_added} chunks added to vector store.`
             }
           ])
           setTimeout(() => setUploadStatus(''), 3000)
-        }, 3000)
-      } else {
-        setUploadStatus('Upload failed')
-        setTimeout(() => setUploadStatus(''), 3000)
+        }, 1500)
       }
     } catch (err) {
       console.error(err)
@@ -286,6 +269,29 @@ Type your query below or select a suggestion to begin.`,
         <span className="live-dot" />
         <span className="mono" style={{ fontSize: 12 }}>{t('ai.title') || 'SENTINAL AI TERMINAL'}</span>
         <Badge text="RAG + LLM" variant="badge-copper" />
+
+        {/* Target Canvas Selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 16 }}>
+          <Layers size={13} color="var(--copper-400)" />
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>Active Canvas:</span>
+          <select
+            value={selectedCanvas}
+            onChange={e => setSelectedCanvas(e.target.value)}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              color: '#fff', border: '1px solid var(--border-subtle)',
+              borderRadius: 6, padding: '3px 8px', fontSize: 11,
+              outline: 'none', cursor: 'pointer'
+            }}
+          >
+            {canvasList.map(c => (
+              <option key={c.canvas_id} value={c.canvas_id} style={{ background: '#121222' }}>
+                {c.name} ({c.canvas_id})
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div style={{ flex: 1 }} />
         <button onClick={() => setVoiceMode(v => !v)} style={{
           background: voiceMode ? 'var(--copper-400)' : 'transparent',
@@ -298,7 +304,7 @@ Type your query below or select a suggestion to begin.`,
           <span>{voiceMode ? 'VOICE ON' : 'VOICE'}</span>
         </button>
         <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          KNOWLEDGE BASE: 500 narratives · 2,384 chunks · 113K records · Last indexed: Jul 5, 2026
+          KNOWLEDGE BASE: 80,000+ Kaggle records · 2,384 chunks · Last indexed: Live
         </span>
       </div>
 
@@ -348,85 +354,77 @@ Type your query below or select a suggestion to begin.`,
                   }}
                   title="Speak Response"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
+                  <Volume2 size={13} />
                 </button>
               )}
-              <ReactMarkdown
-                components={{
-                  h2: ({ children }) => <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--copper-400)' }}>{children}</h2>,
-                  h3: ({ children }) => <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>{children}</h3>,
-                  strong: ({ children }) => <strong style={{ color: 'var(--copper-300)' }}>{children}</strong>,
-                  code: ({ children }) => <code className="mono" style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 3 }}>{children}</code>,
-                  li: ({ children }) => <li style={{ marginBottom: 4 }}>{children}</li>,
-                  p: ({ children }) => <p style={{ marginBottom: 8 }}>{children}</p>,
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
+              {msg.role === 'assistant' ? (
+                <ReactMarkdown
+                  components={{
+                    p: ({ node, ...props }) => <p style={{ margin: '0 0 8px' }} {...props} />,
+                    strong: ({ node, ...props }) => <strong style={{ color: 'var(--copper-300)' }} {...props} />,
+                    ul: ({ node, ...props }) => <ul style={{ margin: '0 0 8px', paddingLeft: 20 }} {...props} />,
+                    li: ({ node, ...props }) => <li style={{ marginBottom: 4 }} {...props} />,
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              ) : (
+                msg.content
+              )}
 
-              {/* Citations Expandable Drawer */}
-              {msg.citations?.length > 0 && (
-                <MessageCitations citations={msg.citations} debugInfo={msg.debugInfo} />
+              {msg.citations && (
+                <MessageCitations
+                  citations={msg.citations}
+                  debugInfo={msg.debugInfo}
+                />
               )}
             </div>
           </div>
         ))}
 
         {loading && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingLeft: 4 }}>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <span className="dot-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--copper-400)', animation: 'dot-pulse-anim 1.2s infinite' }} />
-              <span className="dot-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--copper-400)', animation: 'dot-pulse-anim 1.2s infinite 0.2s' }} />
-              <span className="dot-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--copper-400)', animation: 'dot-pulse-anim 1.2s infinite 0.4s' }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: 10,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+            }}>
+              <LoadingPulse text="Correlating canvas evidence, Kaggle crime models & CCTV/CDR telemetry..." />
             </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Analyzing intelligence...</span>
-            <style>{`
-              @keyframes dot-pulse-anim {
-                0%, 100% { transform: scale(0.6); opacity: 0.4; }
-                50% { transform: scale(1.2); opacity: 1; }
-              }
-            `}</style>
           </div>
         )}
-
-        {/* Upload status indicator panel */}
-        {uploadStatus && (
-          <div style={{
-            alignSelf: 'center',
-            padding: '8px 16px', borderRadius: 6,
-            background: 'var(--bg-overlay)', border: '1px solid var(--copper-500)',
-            color: 'var(--copper-400)', fontSize: 11, fontWeight: 'bold',
-            animation: 'pulse 1.5s infinite', display: 'flex', alignItems: 'center', gap: 6
-          }}>
-            <Paperclip size={12} />
-            <span>{uploadStatus}</span>
-          </div>
-        )}
-
         <div ref={chatEndRef} />
       </div>
 
-      {/* Suggestions */}
-      {messages.length <= 1 && (
-        <div style={{
-          padding: '0 20px 12px',
-          display: 'flex', flexWrap: 'wrap', gap: 6,
-        }}>
-          {SUGGESTIONS.map((s, i) => (
-            <button
-              key={i}
-              className="btn btn-sm"
-              onClick={() => sendQuery(s)}
-              style={{ fontSize: 11, color: 'var(--text-secondary)' }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Quick Suggestion Pills */}
+      <div style={{
+        padding: '6px 20px',
+        display: 'flex', gap: 8,
+        background: 'var(--bg-secondary)',
+        borderTop: '1px solid var(--border-subtle)',
+        overflowX: 'auto',
+      }}>
+        {[
+          '🚗 Who stole the white Hyundai Creta on canvas CANVAS-VEHICLE-THEFT-01?',
+          '⚡ Trace the getaway route and FASTag toll pings for the stolen car.',
+          '🔗 Check alibi contradictions for Imran Pasha vs cell tower CDR logs.',
+          '🔍 What physical evidence links the suspect to the Indiranagar crime scene?'
+        ].map((s, idx) => (
+          <button
+            key={idx}
+            onClick={() => sendQuery(s)}
+            style={{
+              fontSize: 11, padding: '4px 10px', borderRadius: 12,
+              background: 'rgba(200,129,74,0.12)', color: 'var(--copper-300)',
+              border: '1px solid rgba(200,129,74,0.25)', cursor: 'pointer',
+              whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4
+            }}
+          >
+            <span>{s}</span>
+          </button>
+        ))}
+      </div>
 
       {voiceMode && (
         <div style={{ padding: '0 20px 12px' }}>
@@ -456,7 +454,6 @@ Type your query below or select a suggestion to begin.`,
         background: 'var(--bg-secondary)',
         alignItems: 'center',
       }}>
-        {/* Hidden File Input */}
         <input
           type="file"
           ref={fileInputRef}
@@ -480,7 +477,7 @@ Type your query below or select a suggestion to begin.`,
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && sendQuery()}
-          placeholder={t('ai.placeholder') || "Ask the intelligence system..."}
+          placeholder={t('ai.placeholder') || "Ask about the canvas evidence, who stole the car, suspect alibis..."}
           style={{ flex: 1, fontSize: 13 }}
           disabled={loading || !!uploadStatus}
         />

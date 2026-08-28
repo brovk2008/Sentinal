@@ -1,7 +1,7 @@
 /**
  * ConnectionsBoard.jsx — Sentinal v2 Investigation Canvas
- * Infinite ReactFlow canvas. Node types: person, case, location, phone,
- * vehicle, evidence, financial. AI Connect Dots + AI Analyze. Auto-save.
+ * Infinite ReactFlow canvas with Multi-Canvas management, Custom IDs,
+ * and AI Forensic Detective for complex case & vehicle theft reasoning.
  */
 import { useState, useCallback, useRef, useEffect } from 'react'
 import ReactFlow, {
@@ -15,28 +15,20 @@ import {
   User, Folder, MapPin, Smartphone, Car,
   FileSearch, Coins, Sparkles, Brain, Plus,
   Trash2, ArrowRight, Link2, Download, Save,
-  Info, Paperclip, Check, FolderOpen
+  Info, Paperclip, Check, FolderOpen, Search,
+  ShieldAlert, Compass, ChevronRight, X, Layers
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { connectDots, analyzeBoard, queryIntelligence } from '../api'
+import {
+  fetchCanvasList,
+  loadCanvasById,
+  saveCanvasById,
+  deleteCanvasById,
+  runCanvasDetective,
+  connectDots,
+  analyzeBoard
+} from '../api'
 import FileUploader from '../components/FileUploader'
-
-// ── API helpers ─────────────────────────────────────────────────────
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-async function loadCanvas(caseId) {
-  const res = await fetch(`${BASE_URL}/api/v1/board/canvas/load/${caseId}`)
-  if (!res.ok) return null
-  return res.json()
-}
-
-async function saveCanvas(caseId, nodes, edges) {
-  await fetch(`${BASE_URL}/api/v1/board/canvas/save`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ case_id: caseId, nodes, edges }),
-  })
-}
 
 function NodeIcon({ type, size = 12 }) {
   switch (type) {
@@ -74,16 +66,20 @@ function SentinalNode({ data, selected }) {
     financial: { border: '#52e0cc', bg: 'rgba(82,224,204,0.08)' },
   };
   const c = colors[data.type] || colors.evidence;
+  const isHighlighted = data.isHighlighted;
 
   return (
     <div style={{
-      background: 'rgba(12,12,24,0.95)',
-      border: `2px solid ${selected ? '#fff' : c.border}`,
+      background: isHighlighted ? 'rgba(25, 10, 10, 0.98)' : 'rgba(12,12,24,0.95)',
+      border: `2px solid ${isHighlighted ? '#ff4d4f' : (selected ? '#fff' : c.border)}`,
       borderRadius: 8, padding: '10px 14px',
-      minWidth: 140, maxWidth: 200,
+      minWidth: 140, maxWidth: 220,
       fontFamily: 'var(--font-sans)',
-      boxShadow: selected ? `0 0 16px ${c.border}` : '0 4px 16px rgba(0,0,0,0.5)',
+      boxShadow: isHighlighted
+        ? '0 0 24px rgba(255, 77, 79, 0.8), inset 0 0 12px rgba(255, 77, 79, 0.3)'
+        : (selected ? `0 0 16px ${c.border}` : '0 4px 16px rgba(0,0,0,0.5)'),
       position: 'relative',
+      transition: 'all 0.3s ease',
     }}>
       {/* SOURCE handle — right center — drag FROM here */}
       <Handle
@@ -115,11 +111,12 @@ function SentinalNode({ data, selected }) {
                    border: '1px solid var(--border-subtle)' }} />
       )}
 
-      <div style={{ fontSize: 10, color: c.border, fontWeight: 700,
+      <div style={{ fontSize: 10, color: isHighlighted ? '#ff7875' : c.border, fontWeight: 700,
                     textTransform: 'uppercase', letterSpacing: '0.1em',
                     marginBottom: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
         <NodeIcon type={data.type} size={11} />
         <span>{data.type}</span>
+        {isHighlighted && <span style={{ marginLeft: 'auto', color: '#ff4d4f', fontSize: 9 }}>★ TARGET</span>}
       </div>
       <div style={{ fontSize: 13, color: '#fff', fontWeight: 600,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -159,7 +156,6 @@ const nodeTypes = { sentinalNode: SentinalNode }
 
 // ── Add Node Modal ───────────────────────────────────────────────────
 function AddNodeModal({ onAdd, onClose }) {
-  const { t } = useTranslation()
   const [type, setType] = useState('person')
   const [label, setLabel] = useState('')
   const [subtitle, setSubtitle] = useState('')
@@ -167,31 +163,32 @@ function AddNodeModal({ onAdd, onClose }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0,
-      background: 'rgba(0,0,0,0.7)', zIndex: 9999,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{
-        background: 'var(--bg-card, #1a1a2e)',
+        background: 'var(--bg-card,#1a1a2e)',
         border: '1px solid rgba(255,255,255,0.15)',
-        borderRadius: 16, padding: 28, width: 380,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+        borderRadius: 14, padding: 24, width: 360,
       }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: '#fff' }}>
-          {t('canvas.addNode')}
-        </div>
+        <div style={{ fontWeight: 700, marginBottom: 16, color: '#fff' }}>Add Evidence Node</div>
 
-        {/* Type picker */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-          {Object.entries(NODE_TYPES).map(([key, cfg]) => (
-            <button key={key} onClick={() => setType(key)} style={{
-              padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-              fontSize: 11, fontWeight: 600,
-              background: type === key ? `${cfg.color}33` : 'transparent',
-              border: `1px solid ${type === key ? cfg.color : 'rgba(255,255,255,0.15)'}`,
-              color: type === key ? cfg.color : 'rgba(255,255,255,0.6)',
-              outline: 'none', fontFamily: 'inherit',
-            }}>{cfg.icon} {t(`canvas.nodeTypes.${key}`)}</button>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+          {Object.entries(NODE_TYPES).map(([k, v]) => (
+            <button
+              key={k}
+              onClick={() => setType(k)}
+              style={{
+                fontSize: 11, padding: '4px 8px', borderRadius: 6,
+                border: `1px solid ${type === k ? v.color : 'rgba(255,255,255,0.15)'}`,
+                background: type === k ? `${v.color}22` : 'transparent',
+                color: type === k ? v.color : '#aaa',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              <NodeIcon type={k} size={10} />
+              <span>{v.label}</span>
+            </button>
           ))}
         </div>
 
@@ -199,19 +196,19 @@ function AddNodeModal({ onAdd, onClose }) {
           autoFocus
           value={label}
           onChange={e => setLabel(e.target.value)}
-          placeholder="Label (name, case no., address...)"
+          placeholder="Label (name, car model, license plate, location...)"
           style={inputStyle}
         />
         <input
           value={subtitle}
           onChange={e => setSubtitle(e.target.value)}
-          placeholder="Subtitle (optional details)"
+          placeholder="Subtitle (e.g. Stolen 02:30 AM, OBD Keyless bypass)"
           style={{ ...inputStyle, marginTop: 8 }}
         />
         <input
           value={tags}
           onChange={e => setTags(e.target.value)}
-          placeholder="Tags (comma-separated, optional)"
+          placeholder="Tags (comma-separated, e.g. Target Asset, IPC 379)"
           style={{ ...inputStyle, marginTop: 8 }}
         />
 
@@ -233,6 +230,65 @@ function AddNodeModal({ onAdd, onClose }) {
   )
 }
 
+// ── Custom Canvas ID Creator Modal ───────────────────────────────────
+function NewCanvasModal({ onCreate, onClose }) {
+  const [customId, setCustomId] = useState('')
+  const [canvasTitle, setCanvasTitle] = useState('')
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'var(--bg-card,#1a1a2e)',
+        border: '1px solid rgba(200,129,74,0.4)',
+        borderRadius: 14, padding: 24, width: 380,
+      }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Layers size={16} color="var(--copper-400)" />
+          <span>Create New Canvas with Custom ID</span>
+        </div>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 16 }}>
+          Assign a distinct identifier so the AI Detective can recognise and reason over this specific board.
+        </div>
+
+        <label style={{ fontSize: 11, color: 'var(--copper-300)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+          CUSTOM CANVAS ID
+        </label>
+        <input
+          autoFocus
+          value={customId}
+          onChange={e => setCustomId(e.target.value.toUpperCase().replace(/\s+/g, '-'))}
+          placeholder="e.g. CANVAS-CAR-THEFT-2024"
+          style={inputStyle}
+        />
+
+        <label style={{ fontSize: 11, color: 'var(--copper-300)', fontWeight: 600, display: 'block', marginTop: 12, marginBottom: 4 }}>
+          CASE / CANVAS TITLE
+        </label>
+        <input
+          value={canvasTitle}
+          onChange={e => setCanvasTitle(e.target.value)}
+          placeholder="e.g. Vehicle Theft — White Creta Heist"
+          style={inputStyle}
+        />
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+          <button
+            onClick={() => {
+              if (!customId.trim()) return
+              onCreate(customId.trim(), canvasTitle.trim() || customId.trim())
+            }}
+            style={btnPrimary}
+          >Create Canvas</button>
+          <button onClick={onClose} style={btnSecondary}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Edge label dialog ────────────────────────────────────────────────
 function EdgeLabelModal({ onSave, onClose }) {
   const [label, setLabel] = useState('')
@@ -246,10 +302,10 @@ function EdgeLabelModal({ onSave, onClose }) {
         border: '1px solid rgba(255,255,255,0.15)',
         borderRadius: 14, padding: 24, width: 340,
       }}>
-        <div style={{ fontWeight: 700, marginBottom: 12, color: '#fff' }}>Connection Label</div>
+        <div style={{ fontWeight: 700, marginBottom: 12, color: '#fff' }}>Connection Relationship</div>
         <input
           autoFocus value={label} onChange={e => setLabel(e.target.value)}
-          placeholder="e.g. Financial link, Called on 12 Jan..."
+          placeholder="e.g. Stole Vehicle, Called at 03:15 AM, Spotted on CCTV..."
           style={inputStyle}
           onKeyDown={e => e.key === 'Enter' && onSave(label)}
         />
@@ -262,38 +318,7 @@ function EdgeLabelModal({ onSave, onClose }) {
   )
 }
 
-// ── AI Analysis Panel ────────────────────────────────────────────────
-function AIPanel({ content, loading, onClose }) {
-  return (
-    <div style={{
-      position: 'absolute', right: 16, top: 16, width: 380, maxHeight: '80vh',
-      background: 'rgba(12,12,24,0.96)',
-      border: '1px solid rgba(200,129,74,0.4)',
-      borderRadius: 14, padding: 20,
-      backdropFilter: 'blur(16px)',
-      boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
-      zIndex: 100, overflowY: 'auto',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--copper-300,#e8a87c)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Brain size={14} />
-          <span>AI Analysis</span>
-        </span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 16 }}>×</button>
-      </div>
-      {loading ? (
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Analysing board...</div>
-      ) : (
-        <div style={{
-          fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 1.7,
-          whiteSpace: 'pre-wrap',
-        }}>{content}</div>
-      )}
-    </div>
-  )
-}
-
-// ─── Shared inline styles ────────────────────────────────────────────
+// ── Shared inline styles ────────────────────────────────────────────
 const inputStyle = {
   width: '100%', padding: '8px 12px', borderRadius: 8,
   border: '1px solid rgba(255,255,255,0.15)',
@@ -314,98 +339,64 @@ const btnSecondary = {
   fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
 }
 
-// ─── Main component ──────────────────────────────────────────────────
-const CANVAS_CASE = 'canvas_global'
-
+// ─── Main Component ──────────────────────────────────────────────────
 export default function ConnectionsBoard() {
   const { t } = useTranslation()
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showNewCanvasModal, setShowNewCanvasModal] = useState(false)
   const [pendingEdge, setPendingEdge] = useState(null)
-  const [aiPanel, setAiPanel] = useState(null)
-  const [aiLoading, setAiLoading] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
-  const nodeIdRef = useRef(1)
+  const [canvases, setCanvases] = useState([])
+  const [currentCanvasId, setCurrentCanvasId] = useState('CANVAS-VEHICLE-THEFT-01')
+
+  // AI Detective state
+  const [showDetectiveDrawer, setShowDetectiveDrawer] = useState(false)
+  const [detectiveQuery, setDetectiveQuery] = useState('')
+  const [detectiveLoading, setDetectiveLoading] = useState(false)
+  const [detectiveVerdict, setDetectiveVerdict] = useState(null)
+
+  const nodeIdRef = useRef(10)
   const saveTimer = useRef(null)
 
-  // Load saved canvas on mount
-  useEffect(() => {
-    loadCanvas(CANVAS_CASE).then(data => {
-      if (data?.nodes?.length) {
-        setNodes(data.nodes)
-        setEdges(data.edges || [])
-        const maxId = Math.max(0, ...data.nodes.map(n => parseInt(n.id.replace('sn_', '')) || 0))
-        nodeIdRef.current = maxId + 1
+  // Fetch all available canvases
+  const loadCanvasList = useCallback(async () => {
+    try {
+      const res = await fetchCanvasList()
+      if (Array.isArray(res)) {
+        setCanvases(res)
       }
-    }).catch(console.error)
+    } catch (err) {
+      console.error('Failed to load canvas list:', err)
+    }
   }, [])
 
-  // Listen to demo mode auto-triggers
+  // Load a canvas by ID
+  const switchCanvas = useCallback(async (canvasId) => {
+    setCurrentCanvasId(canvasId)
+    setDetectiveVerdict(null)
+    try {
+      const res = await loadCanvasById(canvasId)
+      if (res?.nodes?.length) {
+        setNodes(res.nodes)
+        setEdges(res.edges || [])
+        const maxId = Math.max(0, ...res.nodes.map(n => parseInt((n.id || '').replace(/[^0-9]/g, '')) || 0))
+        nodeIdRef.current = maxId + 1
+      } else {
+        setNodes([])
+        setEdges([])
+      }
+    } catch (err) {
+      console.error('Failed to switch canvas:', err)
+    }
+  }, [setNodes, setEdges])
+
+  // Initial load
   useEffect(() => {
-    const handleDemoCanvas = () => {
-      setTimeout(() => {
-        handleAIAnalyze();
-      }, 1000);
-    };
-    const handleDemoPopulate = () => {
-      const demoNodes = [
-        {
-          id: 'sn_1',
-          type: 'sentinalNode',
-          position: { x: 120, y: 150 },
-          data: { type: 'case', label: 'Case #456 — UPI Cyber Fraud', subtitle: 'Bengaluru Urban · Under Investigation', tags: ['UPI Fraud', 'High Gravity'] }
-        },
-        {
-          id: 'sn_2',
-          type: 'sentinalNode',
-          position: { x: 450, y: 120 },
-          data: { type: 'person', label: 'Ashok Kumar', subtitle: 'Suspected Syndicate Coordinator', tags: ['Main Actor', 'Repeat Offender'], risk: 'HIGH' }
-        },
-        {
-          id: 'sn_3',
-          type: 'sentinalNode',
-          position: { x: 450, y: 350 },
-          data: { type: 'financial', label: 'Mule Account #90812328', subtitle: 'Canara Bank · Hebbal Branch', tags: ['Suspicious Activity'] }
-        },
-        {
-          id: 'sn_4',
-          type: 'sentinalNode',
-          position: { x: 120, y: 380 },
-          data: { type: 'phone', label: '+91 94808-12345', subtitle: 'SIM registered in Bidar', tags: ['Burner SIM'] }
-        }
-      ];
-      const demoEdges = [
-        {
-          id: 'e_1',
-          source: 'sn_1',
-          target: 'sn_2',
-          label: 'Primary Beneficiary',
-          animated: true,
-          style: { stroke: 'rgba(200,129,74,0.8)', strokeWidth: 2 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(200,129,74,0.8)' }
-        },
-        {
-          id: 'e_2',
-          source: 'sn_2',
-          target: 'sn_3',
-          label: 'Account Signatory',
-          animated: true,
-          style: { stroke: 'rgba(200,129,74,0.8)', strokeWidth: 2 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(200,129,74,0.8)' }
-        }
-      ];
-      setNodes(demoNodes);
-      setEdges(demoEdges);
-      nodeIdRef.current = 5;
-    };
-    window.addEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
-    window.addEventListener('demo-trigger-canvas-populate', handleDemoPopulate);
-    return () => {
-      window.removeEventListener('demo-trigger-canvas-ai', handleDemoCanvas);
-      window.removeEventListener('demo-trigger-canvas-populate', handleDemoPopulate);
-    };
-  }, [nodes, edges]);
+    loadCanvasList()
+    switchCanvas('CANVAS-VEHICLE-THEFT-01')
+  }, [loadCanvasList, switchCanvas])
 
   // Auto-save on change (debounced 2s)
   useEffect(() => {
@@ -413,13 +404,14 @@ export default function ConnectionsBoard() {
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
       try {
-        await saveCanvas(CANVAS_CASE, nodes, edges)
+        await saveCanvasById(currentCanvasId, nodes, edges)
         setSaveStatus('Saved')
         setTimeout(() => setSaveStatus(''), 2000)
+        loadCanvasList()
       } catch { setSaveStatus('Save failed') }
     }, 2000)
     return () => clearTimeout(saveTimer.current)
-  }, [nodes, edges])
+  }, [nodes, edges, currentCanvasId, loadCanvasList])
 
   const onConnect = useCallback((params) => {
     setPendingEdge(params)
@@ -442,296 +434,333 @@ export default function ConnectionsBoard() {
 
   const addNode = (nodeData) => {
     const id = `sn_${nodeIdRef.current++}`
-    const cfg = NODE_TYPES[nodeData.type]
+    const cfg = NODE_TYPES[nodeData.type] || NODE_TYPES.evidence
     const newNode = {
       id,
       type: 'sentinalNode',
-      position: { x: 100 + Math.random() * 400, y: 100 + Math.random() * 300 },
+      position: { x: 200 + Math.random() * 300, y: 150 + Math.random() * 200 },
       data: { ...nodeData, color: cfg.color },
     }
-    setNodes(ns => [...ns, newNode])
+    setNodes(nds => [...nds, newNode])
     setShowAddModal(false)
   }
 
-  const handleAIConnect = async () => {
-    if (nodes.length < 2) return
-    setAiLoading(true)
-    setAiPanel('loading')
-    try {
-      const boardPayload = {
-        nodes: nodes.map(n => ({
-          id: n.id, type: n.data.type, label: n.data.label,
-          subtitle: n.data.subtitle, tags: n.data.tags,
-        })),
-        connections: edges.map(e => ({
-          from: e.source, to: e.target, label: e.label || '',
-        })),
-      }
-      const res = await connectDots(boardPayload)
-      const suggestions = res.suggested_connections || []
-      if (suggestions.length) {
-        const newEdges = suggestions.map((s, i) => ({
-          id: `ai_e_${Date.now()}_${i}`,
-          source: s.from_node_id, target: s.to_node_id,
-          label: s.link_label || s.relationship_type || 'AI Link',
-          animated: true,
-          style: { stroke: '#52e07a', strokeWidth: 2, strokeDasharray: '5,3' },
-          labelStyle: { fontSize: 10, fill: '#52e07a', fontWeight: 600 },
-          labelBgStyle: { fill: 'rgba(12,12,24,0.85)', rx: 4 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#52e07a' },
-        })).filter(e => e.source && e.target)
-        if (newEdges.length) setEdges(eds => [...eds, ...newEdges])
-        setAiPanel(`AI found ${newEdges.length} connection(s):\n\n` +
-          suggestions.map(s => `• ${s.link_label || s.relationship_type}: ${s.reasoning || ''}`).join('\n'))
-      } else {
-        setAiPanel('AI found no additional connections to suggest based on the current board.')
-      }
-    } catch (e) {
-      setAiPanel(`Connect Dots failed: ${e.message}`)
-    } finally {
-      setAiLoading(false)
-    }
-  }
-
-  const handleAIAnalyze = async () => {
-    setAiLoading(true)
-    setAiPanel('loading')
-    try {
-      const boardPayload = {
-        nodes: nodes.map(n => ({ ...n.data, id: n.id })),
-        connections: edges.map(e => ({ from: e.source, to: e.target, label: e.label })),
-      }
-      const res = await analyzeBoard(boardPayload)
-      setAiPanel(res.analysis || res.answer || JSON.stringify(res, null, 2))
-    } catch (e) {
-      setAiPanel(`Analysis failed: ${e.message}`)
-    } finally {
-      setAiLoading(false)
-    }
-  }
-
-  const handleSaveNow = async () => {
-    clearTimeout(saveTimer.current)
-    try {
-      await saveCanvas(CANVAS_CASE, nodes, edges)
-      setSaveStatus('Saved')
-      setTimeout(() => setSaveStatus(''), 2000)
-    } catch { setSaveStatus('Save failed') }
-  }
-
-  const handleClear = () => {
-    if (!window.confirm('Clear entire canvas? This cannot be undone.')) return
+  // Create new canvas with custom ID
+  const handleCreateCanvas = (customId, title) => {
+    setShowNewCanvasModal(false)
+    setCurrentCanvasId(customId)
     setNodes([])
     setEdges([])
-    saveCanvas(CANVAS_CASE, [], [])
+    setDetectiveVerdict(null)
+    saveCanvasById(customId, [], []).then(() => {
+      loadCanvasList()
+    })
+  }
+
+  // Run AI Forensic Detective
+  const handleRunDetective = async (customPrompt = null) => {
+    const queryToRun = customPrompt || detectiveQuery || 'Who stole the car and what is the primary chain of evidence?'
+    setDetectiveLoading(true)
+    setShowDetectiveDrawer(true)
+    try {
+      const res = await runCanvasDetective({
+        canvas_id: currentCanvasId,
+        query: queryToRun,
+        nodes,
+        edges
+      })
+      if (res?.verdict) {
+        setDetectiveVerdict(res.verdict)
+
+        // Graph illumination: highlight suspect node & critical edges
+        const targetIds = new Set(res.verdict.highlight_node_ids || [])
+        if (res.verdict.prime_suspect_node_id) {
+          targetIds.add(res.verdict.prime_suspect_node_id)
+        }
+
+        setNodes(nds => nds.map(n => ({
+          ...n,
+          data: {
+            ...n.data,
+            isHighlighted: targetIds.has(n.id)
+          }
+        })))
+
+        const edgeIds = new Set(res.verdict.highlight_edge_ids || [])
+        setEdges(eds => eds.map(e => ({
+          ...e,
+          animated: true,
+          style: {
+            ...e.style,
+            stroke: edgeIds.has(e.id) ? '#ff4d4f' : (e.style?.stroke || 'rgba(200,129,74,0.8)'),
+            strokeWidth: edgeIds.has(e.id) ? 3.5 : (e.style?.strokeWidth || 2)
+          }
+        })))
+      }
+    } catch (err) {
+      console.error('Detective error:', err)
+    } finally {
+      setDetectiveLoading(false)
+    }
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#0a0a16' }}>
-      {/* Toolbar */}
+    <div style={{ width: '100%', height: 'calc(100vh - 64px)', position: 'relative', background: '#0a0a14' }}>
+      {/* ── Top Bar / Canvas Selector ─────────────────────────────── */}
       <div style={{
+        position: 'absolute', top: 12, left: 16, zIndex: 10,
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        background: 'rgba(255,255,255,0.02)',
-        flexWrap: 'wrap',
+        background: 'rgba(12, 12, 24, 0.92)',
+        padding: '6px 12px', borderRadius: 10,
+        border: '1px solid rgba(255,255,255,0.12)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
       }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginRight: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Link2 size={15} color="var(--copper-400)" />
-          <span>{t('canvas.title')}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--copper-400)', fontWeight: 700, fontSize: 12 }}>
+          <Layers size={15} />
+          <span>CANVAS:</span>
         </div>
-        <div style={{ flex: 1 }} />
 
-        <button
-          onClick={async () => {
-            try {
-              const res = await fetch(`${BASE_URL}/api/v1/board/demo`);
-              if (!res.ok) throw new Error(`HTTP ${res.status}`);
-              const data = await res.json();
-              setNodes(data.nodes || []);
-              setEdges(data.edges || []);
-            } catch (e) {
-              setSaveStatus(`Load failed: ${e.message}`);
-              setTimeout(() => setSaveStatus(''), 3000);
-            }
-          }}
+        <select
+          value={currentCanvasId}
+          onChange={e => switchCanvas(e.target.value)}
           style={{
-            ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-            background: 'rgba(74,158,255,0.1)',
-            borderColor: 'rgba(74,158,255,0.4)',
-            color: '#4a9eff', display: 'flex', alignItems: 'center', gap: 5
+            background: 'rgba(255,255,255,0.08)',
+            color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 6, padding: '4px 8px', fontSize: 12,
+            outline: 'none', cursor: 'pointer', maxWidth: 260
           }}
         >
-          <FolderOpen size={12} />
-          <span>Load Demo Case</span>
-        </button>
+          {canvases.map(c => (
+            <option key={c.canvas_id} value={c.canvas_id} style={{ background: '#121222' }}>
+              {c.name} ({c.node_count} nodes)
+            </option>
+          ))}
+        </select>
 
-        <button onClick={() => setShowAddModal(true)} style={{
-          ...btnPrimary, flex: 'none', padding: '7px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5
-        }}>
-          <Plus size={12} />
-          <span>{t('canvas.addNode')}</span>
-        </button>
-
-        <button onClick={handleAIConnect} style={{
-          ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-          borderColor: '#52e07a44', color: '#52e07a', display: 'flex', alignItems: 'center', gap: 5
-        }}>
-          <Sparkles size={12} />
-          <span>{t('canvas.connectDots')}</span>
-        </button>
-
-        <button onClick={handleAIAnalyze} style={{
-          ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-          borderColor: 'rgba(200,129,74,0.4)', color: 'var(--copper-300,#e8a87c)', display: 'flex', alignItems: 'center', gap: 5
-        }}>
-          <Brain size={12} />
-          <span>{t('canvas.analyzeBoard')}</span>
-        </button>
-
-        <button onClick={handleSaveNow} style={{
-          ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5
-        }}>
-          <Save size={12} />
-          <span>{t('canvas.saveBoard')}</span>
-        </button>
-
-        <button onClick={handleClear} style={{
-          ...btnSecondary, flex: 'none', padding: '7px 14px', fontSize: 11,
-          borderColor: '#e0525244', color: '#e05252', display: 'flex', alignItems: 'center', gap: 5
-        }}>
-          <Trash2 size={12} />
-          <span>{t('canvas.clearBoard')}</span>
+        <button
+          onClick={() => setShowNewCanvasModal(true)}
+          style={{
+            background: 'rgba(200,129,74,0.2)',
+            color: 'var(--copper-300)',
+            border: '1px solid rgba(200,129,74,0.4)',
+            borderRadius: 6, padding: '4px 10px',
+            fontSize: 11, fontWeight: 600, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 4
+          }}
+        >
+          <Plus size={13} />
+          <span>New Canvas (Custom ID)</span>
         </button>
 
         {saveStatus && (
-          <span style={{ fontSize: 10, color: '#52e07a', marginLeft: 4 }}>{saveStatus}</span>
+          <span style={{ fontSize: 11, color: '#52e07a', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Check size={12} /> {saveStatus}
+          </span>
         )}
-
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginLeft: 4 }}>
-          {nodes.length} nodes · {edges.length} edges
-        </span>
       </div>
 
+      {/* ── Action Toolbar (Right) ─────────────────────────────────── */}
       <div style={{
-        padding: '6px 16px', background: 'rgba(74,158,255,0.06)',
-        borderBottom: '1px solid rgba(74,158,255,0.15)',
-        fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6
+        position: 'absolute', top: 12, right: 16, zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <Info size={13} color="#4a9eff" />
-        <span>
-          Drag from the <span style={{ color: '#e05252' }}>red/orange dot</span> (right side of node)
-          to the <span style={{ color: '#4a9eff' }}>blue dot</span> (left side) to connect two nodes.
-          Press Backspace or Delete to remove a selected node/edge.
-        </span>
-      </div>
-
-      {/* Attach Evidence Files Collapsible */}
-      <details style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-secondary)' }}>
-        <summary style={{
-          padding: '8px 16px', cursor: 'pointer', fontSize: 11,
-          color: 'rgba(255,255,255,0.6)',
-          userSelect: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
-        }}>
-          <Paperclip size={12} />
-          <span>Attach Evidence Files to Investigation</span>
-        </summary>
-        <div style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)' }}>
-          <FileUploader
-            caseId={CANVAS_CASE}
-            onUploadComplete={(file) => {
-              // Auto-add uploaded image as a node on the canvas
-              if (file.file_type === 'image') {
-                setNodes(ns => [...ns, {
-                  id: `file-${file.file_id || Date.now()}`,
-                  type: 'sentinalNode',
-                  position: { x: 150 + Math.random() * 300, y: 150 + Math.random() * 200 },
-                  data: {
-                    type: 'evidence',
-                    label: file.label || 'Uploaded Image',
-                    subtitle: file.ai_summary ? (file.ai_summary.slice(0, 60) + '...') : 'AI Evidence Analysis',
-                    tags: file.ai_tags || [],
-                    // Use imageUrl (includes localPreviewUrl fallback) so image shows immediately
-                    imageUrl: file.imageUrl || file.stratus_url || file.localPreviewUrl || null,
-                  },
-                }]);
-              } else if (file.ai_summary) {
-                // Add non-image files as evidence nodes too
-                setNodes(ns => [...ns, {
-                  id: `file-${file.file_id || Date.now()}`,
-                  type: 'sentinalNode',
-                  position: { x: 150 + Math.random() * 300, y: 150 + Math.random() * 200 },
-                  data: {
-                    type: 'evidence',
-                    label: file.label || file.file_type || 'Uploaded File',
-                    subtitle: file.ai_summary ? file.ai_summary.slice(0, 60) + '...' : '',
-                    tags: file.ai_tags || [],
-                    imageUrl: null,
-                  },
-                }]);
-              }
-            }}
-          />
-        </div>
-      </details>
-
-      {/* Canvas */}
-      <div style={{ flex: 1, position: 'relative' }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
-          connectionMode="loose"
-          minZoom={0.1}
-          maxZoom={4}
-          deleteKeyCode={['Backspace', 'Delete']}
-          style={{ background: 'transparent' }}
+        <button
+          onClick={() => setShowAddModal(true)}
+          style={{
+            background: 'rgba(255,255,255,0.08)', color: '#fff',
+            border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8,
+            padding: '7px 12px', fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            backdropFilter: 'blur(8px)'
+          }}
         >
-          <Background color="rgba(255,255,255,0.04)" gap={28} />
-          <Controls style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8,
-          }} />
-          <MiniMap
-            style={{ background: 'rgba(10,10,22,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-            nodeColor={n => NODE_TYPES[n.data?.type]?.color || '#888'}
-          />
+          <Plus size={14} />
+          <span>Add Node</span>
+        </button>
 
-          {/* AI Panel */}
-          {aiPanel && (
-            <Panel position="top-right">
-              <AIPanel
-                content={aiPanel === 'loading' ? '' : aiPanel}
-                loading={aiPanel === 'loading' || aiLoading}
-                onClose={() => setAiPanel(null)}
-              />
-            </Panel>
-          )}
-        </ReactFlow>
-
-        {/* Empty state hint */}
-        {nodes.length === 0 && (
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex',
-            flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            pointerEvents: 'none',
-          }}>
-            <Link2 size={40} style={{ marginBottom: 12, opacity: 0.2 }} color="var(--copper-400)" />
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
-              Click <strong style={{ color: 'rgba(200,129,74,0.6)' }}>+ Add Node</strong> to start the investigation canvas.<br/>
-              Connect nodes by dragging between their handles.
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => handleRunDetective()}
+          style={{
+            background: 'linear-gradient(135deg, rgba(200,129,74,0.95), rgba(224,82,82,0.85))',
+            color: '#fff', border: 'none', borderRadius: 8,
+            padding: '7px 14px', fontSize: 12, fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 0 16px rgba(200,129,74,0.5)'
+          }}
+        >
+          <ShieldAlert size={14} />
+          <span>🤖 AI Forensic Detective</span>
+        </button>
       </div>
+
+      {/* ── ReactFlow Canvas ──────────────────────────────────────── */}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        nodeTypes={nodeTypes}
+        fitView
+      >
+        <Background color="rgba(255,255,255,0.04)" gap={20} size={1} />
+        <Controls style={{ background: 'rgba(12,12,24,0.9)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8 }} />
+        <MiniMap
+          style={{ background: 'rgba(12,12,24,0.9)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8 }}
+          nodeColor={n => NODE_TYPES[n.data?.type]?.color || '#c8814a'}
+        />
+      </ReactFlow>
+
+      {/* ── AI Forensic Detective Drawer ───────────────────────────── */}
+      {showDetectiveDrawer && (
+        <div style={{
+          position: 'absolute', top: 60, right: 16, width: 440, maxHeight: 'calc(100vh - 140px)',
+          background: 'rgba(10, 10, 20, 0.97)',
+          border: '1px solid rgba(200,129,74,0.5)',
+          borderRadius: 14, padding: 18,
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.85)',
+          zIndex: 100, overflowY: 'auto',
+          display: 'flex', flexDirection: 'column', gap: 14
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShieldAlert size={16} color="#ff4d4f" />
+              <span style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>AI Forensic Evidence Solver</span>
+            </div>
+            <button onClick={() => setShowDetectiveDrawer(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Quick Query Pills */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {[
+              { label: '🚗 Who stole the car?', q: 'Who stole the white Hyundai Creta and how did they execute the theft?' },
+              { label: '⚡ Trace Escape Route', q: 'Trace the vehicle getaway path from Indiranagar to the toll checkpoint.' },
+              { label: '🔗 Check Alibis', q: 'Assess suspect alibis and point out contradictions with cell tower CDR logs.' },
+              { label: '📋 Action Plan', q: 'What immediate police warrants and search actions should be executed?' }
+            ].map(p => (
+              <button
+                key={p.label}
+                onClick={() => handleRunDetective(p.q)}
+                style={{
+                  fontSize: 10, padding: '4px 8px', borderRadius: 6,
+                  background: 'rgba(200,129,74,0.15)', color: 'var(--copper-300)',
+                  border: '1px solid rgba(200,129,74,0.3)', cursor: 'pointer'
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              value={detectiveQuery}
+              onChange={e => setDetectiveQuery(e.target.value)}
+              placeholder="Ask custom question about this canvas..."
+              style={inputStyle}
+              onKeyDown={e => e.key === 'Enter' && handleRunDetective()}
+            />
+            <button
+              onClick={() => handleRunDetective()}
+              disabled={detectiveLoading}
+              style={{
+                background: 'var(--copper-500)', color: '#fff', border: 'none',
+                borderRadius: 8, padding: '0 14px', fontWeight: 700, cursor: 'pointer'
+              }}
+            >
+              {detectiveLoading ? '...' : 'Ask'}
+            </button>
+          </div>
+
+          {/* Verdict Body */}
+          {detectiveLoading ? (
+            <div style={{ textAlign: 'center', padding: '30px 0', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+              <Brain size={28} color="var(--copper-400)" style={{ animation: 'spin 2s linear infinite', marginBottom: 8 }} />
+              <div>Correlating canvas graph, CCTV timestamps, CDR pings, and Kaggle crime patterns...</div>
+            </div>
+          ) : detectiveVerdict ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Prime Suspect Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(224,82,82,0.15), rgba(200,129,74,0.1))',
+                border: '1px solid rgba(224,82,82,0.4)', borderRadius: 10, padding: 12
+              }}>
+                <div style={{ fontSize: 10, color: '#ff7875', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  ★ IDENTIFIED PRIME SUSPECT
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginTop: 2 }}>
+                  {detectiveVerdict.prime_suspect}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <div style={{ fontSize: 11, color: '#52e07a', fontWeight: 700, background: 'rgba(82,224,122,0.15)', padding: '2px 6px', borderRadius: 4 }}>
+                    {detectiveVerdict.confidence_score}% CONFIDENCE
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--copper-300)' }}>
+                    {detectiveVerdict.crime_type}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modus Operandi */}
+              {detectiveVerdict.modus_operandi_match && (
+                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 10, border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontSize: 10, color: 'var(--copper-400)', fontWeight: 700 }}>MODUS OPERANDI MATCH</div>
+                  <div style={{ fontSize: 11, color: '#ddd', marginTop: 4 }}>{detectiveVerdict.modus_operandi_match}</div>
+                </div>
+              )}
+
+              {/* Chain of Evidence */}
+              {detectiveVerdict.evidence_chain?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 10, color: '#aaa', fontWeight: 700, marginBottom: 6 }}>CHAIN OF EVIDENCE LINKAGE:</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {detectiveVerdict.evidence_chain.map((item, idx) => (
+                      <div key={idx} style={{
+                        fontSize: 11, color: '#ccc', background: 'rgba(255,255,255,0.03)',
+                        padding: '6px 8px', borderRadius: 6, borderLeft: '3px solid var(--copper-500)'
+                      }}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Alibi Falsification */}
+              {detectiveVerdict.alibi_falsification && (
+                <div style={{ background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.25)', borderRadius: 8, padding: 10 }}>
+                  <div style={{ fontSize: 10, color: '#ff7875', fontWeight: 700 }}>ALIBI FALSIFICATION</div>
+                  <div style={{ fontSize: 11, color: '#eee', marginTop: 4 }}>{detectiveVerdict.alibi_falsification}</div>
+                </div>
+              )}
+
+              {/* Recommended Actions */}
+              {detectiveVerdict.recommended_police_actions?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 10, color: '#aaa', fontWeight: 700, marginBottom: 6 }}>RECOMMENDED POLICE ACTIONS:</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {detectiveVerdict.recommended_police_actions.map((act, idx) => (
+                      <div key={idx} style={{ fontSize: 11, color: '#52e0cc', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                        <span>→</span>
+                        <span>{act}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {/* Modals */}
       {showAddModal && <AddNodeModal onAdd={addNode} onClose={() => setShowAddModal(false)} />}
+      {showNewCanvasModal && <NewCanvasModal onCreate={handleCreateCanvas} onClose={() => setShowNewCanvasModal(false)} />}
       {pendingEdge && <EdgeLabelModal onSave={handleEdgeLabel} onClose={() => setPendingEdge(null)} />}
     </div>
   )

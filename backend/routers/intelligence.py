@@ -151,24 +151,48 @@ async def intelligence_query(req: QueryRequest, request: Request):
             except Exception as e:
                 print(f"[RAG Board Context] Error: {e}")
 
-        # Canvas board state (ReactFlow ConnectionsBoard)
+        # Canvas board state (ReactFlow ConnectionsBoard) with deep multi-entity graph enrichment
         canvas_context = ""
-        if req.board_id:
+        target_canvas_id = req.board_id
+
+        # Auto-detect canvas mentions in query (e.g. CANVAS-VEHICLE-THEFT-01, BOARD-HEIST)
+        if not target_canvas_id:
+            canvas_match = re.search(r'(CANVAS-[A-Za-z0-9_-]+|BOARD-[A-Za-z0-9_-]+)', req.query, re.IGNORECASE)
+            if canvas_match:
+                target_canvas_id = canvas_match.group(1).upper()
+
+        if target_canvas_id:
             try:
                 import sqlite3 as _sqlite3
                 _con = _sqlite3.connect(config.DB_PATH)
                 _con.row_factory = _sqlite3.Row
                 canvas_row = _con.execute(
-                    "SELECT nodes_json, edges_json FROM board_state WHERE case_id = ?", (req.board_id,)
+                    "SELECT nodes_json, edges_json FROM board_state WHERE case_id = ?", (target_canvas_id,)
                 ).fetchone()
                 _con.close()
                 if canvas_row:
                     _nodes = json.loads(canvas_row["nodes_json"] or "[]")
                     _edges = json.loads(canvas_row["edges_json"] or "[]")
-                    canvas_context = f"\n[INVESTIGATION CANVAS ({len(_nodes)} nodes, {len(_edges)} connections)]\n"
-                    for n in _nodes[:20]:
+                    canvas_context = f"\n[ACTIVE INVESTIGATION CANVAS: {target_canvas_id} ({len(_nodes)} nodes, {len(_edges)} directed links)]\n"
+                    
+                    node_id_map = {}
+                    for n in _nodes:
+                        nid = n.get("id")
                         d = n.get("data", {})
-                        canvas_context += f"  - {d.get('type','?').upper()}: {d.get('label','?')}\n"
+                        ntype = (d.get("type") or "evidence").upper()
+                        lbl = d.get("label") or d.get("title") or "Unnamed Entity"
+                        sub = d.get("subtitle", "")
+                        tags = ", ".join(d.get("tags") or [])
+                        risk = f" [RISK: {d.get('risk')}]" if d.get('risk') else ""
+                        node_id_map[nid] = lbl
+                        canvas_context += f"  * Node [{nid}] {ntype}: '{lbl}' {risk}\n    Details: {sub} | Tags: {tags}\n"
+
+                    canvas_context += "\n  DIRECTED EVIDENCE LINKS:\n"
+                    for e in _edges:
+                        src = node_id_map.get(e.get("source"), e.get("source"))
+                        tgt = node_id_map.get(e.get("target"), e.get("target"))
+                        lbl = e.get("label") or "connected to"
+                        canvas_context += f"    - [{src}] ──({lbl})──> [{tgt}]\n"
             except Exception as e:
                 print(f"[RAG Canvas Context] Error: {e}")
 
