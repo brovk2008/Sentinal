@@ -507,3 +507,34 @@ export const runCanvasDetective = (payload) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+// ── Tactical Criminology & Financial Forensics Engines ───────────────────────
+export const generateBNSChargesheet = (payload = {}) =>
+  request('/api/v1/criminology/generate-chargesheet', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const runANPRConvoyAnalysis = (payload = {}) =>
+  request('/api/v1/criminology/anpr-convoy-analysis', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const runAudioForensicProfile = (payload = {}) =>
+  request('/api/v1/criminology/audio-forensic-profile', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const planStingIntercept = (payload = {}) =>
+  request('/api/v1/criminology/plan-sting-intercept', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const detectSmurfingRings = (payload = {}) =>
+  request('/api/v1/financial/detect-smurfing-rings', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });

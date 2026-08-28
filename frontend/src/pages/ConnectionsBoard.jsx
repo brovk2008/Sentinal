@@ -1,7 +1,7 @@
 /**
  * ConnectionsBoard.jsx — Sentinal v2 Investigation Canvas
  * Infinite ReactFlow canvas with Multi-Canvas management, Custom IDs,
- * and AI Forensic Detective for complex case & vehicle theft reasoning.
+ * AI Forensic Detective, BNS Chargesheet Generator, ANPR Convoy Tracker, and Tactical Sting Planner.
  */
 import { useState, useCallback, useRef, useEffect } from 'react'
 import ReactFlow, {
@@ -16,7 +16,8 @@ import {
   FileSearch, Coins, Sparkles, Brain, Plus,
   Trash2, ArrowRight, Link2, Download, Save,
   Info, Paperclip, Check, FolderOpen, Search,
-  ShieldAlert, Compass, ChevronRight, X, Layers
+  ShieldAlert, Compass, ChevronRight, X, Layers,
+  FileText, Navigation, ShieldCheck, Printer, Radio
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -25,10 +26,12 @@ import {
   saveCanvasById,
   deleteCanvasById,
   runCanvasDetective,
+  generateBNSChargesheet,
+  runANPRConvoyAnalysis,
+  planStingIntercept,
   connectDots,
   analyzeBoard
 } from '../api'
-import FileUploader from '../components/FileUploader'
 
 function NodeIcon({ type, size = 12 }) {
   switch (type) {
@@ -81,7 +84,6 @@ function SentinalNode({ data, selected }) {
       position: 'relative',
       transition: 'all 0.3s ease',
     }}>
-      {/* SOURCE handle — right center — drag FROM here */}
       <Handle
         type="source"
         position={Position.Right}
@@ -91,8 +93,6 @@ function SentinalNode({ data, selected }) {
           cursor: 'crosshair', zIndex: 10
         }}
       />
-
-      {/* TARGET handle — left center — edges connect TO here */}
       <Handle
         type="target"
         position={Position.Left}
@@ -103,7 +103,6 @@ function SentinalNode({ data, selected }) {
         }}
       />
 
-      {/* Image preview if photo node */}
       {data.imageUrl && (
         <img src={data.imageUrl} alt={data.label}
           style={{ width: '100%', maxHeight: 90, objectFit: 'cover',
@@ -289,30 +288,233 @@ function NewCanvasModal({ onCreate, onClose }) {
   )
 }
 
-// ── Edge label dialog ────────────────────────────────────────────────
-function EdgeLabelModal({ onSave, onClose }) {
-  const [label, setLabel] = useState('')
+// ── BNS Chargesheet Generator Modal ─────────────────────────────────
+function BNSChargesheetModal({ caseId, onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    generateBNSChargesheet({ case_id: caseId })
+      .then(res => { setData(res); setLoading(false); })
+      .catch(() => setLoading(false))
+  }, [caseId])
+
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
       zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{
-        background: 'var(--bg-card,#1a1a2e)',
-        border: '1px solid rgba(255,255,255,0.15)',
-        borderRadius: 14, padding: 24, width: 340,
+        background: '#0d0d1a', border: '1px solid var(--copper-500)',
+        borderRadius: 14, padding: 24, width: 720, maxHeight: '85vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
       }}>
-        <div style={{ fontWeight: 700, marginBottom: 12, color: '#fff' }}>Connection Relationship</div>
-        <input
-          autoFocus value={label} onChange={e => setLabel(e.target.value)}
-          placeholder="e.g. Stole Vehicle, Called at 03:15 AM, Spotted on CCTV..."
-          style={inputStyle}
-          onKeyDown={e => e.key === 'Enter' && onSave(label)}
-        />
-        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-          <button onClick={() => onSave(label)} style={btnPrimary}>Confirm</button>
-          <button onClick={onClose} style={btnSecondary}>Skip</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={18} color="var(--copper-400)" />
+            <span style={{ fontWeight: 700, fontSize: 15 }}>FORM 5A: LEGAL DRAFT CHARGESHEET (BNS 2023 / BNSS)</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
         </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Compiling statutory sections, witness lists & Sec 65B hash certificates...</div>
+        ) : data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+            {/* Header info */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8, fontSize: 11, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div><strong>Chargesheet No:</strong> {data.chargesheet_number}</div>
+              <div><strong>Generated At:</strong> {data.generated_at}</div>
+              <div><strong>Police Station:</strong> {data.police_station}</div>
+              <div><strong>Investigating Officer:</strong> {data.investigating_officer}</div>
+              <div style={{ gridColumn: 'span 2' }}><strong>Sec 65B Cryptographic Proof Hash:</strong> <span className="mono" style={{ color: 'var(--copper-300)' }}>{data.sec65b_certificate_hash}</span></div>
+            </div>
+
+            {/* Statutory Charges */}
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--copper-400)', marginBottom: 6 }}>STATUTORY CHARGES & OFFENSES (BNS 2023):</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {data.statutory_charges.map((c, i) => (
+                  <div key={i} style={{ background: 'rgba(200,129,74,0.08)', borderLeft: '3px solid var(--copper-500)', padding: 8, borderRadius: 4, fontSize: 11 }}>
+                    <div style={{ fontWeight: 700, color: '#fff' }}>{c.bns_section} <span style={{ color: '#888', fontWeight: 400 }}>({c.ipc_equivalent})</span> — {c.title}</div>
+                    <div style={{ color: '#ccc', marginTop: 2 }}>{c.description}</div>
+                    <div style={{ color: '#52e07a', fontSize: 10, marginTop: 2 }}>Penalty: {c.statutory_punishment}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Brief of Case */}
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--copper-400)', marginBottom: 4 }}>BRIEF OF CASE & EVIDENCE CHAIN:</div>
+              <div style={{ fontSize: 11, lineHeight: 1.6, color: '#ddd', background: 'rgba(255,255,255,0.02)', padding: 10, borderRadius: 6 }}>
+                {data.brief_of_case}
+              </div>
+            </div>
+
+            {/* Accused & Witnesses */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#ff7875', marginBottom: 4 }}>ACCUSED ROSTER:</div>
+                {data.accused_persons.map((a, i) => (
+                  <div key={i} style={{ fontSize: 10, background: 'rgba(224,82,82,0.08)', padding: 6, borderRadius: 4, marginBottom: 4 }}>
+                    <strong>{a.accused_no}:</strong> {a.name} ({a.age} yrs) - <em>{a.role}</em>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#52e07a', marginBottom: 4 }}>PROSECUTION WITNESSES (PW):</div>
+                {data.prosecution_witnesses.slice(0, 3).map((w, i) => (
+                  <div key={i} style={{ fontSize: 10, background: 'rgba(82,224,122,0.08)', padding: 6, borderRadius: 4, marginBottom: 4 }}>
+                    <strong>{w.cw_no}:</strong> {w.name} ({w.type})
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <button onClick={() => window.print()} style={btnPrimary}>
+                <Printer size={13} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                Print / Export Court PDF
+              </button>
+              <button onClick={onClose} style={btnSecondary}>Close</button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+// ── ANPR Convoy Tracker Modal ───────────────────────────────────────
+function ANPRConvoyModal({ onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    runANPRConvoyAnalysis({ target_vehicle: "KA-04-MB-1234" })
+      .then(res => { setData(res); setLoading(false); })
+      .catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: '#0d0d1a', border: '1px solid #52b0e0',
+        borderRadius: 14, padding: 24, width: 680, maxHeight: '85vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Car size={18} color="#52b0e0" />
+            <span style={{ fontWeight: 700, fontSize: 15 }}>ANPR & FASTag CONVOY TRAJECTORY TRACKER</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Scanning toll plaza cameras & detecting trailing escort vehicles...</div>
+        ) : data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+            {/* Convoy Badge */}
+            <div style={{ background: 'rgba(224,82,82,0.15)', border: '1px solid rgba(224,82,82,0.4)', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>★ CONVOY ESCORT DETECTED ({data.convoy_confidence}% MATCH)</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginTop: 4 }}>
+                Target: {data.target_vehicle} <span style={{ color: '#aaa' }}>← Trailed by →</span> {data.convoy_vehicle.plate_number} ({data.convoy_vehicle.model})
+              </div>
+              <div style={{ fontSize: 11, color: '#ccc', marginTop: 2 }}>
+                Owner: <strong>{data.convoy_vehicle.registered_owner}</strong> | Role: {data.convoy_vehicle.role}
+              </div>
+            </div>
+
+            {/* Trajectory Timeline */}
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#52b0e0', marginBottom: 6 }}>CONSECUTIVE TOLL PLAZA PASSES:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {data.trajectory_path.map((t, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #52b0e0', padding: 10, borderRadius: 6, fontSize: 11 }}>
+                    <div style={{ fontWeight: 700, color: '#fff' }}>#{i+1} {t.name} (Lane {t.target_lane})</div>
+                    <div style={{ color: '#aaa', marginTop: 2 }}>
+                      Target Time: <span style={{ color: '#fff' }}>{t.target_time}</span> ({t.target_speed_kmh} km/h) | Convoy Time: <span style={{ color: '#ff7875' }}>{t.convoy_timestamp}</span> (Gap: {t.time_delta_seconds}s)
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(82,224,204,0.1)', padding: 10, borderRadius: 6, fontSize: 11, color: '#52e0cc' }}>
+              <strong>Recommended Intercept Point:</strong> {data.recommended_interception_point}
+            </div>
+
+            <button onClick={onClose} style={btnSecondary}>Close</button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+// ── Tactical Sting Intercept Planner Modal ──────────────────────────
+function TacticalStingModal({ onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    planStingIntercept({ incident_location: "Indiranagar 100ft Road", elapsed_minutes: 35 })
+      .then(res => { setData(res); setLoading(false); })
+      .catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: '#0d0d1a', border: '1px solid #ff4d4f',
+        borderRadius: 14, padding: 24, width: 680, maxHeight: '85vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Radio size={18} color="#ff4d4f" />
+            <span style={{ fontWeight: 700, fontSize: 15 }}>TACTICAL HIGHWAY STING & INTERCEPT PLANNER</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Computing highway escape reachability & matching patrol unit ETAs...</div>
+        ) : data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+            <div style={{ background: 'rgba(224,82,82,0.18)', border: '1px solid rgba(224,82,82,0.5)', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#ff4d4f' }}>🚨 {data.tactical_alert}</div>
+              <div style={{ fontSize: 11, color: '#eee', marginTop: 4 }}>
+                Escape Radius: {data.escape_reachability_radius_km} km | Window Before Border Exit: <strong>{data.window_before_state_border_exit_minutes} mins</strong>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6 }}>RECOMMENDED ROADBLOCK CHOKE POINTS:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {data.active_choke_points.map((p, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #ff4d4f', padding: 10, borderRadius: 6, fontSize: 11 }}>
+                    <div style={{ fontWeight: 700, color: '#fff' }}>{p.name} ({p.highway})</div>
+                    <div style={{ color: '#52e07a', marginTop: 2 }}>
+                      Assigned Unit: <strong>{p.assigned_unit}</strong> (ETA: {p.unit_eta_minutes}m) vs Suspect ETA: {p.suspect_eta_minutes}m | Success: {p.intercept_probability}%
+                    </div>
+                    <div style={{ color: '#ccc', marginTop: 2 }}>Action: {p.recommended_action}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={onClose} style={btnSecondary}>Close</button>
+          </div>
+        ) : null}
       </div>
     </div>
   )
@@ -346,6 +548,9 @@ export default function ConnectionsBoard() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [showNewCanvasModal, setShowNewCanvasModal] = useState(false)
+  const [showChargesheetModal, setShowChargesheetModal] = useState(false)
+  const [showANPRModal, setShowANPRModal] = useState(false)
+  const [showStingModal, setShowStingModal] = useState(false)
   const [pendingEdge, setPendingEdge] = useState(null)
   const [saveStatus, setSaveStatus] = useState('')
   const [canvases, setCanvases] = useState([])
@@ -445,7 +650,6 @@ export default function ConnectionsBoard() {
     setShowAddModal(false)
   }
 
-  // Create new canvas with custom ID
   const handleCreateCanvas = (customId, title) => {
     setShowNewCanvasModal(false)
     setCurrentCanvasId(customId)
@@ -457,7 +661,6 @@ export default function ConnectionsBoard() {
     })
   }
 
-  // Run AI Forensic Detective
   const handleRunDetective = async (customPrompt = null) => {
     const queryToRun = customPrompt || detectiveQuery || 'Who stole the car and what is the primary chain of evidence?'
     setDetectiveLoading(true)
@@ -472,7 +675,6 @@ export default function ConnectionsBoard() {
       if (res?.verdict) {
         setDetectiveVerdict(res.verdict)
 
-        // Graph illumination: highlight suspect node & critical edges
         const targetIds = new Set(res.verdict.highlight_node_ids || [])
         if (res.verdict.prime_suspect_node_id) {
           targetIds.add(res.verdict.prime_suspect_node_id)
@@ -528,7 +730,7 @@ export default function ConnectionsBoard() {
             background: 'rgba(255,255,255,0.08)',
             color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
             borderRadius: 6, padding: '4px 8px', fontSize: 12,
-            outline: 'none', cursor: 'pointer', maxWidth: 260
+            outline: 'none', cursor: 'pointer', maxWidth: 240
           }}
         >
           {canvases.map(c => (
@@ -550,7 +752,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <Plus size={13} />
-          <span>New Canvas (Custom ID)</span>
+          <span>New Canvas</span>
         </button>
 
         {saveStatus && (
@@ -560,22 +762,64 @@ export default function ConnectionsBoard() {
         )}
       </div>
 
-      {/* ── Action Toolbar (Right) ─────────────────────────────────── */}
+      {/* ── Tactical Action Toolbar (Right) ────────────────────────── */}
       <div style={{
         position: 'absolute', top: 12, right: 16, zIndex: 10,
         display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <button
+          onClick={() => setShowChargesheetModal(true)}
+          style={{
+            background: 'rgba(200,129,74,0.18)', color: 'var(--copper-300)',
+            border: '1px solid rgba(200,129,74,0.4)', borderRadius: 8,
+            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <FileText size={13} />
+          <span>📑 BNS Chargesheet</span>
+        </button>
+
+        <button
+          onClick={() => setShowANPRModal(true)}
+          style={{
+            background: 'rgba(82,176,224,0.18)', color: '#52b0e0',
+            border: '1px solid rgba(82,176,224,0.4)', borderRadius: 8,
+            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <Car size={13} />
+          <span>🚗 ANPR Convoy</span>
+        </button>
+
+        <button
+          onClick={() => setShowStingModal(true)}
+          style={{
+            background: 'rgba(224,82,82,0.18)', color: '#ff7875',
+            border: '1px solid rgba(224,82,82,0.4)', borderRadius: 8,
+            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <Radio size={13} />
+          <span>🎯 Tactical Sting</span>
+        </button>
+
+        <button
           onClick={() => setShowAddModal(true)}
           style={{
             background: 'rgba(255,255,255,0.08)', color: '#fff',
             border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8,
-            padding: '7px 12px', fontSize: 12, fontWeight: 600,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            padding: '7px 11px', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             backdropFilter: 'blur(8px)'
           }}
         >
-          <Plus size={14} />
+          <Plus size={13} />
           <span>Add Node</span>
         </button>
 
@@ -590,7 +834,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <ShieldAlert size={14} />
-          <span>🤖 AI Forensic Detective</span>
+          <span>🤖 AI Detective</span>
         </button>
       </div>
 
@@ -634,7 +878,6 @@ export default function ConnectionsBoard() {
             </button>
           </div>
 
-          {/* Quick Query Pills */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {[
               { label: '🚗 Who stole the car?', q: 'Who stole the white Hyundai Creta and how did they execute the theft?' },
@@ -656,7 +899,6 @@ export default function ConnectionsBoard() {
             ))}
           </div>
 
-          {/* Search Input */}
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               value={detectiveQuery}
@@ -677,7 +919,6 @@ export default function ConnectionsBoard() {
             </button>
           </div>
 
-          {/* Verdict Body */}
           {detectiveLoading ? (
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
               <Brain size={28} color="var(--copper-400)" style={{ animation: 'spin 2s linear infinite', marginBottom: 8 }} />
@@ -685,7 +926,6 @@ export default function ConnectionsBoard() {
             </div>
           ) : detectiveVerdict ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Prime Suspect Card */}
               <div style={{
                 background: 'linear-gradient(135deg, rgba(224,82,82,0.15), rgba(200,129,74,0.1))',
                 border: '1px solid rgba(224,82,82,0.4)', borderRadius: 10, padding: 12
@@ -706,7 +946,6 @@ export default function ConnectionsBoard() {
                 </div>
               </div>
 
-              {/* Modus Operandi */}
               {detectiveVerdict.modus_operandi_match && (
                 <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 10, border: '1px solid rgba(255,255,255,0.08)' }}>
                   <div style={{ fontSize: 10, color: 'var(--copper-400)', fontWeight: 700 }}>MODUS OPERANDI MATCH</div>
@@ -714,7 +953,6 @@ export default function ConnectionsBoard() {
                 </div>
               )}
 
-              {/* Chain of Evidence */}
               {detectiveVerdict.evidence_chain?.length > 0 && (
                 <div>
                   <div style={{ fontSize: 10, color: '#aaa', fontWeight: 700, marginBottom: 6 }}>CHAIN OF EVIDENCE LINKAGE:</div>
@@ -731,7 +969,6 @@ export default function ConnectionsBoard() {
                 </div>
               )}
 
-              {/* Alibi Falsification */}
               {detectiveVerdict.alibi_falsification && (
                 <div style={{ background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.25)', borderRadius: 8, padding: 10 }}>
                   <div style={{ fontSize: 10, color: '#ff7875', fontWeight: 700 }}>ALIBI FALSIFICATION</div>
@@ -739,7 +976,6 @@ export default function ConnectionsBoard() {
                 </div>
               )}
 
-              {/* Recommended Actions */}
               {detectiveVerdict.recommended_police_actions?.length > 0 && (
                 <div>
                   <div style={{ fontSize: 10, color: '#aaa', fontWeight: 700, marginBottom: 6 }}>RECOMMENDED POLICE ACTIONS:</div>
@@ -761,7 +997,9 @@ export default function ConnectionsBoard() {
       {/* Modals */}
       {showAddModal && <AddNodeModal onAdd={addNode} onClose={() => setShowAddModal(false)} />}
       {showNewCanvasModal && <NewCanvasModal onCreate={handleCreateCanvas} onClose={() => setShowNewCanvasModal(false)} />}
-      {pendingEdge && <EdgeLabelModal onSave={handleEdgeLabel} onClose={() => setPendingEdge(null)} />}
+      {showChargesheetModal && <BNSChargesheetModal caseId={currentCanvasId} onClose={() => setShowChargesheetModal(false)} />}
+      {showANPRModal && <ANPRConvoyModal onClose={() => setShowANPRModal(false)} />}
+      {showStingModal && <TacticalStingModal onClose={() => setShowStingModal(false)} />}
     </div>
   )
 }

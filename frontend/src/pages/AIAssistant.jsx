@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass } from 'lucide-react'
+import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass, Radio, X } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList } from '../api'
+import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList, runAudioForensicProfile } from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
 import { useTranslation } from 'react-i18next'
 
@@ -92,6 +92,84 @@ function MessageCitations({ citations = [], debugInfo = {} }) {
   )
 }
 
+function AudioForensicModal({ onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    runAudioForensicProfile({
+      audio_text: "Emergency 112: Indiranagar 100ft road alli car theft aagide. White Creta car, key illa adru unlock madi tagondu hogidare Hosur road kadege."
+    }).then(res => { setData(res); setLoading(false); }).catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: '#0d0d1a', border: '1px solid var(--copper-500)',
+        borderRadius: 14, padding: 24, width: 660, maxHeight: '85vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Radio size={18} color="var(--copper-400)" />
+            <span style={{ fontWeight: 700, fontSize: 15 }}>112 EMERGENCY VOICE & DIALECT FORENSIC PROFILER</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>Analyzing acoustic stress, regional dialect accents & emergency entities...</div>
+        ) : data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+            {/* Audio Transcript */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8, borderLeft: '3px solid var(--copper-500)' }}>
+              <div style={{ fontSize: 10, color: 'var(--copper-400)', fontWeight: 700 }}>112 DISPATCH AUDIO TRANSCRIPTION:</div>
+              <div style={{ fontSize: 12, color: '#fff', fontStyle: 'italic', marginTop: 4 }}>"{data.transcription}"</div>
+              <div style={{ fontSize: 10, color: '#52e07a', marginTop: 4 }}>Language: {data.language_detected}</div>
+            </div>
+
+            {/* Dialect & Stress Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ background: 'rgba(82,176,224,0.08)', padding: 10, borderRadius: 8, border: '1px solid rgba(82,176,224,0.2)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#52b0e0' }}>DIALECT CLASSIFICATION</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', marginTop: 4 }}>{data.dialect_classification.primary_dialect}</div>
+                <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>Confidence: {data.dialect_classification.confidence}%</div>
+              </div>
+
+              <div style={{ background: 'rgba(224,82,82,0.08)', padding: 10, borderRadius: 8, border: '1px solid rgba(224,82,82,0.2)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#ff7875' }}>ACOUSTIC STRESS & URGENCY</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', marginTop: 4 }}>{data.acoustic_stress_analysis.urgency_score}% URGENCY INDEX</div>
+                <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>State: {data.acoustic_stress_analysis.emotional_state}</div>
+              </div>
+            </div>
+
+            {/* Extracted Entities */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-400)', marginBottom: 6 }}>EXTRACTED CRITICAL ENTITIES:</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11, background: 'rgba(255,255,255,0.02)', padding: 10, borderRadius: 6 }}>
+                <div><strong>Asset:</strong> {data.extracted_critical_entities.target_asset}</div>
+                <div><strong>Crime Type:</strong> {data.extracted_critical_entities.crime_type}</div>
+                <div><strong>Location:</strong> {data.extracted_critical_entities.crime_location}</div>
+                <div><strong>Escape Vector:</strong> {data.extracted_critical_entities.escape_vector}</div>
+                <div style={{ gridColumn: 'span 2' }}><strong>Modus Operandi:</strong> {data.extracted_critical_entities.modus_operandi}</div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(82,224,204,0.1)', padding: 10, borderRadius: 6, fontSize: 11, color: '#52e0cc' }}>
+              <strong>Immediate Action:</strong> {data.suggested_police_dispatch}
+            </div>
+
+            <button onClick={onClose} style={{ padding: '8px 0', borderRadius: 8, background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', fontWeight: 600 }}>Close</button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export default function AIAssistant() {
   const { t, i18n } = useTranslation()
   const [searchParams] = useSearchParams()
@@ -107,6 +185,7 @@ export default function AIAssistant() {
   const [uploadStatus, setUploadStatus] = useState('')
   const [canvasList, setCanvasList] = useState([])
   const [selectedCanvas, setSelectedCanvas] = useState('CANVAS-VEHICLE-THEFT-01')
+  const [showAudioProfiler, setShowAudioProfiler] = useState(false)
   const fileInputRef = useRef(null)
   const chatEndRef = useRef(null)
 
@@ -114,7 +193,6 @@ export default function AIAssistant() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Load available canvases
   useEffect(() => {
     fetchCanvasList().then(res => {
       if (Array.isArray(res)) {
@@ -293,6 +371,22 @@ export default function AIAssistant() {
         </div>
 
         <div style={{ flex: 1 }} />
+
+        {/* 112 Audio Profiler Button */}
+        <button
+          onClick={() => setShowAudioProfiler(true)}
+          style={{
+            background: 'rgba(200,129,74,0.18)',
+            border: '1px solid rgba(200,129,74,0.4)',
+            color: 'var(--copper-300)',
+            padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+            outline: 'none', marginRight: 10, display: 'flex', alignItems: 'center', gap: 5
+          }}
+        >
+          <Radio size={12} />
+          <span>112 AUDIO PROFILER</span>
+        </button>
+
         <button onClick={() => setVoiceMode(v => !v)} style={{
           background: voiceMode ? 'var(--copper-400)' : 'transparent',
           border: '1px solid var(--copper-400)',
@@ -304,7 +398,7 @@ export default function AIAssistant() {
           <span>{voiceMode ? 'VOICE ON' : 'VOICE'}</span>
         </button>
         <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          KNOWLEDGE BASE: 80,000+ Kaggle records · 2,384 chunks · Last indexed: Live
+          KNOWLEDGE BASE: 80,000+ Kaggle records · 2,384 chunks
         </span>
       </div>
 
@@ -489,6 +583,8 @@ export default function AIAssistant() {
           Analyze →
         </button>
       </div>
+
+      {showAudioProfiler && <AudioForensicModal onClose={() => setShowAudioProfiler(false)} />}
     </div>
   )
 }
