@@ -482,3 +482,11 @@ export const matchSuspectFace = (imageBase64, topK = 5) =>
     method: 'POST',
     body: JSON.stringify({ image_base64: imageBase64, top_k: topK })
   });
+
+
+export const fetchCustomAIInference = (payload = {}) =>
+  request('/api/v1/predict/custom-ai-inference', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  });
