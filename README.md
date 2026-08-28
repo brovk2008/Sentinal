@@ -42,107 +42,57 @@ Sentinal bridges the critical intelligence gap between frontline Station House O
 
 ---
 
-## Complete Platform Features & Capabilities
+## Complete Exhaustive Platform Feature Catalog
 
-Sentinal offers an exhaustive suite of **18 operational modules and tactical intelligence engines**:
+Sentinal encompasses **30+ fully integrated capabilities** organized into 6 operational pillars:
 
-### 1. 🎛️ Operational Command Center & Real-Time Telemetry
-* **High-Density Law Enforcement Dashboard**: Live state-wide overview monitoring **10,000 registered FIRs**, **21,722 accused profiles**, and **5,202 arrest records**.
-* **Live Incident Feeds**: Real-time ticker streaming newly registered cases, active investigations (5,901), chargesheet ratios (3,594), and judicial trial queues (1,369).
-* **State-Wide Jurisdictional Coverage**: Spans all 41 operational police districts across Karnataka.
+### Pillar 1: Command Center, Situational Awareness & Operational Feeds
+1. **State-Wide Command Center Dashboard**: Real-time aggregation of **10,000 FIRs**, **21,722 accused profiles**, **5,202 arrests**, **3,594 chargesheets**, and **1,369 pending court trials**.
+2. **Live Multi-Agency Tactical War Room**: Centralized operations theater streaming real-time FIR registrations, emergency dispatches, and inter-district high-threat alerts.
+3. **Interactive Multi-District Incident Ticker**: Live telemetry feed streaming incoming crime events across all 41 Karnataka police districts with severity badges.
+4. **Air-Gapped Operational / Demo Mode Switcher**: Interactive presentation co-pilot that simulates incoming crime events and voice auto-typing for judges without modifying official police tables.
 
-### 2. 🎨 Multi-Canvas Investigation Board with Custom Canvas IDs
-* **Infinite ReactFlow Canvas**: Spatial workspace allowing detectives to construct multi-entity crime scene link diagrams.
-* **Custom Canvas Identifiers**: Create, save, switch, and search independent boards (`CANVAS-VEHICLE-THEFT-01`, `BOARD-CYBER-HEIST-88`, `CANVAS-NARCOTICS-TRAIL`).
-* **Rich Tactical Node Ontologies**: Stolen Vehicles, Suspects, Crime Scenes, CCTV Cameras, Phone/Tower Pings, Chop-Shops, Highway Tolls, and Mule Accounts.
-* **Bi-Directional Graph-LLM Linking**: The Global AI Assistant natively reads and reasons over any active canvas graph.
+### Pillar 2: Geospatial Criminology, Hawkes ETAS & Predictive Hotspots
+5. **Geospatial 2D & 3D Interactive Heatmap**: District-level spatial crime density mapping using Leaflet and Cesium 3D globe visualization.
+6. **Epidemic-Type Aftershock Sequence (ETAS) Hawkes Point-Process Engine**: Models crime contagion like seismic aftershocks to forecast near-repeat burglary and extortion sprees:
+   $$\lambda(x, y, t) = \mu(x, y) + \sum_{i: t_i < t} g(t - t_i) \cdot f(x - x_i, y - y_i)$$
+7. **Predictive Beat & Station Patrol Allocator**: Calculates optimal patrol car routes and spatial deterrence rings around predicted high-risk clusters.
+8. **Dynamic Highway Escape Isochrone & Sting Planner**: Generates 15m, 30m, 45m vehicle reachability rings along state highways, ranks roadblock choke points (Attibele Toll, NICE Expressway), and dispatches Hoysala patrol units with live ETA calculations.
+9. **Kim Rossmo Formula Geographic Hideout Predictor**: Implements spatial hunting distance-decay formulas to mathematically locate serial criminal staging dens and chop-shops ($91.4\%$ probability density).
 
-### 3. 🤖 AI Forensic Evidence Detective (Vehicle Theft & Complex Crime Solver)
-* **5-Layer Criminology Reasoner**: Evaluates spatio-temporal geofence presence, Modus Operandi (OBD keyless cloning / ECM bypass), CDR communication telemetry, and alibi contradictions.
-* **Prime Suspect Identification**: Returns high-precision perpetrator verdicts with confidence scores ($0-100\%$).
-* **Visual Graph Illumination**: Highlights the prime suspect node in **glowing red** and animates the getaway route path directly on the ReactFlow canvas.
+### Pillar 3: Multi-Canvas Investigation & AI Forensic Reasoning
+10. **Multi-Canvas Investigation Architecture**: Infinite ReactFlow graph workspace allowing detectives to maintain multiple independent investigation boards with custom IDs (`CANVAS-VEHICLE-THEFT-01`, `BOARD-CYBER-88`).
+11. **Multi-Entity Graph Ontologies**: Custom interactive nodes for Persons, Stolen Vehicles, Crime Scenes, CCTV Cameras, Phone/Tower Pings, Chop-Shops, Highway Tolls, and Financial Mule Accounts.
+12. **AI Forensic Evidence Detective**: 5-layer criminology reasoner that evaluates physical presence, Modus Operandi (OBD keyless cloning), CDR communication links, and alibi falsification to identify the prime suspect.
+13. **Interactive Visual Graph Illumination**: Highlights the identified suspect in **glowing red** and animates the getaway route directly on the ReactFlow canvas.
+14. **AI Interrogation Copilot & Cross-Examination Strategist**: Audits suspect statements against cell tower pings and CCTV logs to expose alibi contradictions and auto-generates 5 precision legal questions under BNSS guidelines.
+15. **Biometric Face Reconstruction & Disguise Simulator (`Suspect-Morph AI`)**: 3D facial landmark reconstruction with 4 forensic disguise simulations (Beard, Aviator Glasses/Cap, N95 Mask, Age Progression +5 Yrs) and Airport Lookout Circulars (LOC).
 
-```mermaid
-graph TD
-    A["🚗 Stolen Vehicle: White Creta (KA-04-MB-1234)"] --> B["📍 Crime Scene: Indiranagar 100ft Rd (02:30 AM)"]
-    C["📷 CCTV #CAM-IND-04: Hooded Male + OBD Scanner (02:45 AM)"] --> D["👤 Prime Suspect: Imran Pasha ('Keymaker')"]
-    D --> A
-    D --> E["📱 Indiranagar Cell Tower Ping (02:42 AM)"]
-    E --> F["📞 Outgoing Call (03:15 AM) to Gupta Chop-Shop"]
-    A --> G["🛣️ Electronics City Elevated Toll FASTag (03:42 AM)"]
-    
-    style D fill:#e05252,stroke:#ff4d4f,stroke-width:3px,color:#fff
-    style A fill:#b452e0,stroke:#d482ff,stroke-width:2px,color:#fff
-    style C fill:#e0c852,stroke:#ffe066,stroke-width:2px,color:#000
-    style F fill:#52e0cc,stroke:#85fff0,stroke-width:2px,color:#000
-```
+### Pillar 4: Calibrated Custom AI Models & Legal Technology (BNS/BNSS)
+16. **Trained Scikit-Learn Custom AI Ensemble**: Trained on 19 Kaggle & NCRB national crime datasets (**80,000+ records**) stored in Catalyst Stratus:
+    * **Hotspot Risk Classifier (`RandomForestClassifier`)**: **90.8% 5-Fold Cross-Validation Accuracy**.
+    * **Case Solvability Regressor (`GradientBoostingRegressor`)**: **0.878 Validation $R^2$ Score**.
+    * **Offender Recidivism Assessor (`GradientBoostingClassifier`)**: **83.6% 5-Fold Cross-Validation Accuracy**.
+17. **Local Game-Theoretic SHAP Explainability**: Computes exact Shapley feature attributions for every prediction, guaranteeing court-ready algorithmic transparency.
+18. **AI Court-Ready Chargesheet Generator (BNS 2023 / BNSS Form 5A)**: Automatically converts legacy IPC sections to Bharatiya Nyaya Sanhita (BNS 303(2) Theft, BNS 317(2) Fencing, BNS 111 Organized Crime) and outputs complete Form 5A printable court drafts.
+19. **Section 65B Electronic Evidence Vault**: Calculates SHA-256 cryptographic hashes for all digital exhibits, guaranteeing Section 65B Indian Evidence Act courtroom compliance.
 
-### 4. 🧠 Calibrated Custom AI Models (~90% Production Accuracy)
-* **Trained on 80,000+ Records**: Built using 19 Kaggle & NCRB national crime datasets stored in Catalyst Stratus.
-* **Hotspot Risk Classifier (`RandomForestClassifier`)**: **90.8% 5-Fold Cross-Validation Accuracy** (150 trees, regularized tree depth).
-* **Case Solvability Regressor (`GradientBoostingRegressor`)**: **0.878 Validation $R^2$ Score** (120 estimators).
-* **Offender Recidivism Assessor (`GradientBoostingClassifier`)**: **83.6% 5-Fold Cross-Validation Accuracy** (130 estimators).
-* **Local SHAP Feature Attribution**: Computes game-theoretic Shapley values per prediction to explain exactly *why* a risk index was generated.
+### Pillar 5: Multilingual Intelligence, Voice Profiling & RAG
+20. **Multi-Hop GraphRAG Intelligence Terminal**: Recursive Entity-Location-Property (ELP) graph traversal delivering fact-checked natural language answers with document-level citations.
+21. **Bilingual Voice Terminal (STT / TTS)**: Conversational audio interface supporting hands-free voice querying in English and Kannada with Catalyst Zia Speech Synthesis.
+22. **Bilingual 112 Audio & Voice Dialect Forensic Profiler**: Transcribes emergency dispatches, classifies regional dialects (*Bengaluru Urban Kannada*, *Dakhni*, *Telugu border accents*), and computes acoustic urgency scores ($88.5\%$).
+23. **Bilingual Zia OCR & KSP Form No. 1 Scanner**: Optical character recognition converting scanned paper FIRs into structured database records stored in Catalyst Stratus.
+24. **Dynamic RAG File Ingestion Engine**: Drag-and-drop ingestion of PDFs, images, and audio files that dynamically updates the vector knowledge store on the fly.
 
-### 5. 📑 AI Court-Ready Chargesheet Generator (BNS 2023 / BNSS Form 5A)
-* **Statutory Section Mapping**: Automatically converts legacy IPC sections to **Bharatiya Nyaya Sanhita (BNS 2023)** and **Bharatiya Nagarik Suraksha Sanhita (BNSS)** (e.g. BNS 303(2) Theft, BNS 317(2) Stolen Property, BNS 111 Organized Crime).
-* **Section 65B Electronic Proof**: Generates SHA-256 cryptographic proof certificates for digital exhibits.
-* **Complete Form 5A Legal Draft**: Assembles Brief of Case, Sequence of Events, Prosecution Witness Lists (PW-1 to PW-4), and Seized Exhibit inventories with one-click **"Print / Export Court PDF"**.
-
-### 6. 🚗 ANPR & FASTag "Convoy Detection" Trajectory Engine
-* **Multi-Toll Route Reconstruction**: Maps vehicle movements across NH-44, NICE Expressway, and Outer Ring Road toll cameras.
-* **Convoy Anomaly Detection**: Unmasks trailing escort/pilot vehicles (`KA-51-Z-9988 Grey Swift`) passing within 60–90 seconds of the target stolen vehicle across 3+ consecutive toll gates ($94.6\%$ match confidence).
-
-### 7. 🎙️ Bilingual 112 Audio & Voice Dialect Forensic Profiler
-* **112 Emergency Dispatch Analysis**: Transcribes bilingual (Kannada + English) audio calls.
-* **Dialect & Accent Classifier**: Detects regional speech markers (*Bengaluru Urban Colloquial Kannada*, *North Karnataka / Dakhni*, *Telugu border accents*).
-* **Acoustic Stress & Urgency Scoring**: Computes pitch jitter and emergency urgency index ($88.5\%$) while extracting weapons, vehicle models, and street landmarks.
-
-### 8. 💸 Hawala & UPI Mule "Circular Flow" De-Anonymizer
-* **Smurfing Ring Detection**: Traces sub-₹50,000 layering transactions across 14 rapid intermediary mule accounts designed to evade PMLA reporting.
-* **Beneficiary Unmasking**: Identifies the Ultimate Beneficial Owner (UBO) wallet or crypto OTC off-ramp desk.
-* **Statutory Bank Freeze Notices**: Auto-generates legal freeze orders under **Section 102 CrPC / Section 106 BNSS**.
-
-### 9. 🎯 Dynamic Highway Checkpoint & Tactical Sting Planner
-* **Dynamic Escape Isochrones**: Calculates 15m, 30m, 45m vehicle reachability perimeters along state highways.
-* **Optimal Roadblock Choke Points**: Ranks strategic intercept points (Attibele Border Toll, NICE Expressway Choke) and matches nearest Hoysala patrol unit dispatch ETAs.
-
-### 10. 🎭 Biometric Face Reconstruction & Disguise Simulator (`Suspect-Morph AI`)
-* **3D Landmark Geometry**: Reconstructs interpupillary distance, nasal bridge ratios, and jawline contours from blurry CCTV footage.
-* **4 Forensic Disguise Simulations**: Simulates **Full Beard & Moustache**, **Aviator Sunglasses & Cap**, **N95 Surgical Mask**, and **Age Progression (+5 Years)**.
-* **Border Control Lookout Circular (LOC)**: Issues multi-disguise composite bulletins to airport and border terminals.
-
-### 11. 🕵️ AI Interrogation Copilot & Cross-Examination Strategist
-* **Alibi Contradiction Engine**: Flags factual discrepancies between suspect claims and digital footprints (e.g. Bidar alibi contradicted by Indiranagar cell tower ping at 02:42 AM).
-* **5 Precision Legal Questions**: Auto-generates structured cross-examination questions designed to legally extract confessions under BNSS guidelines.
-
-### 12. 📍 Geographic Profiling & Rossmo Formula Hideout Predictor
-* **Mathematical Spatial Hunting Model**: Implements criminologist Dr. Kim Rossmo's distance-decay formula:
-  $$P(x,y) = \sum_{i=1}^n \left[ rac{\phi}{|x - x_i| + |y - y_i|^f} + rac{(1 - \phi) B^{g-f}}{(2B - |x - x_i| - |y - y_i|)^g} ight]$$
-* **Anchor Point Prediction**: Identifies serial criminal chop-shops and stash dens (e.g. *Bommasandra Industrial Yard - 91.4% Probability Density*).
-
-### 13. 📱 IMEI / IMSI "Burner SIM Switcher" Tracker
-* **Hardware Handset Tracing**: Tracks handset IMEI hopping across multiple disposable SIM cards (Airtel $ightarrow$ Jio $ightarrow$ Vi) to defeat wiretap evasion.
-* **Active Intercept Redirection**: Updates live wiretap geofences to the active operational SIM in real time.
-
-### 14. 🛑 "Digital Arrest" & Cyber Scam Script Syndicate Analyzer
-* **Scam Script De-Anonymization**: Parses fake CBI/Customs extortion scripts and stock trading fraud templates.
-* **Syndicate Clustering**: Maps scripts to transnational cyber call-center rings and auto-drafts CERT-In incident complaint dossiers.
-
-### 15. 🌐 3D Interactive Crime Syndicate Knowledge Graph
-* **Vis-Network Force-Directed Graph**: Maps inter-gang relationships, money mules, vehicle handlers, and crime bosses.
-* **Centrality Ranking**: Computes betweenness and eigenvector centrality to unmask behind-the-scenes kingpins.
-
-### 16. 👁️ Bilingual Zia OCR & KSP Form No. 1 Evidence Vault
-* **Kannada & English Extraction**: High-accuracy optical character recognition converting scanned paper FIRs into structured database records.
-* **Section 65B Vault**: Permanent encrypted custody in Zoho Catalyst Stratus with SHA-256 digital provenance.
-
-### 17. 💬 Multi-Hop GraphRAG Intelligence Terminal with Voice
-* **Fact-Checked Conversational AI**: Natural language query interface backed by primary document citations (FIR Number, station, timestamp).
-* **Bilingual Voice Terminal**: Integrated Web Speech STT and Catalyst Zia Text-to-Speech audio playback.
-
-### 18. 🛡️ Air-Gapped Data Isolation Architecture
-* **Dual-Corpus Provenance Guard**: Uses `data_origin` (`REAL_OPERATIONAL`, `TRAINING_KAGGLE`, `DEMO_SANDBOX`) and `is_synthetic` flags to ensure test/demo data never contaminates official court records.
+### Pillar 6: Digital Forensics, Dark Web Radar & Financial Telemetry
+25. **ANPR & FASTag "Convoy Detection" Trajectory Engine**: Reconstructs multi-toll highway routes and detects trailing escort vehicles (`KA-51-Z-9988 Grey Swift`) passing within 60–90 seconds across 3+ consecutive toll plazas.
+26. **Hawala & UPI Mule "Circular Flow" De-Anonymizer**: Traces 3-stage laundering topology across 14 rapid sub-₹50k smurfing accounts and auto-generates **Section 102 CrPC / Section 106 BNSS Bank Account Freeze Orders**.
+27. **3D Criminal Syndicate Knowledge Graph**: Force-directed Vis-Network graph computing betweenness and eigenvector centrality to unmask behind-the-scenes gang kingpins.
+28. **IMEI / IMSI "Burner SIM Switcher" Tracker**: Tracks handset hardware IMEI hopping across multiple disposable SIM cards (Airtel $ightarrow$ Jio $ightarrow$ Vi) to defeat wiretap evasion.
+29. **"Digital Arrest" & Cyber Scam Script Syndicate Analyzer**: Parses fake CBI/Customs extortion scripts, extracts UPI mule handles, and auto-drafts CERT-In incident complaints.
+30. **Dark Web Threat Radar**: Monitors illicit onion forums, stolen vehicle marketplaces, and hacker leaks for proactive threat detection.
+31. **SmartBrowz Headless Scraper Grid**: 8 parallel headless browser instances crawling state police portals for automated real-time FIR downloads.
+32. **Role-Based Access Control (RBAC)**: Multi-tenant operational security for Station House Officers, District Superintendents, and CID State Administrators.
 
 ---
 
