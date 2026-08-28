@@ -882,7 +882,10 @@ def run_custom_ai_inference(payload: CustomInferencePayload):
     """
     Executes live inference on trained Kaggle Scikit-Learn Ensemble AI models.
     """
-    import numpy as np
+    try:
+        import numpy as np
+    except Exception:
+        np = None
     
     # 1. Hotspot Risk Inference
     hotspot_model = _models.get('hotspot')
