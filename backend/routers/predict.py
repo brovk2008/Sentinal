@@ -66,6 +66,13 @@ def load_models():
         except Exception as e:
             print(f"[Sentinal AI Router] Model load notice for {name}: {e}")
 
+# Auto-call load_models on import
+try:
+    load_models()
+except Exception as _autoload_err:
+    print(f"[Sentinal AI Router] Autoload notice: {_autoload_err}")
+
+
 
 
 # ─── 1. HOTSPOT PREDICTION (with ETAS + SHAP) ──────────────────────────────
