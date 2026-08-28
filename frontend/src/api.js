@@ -569,3 +569,34 @@ export const analyzeCyberScamScript = (payload = {}) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+// ── OSINT & Public Web Scraper Suite ──────────────────────────────────────────
+export const searchECourts = (payload = {}) =>
+  request('/api/v1/web-scraper/ecourts/search', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const lookupVahan = (payload = {}) =>
+  request('/api/v1/web-scraper/vahan/lookup', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const searchFugitives = (payload = {}) =>
+  request('/api/v1/web-scraper/fugitives/search', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const lookupCyberThreats = (payload = {}) =>
+  request('/api/v1/web-scraper/cyber/lookup', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const fetchOSINTNews = (payload = {}) =>
+  request('/api/v1/web-scraper/osint/news', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });

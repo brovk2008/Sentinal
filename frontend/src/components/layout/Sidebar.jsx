@@ -39,6 +39,7 @@ export default function Sidebar() {
         { path: '/predict', icon: <Icon name="predict" size={14} />, label: t('nav.predictive') },
         { path: '/assistant', icon: <Icon name="ai" size={14} />, label: t('nav.ai') },
         { path: '/darkweb', icon: <Icon name="darkweb" size={14} />, label: t('nav.darkweb') },
+        { path: '/web-intel', icon: <Icon name="global" size={14} />, label: 'Web Scraper' },
       ],
     },
   ]

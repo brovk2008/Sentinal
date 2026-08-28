@@ -1,5 +1,5 @@
 """
-full_hackathon_audit.py — Comprehensive End-to-End API Audit (23 Endpoints)
+full_hackathon_audit.py — Comprehensive End-to-End API Audit (28 Endpoints)
 """
 
 import sys
@@ -17,7 +17,7 @@ client = TestClient(app)
 
 def run_audit():
     print("=" * 80)
-    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 23-ENDPOINT AUDIT       ")
+    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 28-ENDPOINT AUDIT       ")
     print("=" * 80)
 
     endpoints_to_test = [
@@ -42,6 +42,11 @@ def run_audit():
         ("POST", "/api/v1/cdr/imei-switcher-tracker", {"target_imei": "864920049182741"}),
         ("POST", "/api/v1/darkweb/analyze-cyber-scam-script", {"transcript_sample": "Digital Arrest"}),
         ("POST", "/api/v1/financial/detect-smurfing-rings", {"primary_account": "HDFC-MULE-991204821"}),
+        ("POST", "/api/v1/web-scraper/ecourts/search", {"query_term": "Imran Pasha"}),
+        ("POST", "/api/v1/web-scraper/vahan/lookup", {"plate_number": "KA-04-MB-1234"}),
+        ("POST", "/api/v1/web-scraper/fugitives/search", {"query_term": "all"}),
+        ("POST", "/api/v1/web-scraper/cyber/lookup", {"indicator": "cbi-portal-verify-court.online"}),
+        ("POST", "/api/v1/web-scraper/osint/news", {"district": "All Districts"}),
         ("GET",  "/api/v1/nlp/status"),
         ("GET",  "/api/v1/analytics/kpis"),
     ]

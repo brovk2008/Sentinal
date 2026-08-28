@@ -237,7 +237,80 @@ async def intelligence_query(req: QueryRequest, request: Request):
             except Exception as e:
                 print(f"[RAG CDR Context] Error: {e}")
 
-        extra_context = canvas_context + files_context + cdr_context
+        
+        # ── Live OSINT & Web Scraper Intelligence (eCourts, VAHAN, Fugitives, Cyber, News) ──
+        web_intel_context = ""
+        try:
+            from routers.web_scraper import _scrape_vahan_live, _scrape_ecourts_live
+            import sqlite3 as _sqlite3
+            _con = _sqlite3.connect(config.DB_PATH)
+            _con.row_factory = _sqlite3.Row
+
+            # 1. VAHAN Plate Detection
+            plate_match = re.search(r'\b[A-Z]{2}[-\s]?[0-9]{1,2}[-\s]?[A-Z]{1,3}[-\s]?[0-9]{4}\b', req.query.upper())
+            if plate_match:
+                clean_plate = plate_match.group().replace(" ", "-")
+                vahan_row = _con.execute("SELECT * FROM vahan_records WHERE registration_no LIKE ?", (f"%{clean_plate}%",)).fetchone()
+                if not vahan_row:
+                    vahan_row = _scrape_vahan_live(clean_plate)
+                if vahan_row:
+                    web_intel_context += f"\n[LIVE MORTH VAHAN VEHICLE REGISTRY RECORD]\n"
+                    web_intel_context += f"  * Reg No: {vahan_row['registration_no']} | Model: {vahan_row['maker_model']} ({vahan_row['vehicle_class']})\n"
+                    web_intel_context += f"  * Owner: {vahan_row['registered_owner']} | RTO: {vahan_row['rto_location']}\n"
+                    web_intel_context += f"  * Chassis: {vahan_row['chassis_no']} | Engine: {vahan_row['engine_no']}\n"
+                    web_intel_context += f"  * Blacklist / Stolen Alert: {vahan_row['blacklist_status']} (Flag: {vahan_row['stolen_alert_flag']})\n"
+                    web_intel_context += f"  * Sec 65B Electronic Proof Hash: {vahan_row['sec65b_hash']}\n"
+
+            # 2. e-Courts Bail & Warrant Detection
+            ecourts_keywords = ['bail', 'court', 'warrant', 'nbw', 'cnr', 'hearing', 'judge', 'remand', 'trial', 'sessions']
+            if any(k in req.query.lower() for k in ecourts_keywords):
+                # Search by person name or terms in query
+                name_words = [w for w in re.findall(r'[A-Za-z]{4,}', req.query) if w.lower() not in {
+                    'what', 'show', 'tell', 'about', 'give', 'find', 'list', 'search', 'from', 'with', 'bail', 'court', 'warrant'
+                }]
+                for nw in name_words[:2]:
+                    ec_rows = _con.execute("""
+                        SELECT * FROM ecourts_records 
+                        WHERE accused_name LIKE ? OR cnr_number LIKE ? OR case_number LIKE ?
+                        LIMIT 2
+                    """, (f"%{nw}%", f"%{nw}%", f"%{nw}%")).fetchall()
+                    if ec_rows:
+                        web_intel_context += f"\n[LIVE E-COURTS JUDICIAL RECORD FOR '{nw.title()}']\n"
+                        for ec in ec_rows:
+                            web_intel_context += f"  * Case: {ec['case_number']} (CNR: {ec['cnr_number']}) | Court: {ec['court_complex']}\n"
+                            web_intel_context += f"  * Accused: {ec['accused_name']} | FIR: {ec['fir_number']} ({ec['police_station']})\n"
+                            web_intel_context += f"  * Bail Status: {ec['bail_status']}\n"
+                            web_intel_context += f"  * Warrant Status: {ec['warrant_status']} | Next Hearing: {ec['next_hearing_date']}\n"
+                            web_intel_context += f"  * Order Summary: {ec['order_summary']}\n"
+                            web_intel_context += f"  * Judicial Officer: {ec['judicial_officer']}\n"
+
+            # 3. Fugitive / Interpol Red Notice Detection
+            fugitive_keywords = ['wanted', 'fugitive', 'interpol', 'red notice', 'loc', 'lookout', 'proclaimed']
+            if any(k in req.query.lower() for k in fugitive_keywords):
+                f_rows = _con.execute("SELECT * FROM fugitive_records LIMIT 3").fetchall()
+                if f_rows:
+                    web_intel_context += f"\n[INTERPOL / STATE CID MOST WANTED FUGITIVE ROSTER]\n"
+                    for fr in f_rows:
+                        web_intel_context += f"  * Name: {fr['name']} (Aliases: {fr['aliases']}) | Agency: {fr['agency']}\n"
+                        web_intel_context += f"  * Notice: {fr['notice_type']} (ID: {fr['red_notice_id']}) | Reward: {fr['reward_amount_inr']}\n"
+                        web_intel_context += f"  * Crimes: {fr['wanted_for_crimes']} | Last Known Loc: {fr['last_known_location']}\n"
+
+            # 4. Cyber Threats / Digital Arrest Scam Detection
+            cyber_keywords = ['digital arrest', 'scam', 'cyber', 'apk', 'phishing', 'fake cbi', 'mule', 'vpa']
+            if any(k in req.query.lower() for k in cyber_keywords):
+                c_rows = _con.execute("SELECT * FROM cyber_threat_records LIMIT 3").fetchall()
+                if c_rows:
+                    web_intel_context += f"\n[NCRP & CERT-IN CYBER FRAUD THREAT RADAR]\n"
+                    for cr in c_rows:
+                        web_intel_context += f"  * Indicator: {cr['indicator_value']} ({cr['threat_type']}) | Severity: {cr['severity']}\n"
+                        web_intel_context += f"  * Scam / Syndicate: {cr['associated_scam']} ({cr['syndicate_name']})\n"
+                        web_intel_context += f"  * Advisory: {cr['cert_in_advisory_no']} | Action: {cr['action_recommended']}\n"
+
+            _con.close()
+        except Exception as e:
+            print(f"[RAG Web Intel Context] Error: {e}")
+
+        extra_context = canvas_context + files_context + cdr_context + web_intel_context
 
         # ── Live OCR Records context — search real scraped FIRs from the database ──
         # Pull matching OCR records from SQLite when query mentions FIR numbers, 

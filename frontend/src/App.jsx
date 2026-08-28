@@ -26,6 +26,7 @@ import PatternIntel from './pages/PatternIntel'
 import Profile from './pages/Profile'
 import DataUploadIntel from './pages/DataUploadIntel'
 import OCRRecords from './pages/OCRRecords'
+import WebIntelligence from './pages/WebIntelligence'
 import AuthGuard from './components/AuthGuard'
 import BackendWakeup from './components/layout/BackendWakeup'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -123,6 +124,8 @@ export default function App() {
           <Route path="/patterns"           element={<PatternIntel />} />
           <Route path="/pattern-intel"      element={<Navigate to="/patterns" replace />} />
           <Route path="/profile"            element={<Profile />} />
+          <Route path="/web-intel"          element={<WebIntelligence />} />
+          <Route path="/osint"              element={<Navigate to="/web-intel" replace />} />
           <Route path="/upload"             element={<DataUploadIntel />} />
           <Route path="/data-upload"        element={<Navigate to="/upload" replace />} />
           <Route path="/ocr-records"        element={<OCRRecords />} />

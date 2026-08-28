@@ -10,7 +10,7 @@
 [![Secondary Slate Domain](https://img.shields.io/badge/Slate_Domain-sentinal--peak.onslate.in-7c2d12?style=for-the-badge)](https://sentinal-peak.onslate.in)
 [![Cloud Infrastructure](https://img.shields.io/badge/Cloud_Engine-Zoho_Catalyst-1d4ed8?style=for-the-badge)](https://catalyst.zoho.com)
 [![Custom AI Accuracy](https://img.shields.io/badge/Custom_AI_Accuracy-90.8%25_Calibrated-047857?style=for-the-badge)]()
-[![Zero-Defect Audit](https://img.shields.io/badge/API_Audit-100%25_Passed_(23/23)-1d4ed8?style=for-the-badge)]()
+[![Zero-Defect Audit](https://img.shields.io/badge/API_Audit-100%25_Passed_(28/28)-1d4ed8?style=for-the-badge)]()
 [![Forensic Compliance](https://img.shields.io/badge/Forensic_Proof-Sec_65B_IEA_Certified-047857?style=for-the-badge)]()
 
 <br/>
@@ -88,7 +88,9 @@ Sentinal encompasses **30+ fully integrated capabilities** organized into 6 oper
 25. **ANPR & FASTag "Convoy Detection" Trajectory Engine**: Reconstructs multi-toll highway routes and detects trailing escort vehicles (`KA-51-Z-9988 Grey Swift`) passing within 60–90 seconds across 3+ consecutive toll plazas.
 26. **Hawala & UPI Mule "Circular Flow" De-Anonymizer**: Traces 3-stage laundering topology across 14 rapid sub-₹50k smurfing accounts and auto-generates **Section 102 CrPC / Section 106 BNSS Bank Account Freeze Orders**.
 27. **3D Criminal Syndicate Knowledge Graph**: Force-directed Vis-Network graph computing betweenness and eigenvector centrality to unmask behind-the-scenes gang kingpins.
-28. **IMEI / IMSI "Burner SIM Switcher" Tracker**: Tracks handset hardware IMEI hopping across multiple disposable SIM cards (Airtel $ightarrow$ Jio $ightarrow$ Vi) to defeat wiretap evasion.
+28. **IMEI / IMSI "Burner SIM Switcher" Tracker**: Tracks handset hardware IMEI hopping across multiple disposable SIM cards (Airtel $
+ightarrow$ Jio $
+ightarrow$ Vi) to defeat wiretap evasion.
 29. **"Digital Arrest" & Cyber Scam Script Syndicate Analyzer**: Parses fake CBI/Customs extortion scripts, extracts UPI mule handles, and auto-drafts CERT-In incident complaints.
 30. **Dark Web Threat Radar**: Monitors illicit onion forums, stolen vehicle marketplaces, and hacker leaks for proactive threat detection.
 31. **SmartBrowz Headless Scraper Grid**: 8 parallel headless browser instances crawling state police portals for automated real-time FIR downloads.
@@ -113,7 +115,7 @@ Sentinal is preloaded with authentic law-enforcement data:
 
 ---
 
-## Zero-Defect Hackathon Audit Matrix (100% Pass Rate · 23 Endpoints)
+## Zero-Defect Hackathon Audit Matrix (100% Pass Rate · 28 Endpoints)
 
 | # | HTTP Method | Endpoint | Description | Status | Response |
 |---|---|---|---|---|---|
@@ -138,8 +140,13 @@ Sentinal is preloaded with authentic law-enforcement data:
 | 19 | `POST` | `/api/v1/cdr/imei-switcher-tracker` | IMEI / IMSI Burner SIM Switcher Tracker | **PASSED** | `HTTP 200 OK` |
 | 20 | `POST` | `/api/v1/darkweb/analyze-cyber-scam-script` | 'Digital Arrest' & Scam Script Syndicate Analyzer | **PASSED** | `HTTP 200 OK` |
 | 21 | `POST` | `/api/v1/financial/detect-smurfing-rings` | Hawala & UPI Mule Smurfing Ring De-Anonymizer | **PASSED** | `HTTP 200 OK` |
-| 22 | `GET` | `/api/v1/nlp/status` | Zia NLP & Bilingual Extraction Service | **PASSED** | `HTTP 200 OK` |
-| 23 | `GET` | `/api/v1/analytics/kpis` | Operational State-Wide KPI Dashboard | **PASSED** | `HTTP 200 OK` |
+| 22 | `POST` | `/api/v1/web-scraper/ecourts/search` | e-Courts Judicial Bail, Warrant & Hearing Scraper | **PASSED** | `HTTP 200 OK` |
+| 23 | `POST` | `/api/v1/web-scraper/vahan/lookup` | MoRTH VAHAN Vehicle Registry & Blacklist Scraper | **PASSED** | `HTTP 200 OK` |
+| 24 | `POST` | `/api/v1/web-scraper/fugitives/search` | Interpol Red Notices & State CID Most Wanted Scraper | **PASSED** | `HTTP 200 OK` |
+| 25 | `POST` | `/api/v1/web-scraper/cyber/lookup` | NCRP & CERT-In Cyber Threat & Phishing Scraper | **PASSED** | `HTTP 200 OK` |
+| 26 | `POST` | `/api/v1/web-scraper/osint/news` | OSINT Regional Crime News RSS Feeds | **PASSED** | `HTTP 200 OK` |
+| 27 | `GET` | `/api/v1/nlp/status` | Zia NLP & Bilingual Extraction Service | **PASSED** | `HTTP 200 OK` |
+| 28 | `GET` | `/api/v1/analytics/kpis` | Operational State-Wide KPI Dashboard | **PASSED** | `HTTP 200 OK` |
 
 ---
 
@@ -177,7 +184,7 @@ python -m venv venv
 venv\Scripts\activate          # Windows PowerShell: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-# Run comprehensive zero-defect 23-endpoint audit
+# Run comprehensive zero-defect 28-endpoint audit
 python full_hackathon_audit.py
 
 # Launch FastAPI development server
