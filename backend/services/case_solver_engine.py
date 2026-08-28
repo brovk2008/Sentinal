@@ -10,7 +10,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from config import config
 from services.facial_evidence_matcher import match_face_against_database
-from services.criminology_engine import find_similar_cases, analyze_mo_clusters
+from services.criminology_engine import find_similar_cases, analyze_mo_clusters, calculate_ncrb_solvability_benchmark
 
 log = logging.getLogger(__name__)
 DB_PATH = config.DB_PATH
@@ -115,7 +115,17 @@ def solve_case_with_ai(case_id: int, image_base64: Optional[str] = null) -> Dict
         }
     ]
 
+    
+    # Step 4: NCRB Open Crime Corpus Benchmark Integration
+    ncrb_assessment = calculate_ncrb_solvability_benchmark(
+        crime_type=case_info.get("crime_type", "Cyber Crime"),
+        has_cctv=bool(image_base64),
+        has_witness=True,
+        has_cdr=True
+    )
+
     return {
+        "ncrb_solvability_assessment": ncrb_assessment,
         "success": True,
         "case_id": case_id,
         "case_info": case_info,

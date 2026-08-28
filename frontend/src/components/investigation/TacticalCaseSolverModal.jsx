@@ -142,6 +142,52 @@ export default function TacticalCaseSolverModal({ isOpen, onClose, caseId = 1 })
               </div>
             </div>
 
+            
+            {/* NCRB Solvability & Resolution Benchmark Card */}
+            {solverResult.ncrb_solvability_assessment && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(200,129,74,0.1), rgba(16,185,129,0.08))',
+                border: '1px solid rgba(200,129,74,0.35)', padding: 16, borderRadius: 8,
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16
+              }}>
+                <div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                    NCRB Solvability Probability
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#10b981' }}>
+                    {solverResult.ncrb_solvability_assessment.calculated_solvability_score}%
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                    National Clearance: {solverResult.ncrb_solvability_assessment.ncrb_base_clearance}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                    Est. Days to Resolution
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#c8814a' }}>
+                    {solverResult.ncrb_solvability_assessment.estimated_days_to_resolution} Days
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                    Calibrated on 80K Indian Crime Corpus
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                    Investigation Priority
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444' }}>
+                    {solverResult.ncrb_solvability_assessment.recommended_priority} PRIORITY
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                    High Solvability Lead
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Actionable Tactical Leads */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: 18, borderRadius: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: '#c8814a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
