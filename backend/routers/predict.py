@@ -13,8 +13,17 @@ from pathlib import Path
 from database import query, query_one
 import os
 import json
-import numpy as np
-import pandas as pd
+
+try:
+    import numpy as np
+except Exception:
+    np = None
+
+try:
+    import pandas as pd
+except Exception:
+    pd = None
+
 from datetime import datetime, timedelta
 
 router = APIRouter()
