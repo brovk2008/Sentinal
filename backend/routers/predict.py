@@ -160,7 +160,7 @@ def predict_hotspots(
 
     results = []
     for s in stations:
-        features = pd.DataFrame([{
+        feature_dict = {
             'PoliceStationID':    s['station_id'],
             'month':              target_month,
             'case_count':         s['recent_cases'] or 0,
@@ -170,9 +170,14 @@ def predict_hotspots(
             'total_amount':       0.0,
             'avg_calls':          0.0,
             'is_weekend_rate':    0.28
-        }])
+        }
+        try:
+            import pandas as pd_local
+            features = pd_local.DataFrame([feature_dict])
+        except Exception:
+            features = [feature_dict]
 
-        if model is not None:
+        if model is not None and not isinstance(features, list):
             try:
                 sklearn_prob = float(model.predict_proba(features)[0][1])
             except Exception:
