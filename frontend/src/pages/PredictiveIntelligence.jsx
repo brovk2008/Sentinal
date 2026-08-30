@@ -26,6 +26,7 @@ export default function PredictiveIntelligence() {
   const [temporal, setTemporal] = useState(null)
   const [watchlist, setWatchlist] = useState([])
   const [alerts, setAlerts] = useState([])
+  const [mapMode, setMapMode] = useState('dark')
 
   // Case resolution predictor state
   const [caseIdInput, setCaseIdInput] = useState('')
@@ -247,16 +248,58 @@ export default function PredictiveIntelligence() {
         border: '1px solid var(--border-strong)',
         overflow: 'hidden'
       }}>
+        {/* Layer Switcher & Legend Overlay */}
+        <div style={{
+          position: 'absolute', top: 12, right: 12, zIndex: 1000,
+          background: 'rgba(6,8,16,0.92)', border: '1px solid var(--border-subtle)',
+          borderRadius: 6, padding: '4px 6px', display: 'flex', gap: 4
+        }}>
+          <button
+            onClick={() => setMapMode('dark')}
+            style={{
+              background: mapMode === 'dark' ? 'rgba(245,158,11,0.2)' : 'transparent',
+              border: mapMode === 'dark' ? '1px solid #f59e0b' : '1px solid transparent',
+              color: mapMode === 'dark' ? '#f59e0b' : '#64748b',
+              borderRadius: 4, padding: '3px 7px', fontSize: 9, cursor: 'pointer', fontWeight: 600
+            }}
+          >
+            🗺️ Tactical Vector
+          </button>
+          <button
+            onClick={() => setMapMode('satellite')}
+            style={{
+              background: mapMode === 'satellite' ? 'rgba(14,165,233,0.2)' : 'transparent',
+              border: mapMode === 'satellite' ? '1px solid #0ea5e9' : '1px solid transparent',
+              color: mapMode === 'satellite' ? '#0ea5e9' : '#64748b',
+              borderRadius: 4, padding: '3px 7px', fontSize: 9, cursor: 'pointer', fontWeight: 600
+            }}
+          >
+            🛰️ Satellite Layer
+          </button>
+        </div>
+
         <MapContainer
           center={KA_CENTER}
           zoom={7}
           style={{ height: '100%', width: '100%', background: 'var(--bg-primary)' }}
           maxBounds={[[10, 72], [20, 80]]}
         >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; CartoDB'
-          />
+          {mapMode === 'satellite' ? (
+            <>
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                attribution="&copy; Esri World Imagery"
+              />
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+              />
+            </>
+          ) : (
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution="&copy; CartoDB"
+            />
+          )}
           {/* Predictive circles layer */}
           <PredictiveLayer isActive={true} daysAhead={7} riskFilter="all" />
         </MapContainer>

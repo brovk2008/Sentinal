@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import { request, fetchLiveRiskScore, fetchSyndicates, fetchCases } from '../api'
 import useLiveFeed from '../hooks/useLiveFeed'
+import CesiumGlobe from '../components/map/CesiumGlobe'
 import 'leaflet/dist/leaflet.css'
 
 // ─── Constants & Helpers ──────────────────────────────────────────────────────
@@ -262,6 +263,7 @@ export default function WarRoom() {
   const [prediction, setPrediction] = useState(null)
   const [countdown, setCountdown] = useState('--:--:--')
   const [activeTab, setActiveTab] = useState('upi')
+  const [mapMode, setMapMode] = useState('dark') // 'dark' | 'satellite' | 'cesium3d'
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [fraudCounts, setFraudCounts] = useState({ critical: 0, total: 0 })
   const esRef = useRef(null)
@@ -540,21 +542,66 @@ export default function WarRoom() {
           <div style={{
             border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6,
             overflow: 'hidden', position: 'relative',
+            background: '#04060c', display: 'flex', flexDirection: 'column'
           }}>
-            {/* Map legend overlay */}
+            {/* Map Mode Switcher & Legend Overlay */}
             <div style={{
               position: 'absolute', top: 8, left: 8, zIndex: 1000,
               background: 'rgba(6,8,16,0.92)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 4, padding: '6px 10px', fontSize: 8, display: 'flex', flexDirection: 'column', gap: 3,
+              borderRadius: 4, padding: '6px 10px', fontSize: 8, display: 'flex', flexDirection: 'column', gap: 5,
             }}>
-              <div style={{ color: '#f59e0b', fontWeight: 700, letterSpacing: 1 }}>TACTICAL GEOSPATIAL MAP</div>
-              {[['CRITICAL', '#ef4444'], ['HIGH', '#f59e0b'], ['MEDIUM', '#3b82f6'], ['LOW', '#22c55e']].map(([s, c]) => (
-                <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: c, display: 'inline-block', opacity: 0.8 }} />
-                  <span style={{ color: '#64748b' }}>{s}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: '#f59e0b', fontWeight: 700, letterSpacing: 1 }}>SURVEILLANCE FEED</span>
+                {/* Layer switch buttons */}
+                <div style={{ display: 'flex', gap: 3 }}>
+                  <button
+                    onClick={() => setMapMode('dark')}
+                    style={{
+                      background: mapMode === 'dark' ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: mapMode === 'dark' ? '1px solid #f59e0b' : '1px solid rgba(255,255,255,0.1)',
+                      color: mapMode === 'dark' ? '#f59e0b' : '#64748b',
+                      borderRadius: 3, padding: '2px 5px', fontSize: 7.5, cursor: 'pointer', fontWeight: 700,
+                    }}
+                  >
+                    🗺️ DARK
+                  </button>
+                  <button
+                    onClick={() => setMapMode('satellite')}
+                    style={{
+                      background: mapMode === 'satellite' ? 'rgba(14,165,233,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: mapMode === 'satellite' ? '1px solid #0ea5e9' : '1px solid rgba(255,255,255,0.1)',
+                      color: mapMode === 'satellite' ? '#0ea5e9' : '#64748b',
+                      borderRadius: 3, padding: '2px 5px', fontSize: 7.5, cursor: 'pointer', fontWeight: 700,
+                    }}
+                  >
+                    🛰️ SATELLITE
+                  </button>
+                  <button
+                    onClick={() => setMapMode('cesium3d')}
+                    style={{
+                      background: mapMode === 'cesium3d' ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: mapMode === 'cesium3d' ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.1)',
+                      color: mapMode === 'cesium3d' ? '#22c55e' : '#64748b',
+                      borderRadius: 3, padding: '2px 5px', fontSize: 7.5, cursor: 'pointer', fontWeight: 700,
+                    }}
+                  >
+                    🌐 3D GLOBE
+                  </button>
                 </div>
-              ))}
+              </div>
+
+              {mapMode !== 'cesium3d' && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+                  {[['CRITICAL', '#ef4444'], ['HIGH', '#f59e0b'], ['MEDIUM', '#3b82f6'], ['LOW', '#22c55e']].map(([s, c]) => (
+                    <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: c, display: 'inline-block', opacity: 0.8 }} />
+                      <span style={{ color: '#64748b', fontSize: 7.5 }}>{s}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+
             {/* Live event flash */}
             {lastLiveEvent && (
               <div style={{
@@ -566,27 +613,47 @@ export default function WarRoom() {
                 🔴 {lastLiveEvent.crime_type} · {lastLiveEvent.district}
               </div>
             )}
-            <MapContainer center={[14.5, 75.7]} zoom={7} zoomControl={false} style={{ height: '100%', width: '100%' }}>
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="© CartoDB" />
-              {firMarkers.map((m, i) => (
-                <CircleMarker
-                  key={i}
-                  center={[m.lat, m.lng]}
-                  radius={m.severity === 'CRITICAL' ? 9 : m.severity === 'HIGH' ? 7 : 5}
-                  fillColor={SEV_COLOR[m.severity] || '#3b82f6'}
-                  fillOpacity={0.7}
-                  stroke={true}
-                  color={SEV_COLOR[m.severity] || '#3b82f6'}
-                  weight={1}
-                >
-                  <Popup>
-                    <div style={{ fontSize: 11, fontFamily: 'monospace' }}>
-                      <b>{m.type}</b><br />{m.district}
-                    </div>
-                  </Popup>
-                </CircleMarker>
-              ))}
-            </MapContainer>
+
+            {/* Conditional Rendering: 3D Cesium vs 2D Leaflet (Dark or Satellite) */}
+            {mapMode === 'cesium3d' ? (
+              <div style={{ flex: 1, width: '100%', height: '100%', minHeight: 0 }}>
+                <CesiumGlobe points={firMarkers} liveEvent={lastLiveEvent} buildings3D={true} />
+              </div>
+            ) : (
+              <MapContainer center={[14.5, 75.7]} zoom={7} zoomControl={false} style={{ height: '100%', width: '100%', background: '#04060c' }}>
+                {mapMode === 'satellite' ? (
+                  <>
+                    <TileLayer
+                      url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                      attribution="&copy; Esri World Imagery"
+                    />
+                    <TileLayer
+                      url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                    />
+                  </>
+                ) : (
+                  <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="© CartoDB" />
+                )}
+                {firMarkers.map((m, i) => (
+                  <CircleMarker
+                    key={i}
+                    center={[m.lat, m.lng]}
+                    radius={m.severity === 'CRITICAL' ? 9 : m.severity === 'HIGH' ? 7 : 5}
+                    fillColor={SEV_COLOR[m.severity] || '#3b82f6'}
+                    fillOpacity={mapMode === 'satellite' ? 0.9 : 0.7}
+                    stroke={true}
+                    color={mapMode === 'satellite' ? '#ffffff' : (SEV_COLOR[m.severity] || '#3b82f6')}
+                    weight={mapMode === 'satellite' ? 1.5 : 1}
+                  >
+                    <Popup>
+                      <div style={{ fontSize: 11, fontFamily: 'monospace' }}>
+                        <b>{m.type}</b><br />{m.district}
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                ))}
+              </MapContainer>
+            )}
           </div>
 
           {/* RIGHT: Fraud Intel Panels ───────────────────────────────────── */}
