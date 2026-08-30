@@ -1,7 +1,6 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, CircleMarker, Circle, Polyline, Popup, useMap } from 'react-leaflet'
-import { Plus, Minus, Crosshair, Play, Pause, Cloud, Globe, Zap, FileText, Hexagon, Sparkles, Smartphone, Check, MapPin, RotateCcw, Radio } from 'lucide-react'
+import { Plus, Minus, Crosshair, Play, Pause, Cloud, Globe, Zap, FileText, Hexagon, Sparkles, Smartphone, Check, MapPin, RotateCcw, Radio, Satellite, Layers, Compass, Target, X } from 'lucide-react'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
 import { fetchHeatmapGrid, fetchDistrictCenters, fetchHotspots, fetchCases, downloadDistrictReport, fetchHeatmapTimelapse, fetchDbscanClusters, fetchPredictNext, fetchMovementTrail } from '../api'
@@ -425,15 +424,16 @@ const TILE_LAYERS = {
     attribution: '&copy; CartoDB',
     label: 'Dark Tactical',
   },
-  topo: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
-    label: 'Esri Topo (Super Detailed)',
-  },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    overlayUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles &copy; Esri',
     label: 'Satellite HD',
+  },
+  topo: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri',
+    label: 'Esri Topo',
   },
   street: {
     url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -712,10 +712,11 @@ export default function GeospatialMap() {
         <div style={{ marginBottom: 12 }}>
           <button
             className="btn btn-sm btn-copper"
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
             onClick={() => setGlobeMode(!globeMode)}
           >
-            {globeMode ? 'â—ˆ View 2D Map' : 'â—Ž View 3D Globe'}
+            <Globe size={13} />
+            <span>{globeMode ? 'Switch to 2D Map' : 'View 3D Cesium Globe'}</span>
           </button>
         </div>
 
@@ -724,11 +725,12 @@ export default function GeospatialMap() {
             <div style={{ marginBottom: 12 }}>
               <button
                 className="btn btn-sm"
-                style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--copper-500)', background: 'transparent', color: 'var(--copper-200)' }}
+                style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--copper-500)', background: 'transparent', color: 'var(--copper-200)', display: 'flex', alignItems: 'center', gap: 6 }}
                 onClick={startTimelapse}
                 disabled={predictionMode}
               >
-                â± Play Time-Lapse
+                <Play size={13} />
+                <span>Play Time-Lapse</span>
               </button>
             </div>
 
@@ -1047,7 +1049,9 @@ export default function GeospatialMap() {
               <Sparkles size={13} />
               <span>Next Crime Prediction</span>
             </span>
-            <button onClick={() => setShowNextCrime(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>Ã—</button>
+            <button onClick={() => setShowNextCrime(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <X size={14} />
+            </button>
           </div>
           <div style={{ fontSize: 11, lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
@@ -1116,6 +1120,71 @@ export default function GeospatialMap() {
         </div>
       )}
 
+      {/* Floating Top-Right Layer Switcher */}
+      <div style={{
+        position: 'absolute', top: 16, right: 16, zIndex: 1000,
+        display: 'flex', gap: 6, background: 'rgba(9, 16, 29, 0.94)',
+        border: '1px solid var(--border-subtle)', borderRadius: 8, padding: 4,
+        backdropFilter: 'blur(8px)', boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
+      }}>
+        <button
+          onClick={() => { setGlobeMode(false); setMapStyle('dark') }}
+          style={{
+            padding: '5px 11px', fontSize: 11, fontWeight: 600,
+            borderRadius: 6, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: (!globeMode && mapStyle === 'dark') ? 'var(--copper-500)' : 'transparent',
+            color: (!globeMode && mapStyle === 'dark') ? '#000' : 'var(--text-secondary)',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Layers size={12} />
+          <span>Dark Tactical</span>
+        </button>
+        <button
+          onClick={() => { setGlobeMode(false); setMapStyle('satellite') }}
+          style={{
+            padding: '5px 11px', fontSize: 11, fontWeight: 600,
+            borderRadius: 6, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: (!globeMode && mapStyle === 'satellite') ? '#3b82f6' : 'transparent',
+            color: (!globeMode && mapStyle === 'satellite') ? '#fff' : 'var(--text-secondary)',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Satellite size={12} />
+          <span>Satellite HD</span>
+        </button>
+        <button
+          onClick={() => { setGlobeMode(false); setMapStyle('topo') }}
+          style={{
+            padding: '5px 11px', fontSize: 11, fontWeight: 600,
+            borderRadius: 6, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: (!globeMode && mapStyle === 'topo') ? 'var(--copper-500)' : 'transparent',
+            color: (!globeMode && mapStyle === 'topo') ? '#000' : 'var(--text-secondary)',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Compass size={12} />
+          <span>Topo Map</span>
+        </button>
+        <button
+          onClick={() => setGlobeMode(true)}
+          style={{
+            padding: '5px 11px', fontSize: 11, fontWeight: 600,
+            borderRadius: 6, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: globeMode ? '#8b5cf6' : 'transparent',
+            color: globeMode ? '#fff' : 'var(--text-secondary)',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Globe size={12} />
+          <span>3D Globe</span>
+        </button>
+      </div>
+
       {/* Map Rendering Container */}
       <div style={{ width: '100%', height: '100%' }}>
         {loading ? (
@@ -1138,6 +1207,14 @@ export default function GeospatialMap() {
               url={TILE_LAYERS[mapStyle].url}
               attribution={TILE_LAYERS[mapStyle].attribution}
             />
+            {mapStyle === 'satellite' && TILE_LAYERS.satellite.overlayUrl && (
+              <TileLayer
+                key="satellite-overlay"
+                url={TILE_LAYERS.satellite.overlayUrl}
+                attribution="&copy; Esri"
+                opacity={0.85}
+              />
+            )}
             
             {/* Heat Points */}
             {!predictionMode && activePoints.map((p, i) => (
@@ -1270,16 +1347,16 @@ export default function GeospatialMap() {
             </div>
             <button
               onClick={() => setSelectedCasePin(null)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20 }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             >
-              Ã—
+              <X size={16} />
             </button>
           </div>
 
           {/* Details */}
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
             <MapPin size={12} color="var(--copper-400)" />
-            <span>{selectedCasePin.DistrictName} District Â· Registered: {selectedCasePin.CrimeRegisteredDate}</span>
+            <span>{selectedCasePin.DistrictName} District · Registered: {selectedCasePin.CrimeRegisteredDate}</span>
           </div>
 
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '6px 0' }}>
