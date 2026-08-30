@@ -19,7 +19,7 @@ class CompareRequest(BaseModel):
 @router.get("/")
 async def list_cases(
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=500),
     status: Optional[str] = Query(None),
     crime_type: Optional[str] = Query(None),
     district: Optional[str] = Query(None),
@@ -58,7 +58,8 @@ async def list_cases(
         SELECT cm.CaseMasterID, cm.CrimeNo, cm.CaseNo,
                cm.CrimeRegisteredDate, cm.BriefFacts,
                ch.CrimeGroupName, cs.CaseStatusName,
-               d.DistrictName, cm.CaseStatusID
+               d.DistrictName, cm.CaseStatusID,
+               cm.latitude, cm.longitude
         FROM CaseMaster cm
         JOIN CrimeHead ch ON cm.CrimeMajorHeadID = ch.CrimeHeadID
         JOIN CaseStatusMaster cs ON cm.CaseStatusID = cs.CaseStatusID
