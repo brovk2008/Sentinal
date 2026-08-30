@@ -16,43 +16,43 @@ const CRIME_TYPES = ['All', 'Murder & Culpable Homicide', 'Theft & Burglary', 'C
 // ── Helper: Tactical 3D Pin Canvas Generator ──
 function createTacticalPinCanvas(isHeinous, isHigh, isCyber) {
   const canvas = document.createElement('canvas')
-  canvas.width = 48
-  canvas.height = 60
+  canvas.width = 44
+  canvas.height = 54
   const ctx = canvas.getContext('2d')
 
   const pinColor = isHeinous ? '#ef4444' : isHigh ? '#f97316' : isCyber ? '#3b82f6' : '#c8814a'
 
   // Shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
-  ctx.shadowBlur = 8
-  ctx.shadowOffsetY = 4
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.75)'
+  ctx.shadowBlur = 6
+  ctx.shadowOffsetY = 3
 
   // Teardrop pin
   ctx.beginPath()
-  ctx.moveTo(24, 56)
-  ctx.bezierCurveTo(10, 38, 4, 28, 4, 18)
-  ctx.arc(24, 18, 18, Math.PI, 0, false)
-  ctx.bezierCurveTo(44, 28, 38, 38, 24, 56)
+  ctx.moveTo(22, 50)
+  ctx.bezierCurveTo(8, 34, 4, 24, 4, 16)
+  ctx.arc(22, 16, 16, Math.PI, 0, false)
+  ctx.bezierCurveTo(40, 24, 36, 34, 22, 50)
   ctx.closePath()
 
-  const grad = ctx.createLinearGradient(4, 4, 44, 56)
+  const grad = ctx.createLinearGradient(4, 4, 40, 50)
   grad.addColorStop(0, pinColor)
   grad.addColorStop(1, '#09101d')
   ctx.fillStyle = grad
   ctx.fill()
   ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 2.2
+  ctx.lineWidth = 2
   ctx.stroke()
 
   // Inner glowing target reticle
   ctx.shadowBlur = 0
   ctx.beginPath()
-  ctx.arc(24, 18, 7, 0, Math.PI * 2)
+  ctx.arc(22, 16, 6, 0, Math.PI * 2)
   ctx.fillStyle = '#ffffff'
   ctx.fill()
 
   ctx.beginPath()
-  ctx.arc(24, 18, 3.5, 0, Math.PI * 2)
+  ctx.arc(22, 16, 3, 0, Math.PI * 2)
   ctx.fillStyle = pinColor
   ctx.fill()
 
@@ -100,7 +100,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
     }
   }, [])
 
-  // Initialize Cesium viewer with 3D Terrain, Satellite & 3D Buildings
+  // Initialize Cesium viewer with 3D Terrain, Satellite & Obsidian 3D Buildings
   useEffect(() => {
     if (!cesiumReady || !mountRef.current || viewerRef.current) return
 
@@ -147,7 +147,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
         })
       )
 
-      // Reference Labels & Borders
+      // Reference Labels & Boundaries
       viewer.imageryLayers.addImageryProvider(
         new Cesium.UrlTemplateImageryProvider({
           url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
@@ -165,10 +165,10 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           })
           .catch(() => {})
       } catch (err) {
-        console.warn('[CesiumGlobe] World terrain init fallback:', err)
+        console.warn('[CesiumGlobe] Terrain fallback:', err)
       }
 
-      // 3D Buildings
+      // 3D Obsidian / Tactical Buildings
       try {
         Cesium.createOsmBuildingsAsync()
           .then(buildingTileset => {
@@ -176,11 +176,13 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
               buildingTileset.style = new Cesium.Cesium3DTileStyle({
                 color: {
                   conditions: [
-                    ["${feature['building']} === 'hospital'", "color('#3b82f6', 0.8)"],
-                    ["${feature['building']} === 'government'", "color('#c8814a', 0.9)"],
-                    ["true", "color('#1e293b', 0.7)"]
+                    ["${feature['building']} === 'hospital'", "color('#3b82f6', 0.85)"],
+                    ["${feature['building']} === 'government' || ${feature['building']} === 'police'", "color('#c8814a', 0.9)"],
+                    ["${feature['building']} === 'commercial'", "color('#0ea5e9', 0.75)"],
+                    ["true", "color('#1a2333', 0.8)"]
                   ]
-                }
+                },
+                show: "${feature['building']} !== undefined"
               })
               viewer.scene.primitives.add(buildingTileset)
             }
@@ -207,13 +209,13 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           const lat = parseFloat(cd.latitude)
           const lng = parseFloat(cd.longitude)
           viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(lng, lat, 2600),
+            destination: Cesium.Cartesian3.fromDegrees(lng, lat, 1800),
             orientation: {
-              heading: Cesium.Math.toRadians(25),
-              pitch: Cesium.Math.toRadians(-55),
+              heading: 0,
+              pitch: Cesium.Math.toRadians(-60),
               roll: 0
             },
-            duration: 1.8
+            duration: 1.5
           })
         }
       }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
@@ -224,7 +226,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(76.0, 14.5, 1100000),
         orientation: { heading: 0, pitch: Cesium.Math.toRadians(-48), roll: 0 },
-        duration: 2.2,
+        duration: 2.0,
       })
 
     } catch (e) {
@@ -239,7 +241,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
     }
   }, [cesiumReady])
 
-  // Plot 3D Crime Pillars, Ground Reticles & Individual Case Pins
+  // Plot Sleek Tactical Crime Beacons & Individual Case Pins with Distance Culling
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady) return
     const Cesium = window.Cesium
@@ -247,23 +249,23 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
     viewer.entities.removeAll()
 
-    // 1. Plot District Density Pillars
+    // 1. High-Altitude District Overview Beacons (Culled when zoomed in < 50km)
     const FALLBACK_POINTS = [
-      { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban HQ', severity: 'critical', count: 199, type: 'Theft & Cyber' },
-      { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad Sector', severity: 'medium', count: 73, type: 'Narcotics' },
-      { lat: 15.1394, lng: 76.9214, label: 'Ballari Mining Belt', severity: 'critical', count: 114, type: 'Mining Crimes' },
-      { lat: 15.8497, lng: 74.4977, label: 'Belagavi Sector', severity: 'medium', count: 82, type: 'Smuggling' },
-      { lat: 12.2958, lng: 76.6394, label: 'Mysuru City', severity: 'high', count: 179, type: 'Cheating & Fraud' },
-      { lat: 14.4426, lng: 75.7218, label: 'Davanagere Hub', severity: 'low', count: 47, type: 'Robbery' },
-      { lat: 13.3409, lng: 77.1000, label: 'Tumakuru Sector', severity: 'high', count: 117, type: 'Theft' },
-      { lat: 12.8438, lng: 77.6624, label: 'Electronic City Tech Hub', severity: 'critical', count: 245, type: 'Cyber Crime' },
-      { lat: 14.2218, lng: 76.3978, label: 'Chitradurga Sector', severity: 'medium', count: 60, type: 'Robbery' },
-      { lat: 13.9299, lng: 75.5681, label: 'Shivamogga Sector', severity: 'low', count: 85, type: 'Arms Smuggling' },
-      { lat: 16.2076, lng: 77.3463, label: 'Raichur Thermal Zone', severity: 'medium', count: 48, type: 'Murder' },
-      { lat: 12.9254, lng: 74.8237, label: 'Mangaluru Port', severity: 'high', count: 74, type: 'Drug Trafficking' },
-      { lat: 13.3389, lng: 74.7451, label: 'Udupi Coastal Line', severity: 'medium', count: 95, type: 'Smuggling' },
-      { lat: 17.3297, lng: 76.8343, label: 'Kalaburagi Belt', severity: 'high', count: 95, type: 'Cheating & Fraud' },
-      { lat: 16.8302, lng: 75.7100, label: 'Vijayapura District', severity: 'medium', count: 115, type: 'Theft' },
+      { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban HQ', severity: 'critical', count: 199 },
+      { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad Sector', severity: 'medium', count: 73 },
+      { lat: 15.1394, lng: 76.9214, label: 'Ballari Mining Belt', severity: 'critical', count: 114 },
+      { lat: 15.8497, lng: 74.4977, label: 'Belagavi Sector', severity: 'medium', count: 82 },
+      { lat: 12.2958, lng: 76.6394, label: 'Mysuru City', severity: 'high', count: 179 },
+      { lat: 14.4426, lng: 75.7218, label: 'Davanagere Hub', severity: 'low', count: 47 },
+      { lat: 13.3409, lng: 77.1000, label: 'Tumakuru Sector', severity: 'high', count: 117 },
+      { lat: 12.8438, lng: 77.6624, label: 'Electronic City Tech Hub', severity: 'critical', count: 245 },
+      { lat: 14.2218, lng: 76.3978, label: 'Chitradurga Sector', severity: 'medium', count: 60 },
+      { lat: 13.9299, lng: 75.5681, label: 'Shivamogga Sector', severity: 'low', count: 85 },
+      { lat: 16.2076, lng: 77.3463, label: 'Raichur Zone', severity: 'medium', count: 48 },
+      { lat: 12.9254, lng: 74.8237, label: 'Mangaluru Port', severity: 'high', count: 74 },
+      { lat: 13.3389, lng: 74.7451, label: 'Udupi Coastal Line', severity: 'medium', count: 95 },
+      { lat: 17.3297, lng: 76.8343, label: 'Kalaburagi Belt', severity: 'high', count: 95 },
+      { lat: 16.8302, lng: 75.7100, label: 'Vijayapura District', severity: 'medium', count: 115 },
     ]
 
     const displayPoints = (points && points.length > 0) ? points.slice(0, 150) : FALLBACK_POINTS
@@ -282,37 +284,45 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           : Cesium.Color.fromCssColorString('#c8814a')
 
       const count = pt.count || pt.incident_count || 1
-      const pillarHeight = Math.max(14000, Math.min(count * 450, 90000))
-      const labelText = (pt.label || pt.district_name || 'Zone') + "\n" + count + " FIRs";
+      const beaconHeight = Math.max(16000, Math.min(count * 350, 70000))
+      const labelText = `${pt.label || pt.district_name || 'Zone'}\n${count} FIRs`
 
+      // Overview Laser Shaft - Fades out completely when camera is close (< 50km)
       viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, pillarHeight / 2),
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight / 2),
         cylinder: {
-          length: pillarHeight,
-          topRadius: isCritical ? 5000 : 3500,
-          bottomRadius: isCritical ? 7000 : 4500,
-          material: new Cesium.ColorMaterialProperty(pinColor.withAlpha(0.5)),
+          length: beaconHeight,
+          topRadius: 80.0,
+          bottomRadius: 220.0,
+          material: new Cesium.ColorMaterialProperty(pinColor.withAlpha(0.55)),
           outline: true,
           outlineColor: pinColor.withAlpha(0.9),
-          outlineWidth: 2,
+          outlineWidth: 1.5,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(50000.0, 5000000.0),
         }
       })
 
+      // Overview District Label - High altitude only
       viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, 20),
-        ellipse: {
-          semiMinorAxis: isCritical ? 20000 : 12000,
-          semiMajorAxis: isCritical ? 20000 : 12000,
-          height: 30,
-          material: new Cesium.ColorMaterialProperty(pinColor.withAlpha(0.25)),
-          outline: true,
-          outlineColor: pinColor.withAlpha(0.8),
-          outlineWidth: 2,
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight + 1000),
+        label: {
+          text: labelText,
+          font: 'bold 11px "Inter", sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2.5,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(60000.0, 1800000.0),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          showBackground: true,
+          backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.90),
+          backgroundPadding: new Cesium.Cartesian2(8, 5),
         }
       })
     })
 
-    // 2. Plot Real Interactive Case Pins
+    // 2. Individual Case Pins (Street to Regional View)
     casePins.forEach((cp, idx) => {
       const lat = parseFloat(cp.latitude)
       const lng = parseFloat(cp.longitude)
@@ -331,65 +341,69 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
             ? Cesium.Color.fromCssColorString('#3b82f6')
             : Cesium.Color.fromCssColorString('#c8814a')
 
-      const beaconHeight = 2400
+      const beaconHeight = 500
 
-      // Laser Light Shaft
+      // Sleek Laser Shaft
       const laser = viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight / 2),
         cylinder: {
           length: beaconHeight,
-          topRadius: 12.0,
-          bottomRadius: 28.0,
-          material: pinColor.withAlpha(0.7),
+          topRadius: 2.5,
+          bottomRadius: 6.0,
+          material: pinColor.withAlpha(0.8),
           outline: true,
           outlineColor: pinColor.withAlpha(0.95),
-          outlineWidth: 1.5,
+          outlineWidth: 1.2,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 120000.0),
         }
       })
       laser.caseData = cp
 
       // Ground Target Reticle
       const groundRing = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, 10),
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, 5),
         ellipse: {
-          semiMinorAxis: isHeinous ? 180 : 100,
-          semiMajorAxis: isHeinous ? 180 : 100,
-          height: 15,
-          material: pinColor.withAlpha(0.35),
+          semiMinorAxis: isHeinous ? 45 : 30,
+          semiMajorAxis: isHeinous ? 45 : 30,
+          height: 5,
+          material: pinColor.withAlpha(0.4),
           outline: true,
-          outlineColor: pinColor.withAlpha(0.85),
+          outlineColor: pinColor.withAlpha(0.9),
           outlineWidth: 2,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 30000.0),
         }
       })
       groundRing.caseData = cp
 
-      // Tactical Pointer Pin & Multi-Line Label
+      // Tactical Billboard Pointer & Dynamic Label
       const pinEntity = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight + 40),
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight + 20),
         billboard: {
           image: createTacticalPinCanvas(isHeinous, isHigh, isCyber),
-          width: 36,
-          height: 45,
+          width: 32,
+          height: 40,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          scaleByDistance: new Cesium.NearFarScalar(5e3, 1.2, 8e5, 0.45),
-          translucencyByDistance: new Cesium.NearFarScalar(5e3, 1.0, 1.2e6, 0.5),
+          scaleByDistance: new Cesium.NearFarScalar(2e3, 1.2, 5e5, 0.45),
+          translucencyByDistance: new Cesium.NearFarScalar(2e3, 1.0, 8e5, 0.5),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 450000.0),
         },
         label: {
-          text: `FIR #${caseNo}\n${cp.CrimeGroupName || 'Offence'}\n${cp.DistrictName || 'Sector'}`,
+          text: `FIR #${caseNo}\n${cp.CrimeGroupName || 'Offence'}`,
           font: 'bold 11px "Inter", sans-serif',
           fillColor: Cesium.Color.WHITE,
           outlineColor: Cesium.Color.BLACK,
           outlineWidth: 2.5,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -48),
-          scaleByDistance: new Cesium.NearFarScalar(2e4, 1.0, 4e5, 0.0),
-          translucencyByDistance: new Cesium.NearFarScalar(2e4, 1.0, 4e5, 0.0),
+          pixelOffset: new Cesium.Cartesian2(0, -44),
+          scaleByDistance: new Cesium.NearFarScalar(5e3, 1.0, 1.5e5, 0.0),
+          translucencyByDistance: new Cesium.NearFarScalar(5e3, 1.0, 1.5e5, 0.0),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           showBackground: true,
-          backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.90),
-          backgroundPadding: new Cesium.Cartesian2(8, 5),
+          backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.92),
+          backgroundPadding: new Cesium.Cartesian2(8, 4),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 150000.0),
         }
       })
       pinEntity.caseData = cp
@@ -397,7 +411,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
   }, [points, casePins, hotspots, cesiumReady])
 
-  const flyToLocation = (lng, lat, altitude = 2800, headingDeg = 20, pitchDeg = -55) => {
+  const flyToLocation = (lng, lat, altitude = 1800, headingDeg = 0, pitchDeg = -60) => {
     if (!viewerRef.current) return
     viewerRef.current.camera.flyTo({
       destination: window.Cesium.Cartesian3.fromDegrees(lng, lat, altitude),
@@ -406,7 +420,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
         pitch: window.Cesium.Math.toRadians(pitchDeg),
         roll: 0,
       },
-      duration: 1.8,
+      duration: 1.5,
     })
   }
 
@@ -422,7 +436,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
     const cp = casePins.find(c => String(c.CaseMasterID || c.CrimeNo || c.FIRNo) === String(caseId))
     if (cp && cp.latitude && cp.longitude) {
       if (onSelectCase) onSelectCase(cp)
-      flyToLocation(parseFloat(cp.longitude), parseFloat(cp.latitude), 2400)
+      flyToLocation(parseFloat(cp.longitude), parseFloat(cp.latitude), 1800)
     }
   }
 
@@ -459,13 +473,13 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
       {cesiumReady && (
         <div style={{
           position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
-          display: 'flex', alignItems: 'center', gap: 8, zIndex: 1000,
-          background: 'rgba(9,16,29,0.94)', border: '1px solid rgba(200,129,74,0.4)',
-          borderRadius: 8, padding: '6px 14px', backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
+          display: 'flex', alignItems: 'center', gap: 10, zIndex: 1000,
+          background: 'rgba(9,16,29,0.95)', border: '1px solid rgba(200,129,74,0.45)',
+          borderRadius: 8, padding: '7px 16px', backdropFilter: 'blur(12px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.7)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--copper-400)', fontSize: 11, fontWeight: 700 }}>
-            <Crosshair size={13} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--copper-400)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            <Crosshair size={14} />
             <span>ZOOM TO CASE / DISTRICT:</span>
           </div>
 
@@ -473,12 +487,12 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
             value={selectedFocusCaseId}
             onChange={handleCaseDropdownZoom}
             style={{
-              background: '#0e1726', border: '1px solid rgba(200,129,74,0.3)',
-              borderRadius: 4, color: '#fff', fontSize: 11, padding: '4px 10px',
-              cursor: 'pointer', outline: 'none', maxWidth: 260
+              background: '#0e1726', border: '1px solid rgba(200,129,74,0.35)',
+              borderRadius: 5, color: '#fff', fontSize: 11, padding: '5px 12px',
+              cursor: 'pointer', outline: 'none', minWidth: 260, maxWidth: 360, textOverflow: 'ellipsis'
             }}
           >
-            <option value="">-- Select Case to Fly-In --</option>
+            <option value="">-- Select Case to Fly-In ({casePins.length} Loaded) --</option>
             {casePins.map((cp, idx) => (
               <option key={cp.CaseMasterID || idx} value={cp.CaseMasterID || cp.CrimeNo || cp.FIRNo}>
                 FIR #{cp.CrimeNo || cp.FIRNo || cp.CaseMasterID} · {cp.CrimeGroupName || 'Crime'} ({cp.DistrictName || 'Sector'})
@@ -486,28 +500,28 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
             ))}
           </select>
 
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div style={{ display: 'flex', gap: 5 }}>
             <button
               onClick={() => flyToLocation(77.5946, 12.9716, 2800)}
-              style={{ padding: '4px 8px', fontSize: 10, borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Bengaluru
             </button>
             <button
               onClick={() => flyToLocation(74.8237, 12.9254, 2800)}
-              style={{ padding: '4px 8px', fontSize: 10, borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Mangaluru
             </button>
             <button
               onClick={() => flyToLocation(76.6394, 12.2958, 2800)}
-              style={{ padding: '4px 8px', fontSize: 10, borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Mysuru
             </button>
             <button
               onClick={() => flyToLocation(76.9214, 15.1394, 2800)}
-              style={{ padding: '4px 8px', fontSize: 10, borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Ballari
             </button>
