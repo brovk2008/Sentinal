@@ -631,3 +631,10 @@ export const generateDigitalPanchnama = (payload = {}) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+// ── Real-Time Fraud Intelligence Suite ─────────────────────────────────────────
+export const fetchFraudDashboard      = ()  => request('/api/v1/fraud/dashboard');
+export const fetchUPIVelocityAlerts   = ()  => request('/api/v1/fraud/upi-velocity');
+export const fetchNCRPStream          = (n) => request('/api/v1/fraud/ncrp-stream?limit=' + (n || 20));
+export const fetchTelegramScamMonitor = ()  => request('/api/v1/fraud/telegram-scam-monitor');
+export const fetchMuleAlertFeed       = ()  => request('/api/v1/fraud/mule-alert-feed');

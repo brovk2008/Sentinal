@@ -86,8 +86,9 @@ ALL_ROUTERS = [
     ("nlp",          "/api/v1/nlp",          "Catalyst NLP"),
     ("uploads",      "/api/v1/uploads",      "File Uploads"),
     ("criminology",  "/api/v1/criminology",  "Criminology & Crime Pattern AI"),
-    ("web_scraper",  "/api/v1/web-scraper",  "OSINT & Web Scraper Suite"),
-    ("auth",         "/api/v1/auth",         "Auth"),
+    ("web_scraper",     "/api/v1/web-scraper",  "OSINT & Web Scraper Suite"),
+    ("realtime_fraud",  "/api/v1/fraud",        "Real-Time Fraud Intelligence"),
+    ("auth",            "/api/v1/auth",         "Auth"),
 ]
 
 LOADED_ROUTERS = set()

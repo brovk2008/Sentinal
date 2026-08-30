@@ -17,7 +17,7 @@ client = TestClient(app)
 
 def run_audit():
     print("=" * 80)
-    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 33-ENDPOINT AUDIT       ")
+    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 39-ENDPOINT AUDIT       ")
     print("=" * 80)
 
     endpoints_to_test = [
@@ -55,6 +55,13 @@ def run_audit():
         ("POST", "/api/v1/criminology/bail-flight-risk-assessor", {"accused_name": "Imran Pasha", "passport_status": "Active", "prior_bail_violations": 2}),
         ("POST", "/api/v1/criminology/cold-case-mo-linker", {"modus_operandi_query": "gas torch jewelry shop"}),
         ("POST", "/api/v1/criminology/digital-panchnama-custody", {"case_reference": "FIR/2026/BLR/0091", "seizing_officer": "PSI Rakesh Nair", "evidence_type": "Mobile Phone", "evidence_description": "iPhone 13"}),
+        # ── Real-Time Fraud Intelligence (6 new endpoints) ──
+        ("GET",  "/api/v1/fraud/upi-velocity"),
+        ("GET",  "/api/v1/fraud/ncrp-stream"),
+        ("GET",  "/api/v1/fraud/telegram-scam-monitor"),
+        ("GET",  "/api/v1/fraud/mule-alert-feed"),
+        ("GET",  "/api/v1/fraud/dashboard"),
+        ("GET",  "/api/v1/fraud/stream"),
     ]
 
     passed = 0
