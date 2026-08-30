@@ -27,6 +27,7 @@ import Profile from './pages/Profile'
 import DataUploadIntel from './pages/DataUploadIntel'
 import OCRRecords from './pages/OCRRecords'
 import WebIntelligence from './pages/WebIntelligence'
+import ForensicIntel from './pages/ForensicIntel'
 import AuthGuard from './components/AuthGuard'
 import BackendWakeup from './components/layout/BackendWakeup'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -129,6 +130,8 @@ export default function App() {
           <Route path="/upload"             element={<DataUploadIntel />} />
           <Route path="/data-upload"        element={<Navigate to="/upload" replace />} />
           <Route path="/ocr-records"        element={<OCRRecords />} />
+          <Route path="/forensic"            element={<ForensicIntel />} />
+          <Route path="/forensics"           element={<Navigate to="/forensic" replace />} />
         </Route>
       </Routes>
     </HashRouter>

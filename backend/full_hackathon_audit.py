@@ -17,7 +17,7 @@ client = TestClient(app)
 
 def run_audit():
     print("=" * 80)
-    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 28-ENDPOINT AUDIT       ")
+    print("      PROJECT SENTINAL — HACKATHON ZERO-DEFECT 33-ENDPOINT AUDIT       ")
     print("=" * 80)
 
     endpoints_to_test = [
@@ -49,6 +49,12 @@ def run_audit():
         ("POST", "/api/v1/web-scraper/osint/news", {"district": "All Districts"}),
         ("GET",  "/api/v1/nlp/status"),
         ("GET",  "/api/v1/analytics/kpis"),
+        # ── 5 New Forensic Intelligence Features ──
+        ("POST", "/api/v1/financial/crypto-trace-unmixer", {"wallet_address": "0xd4A5f9E3C7b2A1082BC6019d3F77e4c8b09E2A00", "blockchain": "ETH"}),
+        ("POST", "/api/v1/criminology/weapon-ballistics-classify", {"description": "9mm pistol", "crime_scene_location": "Bengaluru"}),
+        ("POST", "/api/v1/criminology/bail-flight-risk-assessor", {"accused_name": "Imran Pasha", "passport_status": "Active", "prior_bail_violations": 2}),
+        ("POST", "/api/v1/criminology/cold-case-mo-linker", {"modus_operandi_query": "gas torch jewelry shop"}),
+        ("POST", "/api/v1/criminology/digital-panchnama-custody", {"case_reference": "FIR/2026/BLR/0091", "seizing_officer": "PSI Rakesh Nair", "evidence_type": "Mobile Phone", "evidence_description": "iPhone 13"}),
     ]
 
     passed = 0

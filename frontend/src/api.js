@@ -600,3 +600,34 @@ export const fetchOSINTNews = (payload = {}) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+// ── Forensic Intelligence Suite (5 Advanced Criminology Engines) ────────────
+export const traceCryptoBlockchain = (payload = {}) =>
+  request('/api/v1/financial/crypto-trace-unmixer', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const classifyWeaponBallistics = (payload = {}) =>
+  request('/api/v1/criminology/weapon-ballistics-classify', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const assessBailFlightRisk = (payload = {}) =>
+  request('/api/v1/criminology/bail-flight-risk-assessor', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const linkColdCasesByMO = (payload = {}) =>
+  request('/api/v1/criminology/cold-case-mo-linker', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const generateDigitalPanchnama = (payload = {}) =>
+  request('/api/v1/criminology/digital-panchnama-custody', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });

@@ -40,6 +40,7 @@ export default function Sidebar() {
         { path: '/assistant', icon: <Icon name="ai" size={14} />, label: t('nav.ai') },
         { path: '/darkweb', icon: <Icon name="darkweb" size={14} />, label: t('nav.darkweb') },
         { path: '/web-intel', icon: <Icon name="global" size={14} />, label: 'Web Scraper' },
+        { path: '/forensic', icon: <Icon name="evidence" size={14} />, label: 'Forensic Suite' },
       ],
     },
   ]
