@@ -10,7 +10,7 @@
 [![Secondary Slate Domain](https://img.shields.io/badge/Slate_Domain-sentinal--peak.onslate.in-7c2d12?style=for-the-badge)](https://sentinal-peak.onslate.in)
 [![Cloud Infrastructure](https://img.shields.io/badge/Cloud_Engine-Zoho_Catalyst-1d4ed8?style=for-the-badge)](https://catalyst.zoho.com)
 [![Custom AI Accuracy](https://img.shields.io/badge/Custom_AI_Accuracy-90.8%25_Calibrated-047857?style=for-the-badge)]()
-[![Zero-Defect Audit](https://img.shields.io/badge/API_Audit-100%25_Passed_(28/28)-1d4ed8?style=for-the-badge)]()
+[![Zero-Defect Audit](https://img.shields.io/badge/API_Audit-100%25_Passed_(33/33)-1d4ed8?style=for-the-badge)]()
 [![Forensic Compliance](https://img.shields.io/badge/Forensic_Proof-Sec_65B_IEA_Certified-047857?style=for-the-badge)]()
 
 <br/>
@@ -44,7 +44,7 @@ Sentinal bridges the critical intelligence gap between frontline Station House O
 
 ## Complete Exhaustive Platform Feature Catalog
 
-Sentinal encompasses **38 fully integrated capabilities** organized into 7 operational pillars:
+Sentinal encompasses **43 fully integrated capabilities** organized into 7 operational pillars:
 
 ### Pillar 1: Command Center, Situational Awareness & Operational Feeds
 1. **State-Wide Command Center Dashboard**: Real-time aggregation of **10,000 FIRs**, **21,722 accused profiles**, **5,202 arrests**, **3,594 chargesheets**, and **1,369 pending court trials**.
@@ -123,7 +123,7 @@ Sentinal is preloaded with authentic law-enforcement data:
 
 ---
 
-## Zero-Defect Hackathon Audit Matrix (100% Pass Rate · 28 Endpoints)
+## Zero-Defect Hackathon Audit Matrix (100% Pass Rate · 33 Endpoints)
 
 | # | HTTP Method | Endpoint | Description | Status | Response |
 |---|---|---|---|---|---|
@@ -155,9 +155,22 @@ Sentinal is preloaded with authentic law-enforcement data:
 | 26 | `POST` | `/api/v1/web-scraper/osint/news` | OSINT Regional Crime News RSS Feeds | **PASSED** | `HTTP 200 OK` |
 | 27 | `GET` | `/api/v1/nlp/status` | Zia NLP & Bilingual Extraction Service | **PASSED** | `HTTP 200 OK` |
 | 28 | `GET` | `/api/v1/analytics/kpis` | Operational State-Wide KPI Dashboard | **PASSED** | `HTTP 200 OK` |
+| 29 | `POST` | `/api/v1/financial/crypto-trace-unmixer` | Crypto & Blockchain Multi-Hop Forensic Unmixer | **PASSED** | `HTTP 200 OK` |
+| 30 | `POST` | `/api/v1/criminology/weapon-ballistics-classify` | CCTV Weapon & Ballistics Forensics Classifier | **PASSED** | `HTTP 200 OK` |
+| 31 | `POST` | `/api/v1/criminology/bail-flight-risk-assessor` | Predictive Bail Flight Risk Assessor (8-Factor) | **PASSED** | `HTTP 200 OK` |
+| 32 | `POST` | `/api/v1/criminology/cold-case-mo-linker` | Serial Crime MO Fingerprint & Cold Case Linker | **PASSED** | `HTTP 200 OK` |
+| 33 | `POST` | `/api/v1/criminology/digital-panchnama-custody` | Digital Panchnama Section 65B Custody Vault | **PASSED** | `HTTP 200 OK` |
 
 ---
 
+### Pillar 8: Advanced Forensic Intelligence Suite (5 AI Criminology Engines)
+39. **Chain-Sleuth AI — Crypto & Blockchain Forensic Unmixer**: Traces multi-hop Bitcoin/USDT-TRC20 peeling chains through Tornado Cash mixers and ChipMixer obfuscation nodes. Identifies off-ramp exit transactions at Indian KYC-registered exchanges (WazirX, CoinDCX, Binance). Auto-generates court-ready **Section 94 BNSS Statutory Exchange Subpoena Notices** demanding KYC user details and wallet freeze.
+40. **CCTV AI Weapon & Ballistics Forensics Classifier**: Classifies crime-scene firearms or bladed weapons by category (*Desi Katta*, 9mm Semi-Auto, Machete, Assault Rifle), estimates caliber, analyzes firing pin marks and rifling characteristics, and cross-references against the Karnataka Police seized arms ballistic database across past FIRs to expose arms trafficking supply chain origin.
+41. **Predictive Bail Jumping & Fugitive Flight Risk Assessor**: Evaluates 8 statutory risk metrics (passport status, interstate assets, gang connectivity score, prior bail violations, criminal gravity index) to compute a quantitative **Flight Risk Score (0–100%)**. Auto-drafts a formal **Public Prosecutor Bail Objection Affidavit** with legal grounds under Section 437/439 CrPC (Section 480/483 BNSS 2023) and precedent citations.
+42. **Serial Crime Modus Operandi (MO) Fingerprint & Cold Case Linker**: Applies semantic NLP embeddings across the entire 10,000+ FIR corpus to cluster unsolved cold cases sharing identical MO signatures (e.g. gas-torch shutter cutting, OBD key cloning, chain-snatch MO) across all 41 Karnataka districts — breaking the classic inter-district police communication barrier.
+43. **Digital Panchnama & Section 65B Cryptographic Chain of Custody Vault**: Generates tamper-evident digital evidence seizure certificates with GPS-pinned timestamps, dual **SHA-256 + SHA-3-256** cryptographic hash checkpoints, and printable QR-coded **Section 65B Indian Evidence Act / Section 63 Bharatiya Sakshya Adhiniyam (BSA) 2023** chain-of-custody certificates for court-admissible digital evidence.
+
+---
 ## Deep Zoho Catalyst Integration Matrix
 
 | Zoho Catalyst Service | Technical Implementation in Sentinal | Hackathon Relevance & Scale |
@@ -192,7 +205,7 @@ python -m venv venv
 venv\Scripts\activate          # Windows PowerShell: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-# Run comprehensive zero-defect 28-endpoint audit
+# Run comprehensive zero-defect 33-endpoint audit
 python full_hackathon_audit.py
 
 # Launch FastAPI development server
