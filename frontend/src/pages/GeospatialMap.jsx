@@ -198,7 +198,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
       viewer.scene.backgroundColor = new Cesium.Color(0.016, 0.02, 0.047, 1.0)
       viewer.scene.globe.depthTestAgainstTerrain = true
 
-      // Click Interaction Handler (Fly-to zoom and inspect case)
+      // Click Interaction Handler (Fly-to zoom and inspect case along surface normal)
       const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
       handler.setInputAction((movement) => {
         const picked = viewer.scene.pick(movement.position)
@@ -208,11 +208,12 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
           const lat = parseFloat(cd.latitude)
           const lng = parseFloat(cd.longitude)
+          // Fly directly along surface normal (perpendicular nadir top-down)
           viewer.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(lng, lat, 1800),
             orientation: {
               heading: 0,
-              pitch: Cesium.Math.toRadians(-60),
+              pitch: Cesium.Math.toRadians(-89.9),
               roll: 0
             },
             duration: 1.5
@@ -222,10 +223,10 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
       viewerRef.current = viewer
 
-      // Fly to initial Karnataka view
+      // Fly to initial Karnataka surface normal view
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(76.0, 14.5, 1100000),
-        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-48), roll: 0 },
+        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-89.9), roll: 0 },
         duration: 2.0,
       })
 
@@ -411,13 +412,14 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
   }, [points, casePins, hotspots, cesiumReady])
 
-  const flyToLocation = (lng, lat, altitude = 1800, headingDeg = 0, pitchDeg = -60) => {
+  // Fly directly perpendicular to the geodetic surface normal (-89.9° nadir)
+  const flyToLocation = (lng, lat, altitude = 1800, headingDeg = 0, pitchDeg = -89.9) => {
     if (!viewerRef.current) return
     viewerRef.current.camera.flyTo({
       destination: window.Cesium.Cartesian3.fromDegrees(lng, lat, altitude),
       orientation: {
         heading: window.Cesium.Math.toRadians(headingDeg),
-        pitch: window.Cesium.Math.toRadians(pitchDeg),
+        pitch: window.Cesium.Math.toRadians(pitchDeg), // Surface normal alignment
         roll: 0,
       },
       duration: 1.5,
@@ -425,7 +427,51 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
   }
 
   const focusKarnataka = () => {
-    flyToLocation(76.0, 14.5, 1100000, 0, -48)
+    flyToLocation(76.0, 14.5, 1100000, 0, -89.9)
+  }
+
+  // Snap current camera center to local surface normal (Nadir 90° straight down)
+  const alignToSurfaceNormal = () => {
+    if (!viewerRef.current) return
+    const camera = viewerRef.current.camera
+    const cartographic = camera.positionCartographic
+    const lng = window.Cesium.Math.toDegrees(cartographic.longitude)
+    const lat = window.Cesium.Math.toDegrees(cartographic.latitude)
+    const height = cartographic.height
+
+    camera.flyTo({
+      destination: window.Cesium.Cartesian3.fromDegrees(lng, lat, height),
+      orientation: {
+        heading: 0,
+        pitch: window.Cesium.Math.toRadians(-89.9), // Geodetic normal vector
+        roll: 0,
+      },
+      duration: 1.0,
+    })
+  }
+
+  // Toggle between Surface Normal (90° Top-Down) and 3D Oblique (45° Tilt)
+  const toggleTiltPerspective = () => {
+    if (!viewerRef.current) return
+    const camera = viewerRef.current.camera
+    const cartographic = camera.positionCartographic
+    const lng = window.Cesium.Math.toDegrees(cartographic.longitude)
+    const lat = window.Cesium.Math.toDegrees(cartographic.latitude)
+    const height = cartographic.height
+
+    const currentPitchDeg = window.Cesium.Math.toDegrees(camera.pitch)
+    const isNormal = currentPitchDeg <= -80
+
+    const targetPitchDeg = isNormal ? -48 : -89.9
+    camera.flyTo({
+      destination: window.Cesium.Cartesian3.fromDegrees(lng, lat, height),
+      orientation: {
+        heading: camera.heading,
+        pitch: window.Cesium.Math.toRadians(targetPitchDeg),
+        roll: 0,
+      },
+      duration: 1.2,
+    })
   }
 
   const handleCaseDropdownZoom = (e) => {
@@ -436,7 +482,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
     const cp = casePins.find(c => String(c.CaseMasterID || c.CrimeNo || c.FIRNo) === String(caseId))
     if (cp && cp.latitude && cp.longitude) {
       if (onSelectCase) onSelectCase(cp)
-      flyToLocation(parseFloat(cp.longitude), parseFloat(cp.latitude), 1800)
+      flyToLocation(parseFloat(cp.longitude), parseFloat(cp.latitude), 1800, 0, -89.9)
     }
   }
 
@@ -480,7 +526,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--copper-400)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
             <Crosshair size={14} />
-            <span>ZOOM TO CASE / DISTRICT:</span>
+            <span>SURFACE NORMAL ZOOM:</span>
           </div>
 
           <select
@@ -502,25 +548,25 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
           <div style={{ display: 'flex', gap: 5 }}>
             <button
-              onClick={() => flyToLocation(77.5946, 12.9716, 2800)}
+              onClick={() => flyToLocation(77.5946, 12.9716, 2800, 0, -89.9)}
               style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Bengaluru
             </button>
             <button
-              onClick={() => flyToLocation(74.8237, 12.9254, 2800)}
+              onClick={() => flyToLocation(74.8237, 12.9254, 2800, 0, -89.9)}
               style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Mangaluru
             </button>
             <button
-              onClick={() => flyToLocation(76.6394, 12.2958, 2800)}
+              onClick={() => flyToLocation(76.6394, 12.2958, 2800, 0, -89.9)}
               style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Mysuru
             </button>
             <button
-              onClick={() => flyToLocation(76.9214, 15.1394, 2800)}
+              onClick={() => flyToLocation(76.9214, 15.1394, 2800, 0, -89.9)}
               style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
               Ballari
@@ -542,6 +588,12 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           <button onClick={zoomOut} title="Zoom Out" style={toolBtnStyle}>
             <Minus size={14} />
           </button>
+          <button onClick={alignToSurfaceNormal} title="Align to Surface Normal (Top-Down Nadir)" style={toolBtnStyle}>
+            <Compass size={14} />
+          </button>
+          <button onClick={toggleTiltPerspective} title="Toggle Surface Normal vs 3D Oblique Tilt" style={toolBtnStyle}>
+            <Layers size={14} />
+          </button>
           <button onClick={focusKarnataka} title="Reset State Overview" style={toolBtnStyle}>
             <Crosshair size={14} />
           </button>
@@ -558,10 +610,10 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#c8814a', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Globe size={13} />
-            <span>CESIUM 3D SATELLITE GLOBE · CLICK ANY CASE PIN TO FLY-IN & INSPECT</span>
+            <span>CESIUM 3D SATELLITE GLOBE · SURFACE NORMAL ALIGNMENT ACTIVE</span>
           </div>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
-            Interactive 3D Crime Beacons & Terrain Active · Scroll to zoom · Right-drag to tilt 3D buildings
+            Top-down surface normal perspective · Click Compass or Layers icon to toggle 3D oblique tilt
           </div>
         </div>
       )}
