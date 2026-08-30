@@ -467,21 +467,44 @@ export default function WarRoom() {
               borderRadius: 6, padding: 10, flex: 1, overflowY: 'auto',
             }}>
               <PanelHeader title="Active Operations" live />
-              {operations.map((op, i) => (
-                <div key={i} style={{
-                  padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  display: 'flex', flexDirection: 'column', gap: 2,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: '#e2e8f0' }}>{op.name}</span>
-                    <span style={{ fontSize: 8, color: op.color, fontWeight: 700 }}>{op.status}</span>
-                  </div>
-                  <div style={{ fontSize: 8, color: '#475569' }}>{op.syndicate}</div>
-                  <div style={{ height: 3, background: 'rgba(255,255,255,0.05)', borderRadius: 2, marginTop: 2 }}>
-                    <div style={{ height: '100%', width: `${Math.min(op.cases, 100)}%`, background: op.color, borderRadius: 2 }} />
-                  </div>
-                </div>
-              ))}
+              {(() => {
+                const maxCases = Math.max(...operations.map(o => o.cases || 0), 1)
+                return operations.map((op, i) => {
+                  const pct = Math.round((op.cases / maxCases) * 100)
+                  return (
+                    <div key={i} style={{
+                      padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      display: 'flex', flexDirection: 'column', gap: 2,
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: '#e2e8f0', letterSpacing: 0.5 }}>{op.name}</span>
+                        <span style={{
+                          fontSize: 7, fontWeight: 800, padding: '1px 5px', borderRadius: 3,
+                          background: `${op.color}22`, color: op.color, border: `1px solid ${op.color}55`,
+                        }}>{op.status}</span>
+                      </div>
+                      <div style={{ fontSize: 7.5, color: '#475569', marginBottom: 1 }}>
+                        {op.syndicate}
+                      </div>
+                      {/* Progress bar — width relative to top operation */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${pct}%`,
+                            background: `linear-gradient(90deg, ${op.color}aa, ${op.color})`,
+                            borderRadius: 2,
+                            transition: 'width 0.6s ease',
+                          }} />
+                        </div>
+                        <span style={{ fontSize: 7, color: op.color, fontWeight: 700, minWidth: 22, textAlign: 'right' }}>
+                          {op.cases || 0}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
             </div>
           </div>
 
@@ -524,7 +547,8 @@ export default function WarRoom() {
                   radius={m.severity === 'CRITICAL' ? 9 : m.severity === 'HIGH' ? 7 : 5}
                   fillColor={SEV_COLOR[m.severity] || '#3b82f6'}
                   fillOpacity={0.7}
-                  stroke color={SEV_COLOR[m.severity] || '#3b82f6'}
+                  stroke={true}
+                  color={SEV_COLOR[m.severity] || '#3b82f6'}
                   weight={1}
                 >
                   <Popup>
