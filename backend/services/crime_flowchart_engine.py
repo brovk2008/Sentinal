@@ -160,7 +160,7 @@ class CrimeFlowchartEngine:
 
         if cdr_logs:
             c = cdr_logs[0]
-            c_label = f'{c["caller_name"] or "Suspect"} ↔ {c["receiver_name"] or "Contact"} ({c["call_duration_seconds"]}s)'
+            c_label = f'{c["caller_name"] or "Suspect"}  {c["receiver_name"] or "Contact"} ({c["call_duration_seconds"]}s)'
             mermaid_lines.append(f'    N_CDR["3B. Telecom Intercept<br/>{self._escape_label(c_label)}<br/>Tower: {c["tower_id"]}"]:::trail')
             mermaid_lines.append(f'    {prev_node} --> N_CDR')
             has_trail = True

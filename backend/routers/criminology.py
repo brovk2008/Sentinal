@@ -920,7 +920,7 @@ async def digital_panchnama_custody(req: PanchnamaRequest):
             "timestamp": timestamp_str,
             "gps_location": f"{req.seizure_lat}°N, {req.seizure_lng}°E",
             "hash_checkpoint": sha256_hash[:32],
-            "status": "COMPLETE ✓",
+            "status": "COMPLETE ",
         },
         {
             "step": 2,
@@ -928,7 +928,7 @@ async def digital_panchnama_custody(req: PanchnamaRequest):
             "officer": f"SHO {req.seizing_officer.split(',')[0].replace('PSI', 'PI')} — Malkhana Officer",
             "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
             "hash_checkpoint": sha256_hash[32:64],
-            "status": "REGISTERED ✓",
+            "status": "REGISTERED ",
         },
         {
             "step": 3,

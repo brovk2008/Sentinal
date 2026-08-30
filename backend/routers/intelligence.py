@@ -602,7 +602,7 @@ def _generate_data_answer(question: str) -> str:
     if accused_matches:
         lines.append("\n## Persons of Interest & Suspect Profiles")
         for a in accused_matches:
-            p_flag = "⚠️ HIGH PRIORITY" if a.get('is_priority') else "Identified Suspect"
+            p_flag = "️ HIGH PRIORITY" if a.get('is_priority') else "Identified Suspect"
             lines.append(
                 f"- **{a['AccusedName']}** (Person ID: `{a['PersonID']}`) | Age: {a.get('AgeYear') or 'N/A'} | "
                 f"Linked to FIR: **{a['CrimeNo']}** ({a['DistrictName']}) — *[{p_flag}]*"
@@ -611,7 +611,7 @@ def _generate_data_answer(question: str) -> str:
     if txns:
         lines.append("\n## Financial & Mule Account Layering Trail")
         for t in txns:
-            s_flag = "🚨 Suspicious High Velocity" if t['is_suspicious'] else "Verified Flow"
+            s_flag = " Suspicious High Velocity" if t['is_suspicious'] else "Verified Flow"
             lines.append(
                 f"- **₹{t['amount']:,.0f}** via {t['txn_type']} from **{t['sender_name']}** → **{t['receiver_name']}** "
                 f"on {t['txn_date']} *[{s_flag}]*"
@@ -623,7 +623,7 @@ def _generate_data_answer(question: str) -> str:
             c_from = cdr['caller_name'] or cdr['phone']
             c_to = cdr['receiver_name'] or cdr['called']
             lines.append(
-                f"- **{c_from}** ↔ **{c_to}** ({cdr['call_duration_seconds']}s duration) at Tower Site **#{cdr['tower_id']}**"
+                f"- **{c_from}**  **{c_to}** ({cdr['call_duration_seconds']}s duration) at Tower Site **#{cdr['tower_id']}**"
             )
 
     lines.append("\n## Actionable Investigative Leads")

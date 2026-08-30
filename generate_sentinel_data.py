@@ -466,7 +466,7 @@ LAST_NAMES = [
 
 def progress(count, table):
     """Print progress indicator."""
-    print(f"  ✓ Generated {count:>7,} rows → {table}")
+    print(f"   Generated {count:>7,} rows → {table}")
 
 
 def random_date(start_str, end_str):
@@ -2221,13 +2221,13 @@ def verify_integrity(db_path):
             c.execute(query)
             orphans = c.fetchone()[0]
             if orphans == 0:
-                print(f"    ✓ PASS  {label}")
+                print(f"     PASS  {label}")
                 pass_count += 1
             else:
-                print(f"    ✗ FAIL  {label}  ({orphans} orphan rows)")
+                print(f"     FAIL  {label}  ({orphans} orphan rows)")
                 fail_count += 1
         except Exception as e:
-            print(f"    ✗ ERROR {label}: {e}")
+            print(f"     ERROR {label}: {e}")
             fail_count += 1
 
     print(f"\n  FK Results: {pass_count} PASS, {fail_count} FAIL")
@@ -2351,14 +2351,14 @@ def main():
     # ── Summary ──
     elapsed = time.time() - START_TIME
     print("\n" + "═" * 65)
-    print(f"  ✅ GENERATION COMPLETE in {elapsed:.1f} seconds")
-    print(f"  📁 SQLite: {DB_PATH}")
-    print(f"  📁 CSVs:   {CSV_DIR}")
+    print(f"   GENERATION COMPLETE in {elapsed:.1f} seconds")
+    print(f"   SQLite: {DB_PATH}")
+    print(f"   CSVs:   {CSV_DIR}")
     print("═" * 65)
 
     # ── Verify ──
     passes, fails, total = verify_integrity(DB_PATH)
-    print(f"\n  🏁 Final: {total:,} total rows | {passes} FK checks passed | {fails} FK checks failed")
+    print(f"\n   Final: {total:,} total rows | {passes} FK checks passed | {fails} FK checks failed")
     print()
 
 

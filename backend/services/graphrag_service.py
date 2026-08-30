@@ -244,7 +244,7 @@ YOUR STRICT RULES:
 
         if unverified:
             caveat = (
-                f"\n\n---\n⚠ DATA PROVENANCE NOTE: The following names appear in this briefing "
+                f"\n\n---\n DATA PROVENANCE NOTE: The following names appear in this briefing "
                 f"but could not be verified against the retrieved ontology subgraph: "
                 f"{', '.join(unverified)}. Treat with lower confidence pending further verification."
             )

@@ -27,7 +27,7 @@ ENTITY_TYPES = {
 }
 
 LINK_TYPES = {
-    "CO_ACCUSED",           # Person ↔ Person (co-accused in same case)
+    "CO_ACCUSED",           # Person  Person (co-accused in same case)
     "CALLED",               # Person → Phone (CDR call)
     "OWNS",                 # Person → Vehicle | Phone | BankAccount
     "TRANSFERRED_FUNDS_TO", # BankAccount → BankAccount
@@ -111,7 +111,7 @@ class SubgraphContext:
             lines.append("")
             lines.append("[INTELLIGENCE GAPS — no data found for:]")
             for gap in self.content_gaps:
-                lines.append(f"  ⚠ {gap}")
+                lines.append(f"   {gap}")
 
         return "\n".join(lines)
 

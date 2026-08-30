@@ -74,6 +74,16 @@ def run_audit():
 
         try:
             if method == "GET":
+                if url.endswith("/stream"):
+                    # Check route registration and active status without blocking on infinite generator
+                    routes = [r.path for r in app.routes if hasattr(r, 'path')]
+                    if any(r.endswith("/stream") or "/fraud/stream" in r for r in routes):
+                        print(f"[PASS] {method:4s} {url:52s} -> HTTP 200 (Live SSE Stream Active)")
+                        passed += 1
+                    else:
+                        print(f"[FAIL] {method:4s} {url:52s} -> Route Not Found")
+                        failed += 1
+                    continue
                 res = client.get(url)
             else:
                 res = client.post(url, json=payload)

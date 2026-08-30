@@ -81,7 +81,7 @@ class GraphCanvasLinker:
         con = self._conn()
 
         try:
-            # 1. Person ↔ Person Links (Co-Accused in CaseMaster)
+            # 1. Person  Person Links (Co-Accused in CaseMaster)
             person_nodes = [n for n in node_items if n["type"] in ("person", "suspect", "accused")]
             for i in range(len(person_nodes)):
                 for j in range(i + 1, len(person_nodes)):
@@ -110,7 +110,7 @@ class GraphCanvasLinker:
                             weight=2.0,
                         ))
 
-            # 2. Person ↔ Case Links (Direct involvement)
+            # 2. Person  Case Links (Direct involvement)
             case_nodes = [n for n in node_items if n["type"] in ("case", "fir")]
             for p in person_nodes:
                 for c in case_nodes:
@@ -137,7 +137,7 @@ class GraphCanvasLinker:
                             weight=2.0,
                         ))
 
-            # 3. Person ↔ Phone / CDR Links
+            # 3. Person  Phone / CDR Links
             phone_nodes = [n for n in node_items if n["type"] in ("phone", "cdr", "telecom")]
             for p in person_nodes:
                 for ph in phone_nodes:
@@ -163,7 +163,7 @@ class GraphCanvasLinker:
                                 weight=1.8,
                             ))
 
-            # 4. Person ↔ Financial / Mule Account Links
+            # 4. Person  Financial / Mule Account Links
             financial_nodes = [n for n in node_items if n["type"] in ("financial", "bank", "account", "upi")]
             for p in person_nodes:
                 for f in financial_nodes:
@@ -185,7 +185,7 @@ class GraphCanvasLinker:
                             weight=1.7,
                         ))
 
-            # 5. Person ↔ Location Links (Station / Crime scene vicinity)
+            # 5. Person  Location Links (Station / Crime scene vicinity)
             location_nodes = [n for n in node_items if n["type"] in ("location", "district", "station")]
             for p in person_nodes:
                 for loc in location_nodes:

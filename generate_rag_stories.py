@@ -738,7 +738,7 @@ def main():
     for synd in syndicates:
         narratives.append(generate_syndicate_narrative(synd, nid))
         nid += 1
-    print(f"  ✓ {len(syndicates)} syndicate narratives")
+    print(f"   {len(syndicates)} syndicate narratives")
 
     # ── 2. Individual Case Summaries (200) ──
     print("  Generating case summaries...")
@@ -746,7 +746,7 @@ def main():
     for case in cases:
         narratives.append(generate_case_narrative(case, nid))
         nid += 1
-    print(f"  ✓ {len(cases)} case summaries")
+    print(f"   {len(cases)} case summaries")
 
     # ── 3. Accused Profiles (100) ──
     print("  Generating accused profiles...")
@@ -754,7 +754,7 @@ def main():
     for acc in accused:
         narratives.append(generate_accused_profile(acc, nid))
         nid += 1
-    print(f"  ✓ {len(accused)} accused profiles")
+    print(f"   {len(accused)} accused profiles")
 
     # ── 4. District Reports (100 — cycles through districts multiple times) ──
     print("  Generating district reports...")
@@ -767,7 +767,7 @@ def main():
         nid += 1
         dist_count += 1
         dist_idx += 1
-    print(f"  ✓ {dist_count} district reports")
+    print(f"   {dist_count} district reports")
 
     # ── 5. Thematic Reports (80) ──
     print("  Generating thematic reports...")
@@ -787,7 +787,7 @@ def main():
         nid += 1
         theme_count += 1
         theme_idx += 1
-    print(f"  ✓ {theme_count} thematic reports")
+    print(f"   {theme_count} thematic reports")
 
     conn.close()
 
@@ -796,8 +796,8 @@ def main():
         json.dump(narratives, f, indent=2, ensure_ascii=False, default=str)
 
     elapsed = time.time() - START_TIME
-    print(f"\n  ✅ Generated {len(narratives)} narratives in {elapsed:.1f}s")
-    print(f"  📁 Output: {OUTPUT_JSON}")
+    print(f"\n   Generated {len(narratives)} narratives in {elapsed:.1f}s")
+    print(f"   Output: {OUTPUT_JSON}")
 
     # Summary by type
     type_counts = defaultdict(int)

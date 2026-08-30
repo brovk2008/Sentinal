@@ -122,7 +122,7 @@ def _make_driver(worker_id):
 
     # Verify connection
     driver.get("about:blank")
-    _log(f"Worker {worker_id}: SmartBrowz connected ✓ session={driver.session_id}")
+    _log(f"Worker {worker_id}: SmartBrowz connected  session={driver.session_id}")
     return driver
 
 
@@ -397,7 +397,7 @@ def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock
                     save_fir_metadata(did, dname, sname, sid, fir_s, year, "found", stratus_key)
                     with progress_lock:
                         scrape_progress["firs_found"] += 1
-                    _log(f"[W{worker_id}] ✓ FIR {fir_s} ({year}) → Ingested to Sentinal DB & RAG")
+                    _log(f"[W{worker_id}]  FIR {fir_s} ({year}) → Ingested to Sentinal DB & RAG")
                 except Exception as ex:
                     _log(f"[W{worker_id}] Ingestion save error: {ex}")
                     log.error(f"Simulated save error: {ex}")
@@ -500,7 +500,7 @@ def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock
                             else:
                                 pdf_url = f"https://ksp.karnataka.gov.in/firsearch/{href}"
 
-                            _log(f"[W{worker_id}] ✓ FIR {fir_s} found — fetching PDF via requests")
+                            _log(f"[W{worker_id}]  FIR {fir_s} found — fetching PDF via requests")
 
                             # FETCH PDF WITHOUT OPENING IN BROWSER TAB
                             pdf_data = _fetch_pdf_via_requests(driver, pdf_url)
@@ -510,10 +510,10 @@ def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock
                                     pdf_data, did, sid, fir_s, year
                                 ) or ""
                                 status = "found" if stratus_key else "found_no_pdf"
-                                _log(f"[W{worker_id}] ✓ FIR {fir_s} PDF saved → {status}")
+                                _log(f"[W{worker_id}]  FIR {fir_s} PDF saved → {status}")
                             else:
                                 status = "found_no_pdf"
-                                _log(f"[W{worker_id}] ✓ FIR {fir_s} found but PDF download failed")
+                                _log(f"[W{worker_id}]  FIR {fir_s} found but PDF download failed")
 
                             with progress_lock:
                                 scrape_progress["firs_found"] += 1
@@ -549,7 +549,7 @@ def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock
                             _log(f"[W{worker_id}] Browser restart failed: {restart_err} — exiting")
                             break
                     else:
-                        _log(f"[W{worker_id}] ✗ FIR {fir_s}: {e}")
+                        _log(f"[W{worker_id}]  FIR {fir_s}: {e}")
                         with progress_lock:
                             scrape_progress["errors"] += 1
                         save_fir_metadata(did, dname, sname, sid, fir_s, year, "error")

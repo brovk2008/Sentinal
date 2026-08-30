@@ -19,7 +19,7 @@ ALERT_EMAIL = os.getenv("SENTINAL_ALERT_EMAIL", "techp.sentinal.alerts@gmail.com
 
 def send_hotspot_alert(district: str, crime_type: str, spike_pct: float, station: str):
     """Send email + push when hotspot spikes >30% above historical average."""
-    subject = f"🚨 SENTINAL ALERT: Crime Spike in {district}"
+    subject = f" SENTINAL ALERT: Crime Spike in {district}"
     body = f"""
 PROJECT SENTINAL — INTELLIGENCE ALERT
 ======================================
@@ -39,7 +39,7 @@ This is an automated alert from the Sentinal Pattern Intelligence Engine.
 
 def send_critical_fir_alert(fir_number: str, district: str, crime_head: str):
     """Send alert when a CRITICAL severity FIR is ingested."""
-    subject = f"🔴 SENTINAL: Critical FIR Ingested — {district}"
+    subject = f" SENTINAL: Critical FIR Ingested — {district}"
     body = f"""
 CRITICAL FIR ALERT
 ==================

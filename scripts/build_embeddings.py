@@ -255,7 +255,7 @@ def build():
         json.dump(metadata_list, f, ensure_ascii=False)
     print(f"  chunk_metadata.json → {METADATA_PATH}  ({len(metadata_list):,} entries)", flush=True)
 
-    print("\n✅ Done!", flush=True)
+    print("\n Done!", flush=True)
 
 
 if __name__ == "__main__":

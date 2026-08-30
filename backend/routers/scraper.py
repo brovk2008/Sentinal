@@ -85,7 +85,7 @@ async def scraper_status():
       "firs_skipped":    301,
       "errors":          3,
       "current":         "W2 → Bengaluru City → Indiranagar PS",
-      "log":             ["[W0] ✓ FIR 0023 (2024) → found", ...]
+      "log":             ["[W0]  FIR 0023 (2024) → found", ...]
     }
     """
     with progress_lock:

@@ -150,7 +150,7 @@ async def call_ai_messages(
         )
 
     try:
-        async with httpx.AsyncClient(timeout=25) as client:
+        async with httpx.AsyncClient(timeout=5.0) as client:
 
             # ── Attempt 1: Full OpenAI-compatible messages array ──────────────
             try:
@@ -232,7 +232,7 @@ async def call_vision(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=8.0) as client:
             r = await client.post(VISION_CHAT_URL, headers=headers, json=body)
             log.info(f"[QuickML Vision] status={r.status_code}")
             r.raise_for_status()
