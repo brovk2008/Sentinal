@@ -295,10 +295,15 @@ export default function PredictiveIntelligence() {
               />
             </>
           ) : (
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution="&copy; CartoDB"
-            />
+            <>
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                attribution="&copy; Esri &copy; OpenStreetMap"
+              />
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+              />
+            </>
           )}
           {/* Predictive circles layer */}
           <PredictiveLayer isActive={true} daysAhead={7} riskFilter="all" />

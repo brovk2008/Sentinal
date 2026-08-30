@@ -618,8 +618,9 @@ function MapRefTracker({ mapRef }) {
 
 const TILE_LAYERS = {
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; CartoDB',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    overlayUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &copy; OpenStreetMap',
     label: 'Dark Tactical',
   },
   satellite: {
@@ -634,8 +635,8 @@ const TILE_LAYERS = {
     label: 'Esri Topo',
   },
   street: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CartoDB',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
     label: 'Street Vector',
   },
 }
@@ -1405,10 +1406,10 @@ export default function GeospatialMap() {
               url={TILE_LAYERS[mapStyle].url}
               attribution={TILE_LAYERS[mapStyle].attribution}
             />
-            {mapStyle === 'satellite' && TILE_LAYERS.satellite.overlayUrl && (
+            {TILE_LAYERS[mapStyle]?.overlayUrl && (
               <TileLayer
-                key="satellite-overlay"
-                url={TILE_LAYERS.satellite.overlayUrl}
+                key={`${mapStyle}-overlay`}
+                url={TILE_LAYERS[mapStyle].overlayUrl}
                 attribution="&copy; Esri"
                 opacity={0.85}
               />
