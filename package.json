@@ -1,0 +1,13 @@
+{
+  "name": "sentinal",
+  "version": "1.4.0",
+  "description": "Sentinal — AI-Driven Autonomous Crime Analytics & Tactical Intelligence Platform for Karnataka State Police",
+  "scripts": {
+    "deploy:all": "node deploy_sync.js",
+    "build:frontend": "cd frontend && npm run build",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python main.py"
+  },
+  "author": "Vaibhav Kumar (Team MECH)",
+  "license": "CC-BY-4.0"
+}
