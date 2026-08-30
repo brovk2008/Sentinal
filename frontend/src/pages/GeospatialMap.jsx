@@ -13,7 +13,7 @@ import 'leaflet/dist/leaflet.css'
 const KA_CENTER = [14.5, 76.0]
 const CRIME_TYPES = ['All', 'Murder & Culpable Homicide', 'Theft & Burglary', 'Cyber Crime', 'Narcotics', 'Cheating & Fraud', 'Crimes Against Women']
 
-// ── Helper: Tactical 3D Pin Canvas Generator ──
+// ── Helper: Tactical Map Pin Billboard Canvas ──
 function createTacticalPinCanvas(isHeinous, isHigh, isCyber) {
   const canvas = document.createElement('canvas')
   canvas.width = 44
@@ -22,12 +22,12 @@ function createTacticalPinCanvas(isHeinous, isHigh, isCyber) {
 
   const pinColor = isHeinous ? '#ef4444' : isHigh ? '#f97316' : isCyber ? '#3b82f6' : '#c8814a'
 
-  // Shadow
+  // Drop Shadow
   ctx.shadowColor = 'rgba(0, 0, 0, 0.75)'
   ctx.shadowBlur = 6
   ctx.shadowOffsetY = 3
 
-  // Teardrop pin
+  // Teardrop pin pointing down to bottom center (22, 50)
   ctx.beginPath()
   ctx.moveTo(22, 50)
   ctx.bezierCurveTo(8, 34, 4, 24, 4, 16)
@@ -44,7 +44,7 @@ function createTacticalPinCanvas(isHeinous, isHigh, isCyber) {
   ctx.lineWidth = 2
   ctx.stroke()
 
-  // Inner glowing target reticle
+  // Center Target Dot
   ctx.shadowBlur = 0
   ctx.beginPath()
   ctx.arc(22, 16, 6, 0, Math.PI * 2)
@@ -55,6 +55,40 @@ function createTacticalPinCanvas(isHeinous, isHigh, isCyber) {
   ctx.arc(22, 16, 3, 0, Math.PI * 2)
   ctx.fillStyle = pinColor
   ctx.fill()
+
+  return canvas
+}
+
+// ── Helper: District Overview Badge Canvas ──
+function createDistrictBadgeCanvas(count, isCritical, isHigh) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 44
+  canvas.height = 44
+  const ctx = canvas.getContext('2d')
+
+  const color = isCritical ? '#ef4444' : isHigh ? '#f97316' : '#c8814a'
+
+  // Outer glow ring
+  ctx.beginPath()
+  ctx.arc(22, 22, 20, 0, Math.PI * 2)
+  ctx.fillStyle = color + '44'
+  ctx.fill()
+
+  // Inner solid badge
+  ctx.beginPath()
+  ctx.arc(22, 22, 15, 0, Math.PI * 2)
+  ctx.fillStyle = color
+  ctx.fill()
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 2
+  ctx.stroke()
+
+  // Text count
+  ctx.font = 'bold 11px "Inter", sans-serif'
+  ctx.fillStyle = '#ffffff'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(String(count > 999 ? (count/1000).toFixed(1)+'k' : count), 22, 22)
 
   return canvas
 }
@@ -242,7 +276,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
     }
   }, [cesiumReady])
 
-  // Plot Sleek Tactical Crime Beacons & Individual Case Pins with Distance Culling
+  // Plot Clean 2D Ground Tactical Pins (ZERO 3D Cylinders / Towers)
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady) return
     const Cesium = window.Cesium
@@ -250,7 +284,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
     viewer.entities.removeAll()
 
-    // 1. High-Altitude District Overview Beacons (Culled when zoomed in < 50km)
+    // 1. High-Altitude Regional Overview Badges (Culled when zoomed in < 45km)
     const FALLBACK_POINTS = [
       { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban HQ', severity: 'critical', count: 199 },
       { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad Sector', severity: 'medium', count: 73 },
@@ -278,52 +312,39 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
       const isCritical = pt.severity === 'critical' || pt.count > 150
       const isHigh = pt.severity === 'high' || pt.count > 80
-      const pinColor = isCritical
-        ? Cesium.Color.fromCssColorString('#ef4444')
-        : isHigh
-          ? Cesium.Color.fromCssColorString('#f97316')
-          : Cesium.Color.fromCssColorString('#c8814a')
-
       const count = pt.count || pt.incident_count || 1
-      const beaconHeight = Math.max(16000, Math.min(count * 350, 70000))
-      const labelText = `${pt.label || pt.district_name || 'Zone'}\n${count} FIRs`
 
-      // Overview Laser Shaft - Fades out completely when camera is close (< 50km)
+      // Flat Ground Badge - Visible in high-altitude regional view only
       viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight / 2),
-        cylinder: {
-          length: beaconHeight,
-          topRadius: 80.0,
-          bottomRadius: 220.0,
-          material: new Cesium.ColorMaterialProperty(pinColor.withAlpha(0.55)),
-          outline: true,
-          outlineColor: pinColor.withAlpha(0.9),
-          outlineWidth: 1.5,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(50000.0, 5000000.0),
-        }
-      })
-
-      // Overview District Label - High altitude only
-      viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight + 1000),
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
+        billboard: {
+          image: createDistrictBadgeCanvas(count, isCritical, isHigh),
+          width: 38,
+          height: 38,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(45000.0, 5000000.0),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
         label: {
-          text: labelText,
+          text: pt.label || pt.district_name || 'Zone',
           font: 'bold 11px "Inter", sans-serif',
           fillColor: Cesium.Color.WHITE,
           outlineColor: Cesium.Color.BLACK,
           outlineWidth: 2.5,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(60000.0, 1800000.0),
+          pixelOffset: new Cesium.Cartesian2(0, -24),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(55000.0, 1800000.0),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           showBackground: true,
           backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.90),
-          backgroundPadding: new Cesium.Cartesian2(8, 5),
+          backgroundPadding: new Cesium.Cartesian2(8, 4),
         }
       })
     })
 
-    // 2. Individual Case Pins (Street to Regional View)
+    // 2. Individual Case Pins Clamped Flat to Ground (ZERO 3D cylinders/towers)
     casePins.forEach((cp, idx) => {
       const lat = parseFloat(cp.latitude)
       const lng = parseFloat(cp.longitude)
@@ -334,60 +355,18 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
       const isCyber = cp.CrimeGroupName && cp.CrimeGroupName.toLowerCase().includes('cyber')
       const caseNo = cp.CrimeNo || cp.FIRNo || cp.CaseMasterID || (idx + 1)
 
-      const pinColor = isHeinous
-        ? Cesium.Color.fromCssColorString('#ef4444')
-        : isHigh
-          ? Cesium.Color.fromCssColorString('#f97316')
-          : isCyber
-            ? Cesium.Color.fromCssColorString('#3b82f6')
-            : Cesium.Color.fromCssColorString('#c8814a')
-
-      const beaconHeight = 500
-
-      // Sleek Laser Shaft
-      const laser = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight / 2),
-        cylinder: {
-          length: beaconHeight,
-          topRadius: 2.5,
-          bottomRadius: 6.0,
-          material: pinColor.withAlpha(0.8),
-          outline: true,
-          outlineColor: pinColor.withAlpha(0.95),
-          outlineWidth: 1.2,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 120000.0),
-        }
-      })
-      laser.caseData = cp
-
-      // Ground Target Reticle
-      const groundRing = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, 5),
-        ellipse: {
-          semiMinorAxis: isHeinous ? 45 : 30,
-          semiMajorAxis: isHeinous ? 45 : 30,
-          height: 5,
-          material: pinColor.withAlpha(0.4),
-          outline: true,
-          outlineColor: pinColor.withAlpha(0.9),
-          outlineWidth: 2,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 30000.0),
-        }
-      })
-      groundRing.caseData = cp
-
-      // Tactical Billboard Pointer & Dynamic Label
+      // Flat Ground Tactical Map Pin Pointer
       const pinEntity = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, beaconHeight + 20),
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
         billboard: {
           image: createTacticalPinCanvas(isHeinous, isHigh, isCyber),
           width: 32,
           height: 40,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          scaleByDistance: new Cesium.NearFarScalar(2e3, 1.2, 5e5, 0.45),
-          translucencyByDistance: new Cesium.NearFarScalar(2e3, 1.0, 8e5, 0.5),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          scaleByDistance: new Cesium.NearFarScalar(1e3, 1.15, 3e5, 0.45),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 450000.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 350000.0),
         },
         label: {
           text: `FIR #${caseNo}\n${cp.CrimeGroupName || 'Offence'}`,
@@ -397,14 +376,13 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           outlineWidth: 2.5,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -44),
-          scaleByDistance: new Cesium.NearFarScalar(5e3, 1.0, 1.5e5, 0.0),
-          translucencyByDistance: new Cesium.NearFarScalar(5e3, 1.0, 1.5e5, 0.0),
+          pixelOffset: new Cesium.Cartesian2(0, -42),
+          scaleByDistance: new Cesium.NearFarScalar(3e3, 1.0, 1.0e5, 0.0),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           showBackground: true,
           backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.92),
           backgroundPadding: new Cesium.Cartesian2(8, 4),
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 150000.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 100000.0),
         }
       })
       pinEntity.caseData = cp
