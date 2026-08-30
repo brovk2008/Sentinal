@@ -483,7 +483,7 @@ const createTacticalPinIcon = (cp) => {
           align-items: center;
           justify-content: center;
         ">
-          ★
+          *
         </div>
       </div>
       <div style="

@@ -205,7 +205,7 @@ export default function TacticalCaseSolverModal({ isOpen, onClose, caseId = 1 })
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {phase.steps.map((step, idx) => (
                           <div key={idx} style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                            <span style={{ color: '#10b981' }}>✓</span>
+                            <span style={{ color: '#10b981', fontWeight: 'bold' }}>[OK]</span>
                             <span>{step}</span>
                           </div>
                         ))}

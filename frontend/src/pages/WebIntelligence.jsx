@@ -24,11 +24,11 @@ import {
 } from '../api'
 
 const TABS = [
-  { id: 'ecourts', label: '⚖️ e-Courts Bail & Orders', icon: Scale },
-  { id: 'vahan', label: '🚗 VAHAN Vehicle Registry', icon: Car },
-  { id: 'fugitives', label: '🚨 Interpol & CID Fugitives', icon: ShieldAlert },
-  { id: 'cyber', label: '🌐 NCRP Cyber Threat Radar', icon: AlertTriangle },
-  { id: 'osint', label: '📰 OSINT Regional News', icon: Newspaper },
+  { id: 'ecourts', label: 'e-Courts Bail & Orders', icon: Scale },
+  { id: 'vahan', label: 'VAHAN Vehicle Registry', icon: Car },
+  { id: 'fugitives', label: 'Interpol & CID Fugitives', icon: ShieldAlert },
+  { id: 'cyber', label: 'NCRP Cyber Threat Radar', icon: AlertTriangle },
+  { id: 'osint', label: 'OSINT Regional News', icon: Newspaper },
 ]
 
 export default function WebIntelligence() {

@@ -4,14 +4,23 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import { request, fetchLiveRiskScore, fetchSyndicates, fetchCases } from '../api'
 import useLiveFeed from '../hooks/useLiveFeed'
 import CesiumGlobe from '../components/map/CesiumGlobe'
+import { CreditCard, FileText, Smartphone, Lock, Globe, ShieldAlert, Zap, Radio, MapPin, X, Layers, Satellite, AlertTriangle, Activity } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 
 // ─── Constants & Helpers ──────────────────────────────────────────────────────
 const SEV_COLOR = { CRITICAL: '#ef4444', HIGH: '#f59e0b', MEDIUM: '#3b82f6', LOW: '#22c55e' }
 const SEV_BG    = { CRITICAL: 'rgba(239,68,68,0.15)', HIGH: 'rgba(245,158,11,0.12)', MEDIUM: 'rgba(59,130,246,0.12)', LOW: 'rgba(34,197,94,0.12)' }
-const TYPE_ICON = {
-  UPI_VELOCITY:   '💸', NCRP_COMPLAINT: '📋', TELEGRAM_SCAM:  '📱',
-  MULE_FREEZE:    '🔒', PHISHING_DOMAIN:'🎣', DIGITAL_ARREST: '🚨', OTP_DRAIN: '📲',
+const renderTypeIcon = (type) => {
+  switch (type) {
+    case 'UPI_VELOCITY':    return <CreditCard size={11} color="#ef4444" />
+    case 'NCRP_COMPLAINT':   return <FileText size={11} color="#3b82f6" />
+    case 'TELEGRAM_SCAM':    return <Smartphone size={11} color="#8b5cf6" />
+    case 'MULE_FREEZE':      return <Lock size={11} color="#f59e0b" />
+    case 'PHISHING_DOMAIN':  return <Globe size={11} color="#f59e0b" />
+    case 'DIGITAL_ARREST':   return <ShieldAlert size={11} color="#ef4444" />
+    case 'OTP_DRAIN':        return <Smartphone size={11} color="#8b5cf6" />
+    default:                 return <Activity size={11} color="#22c55e" />
+  }
 }
 const fmt = (n) => n >= 1e7 ? `₹${(n/1e7).toFixed(1)}Cr` : n >= 1e5 ? `₹${(n/1e5).toFixed(1)}L` : `₹${(n/1000).toFixed(0)}K`
 const fmtNum = (n) => n?.toLocaleString('en-IN') || '0'
@@ -95,7 +104,7 @@ function UPIVelocityPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto' }}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 700 }}>⚠ {data.critical_alerts} CRITICAL</span>
+        <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}><AlertTriangle size={10} /> {data.critical_alerts} CRITICAL</span>
         <span style={{ fontSize: 9, color: '#64748b' }}>Total at risk: <b style={{ color: '#f59e0b' }}>{fmt(data.total_amount_at_risk_inr)}</b></span>
       </div>
       {data.alerts?.slice(0, 6).map((a, i) => (
@@ -130,7 +139,7 @@ function NCRPStreamPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto' }}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 9, color: '#94a3b8' }}>📋 <b style={{ color: '#3b82f6' }}>{data.total_complaints}</b> complaints · <b style={{ color: '#ef4444' }}>{fmt(data.total_loss_inr)}</b> lost</span>
+        <span style={{ fontSize: 9, color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}><FileText size={10} color="#3b82f6" /> <b style={{ color: '#3b82f6' }}>{data.total_complaints}</b> complaints · <b style={{ color: '#ef4444' }}>{fmt(data.total_loss_inr)}</b> lost</span>
       </div>
       {data.complaints?.slice(0, 8).map((c, i) => (
         <div key={i} style={{
@@ -168,9 +177,9 @@ function TelegramScamPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto' }}>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-        <span style={{ fontSize: 9, color: '#94a3b8' }}>📱 <b style={{ color: '#8b5cf6' }}>{fmtNum(sig.telegram_channels_monitored)}</b> channels</span>
-        <span style={{ fontSize: 9, color: '#94a3b8' }}>🎣 <b style={{ color: '#ef4444' }}>{sig.phishing_domains_detected}</b> live domains</span>
-        <span style={{ fontSize: 9, color: '#94a3b8' }}>🚨 <b style={{ color: '#f59e0b' }}>{sig.new_scam_scripts_detected_24h}</b> new scripts/24h</span>
+        <span style={{ fontSize: 9, color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Smartphone size={10} color="#8b5cf6" /> <b style={{ color: '#8b5cf6' }}>{fmtNum(sig.telegram_channels_monitored)}</b> channels</span>
+        <span style={{ fontSize: 9, color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Globe size={10} color="#ef4444" /> <b style={{ color: '#ef4444' }}>{sig.phishing_domains_detected}</b> live domains</span>
+        <span style={{ fontSize: 9, color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}><ShieldAlert size={10} color="#f59e0b" /> <b style={{ color: '#f59e0b' }}>{sig.new_scam_scripts_detected_24h}</b> new scripts/24h</span>
       </div>
       {data.active_scam_scripts?.map((s, i) => (
         <div key={i} style={{
@@ -206,7 +215,7 @@ function MuleAlertPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto' }}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: 9, color: '#94a3b8' }}>🔒 <b style={{ color: '#ef4444' }}>{data.total_mule_accounts_flagged}</b> accounts · Frozen: <b style={{ color: '#f59e0b' }}>{fmt(data.total_frozen_amount_inr)}</b> · Recoverable: <b style={{ color: '#22c55e' }}>{fmt(data.recoverable_amount_inr)}</b></span>
+        <span style={{ fontSize: 9, color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Lock size={10} color="#ef4444" /> <b style={{ color: '#ef4444' }}>{data.total_mule_accounts_flagged}</b> accounts · Frozen: <b style={{ color: '#f59e0b' }}>{fmt(data.total_frozen_amount_inr)}</b> · Recoverable: <b style={{ color: '#22c55e' }}>{fmt(data.recoverable_amount_inr)}</b></span>
       </div>
       {data.mule_alerts?.slice(0, 7).map((a, i) => (
         <div key={i} style={{
@@ -240,7 +249,7 @@ function FraudAlertTicker({ alerts }) {
           borderRadius: 4, borderLeft: `2px solid ${SEV_COLOR[a.severity] || '#475569'}`,
           animation: i === 0 ? 'fadeIn 0.3s ease' : 'none',
         }}>
-          <span style={{ fontSize: 11, flexShrink: 0 }}>{TYPE_ICON[a.type] || '⚡'}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginTop: 1 }}>{renderTypeIcon(a.type)}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 9, color: '#e2e8f0', lineHeight: 1.4 }}>{a.message}</div>
             <div style={{ fontSize: 8, color: '#475569', marginTop: 1 }}>{a.timestamp} · {a.district}</div>
@@ -382,7 +391,7 @@ export default function WarRoom() {
     if (!prediction) return
     const tick = () => {
       const diff = prediction.target_time - Date.now()
-      if (diff <= 0) { setCountdown('⚡ THREAT WINDOW ACTIVE'); return }
+      if (diff <= 0) { setCountdown('THREAT WINDOW ACTIVE'); return }
       const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000)
       setCountdown(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
     }
@@ -406,11 +415,11 @@ export default function WarRoom() {
 
   const kpi = kpis?.kpis || {}
   const TABS = [
-    { id: 'upi',      label: '💸 UPI Velocity',    color: '#ef4444' },
-    { id: 'ncrp',     label: '📋 1930 NCRP',       color: '#3b82f6' },
-    { id: 'telegram', label: '📱 Telegram/WA',      color: '#8b5cf6' },
-    { id: 'mule',     label: '🔒 Mule Freezes',    color: '#f59e0b' },
-    { id: 'stream',   label: '⚡ Live Stream',      color: '#22c55e' },
+    { id: 'upi',      label: 'UPI Velocity',    color: '#ef4444', Icon: CreditCard },
+    { id: 'ncrp',     label: '1930 NCRP',       color: '#3b82f6', Icon: FileText },
+    { id: 'telegram', label: 'Telegram / WA',   color: '#8b5cf6', Icon: Smartphone },
+    { id: 'mule',     label: 'Mule Freezes',    color: '#f59e0b', Icon: Lock },
+    { id: 'stream',   label: 'Live Stream',     color: '#22c55e', Icon: Radio },
   ]
   const activeTab_ = TABS.find(t => t.id === activeTab)
 
@@ -447,7 +456,7 @@ export default function WarRoom() {
             <button onClick={() => navigate('/dashboard')} style={{
               background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)',
               borderRadius: 4, color: '#f87171', padding: '3px 10px', fontSize: 9, cursor: 'pointer', fontWeight: 700,
-            }}>✕ EXIT</button>
+            }}>EXIT</button>
           </div>
         </div>
 
@@ -485,7 +494,7 @@ export default function WarRoom() {
               }}>{countdown}</div>
               {prediction && (
                 <div style={{ fontSize: 8, color: '#64748b', marginTop: 4 }}>
-                  📍 {prediction.district} · {prediction.station}<br />
+                  {prediction.district} · {prediction.station}<br />
                   <span style={{ color: '#22c55e', fontWeight: 700 }}>{prediction.confidence}%</span> confidence
                 </div>
               )}
@@ -563,7 +572,7 @@ export default function WarRoom() {
                       borderRadius: 3, padding: '2px 5px', fontSize: 7.5, cursor: 'pointer', fontWeight: 700,
                     }}
                   >
-                    🗺️ DARK
+                    DARK
                   </button>
                   <button
                     onClick={() => setMapMode('satellite')}
@@ -574,7 +583,7 @@ export default function WarRoom() {
                       borderRadius: 3, padding: '2px 5px', fontSize: 7.5, cursor: 'pointer', fontWeight: 700,
                     }}
                   >
-                    🛰️ SATELLITE
+                    SATELLITE
                   </button>
                   <button
                     onClick={() => setMapMode('cesium3d')}
@@ -585,7 +594,7 @@ export default function WarRoom() {
                       borderRadius: 3, padding: '2px 5px', fontSize: 7.5, cursor: 'pointer', fontWeight: 700,
                     }}
                   >
-                    🌐 3D GLOBE
+                    3D GLOBE
                   </button>
                 </div>
               </div>
@@ -610,7 +619,7 @@ export default function WarRoom() {
                 borderRadius: 4, padding: '4px 8px', fontSize: 8, color: '#ef4444',
                 animation: 'slideIn 0.3s ease', maxWidth: 180,
               }}>
-                🔴 {lastLiveEvent.crime_type} · {lastLiveEvent.district}
+                {lastLiveEvent.crime_type} · {lastLiveEvent.district}
               </div>
             )}
 
@@ -671,7 +680,12 @@ export default function WarRoom() {
                   color: activeTab === tab.id ? tab.color : '#475569',
                   borderBottom: activeTab === tab.id ? `2px solid ${tab.color}` : '2px solid transparent',
                   transition: 'all 0.2s',
-                }}>{tab.label}</button>
+                }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <tab.Icon size={10} />
+                    {tab.label}
+                  </span>
+                </button>
               ))}
             </div>
             {/* Panel content */}

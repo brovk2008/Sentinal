@@ -263,7 +263,7 @@ export default function PredictiveIntelligence() {
               borderRadius: 4, padding: '3px 7px', fontSize: 9, cursor: 'pointer', fontWeight: 600
             }}
           >
-            🗺️ Tactical Vector
+            Tactical Vector
           </button>
           <button
             onClick={() => setMapMode('satellite')}
@@ -274,7 +274,7 @@ export default function PredictiveIntelligence() {
               borderRadius: 4, padding: '3px 7px', fontSize: 9, cursor: 'pointer', fontWeight: 600
             }}
           >
-            🛰️ Satellite Layer
+            Satellite Layer
           </button>
         </div>
 

@@ -1,12 +1,13 @@
+import { Link, Crosshair, Scale, Dna, Box, ShieldAlert, Building2, Search, FileText, CheckCircle2, MapPin, Award, Activity, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
 import { request } from '../api'
 
 const TABS = [
-  { id: 'crypto',     label: '⛓️ Crypto Tracer',      desc: 'Blockchain & wallet forensic unmixer' },
-  { id: 'ballistics', label: '🔫 Ballistics AI',       desc: 'Weapon classification & arms trafficking' },
-  { id: 'bail',       label: '⚖️ Bail Risk Assessor',  desc: 'Flight risk score & prosecutor affidavit' },
-  { id: 'coldcase',   label: '🧬 Cold Case Linker',    desc: 'Serial MO fingerprint across districts' },
-  { id: 'panchnama',  label: '📦 Panchnama Vault',     desc: 'Section 65B cryptographic custody chain' },
+  { id: 'crypto',     label: 'Crypto Tracer',      desc: 'Blockchain & wallet forensic unmixer' },
+  { id: 'ballistics', label: 'Ballistics AI',       desc: 'Weapon classification & arms trafficking' },
+  { id: 'bail',       label: 'Bail Risk Assessor',  desc: 'Flight risk score & prosecutor affidavit' },
+  { id: 'coldcase',   label: 'Cold Case Linker',    desc: 'Serial MO fingerprint across districts' },
+  { id: 'panchnama',  label: 'Panchnama Vault',     desc: 'Section 65B cryptographic custody chain' },
 ]
 
 const st = {
@@ -73,7 +74,7 @@ function CryptoTracer() {
             </select>
           </div>
         </div>
-        <button style={st.btn()} onClick={run} disabled={loading}>{loading ? '⛓️ Tracing...' : '⛓️ Trace & Unmix Blockchain'}</button>
+        <button style={st.btn()} onClick={run} disabled={loading}>{loading ? 'Tracing...' : 'Trace & Unmix Blockchain'}</button>
       </div>
       {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: 12, borderRadius: 8 }}>{err}</div>}
       {data && (
@@ -89,7 +90,7 @@ function CryptoTracer() {
             ))}
           </div>
           <div style={st.card}>
-            <div style={st.sectionTitle}>🔗 Blockchain Hop Chain</div>
+            <div style={st.sectionTitle}>Blockchain Hop Chain</div>
             {data.hop_chain?.map((hop, i) => (
               <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: hop.mixer_flag ? 'rgba(239,68,68,0.2)' : hop.exchange_flag ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800, color: hop.mixer_flag ? '#f87171' : hop.exchange_flag ? '#4ade80' : '#f59e0b' }}>{hop.hop}</div>
@@ -98,19 +99,19 @@ function CryptoTracer() {
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 2, wordBreak: 'break-all' }}>{hop.wallet}</div>
                   <div style={{ marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span style={st.badge('yellow')}>{hop.blockchain || chain}</span>
-                    {hop.mixer_flag && <span style={st.badge('red')}>🚨 MIXER: {hop.mixer_name}</span>}
-                    {hop.exchange_flag && <span style={st.badge('green')}>🏦 Exchange Exit</span>}
+                    {hop.mixer_flag && <span style={st.badge('red')}>MIXER: {hop.mixer_name}</span>}
+                    {hop.exchange_flag && <span style={st.badge('green')}>Exchange Exit</span>}
                     {hop.amount_inr && <span style={st.badge('yellow')}>₹{(hop.amount_inr/100000).toFixed(1)}L</span>}
                     {hop.amount_usdt && <span style={st.badge('yellow')}>USDT {hop.amount_usdt.toLocaleString()}</span>}
                   </div>
-                  {hop.kyc_demand && <div style={{ marginTop: 4, fontSize: 11, color: '#fbbf24', background: 'rgba(245,158,11,0.1)', padding: '4px 8px', borderRadius: 4 }}>📋 {hop.kyc_demand}</div>}
+                  {hop.kyc_demand && <div style={{ marginTop: 4, fontSize: 11, color: '#fbbf24', background: 'rgba(245,158,11,0.1)', padding: '4px 8px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 4 }}><FileText size={11} /> {hop.kyc_demand}</div>}
                 </div>
               </div>
             ))}
           </div>
           {data.statutory_subpoena && (
             <div style={{ ...st.card, borderColor: 'rgba(239,68,68,0.3)' }}>
-              <div style={st.sectionTitle}>⚖️ Section 94 BNSS Statutory Subpoena</div>
+              <div style={st.sectionTitle}>Section 94 BNSS Statutory Subpoena</div>
               <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.7 }}>{data.statutory_subpoena.certification_text || data.statutory_subpoena.directive}</div>
               <div style={{ marginTop: 8, fontSize: 11, color: '#64748b' }}>
                 <b>Exchanges Served:</b> {data.statutory_subpoena.exchanges_served?.join(' | ')} &nbsp;·&nbsp;
@@ -161,7 +162,7 @@ function BallisticsClassifier() {
             <input style={st.input} value={caseRef} onChange={e => setCaseRef(e.target.value)} />
           </div>
         </div>
-        <button style={st.btn('#ef4444')} onClick={run} disabled={loading}>{loading ? '🔍 Classifying...' : '🔫 Classify Weapon & Trace Arms'}</button>
+        <button style={st.btn('#ef4444')} onClick={run} disabled={loading}>{loading ? 'Classifying...' : 'Classify Weapon & Trace Arms'}</button>
       </div>
       {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: 12, borderRadius: 8 }}>{err}</div>}
       {data && (
@@ -172,7 +173,7 @@ function BallisticsClassifier() {
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{data.weapon_classification}</div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Caliber: <b style={{ color: '#e2e8f0' }}>{data.estimated_caliber}</b> | Origin: <b style={{ color: '#fbbf24' }}>{data.trafficking_origin}</b></div>
               </div>
-              <span style={{ ...st.badge(dangerColor), fontSize: 13, padding: '4px 14px' }}>⚠️ {data.danger_level}</span>
+              <span style={{ ...st.badge(dangerColor), fontSize: 13, padding: '4px 14px' }}>{data.danger_level}</span>
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8', background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: 6 }}>
               <b>Legal Section:</b> {data.applicable_legal_section}
@@ -180,7 +181,7 @@ function BallisticsClassifier() {
           </div>
           {data.ballistic_analysis && (
             <div style={st.card}>
-              <div style={st.sectionTitle}>🔬 Ballistic Analysis</div>
+              <div style={st.sectionTitle}>Ballistic Analysis</div>
               {Object.entries(data.ballistic_analysis).map(([k, v]) => (
                 <div key={k} style={{ fontSize: 12, color: '#94a3b8', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <b style={{ color: '#cbd5e1', textTransform: 'capitalize' }}>{k.replace(/_/g, ' ')}:</b> {v}
@@ -190,7 +191,7 @@ function BallisticsClassifier() {
           )}
           {data.cross_reference_past_seizures?.length > 0 && (
             <div style={st.card}>
-              <div style={st.sectionTitle}>🗂️ Cross-Referenced Past Seizures (Ballistic Database)</div>
+              <div style={st.sectionTitle}>Cross-Referenced Past Seizures (Ballistic Database)</div>
               {data.cross_reference_past_seizures.map((s, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 12 }}>
                   <span style={st.badge('yellow')}>{s.match_confidence}% Match</span>
@@ -203,7 +204,7 @@ function BallisticsClassifier() {
           )}
           {data.arms_trafficking_lead && (
             <div style={{ ...st.card, borderColor: 'rgba(245,158,11,0.3)' }}>
-              <div style={st.sectionTitle}>🚨 Arms Trafficking Intelligence Lead</div>
+              <div style={st.sectionTitle}>Arms Trafficking Intelligence Lead</div>
               <div style={{ fontSize: 12, color: '#fbbf24' }}><b>Network:</b> {data.arms_trafficking_lead.trafficking_network}</div>
               <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}><b>Known Dealers:</b> {data.arms_trafficking_lead.known_dealers?.join(', ')}</div>
               <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{data.arms_trafficking_lead.recommended_action}</div>
@@ -285,7 +286,7 @@ function BailRiskAssessor() {
             Chargesheet Filed
           </label>
         </div>
-        <button style={st.btn('#8b5cf6')} onClick={run} disabled={loading}>{loading ? '⚖️ Calculating...' : '⚖️ Compute Flight Risk Score'}</button>
+        <button style={st.btn('#8b5cf6')} onClick={run} disabled={loading}>{loading ? 'Calculating...' : 'Compute Flight Risk Score'}</button>
       </div>
       {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: 12, borderRadius: 8 }}>{err}</div>}
       {data && (
@@ -308,7 +309,7 @@ function BailRiskAssessor() {
           </div>
           {data.prosecutor_bail_objection_affidavit && (
             <div style={{ ...st.card, borderColor: 'rgba(139,92,246,0.3)' }}>
-              <div style={st.sectionTitle}>📋 Prosecutor Bail Objection Affidavit (Auto-Generated)</div>
+              <div style={st.sectionTitle}>Prosecutor Bail Objection Affidavit (Auto-Generated)</div>
               <div style={{ fontSize: 12, color: '#fbbf24', marginBottom: 8 }}><b>{data.prosecutor_bail_objection_affidavit.document_title}</b></div>
               <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>Under: {data.prosecutor_bail_objection_affidavit.court_section}</div>
               {data.prosecutor_bail_objection_affidavit.grounds?.map((g, i) => (
@@ -357,13 +358,13 @@ function ColdCaseLinker() {
             <button key={q} onClick={() => setQuery(q)} style={{ ...st.btn('#1e293b'), color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontSize: 11, padding: '5px 10px' }}>{q.slice(0, 32)}…</button>
           ))}
         </div>
-        <button style={st.btn('#22c55e')} onClick={run} disabled={loading}>{loading ? '🧬 Scanning 10,000 FIRs...' : '🧬 Find MO Matches & Link Cold Cases'}</button>
+        <button style={st.btn('#22c55e')} onClick={run} disabled={loading}>{loading ? 'Scanning 10,000 FIRs...' : 'Find MO Matches & Link Cold Cases'}</button>
       </div>
       {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: 12, borderRadius: 8 }}>{err}</div>}
       {data && (
         <div>
           <div style={st.card}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>🧬 {data.mo_signature_detected}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>{data.mo_signature_detected}</div>
             <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.7 }}>{data.mo_description}</div>
             <div style={{ marginTop: 10, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <div style={st.statBlock}><span style={{ ...st.statVal, color: '#22c55e' }}>{data.total_matches}</span><span style={st.statLbl}>Linked Cases</span></div>
@@ -372,7 +373,7 @@ function ColdCaseLinker() {
             </div>
           </div>
           <div style={st.card}>
-            <div style={st.sectionTitle}>🗂️ Linked Cold Cases by District</div>
+            <div style={st.sectionTitle}>Linked Cold Cases by District</div>
             {data.linked_cold_cases?.map((c, i) => (
               <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={st.badge(c.status === 'Unsolved' ? 'red' : 'green')}>{c.status}</span>
@@ -385,7 +386,7 @@ function ColdCaseLinker() {
             ))}
           </div>
           <div style={{ ...st.card, borderColor: 'rgba(34,197,94,0.3)' }}>
-            <div style={st.sectionTitle}>🎯 Investigative Lead</div>
+            <div style={st.sectionTitle}>Investigative Lead</div>
             <div style={{ fontSize: 12, color: '#fbbf24' }}><b>Gang Profile:</b> {data.gang_profile}</div>
             <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{data.investigative_lead}</div>
             <div style={{ fontSize: 11, color: '#64748b', marginTop: 8 }}>{data.recommended_action}</div>
@@ -459,7 +460,7 @@ function DigitalPanchnama() {
             <input style={st.input} type="number" step="0.0001" value={form.seizure_lng} onChange={e => upd('seizure_lng', parseFloat(e.target.value))} />
           </div>
         </div>
-        <button style={st.btn('#0ea5e9')} onClick={run} disabled={loading}>{loading ? '📦 Generating...' : '📦 Generate Section 65B Panchnama & Custody Chain'}</button>
+        <button style={st.btn('#0ea5e9')} onClick={run} disabled={loading}>{loading ? 'Generating...' : 'Generate Section 65B Panchnama & Custody Chain'}</button>
       </div>
       {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: 12, borderRadius: 8 }}>{err}</div>}
       {data && (
@@ -470,21 +471,21 @@ function DigitalPanchnama() {
                 <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Evidence Tag ID</div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#0ea5e9', letterSpacing: 1 }}>{data.evidence_tag_id}</div>
               </div>
-              <span style={st.badge('green')}>✅ {data.cryptographic_proof?.tamper_status}</span>
+              <span style={st.badge('green')}>{data.cryptographic_proof?.tamper_status}</span>
             </div>
             <div style={{ marginTop: 10, fontSize: 11, color: '#64748b' }}>
               <b>SHA-256:</b> <span style={{ fontFamily: 'monospace', color: '#94a3b8', wordBreak: 'break-all' }}>{data.cryptographic_proof?.sha256_hash}</span>
             </div>
           </div>
           <div style={st.card}>
-            <div style={st.sectionTitle}>🔗 Chain of Custody Audit Trail</div>
+            <div style={st.sectionTitle}>Chain of Custody Audit Trail</div>
             {data.chain_of_custody?.map((step, i) => (
               <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: step.status?.includes('COMPLETE') || step.status?.includes('REGISTERED') ? 'rgba(34,197,94,0.2)' : 'rgba(100,116,139,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800, color: step.status?.includes('COMPLETE') || step.status?.includes('REGISTERED') ? '#4ade80' : '#64748b' }}>{step.step}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{step.action}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{step.officer || step.lab} · {step.timestamp}</div>
-                  {step.gps_location && <div style={{ fontSize: 11, color: '#64748b' }}>📍 {step.gps_location}</div>}
+                  {step.gps_location && <div style={{ fontSize: 11, color: '#64748b' }}>{step.gps_location}</div>}
                   <div style={{ fontSize: 10, color: '#475569', fontFamily: 'monospace', marginTop: 2 }}>Hash: {step.hash_checkpoint}</div>
                 </div>
                 <span style={{ ...st.badge(step.status?.includes('PENDING') ? 'yellow' : 'green'), alignSelf: 'flex-start' }}>{step.status}</span>
@@ -493,11 +494,11 @@ function DigitalPanchnama() {
           </div>
           {data.section_65b_certificate && (
             <div style={{ ...st.card, borderColor: 'rgba(14,165,233,0.3)' }}>
-              <div style={st.sectionTitle}>📜 {data.section_65b_certificate.certificate_title}</div>
+              <div style={st.sectionTitle}>{data.section_65b_certificate.certificate_title}</div>
               <div style={{ fontSize: 11, color: '#fbbf24', marginBottom: 8 }}>Under: {data.section_65b_certificate.applicable_law}</div>
               <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.8, fontStyle: 'italic' }}>{data.section_65b_certificate.certification_text}</div>
               <div style={{ marginTop: 10, fontSize: 11, color: '#64748b' }}>Precedent: {data.section_65b_certificate.precedent}</div>
-              <div style={{ marginTop: 8 }}><span style={st.badge('green')}>✅ Court Submission Ready</span></div>
+              <div style={{ marginTop: 8 }}><span style={st.badge('green')}>Court Submission Ready</span></div>
             </div>
           )}
           {data.qr_code_data && (
@@ -529,7 +530,7 @@ export default function ForensicIntel() {
   return (
     <div style={st.page}>
       <div style={st.header}>
-        <h1 style={st.title}>🔬 Forensic Intelligence Suite</h1>
+        <h1 style={st.title}>Forensic Intelligence Suite</h1>
         <p style={st.sub}>Advanced Criminology Engines — Crypto Forensics · Ballistics AI · Bail Risk · Cold Case Linker · Section 65B Vault</p>
       </div>
 

@@ -55,7 +55,7 @@ app.post("/", async (req, res) => {
       const datastore = catalystApp.datastore();
       const table = datastore.table("FIR_Records");
 
-      // All 39 columns confirmed in FIR_Records table ✓
+      // All 39 columns confirmed in FIR_Records table
       const rowData = {
         FIR_Number:                   parsed.fir_number           || String(fir_metadata.fir_number || ""),
         Year:                         parsed.year                 || String(fir_metadata.year || ""),

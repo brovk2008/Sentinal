@@ -11,7 +11,7 @@ import TacticalCaseSolverModal from '../components/investigation/TacticalCaseSol
 import { useState, useEffect } from 'react';
 import { fetchPatternIntel, predictNextCrime } from '../api';
 import Badge from '../components/shared/Badge';
-import { Dna, Target, MapPin, Users, Zap, User, ShieldAlert, Clock, Compass } from 'lucide-react';
+import { Dna, Target, MapPin, Users, Zap, User, ShieldAlert, Clock, Compass, ArrowRight } from 'lucide-react';
 
 export default function PatternIntel() {
   const [activeTab, setActiveTab] = useState('mo');
@@ -205,7 +205,7 @@ export default function PatternIntel() {
 
       {loading ? (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--copper-400)', fontSize: 13 }}>
-          ⏳ Analyzing crime patterns, MO tactics, and spatial risks across 41 districts...
+          Analyzing crime patterns, MO tactics, and spatial risks across 41 districts...
         </div>
       ) : (
         <div>
@@ -361,7 +361,7 @@ export default function PatternIntel() {
                           {Math.round(chain.probability * 100)}%
                         </span>
                         <div style={{ width: 40, height: 2, background: 'linear-gradient(90deg, #c8814a, #ef4444)' }}></div>
-                        <span style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>➔</span>
+                        <ArrowRight size={12} color="#ef4444" style={{ marginTop: 2 }} />
                       </div>
 
                       {/* Node B */}

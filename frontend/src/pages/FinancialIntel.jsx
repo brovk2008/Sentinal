@@ -38,7 +38,7 @@ function SmurfingModal({ onClose }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
             {/* Overview */}
             <div style={{ background: 'rgba(224,82,82,0.15)', border: '1px solid rgba(224,82,82,0.4)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>★ CYBER MULE SYNDICATE UNMASKED ({data.cyber_syndicate_confidence}% CONFIDENCE)</div>
+              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>CYBER MULE SYNDICATE UNMASKED ({data.cyber_syndicate_confidence}% CONFIDENCE)</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginTop: 4 }}>
                 Total Diverted Fraud Volume: Rs. {data.total_diverted_amount_inr?.toLocaleString('en-IN')}
               </div>
@@ -131,7 +131,7 @@ export default function FinancialIntel() {
           }}
         >
           <ShieldAlert size={14} />
-          <span>⚡ Unmask Smurfing & Mule Rings</span>
+          <span>Unmask Smurfing & Mule Rings</span>
         </button>
       </div>
 

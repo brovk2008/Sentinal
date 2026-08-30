@@ -500,10 +500,10 @@ export default function AIAssistant() {
         overflowX: 'auto',
       }}>
         {[
-          '🚗 Who stole the white Hyundai Creta on canvas CANVAS-VEHICLE-THEFT-01?',
-          '⚡ Trace the getaway route and FASTag toll pings for the stolen car.',
-          '🔗 Check alibi contradictions for Imran Pasha vs cell tower CDR logs.',
-          '🔍 What physical evidence links the suspect to the Indiranagar crime scene?'
+          'Who stole the white Hyundai Creta on canvas CANVAS-VEHICLE-THEFT-01?',
+          'Trace the getaway route and FASTag toll pings for the stolen car.',
+          'Check alibi contradictions for Imran Pasha vs cell tower CDR logs.',
+          'What physical evidence links the suspect to the Indiranagar crime scene?'
         ].map((s, idx) => (
           <button
             key={idx}

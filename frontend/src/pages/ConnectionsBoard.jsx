@@ -117,7 +117,7 @@ function SentinalNode({ data, selected }) {
                     marginBottom: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
         <NodeIcon type={data.type} size={11} />
         <span>{data.type}</span>
-        {isHighlighted && <span style={{ marginLeft: 'auto', color: '#ff4d4f', fontSize: 9 }}>★ TARGET</span>}
+        {isHighlighted && <span style={{ marginLeft: 'auto', color: '#ff4d4f', fontSize: 9 }}>TARGET</span>}
       </div>
       <div style={{ fontSize: 13, color: '#fff', fontWeight: 600,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -418,7 +418,7 @@ function ANPRConvoyModal({ onClose }) {
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
             <div style={{ background: 'rgba(224,82,82,0.15)', border: '1px solid rgba(224,82,82,0.4)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>★ CONVOY ESCORT DETECTED ({data.convoy_confidence}% MATCH)</div>
+              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>CONVOY ESCORT DETECTED ({data.convoy_confidence}% MATCH)</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginTop: 4 }}>
                 Target: {data.target_vehicle} <span style={{ color: '#aaa' }}>← Trailed by →</span> {data.convoy_vehicle.plate_number} ({data.convoy_vehicle.model})
               </div>
@@ -487,7 +487,7 @@ function TacticalStingModal({ onClose }) {
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
             <div style={{ background: 'rgba(224,82,82,0.18)', border: '1px solid rgba(224,82,82,0.5)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#ff4d4f' }}>🚨 {data.tactical_alert}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#ff4d4f' }}>{data.tactical_alert}</div>
               <div style={{ fontSize: 11, color: '#eee', marginTop: 4 }}>
                 Escape Radius: {data.escape_reachability_radius_km} km | Window Before Border Exit: <strong>{data.window_before_state_border_exit_minutes} mins</strong>
               </div>
@@ -550,7 +550,7 @@ function BiometricMorphModal({ onClose }) {
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
             <div style={{ background: 'rgba(180,82,224,0.12)', border: '1px solid rgba(180,82,224,0.35)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: '#d482ff', fontWeight: 700 }}>★ BIOMETRIC LANDMARK RECONSTRUCTION ({data.facial_landmarks.biometric_confidence}% CONFIDENCE)</div>
+              <div style={{ fontSize: 11, color: '#d482ff', fontWeight: 700 }}>BIOMETRIC LANDMARK RECONSTRUCTION ({data.facial_landmarks.biometric_confidence}% CONFIDENCE)</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 2 }}>Target: {data.suspect_name}</div>
               <div style={{ fontSize: 11, color: '#ccc', marginTop: 4 }}>
                 Interpupillary Distance: {data.facial_landmarks.interpupillary_distance_px}px | Jawline Angularity: {data.facial_landmarks.jawline_angularity_deg}°
@@ -617,7 +617,7 @@ function InterrogationCopilotModal({ onClose }) {
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
             <div style={{ background: 'rgba(224,82,82,0.15)', border: '1px solid rgba(224,82,82,0.4)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>★ STATEMENT CREDIBILITY: {data.statement_credibility_score}% (EXTREME DECEPTION DETECTED)</div>
+              <div style={{ fontSize: 11, color: '#ff7875', fontWeight: 700 }}>STATEMENT CREDIBILITY: {data.statement_credibility_score}% (EXTREME DECEPTION DETECTED)</div>
               <div style={{ fontSize: 11, color: '#eee', marginTop: 4 }}>
                 Target Suspect: <strong>{data.suspect_name}</strong> | Tactic: {data.recommended_interrogation_tactic}
               </div>
@@ -911,7 +911,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <Smile size={13} />
-          <span>🎭 Disguise Morph</span>
+          <span>Disguise Morph</span>
         </button>
 
         <button
@@ -925,7 +925,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <MessageSquare size={13} />
-          <span>🕵️ Interrogation</span>
+          <span>Interrogation</span>
         </button>
 
         <button
@@ -939,7 +939,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <FileText size={13} />
-          <span>📑 BNS Chargesheet</span>
+          <span>BNS Chargesheet</span>
         </button>
 
         <button
@@ -953,7 +953,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <Car size={13} />
-          <span>🚗 ANPR Convoy</span>
+          <span>ANPR Convoy</span>
         </button>
 
         <button
@@ -967,7 +967,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <Radio size={13} />
-          <span>🎯 Sting</span>
+          <span>Sting</span>
         </button>
 
         <button
@@ -995,7 +995,7 @@ export default function ConnectionsBoard() {
           }}
         >
           <ShieldAlert size={14} />
-          <span>🤖 AI Detective</span>
+          <span>AI Detective</span>
         </button>
       </div>
 
@@ -1041,10 +1041,10 @@ export default function ConnectionsBoard() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {[
-              { label: '🚗 Who stole the car?', q: 'Who stole the white Hyundai Creta and how did they execute the theft?' },
-              { label: '⚡ Trace Escape Route', q: 'Trace the vehicle getaway path from Indiranagar to the toll checkpoint.' },
-              { label: '🔗 Check Alibis', q: 'Assess suspect alibis and point out contradictions with cell tower CDR logs.' },
-              { label: '📋 Action Plan', q: 'What immediate police warrants and search actions should be executed?' }
+              { label: 'Who stole the car?', q: 'Who stole the white Hyundai Creta and how did they execute the theft?' },
+              { label: 'Trace Escape Route', q: 'Trace the vehicle getaway path from Indiranagar to the toll checkpoint.' },
+              { label: 'Check Alibis', q: 'Assess suspect alibis and point out contradictions with cell tower CDR logs.' },
+              { label: 'Action Plan', q: 'What immediate police warrants and search actions should be executed?' }
             ].map(p => (
               <button
                 key={p.label}
@@ -1092,7 +1092,7 @@ export default function ConnectionsBoard() {
                 border: '1px solid rgba(224,82,82,0.4)', borderRadius: 10, padding: 12
               }}>
                 <div style={{ fontSize: 10, color: '#ff7875', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  ★ IDENTIFIED PRIME SUSPECT
+                  IDENTIFIED PRIME SUSPECT
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginTop: 2 }}>
                   {detectiveVerdict.prime_suspect}
