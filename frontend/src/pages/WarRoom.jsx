@@ -19,17 +19,23 @@ const fmtNum = (n) => n?.toLocaleString('en-IN') || '0'
 function KpiCard({ value, label, color = '#f59e0b', pulse }) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.03)', border: `1px solid ${color}33`,
-      borderRadius: 6, padding: '8px 12px', minWidth: 110, position: 'relative', overflow: 'hidden',
+      background: 'rgba(255,255,255,0.025)',
+      border: '1px solid rgba(255,255,255,0.06)',
+      borderTop: `2px solid ${color}`,
+      borderRadius: 6,
+      padding: '8px 12px',
+      minWidth: 115,
+      position: 'relative',
+      overflow: 'hidden',
     }}>
       {pulse && (
         <span style={{
-          position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%',
-          background: color, boxShadow: `0 0 8px ${color}`, animation: 'pulse 1.4s infinite',
+          position: 'absolute', top: 6, right: 6, width: 5, height: 5, borderRadius: '50%',
+          background: color, boxShadow: `0 0 6px ${color}`, animation: 'pulse 1.4s infinite',
         }} />
       )}
-      <div style={{ fontSize: 18, fontWeight: 900, color, fontFamily: 'monospace', letterSpacing: 1 }}>{value}</div>
-      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 17, fontWeight: 900, color, fontFamily: 'monospace', letterSpacing: 0.5 }}>{value}</div>
+      <div style={{ fontSize: 8.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.7, marginTop: 2, fontWeight: 600 }}>{label}</div>
     </div>
   )
 }
@@ -302,23 +308,44 @@ export default function WarRoom() {
 
   // ── Load operations from syndicates ───────────────────────────────────────
   useEffect(() => {
-    const CODENAMES = ['SHADOW NET', 'BLACK CIRCUIT', 'EAGLE EYE', 'GOLDEN COBRA', 'SILENT WARRIOR', 'VOID WALKER', 'PHANTOM GRID', 'IRON VEIL']
+    const CODENAMES = [
+      'SHADOW NET', 'CYBER SIEGE', 'EAGLE EYE', 'HAWALA FRACTURE',
+      'VIPER HUNT', 'GHOST MULE', 'IRON GRID', 'SILENT COBRA'
+    ]
     fetchSyndicates().then(data => {
       const list = (data?.length ? data : [
-        { syndicate_id: 1, syndicate_name: 'D-Company Splinter', total_cases: 120 },
-        { syndicate_id: 2, syndicate_name: 'Hebbal Cyber Syndicate', total_cases: 82 },
-        { syndicate_id: 3, syndicate_name: 'Western Ghats Narcotics', total_cases: 45 },
-        { syndicate_id: 4, syndicate_name: 'Cyber Fraud UPI Ring', total_cases: 31 },
-        { syndicate_id: 5, syndicate_name: 'Digital Arrest Network', total_cases: 18 },
+        { syndicate_id: 1, syndicate_name: 'Bengaluru Cyber Fraud Collective', total_cases: 142 },
+        { syndicate_id: 2, syndicate_name: 'Mysuru Land Grabbing Syndicate', total_cases: 98 },
+        { syndicate_id: 3, syndicate_name: 'Belagavi Drug Trafficking Network', total_cases: 84 },
+        { syndicate_id: 4, syndicate_name: 'Kalaburagi Extortion Ring', total_cases: 67 },
+        { syndicate_id: 5, syndicate_name: 'Mangaluru Hawala Network', total_cases: 53 },
+        { syndicate_id: 6, syndicate_name: 'Tumakuru Vehicle Theft Gang', total_cases: 46 },
+        { syndicate_id: 7, syndicate_name: 'Davanagere Robbery Syndicate', total_cases: 38 },
       ])
-      setOperations(list.map((s, idx) => ({
-        id: s.syndicate_id,
-        name: `OP ${CODENAMES[idx % CODENAMES.length]}`,
-        syndicate: s.syndicate_name,
-        cases: s.total_cases,
-        status: s.total_cases >= 100 ? 'PURSUING' : s.total_cases >= 50 ? 'MONITORING' : 'SURVEILLANCE',
-        color: s.total_cases >= 100 ? '#ef4444' : s.total_cases >= 50 ? '#f59e0b' : '#22c55e',
-      })))
+      
+      // Take top 7 operations and assign nuanced operational status
+      setOperations(list.slice(0, 7).map((s, idx) => {
+        let status = 'SURVEILLANCE'
+        let color = '#10b981'
+        if (s.total_cases >= 90) {
+          status = 'PURSUING'
+          color = '#ef4444'
+        } else if (s.total_cases >= 60) {
+          status = 'INTERCEPT'
+          color = '#f59e0b'
+        } else if (s.total_cases >= 40) {
+          status = 'MONITORING'
+          color = '#3b82f6'
+        }
+        return {
+          id: s.syndicate_id,
+          name: `OP ${CODENAMES[idx % CODENAMES.length]}`,
+          syndicate: s.syndicate_name,
+          cases: s.total_cases,
+          status,
+          color,
+        }
+      }))
     }).catch(() => {})
 
     fetchCases({ limit: 50 }).then(data => {
@@ -404,10 +431,10 @@ export default function WarRoom() {
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          borderBottom: '1px solid rgba(239,68,68,0.3)', paddingBottom: 8,
+          borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 8,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 12px #ef4444', display: 'inline-block', animation: 'pulse 1.2s infinite' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 10px rgba(239,68,68,0.6)', display: 'inline-block', animation: 'pulse 1.2s infinite' }} />
             <span style={{ fontSize: 11, fontWeight: 900, color: '#e2e8f0', letterSpacing: 2 }}>
               PROJECT SENTINAL · REAL-TIME FRAUD COMMAND CENTER · KSP CYBER CRIME
             </span>
@@ -416,8 +443,8 @@ export default function WarRoom() {
             <span style={{ fontSize: 9, color: '#475569' }}>{new Date().toLocaleString('en-IN')}</span>
             <span style={{ fontSize: 9, color: '#475569' }}>[F] Fullscreen · [ESC] Exit</span>
             <button onClick={() => navigate('/dashboard')} style={{
-              background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444',
-              borderRadius: 4, color: '#ef4444', padding: '3px 10px', fontSize: 9, cursor: 'pointer', fontWeight: 700,
+              background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)',
+              borderRadius: 4, color: '#f87171', padding: '3px 10px', fontSize: 9, cursor: 'pointer', fontWeight: 700,
             }}>✕ EXIT</button>
           </div>
         </div>
@@ -445,7 +472,8 @@ export default function WarRoom() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {/* Countdown */}
             <div style={{
-              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(245,158,11,0.3)',
+              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+              borderTop: '2px solid #f59e0b',
               borderRadius: 6, padding: 10, textAlign: 'center',
             }}>
               <div style={{ fontSize: 8, color: '#64748b', letterSpacing: 1, marginBottom: 4 }}>PREDICTED THREAT WINDOW</div>
@@ -510,7 +538,7 @@ export default function WarRoom() {
 
           {/* CENTER: Tactical Map ────────────────────────────────────────── */}
           <div style={{
-            border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6,
+            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6,
             overflow: 'hidden', position: 'relative',
           }}>
             {/* Map legend overlay */}
