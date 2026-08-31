@@ -27,6 +27,7 @@ import Profile from './pages/Profile'
 import DataUploadIntel from './pages/DataUploadIntel'
 import OCRRecords from './pages/OCRRecords'
 import WebIntelligence from './pages/WebIntelligence'
+import WebInvestigate from './pages/WebInvestigate'
 import ForensicIntel from './pages/ForensicIntel'
 import AuthGuard from './components/AuthGuard'
 import BackendWakeup from './components/layout/BackendWakeup'
@@ -127,6 +128,8 @@ export default function App() {
           <Route path="/profile"            element={<Profile />} />
           <Route path="/web-intel"          element={<WebIntelligence />} />
           <Route path="/osint"              element={<Navigate to="/web-intel" replace />} />
+          <Route path="/web-investigate"    element={<WebInvestigate />} />
+          <Route path="/investigate"        element={<Navigate to="/web-investigate" replace />} />
           <Route path="/upload"             element={<DataUploadIntel />} />
           <Route path="/data-upload"        element={<Navigate to="/upload" replace />} />
           <Route path="/ocr-records"        element={<OCRRecords />} />

@@ -535,6 +535,11 @@ export const browseLiveUrl = (payload = {}) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+export const investigatePersonWeb = (payload = {}) =>
+  request('/api/v1/web-scraper/person-investigate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
 // ── Tactical Criminology & Financial Forensics Engines ───────────────────────
 export const generateBNSChargesheet = (payload = {}) =>

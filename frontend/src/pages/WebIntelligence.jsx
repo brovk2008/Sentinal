@@ -13,7 +13,7 @@ import {
   Globe, Search, Scale, Car, ShieldAlert, AlertTriangle,
   Newspaper, CheckCircle2, RotateCw, ExternalLink, Hash,
   MapPin, Calendar, User, DollarSign, Database, Sparkles,
-  Share2, Shield, Eye, Lock
+  Share2, Shield, Eye, Lock, UserCheck
 } from 'lucide-react'
 import {
   searchECourts,
@@ -24,6 +24,7 @@ import {
 } from '../api'
 
 const TABS = [
+  { id: 'investigate', label: 'Web Investigate (Person & Face)', icon: UserCheck },
   { id: 'ecourts', label: 'e-Courts Bail & Orders', icon: Scale },
   { id: 'vahan', label: 'VAHAN Vehicle Registry', icon: Car },
   { id: 'fugitives', label: 'Interpol & CID Fugitives', icon: ShieldAlert },
@@ -59,7 +60,8 @@ export default function WebIntelligence() {
 
   // Load active tab data
   useEffect(() => {
-    if (activeTab === 'ecourts') handleSearchECourts()
+    if (activeTab === 'investigate') navigate('/web-investigate')
+    else if (activeTab === 'ecourts') handleSearchECourts()
     else if (activeTab === 'vahan') handleLookupVahan()
     else if (activeTab === 'fugitives') handleSearchFugitives()
     else if (activeTab === 'cyber') handleLookupCyber()

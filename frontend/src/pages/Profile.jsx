@@ -34,6 +34,14 @@ const SHORTCUTS_DATA = [
     example: '/browse https://ksp.karnataka.gov.in'
   },
   {
+    command: '/investigate',
+    syntax: '/investigate <person_name | suspect_alias>',
+    title: 'Web Investigate & Person Scanner',
+    category: 'Person & Face OSINT',
+    description: 'Scans across all public social profiles, e-Courts filings, darknet breach dumps, and facial biometric records for a suspect.',
+    example: '/investigate Imran Pasha'
+  },
+  {
     command: '/canvas',
     syntax: '/canvas [case_id | query | *latest]',
     title: 'Instant Investigation Canvas',

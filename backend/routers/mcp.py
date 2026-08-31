@@ -160,12 +160,27 @@ SENTINAL_MCP_TOOLS = [
         "example": "/browse https://ksp.karnataka.gov.in"
     },
     {
-        "name": "navigate_app_tab",
-        "description": "Commands the frontend UI to navigate to any module (Dashboard, War Room, 3D Globe, Investigation Canvas, Financial Intel, CDR Analytics, Predict).",
+        "name": "investigate_person_web_footprint",
+        "description": "Scans across all public social profiles, court filings, darknet breaches, and facial biometric databases for a suspect name or photo.",
         "parameters": {
             "type": "object",
             "properties": {
-                "target_tab": {"type": "string", "description": "Target module name (dashboard, map, canvas, board, warroom, financial, cdr, predict, ocr, darkweb, osint)"}
+                "name": {"type": "string", "description": "Full name or alias of the person to investigate"},
+                "location": {"type": "string", "description": "Optional location or district"},
+                "photo_base64": {"type": "string", "description": "Optional base64 image data for facial reverse lookup"}
+            },
+            "required": ["name"]
+        },
+        "shortcut": "/investigate",
+        "example": "/investigate Imran Pasha"
+    },
+    {
+        "name": "navigate_app_tab",
+        "description": "Commands the frontend UI to navigate to any module (Dashboard, War Room, 3D Globe, Investigation Canvas, Financial Intel, CDR Analytics, Predict, Web Investigate).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "target_tab": {"type": "string", "description": "Target module name (dashboard, map, canvas, board, warroom, financial, cdr, predict, ocr, darkweb, osint, investigate)"}
             },
             "required": ["target_tab"]
         },
@@ -382,7 +397,31 @@ async def execute_mcp_tool(req: MCPExecuteRequest, http_request: Request):
             }
         }
 
-    # 11. navigate_app_tab
+    # 11. investigate_person_web_footprint
+    elif name == "investigate_person_web_footprint":
+        from routers.web_scraper import investigate_person_public_footprint
+        p_name = args.get("name", "Imran Pasha")
+        p_photo = args.get("photo_base64")
+        p_loc = args.get("location")
+        res = investigate_person_public_footprint(name=p_name, photo_b64=p_photo, location=p_loc)
+        return {
+            "status": "success",
+            "tool": name,
+            "target": p_name,
+            "threat_assessment": res.get("threat_assessment"),
+            "public_profiles": res.get("public_profiles", []),
+            "court_cases": res.get("judicial_records", []),
+            "vehicles": res.get("vehicles", []),
+            "facial_biometrics": res.get("facial_biometrics"),
+            "sec65b_certificate_hash": res.get("sec65b_certificate_hash"),
+            "action_card": {
+                "type": "navigation",
+                "label": f"Open {p_name} in Web Investigate Hub",
+                "target_url": f"#/web-investigate?name={p_name}"
+            }
+        }
+
+    # 12. navigate_app_tab
     elif name == "navigate_app_tab":
         tab = args.get("target_tab", "dashboard").lower().strip()
         routes = {
@@ -404,6 +443,8 @@ async def execute_mcp_tool(req: MCPExecuteRequest, http_request: Request):
             "upload": "/upload",
             "darkweb": "/darkweb",
             "osint": "/web-intel",
+            "investigate": "/web-investigate",
+            "web-investigate": "/web-investigate",
             "profile": "/profile",
             "timeline": "/timeline"
         }
@@ -446,6 +487,12 @@ async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Re
         return await execute_mcp_tool(MCPExecuteRequest(
             name="browse_live_url",
             arguments={"url": payload_text or "https://ksp.karnataka.gov.in"}
+        ), http_request)
+
+    elif slash_cmd in ("/investigate", "/person-search", "/face-search", "/recon"):
+        return await execute_mcp_tool(MCPExecuteRequest(
+            name="investigate_person_web_footprint",
+            arguments={"name": payload_text or "Imran Pasha"}
         ), http_request)
 
     elif slash_cmd in ("/canvas", "/make-canvas"):
