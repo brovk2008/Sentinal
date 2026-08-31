@@ -513,6 +513,19 @@ export const autoGenerateCanvas = (payload = {}) =>
     body: JSON.stringify(payload),
   });
 
+// ── Model Context Protocol (MCP) & Chat Slash Commands ───────────────────────
+export const fetchMcpTools = () => request('/api/v1/mcp/tools');
+export const executeMcpTool = (payload = {}) =>
+  request('/api/v1/mcp/execute', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+export const executeChatCommand = (payload = {}) =>
+  request('/api/v1/mcp/chat-command', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
 // ── Tactical Criminology & Financial Forensics Engines ───────────────────────
 export const generateBNSChargesheet = (payload = {}) =>
   request('/api/v1/criminology/generate-chargesheet', {

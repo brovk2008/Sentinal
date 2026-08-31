@@ -88,6 +88,7 @@ ALL_ROUTERS = [
     ("criminology",  "/api/v1/criminology",  "Criminology & Crime Pattern AI"),
     ("web_scraper",     "/api/v1/web-scraper",  "OSINT & Web Scraper Suite"),
     ("realtime_fraud",  "/api/v1/fraud",        "Real-Time Fraud Intelligence"),
+    ("mcp",             "/api/v1/mcp",          "Sentinal MCP Tool Control"),
     ("auth",            "/api/v1/auth",         "Auth"),
 ]
 

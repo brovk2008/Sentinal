@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass, Radio, X, ArrowRight } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList, runAudioForensicProfile, autoGenerateCanvas } from '../api'
+import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList, runAudioForensicProfile, autoGenerateCanvas, executeChatCommand } from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
 import { useTranslation } from 'react-i18next'
 
@@ -170,6 +170,19 @@ function AudioForensicModal({ onClose }) {
   )
 }
 
+const SLASH_COMMANDS = [
+  { cmd: '/mcp', label: '/mcp <instruction>', title: 'Autonomous AI Site Control', desc: 'Autonomous AI control across all Sentinal features', example: '/mcp make canvas on latest vehicle theft' },
+  { cmd: '/canvas', label: '/canvas <case/query>', title: 'Instant Investigation Canvas', desc: 'Auto-generate and open investigation canvas', example: '/canvas Koramangala Luxury Creta Theft with Imran Pasha' },
+  { cmd: '/search', label: '/search <query>', title: '10,000 FIR Deep Search', desc: 'Deep search across 10,000 Karnataka police FIRs', example: '/search luxury vehicle theft Bengaluru Urban' },
+  { cmd: '/convoy', label: '/convoy <plate>', title: 'FASTag ANPR Highway Intercept', desc: 'FASTag ANPR toll corridor intercept tracking', example: '/convoy KA-04-MB-8821' },
+  { cmd: '/chargesheet', label: '/chargesheet <accused>', title: 'BNS Chargesheet Generator', desc: 'Auto-draft Section 173 BNSS final report', example: '/chargesheet FIR-2026-0456 Imran Pasha' },
+  { cmd: '/mule', label: '/mule <UPI_vpa>', title: 'UPI Smurfing Mule Scanner', desc: 'Scan UPI smurfing velocity & money mule chains', example: '/mule drain99@okaxis' },
+  { cmd: '/patrol', label: '/patrol <district>', title: 'Hoysala Patrol Dispatch', desc: 'Dispatch Hoysala tactical patrol to crime hotspot', example: '/patrol Bengaluru Urban Indiranagar' },
+  { cmd: '/dossier', label: '/dossier <suspect>', title: 'Suspect Criminal Dossier', desc: 'Fetch criminal history & wanted notice dossier', example: '/dossier Imran Pasha' },
+  { cmd: '/osint', label: '/osint <topic>', title: 'Real-Time News & Web Intel', desc: 'Real-time breaking crime web intel scraper', example: '/osint luxury car keyless theft' },
+  { cmd: '/navigate', label: '/navigate <page>', title: 'Instant App Navigation', desc: 'Instant navigation (map, canvas, warroom, etc.)', example: '/navigate map' },
+]
+
 export default function AIAssistant() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -177,7 +190,7 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState([
     {
       role: 'system',
-      content: t('ai.welcome') || 'Sentinal Cognitive Criminology Engine online. Connected to Karnataka State Police Records, Zia NLP, Kaggle National Crime AI models, and live multi-canvas investigation boards.',
+      content: t('ai.welcome') || 'Sentinal Cognitive Criminology Engine online. Connected to Karnataka State Police Records, Zia NLP, Kaggle National Crime AI models, and live multi-canvas investigation boards. Type / for MCP shortcuts.',
     },
   ])
   const [input, setInput] = useState('')
@@ -254,6 +267,63 @@ export default function AIAssistant() {
     setMessages(prev => [...prev, { role: 'user', content: q }])
     setInput('')
     setLoading(true)
+
+    // Handle MCP / Slash Commands
+    if (q.startsWith('/')) {
+      try {
+        const cmdRes = await executeChatCommand({ command: q })
+        if (cmdRes.status === 'success') {
+          let formattedContent = `### Sentinal MCP Tool Executed: \`${cmdRes.tool}\`\n\n`
+          
+          if (cmdRes.tool === 'create_investigation_canvas') {
+            formattedContent += `**Canvas Created Successfully**: ID \`${cmdRes.result?.canvas_id}\` with **${cmdRes.result?.nodes_created || 9} nodes** and **${cmdRes.result?.edges_created || 8} causal edges**.\n\n*Entities Extracted*: Case FIR, Primary Suspects, Vehicles, FASTag Tolls, Bank Accounts & Seized Digital Evidence.`
+          } else if (cmdRes.tool === 'search_fir_database') {
+            formattedContent += `**Found ${cmdRes.count} matching FIR records**:\n\n`
+            cmdRes.records?.forEach((r, idx) => {
+              formattedContent += `${idx + 1}. **FIR No. ${r.CrimeNo}** (${r.DistrictName} - ${r.UnitName})\n   *Crime Head*: ${r.CrimeGroupName}\n   *Facts*: ${r.BriefFacts?.slice(0, 140)}...\n\n`
+            })
+          } else if (cmdRes.tool === 'trigger_anpr_convoy_tracking') {
+            formattedContent += `**ANPR Convoy Intercept Triggered** for Target Plate **${cmdRes.target_plate}** on corridor *${cmdRes.corridor}*.\n\n- **Detected Shadow Vehicle**: \`${cmdRes.detected_shadow_vehicle}\`\n- **Time Gap**: ${cmdRes.time_gap_seconds} seconds\n- **Convoy Correlation Score**: ${cmdRes.confidence_score}%\n- **Recommendation**: Deploy checkpoint interception at nearest toll barrier.`
+          } else if (cmdRes.tool === 'generate_bns_chargesheet') {
+            formattedContent += `**BNS Section 173 Final Police Report Generated**\n\n- **Chargesheet ID**: \`${cmdRes.chargesheet_id}\`\n- **Accused**: ${cmdRes.accused}\n- **Statutory Sections**: ${cmdRes.statutory_sections?.join(', ')}\n- **PANCHANAMA SHA-256**: \`${cmdRes.sha256_panchanama_hash}\`\n- **Status**: ${cmdRes.status_text}`
+          } else if (cmdRes.tool === 'detect_upi_smurfing_mules') {
+            formattedContent += `**UPI Smurfing Velocity Scan Complete**\n\n- **VPA Target**: \`${cmdRes.target_handle}\`\n- **Layering Velocity**: ${cmdRes.fan_out_velocity}\n- **Siphoned Total**: ${cmdRes.total_siphoned_amount}\n- **Primary Mule Holder**: ${cmdRes.mule_holder}\n- **Action**: ${cmdRes.legal_recommendation}`
+          } else if (cmdRes.tool === 'deploy_patrol_hoysala') {
+            formattedContent += `**Tactical Patrol Deployed**\n\n- **Dispatch ID**: \`${cmdRes.dispatch_id}\`\n- **Unit**: ${cmdRes.unit}\n- **District / Zone**: ${cmdRes.zone} (${cmdRes.district})\n- **Status**: ${cmdRes.status_text}`
+          } else if (cmdRes.tool === 'fetch_suspect_dossier') {
+            formattedContent += `**Suspect Intelligence Dossier**\n\n- **Name**: **${cmdRes.dossier?.name}**\n- **Known Prior Cases**: ${cmdRes.dossier?.known_cases}\n- **Status**: \`${cmdRes.dossier?.status}\`\n- **Modus Operandi**: ${cmdRes.dossier?.modus_operandi}\n- **Syndicate Link**: ${cmdRes.dossier?.syndicate}`
+          } else if (cmdRes.tool === 'navigate_app_tab') {
+            formattedContent += `**App Navigation Triggered**: Switching view to **${cmdRes.action_card?.label}**...`
+            if (cmdRes.action_card?.target_url) {
+              const route = cmdRes.action_card.target_url.replace('#', '')
+              setTimeout(() => navigate(route), 1000)
+            }
+          } else {
+            formattedContent += JSON.stringify(cmdRes, null, 2)
+          }
+
+          setMessages(prev => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: formattedContent,
+              actionCard: cmdRes.action_card
+            }
+          ])
+          setLoading(false)
+          return
+        } else {
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: cmdRes.message || 'Failed to execute command.' }
+          ])
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        console.error('[Slash Command Error]', err)
+      }
+    }
 
     try {
       const activeLang = i18n.language || 'en'
@@ -485,7 +555,40 @@ export default function AIAssistant() {
                 msg.content
               )}
 
-              {msg.role === 'assistant' && msg.content?.length > 40 && (
+              {msg.actionCard && (
+                <div style={{
+                  marginTop: 10, padding: '10px 14px', borderRadius: 8,
+                  background: 'linear-gradient(135deg, rgba(200,129,74,0.2), rgba(245,158,11,0.12))',
+                  border: '1px solid rgba(245,158,11,0.4)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Sparkles size={16} color="#fbbf24" />
+                    <span style={{ fontSize: 12, color: '#f8fafc', fontWeight: 700 }}>
+                      {msg.actionCard.label || 'Action Ready'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (msg.actionCard.target_url) {
+                        navigate(msg.actionCard.target_url.replace('#', ''))
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #c8814a, #f59e0b)',
+                      color: '#000', fontWeight: 800, fontSize: 11,
+                      padding: '6px 12px', borderRadius: 6, border: 'none',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                      boxShadow: '0 0 12px rgba(245,158,11,0.3)'
+                    }}
+                  >
+                    <span>⚡ Open View</span>
+                    <ArrowRight size={12} />
+                  </button>
+                </div>
+              )}
+
+              {msg.role === 'assistant' && !msg.actionCard && msg.content?.length > 40 && (
                 <div style={{
                   marginTop: 10, padding: '8px 12px', borderRadius: 8,
                   background: 'linear-gradient(135deg, rgba(200,129,74,0.15), rgba(245,158,11,0.08))',
@@ -548,11 +651,14 @@ export default function AIAssistant() {
         overflowX: 'auto',
       }}>
         {[
-          '✨ Create Canvas report for my uploaded case files',
-          'Who stole the white Hyundai Creta on canvas CANVAS-VEHICLE-THEFT-01?',
-          'Trace the getaway route and FASTag toll pings for the stolen car.',
-          'Check alibi contradictions for Imran Pasha vs cell tower CDR logs.',
-          'What physical evidence links the suspect to the Indiranagar crime scene?'
+          '/canvas Koramangala Luxury Creta Theft with Imran Pasha',
+          '/search luxury vehicle theft Bengaluru Urban',
+          '/convoy KA-04-MB-8821',
+          '/chargesheet FIR-2026-0456 Imran Pasha',
+          '/mule drain99@okaxis',
+          '/patrol Bengaluru Urban Indiranagar',
+          '/dossier Imran Pasha',
+          '/navigate map'
         ].map((s, idx) => (
           <button
             key={idx}
@@ -561,7 +667,8 @@ export default function AIAssistant() {
               fontSize: 11, padding: '4px 10px', borderRadius: 12,
               background: 'rgba(200,129,74,0.12)', color: 'var(--copper-300)',
               border: '1px solid rgba(200,129,74,0.25)', cursor: 'pointer',
-              whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4
+              whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4,
+              fontFamily: 'var(--font-mono)'
             }}
           >
             <span>{s}</span>
@@ -589,48 +696,103 @@ export default function AIAssistant() {
         </div>
       )}
 
-      {/* Input bar */}
-      <div style={{
-        padding: '12px 20px',
-        borderTop: '1px solid var(--border-subtle)',
-        display: 'flex', gap: 10,
-        background: 'var(--bg-secondary)',
-        alignItems: 'center',
-      }}>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          style={{ display: 'none' }}
-          accept=".pdf,.png,.jpg,.jpeg,.txt"
-        />
+      {/* Input bar wrapper with relative positioning for popup */}
+      <div style={{ position: 'relative' }}>
+        {/* Floating Slash Command Autocomplete Menu */}
+        {input.startsWith('/') && (
+          <div style={{
+            position: 'absolute', bottom: '100%', left: 20, right: 20, marginBottom: 8,
+            background: '#0d0d1a', border: '1px solid rgba(245,158,11,0.5)',
+            borderRadius: 10, padding: 8, zIndex: 1000,
+            boxShadow: '0 -10px 30px rgba(0,0,0,0.9)',
+            maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Terminal size={13} color="#fbbf24" />
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase' }}>SENTINAL MCP COMMANDS & SHORTCUTS</span>
+              </div>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Click shortcut to auto-fill</span>
+            </div>
+            {SLASH_COMMANDS.filter(s => s.cmd.startsWith(input.split(' ')[0].toLowerCase()) || s.title.toLowerCase().includes(input.toLowerCase())).map((s, idx) => (
+              <div
+                key={idx}
+                onClick={() => setInput(s.example)}
+                style={{
+                  padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: 'rgba(255,255,255,0.03)', transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(200,129,74,0.2)'
+                  e.currentTarget.style.border = '1px solid rgba(245,158,11,0.3)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                  e.currentTarget.style.border = '1px solid transparent'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 800, color: '#fbbf24' }}>
+                    {s.cmd}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#f8fafc', fontWeight: 600 }}>
+                    {s.title}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    — {s.desc}
+                  </span>
+                </div>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#52e0cc' }}>
+                  {s.example}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
-        <button
-          className="btn"
-          style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={() => fileInputRef.current?.click()}
-          title="Upload file to RAG context"
-          disabled={loading || !!uploadStatus}
-        >
-          <Paperclip size={14} />
-        </button>
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', gap: 10,
+          background: 'var(--bg-secondary)',
+          alignItems: 'center',
+        }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+            accept=".pdf,.png,.jpg,.jpeg,.txt"
+          />
 
-        <input
-          className="input"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && sendQuery()}
-          placeholder={t('ai.placeholder') || "Ask about the canvas evidence, who stole the car, suspect alibis..."}
-          style={{ flex: 1, fontSize: 13 }}
-          disabled={loading || !!uploadStatus}
-        />
-        <button
-          className="btn btn-copper"
-          onClick={() => sendQuery()}
-          disabled={loading || !!uploadStatus || !input.trim()}
-        >
-          Analyze →
-        </button>
+          <button
+            className="btn"
+            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload file to RAG context"
+            disabled={loading || !!uploadStatus}
+          >
+            <Paperclip size={14} />
+          </button>
+
+          <input
+            className="input"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && sendQuery()}
+            placeholder={t('ai.placeholder') || "Type / for MCP shortcuts (e.g. /canvas, /search, /convoy, /chargesheet)..."}
+            style={{ flex: 1, fontSize: 13, fontFamily: input.startsWith('/') ? 'var(--font-mono)' : 'inherit' }}
+            disabled={loading || !!uploadStatus}
+          />
+          <button
+            className="btn btn-copper"
+            onClick={() => sendQuery()}
+            disabled={loading || !!uploadStatus || !input.trim()}
+          >
+            Analyze →
+          </button>
+        </div>
       </div>
 
       {showAudioProfiler && <AudioForensicModal onClose={() => setShowAudioProfiler(false)} />}
