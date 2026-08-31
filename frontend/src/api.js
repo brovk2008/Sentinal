@@ -507,6 +507,11 @@ export const runCanvasDetective = (payload) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+export const autoGenerateCanvas = (payload = {}) =>
+  request('/api/v1/board/canvas/auto-generate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
 // ── Tactical Criminology & Financial Forensics Engines ───────────────────────
 export const generateBNSChargesheet = (payload = {}) =>

@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass, Radio, X } from 'lucide-react'
+import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass, Radio, X, ArrowRight } from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList, runAudioForensicProfile } from '../api'
+import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList, runAudioForensicProfile, autoGenerateCanvas } from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
 import { useTranslation } from 'react-i18next'
 
@@ -172,6 +172,7 @@ function AudioForensicModal({ onClose }) {
 
 export default function AIAssistant() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [messages, setMessages] = useState([
     {
@@ -182,12 +183,30 @@ export default function AIAssistant() {
   const [input, setInput] = useState('')
   const [voiceMode, setVoiceMode] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [generatingCanvasFor, setGeneratingCanvasFor] = useState(null)
   const [uploadStatus, setUploadStatus] = useState('')
   const [canvasList, setCanvasList] = useState([])
   const [selectedCanvas, setSelectedCanvas] = useState('CANVAS-VEHICLE-THEFT-01')
   const [showAudioProfiler, setShowAudioProfiler] = useState(false)
   const fileInputRef = useRef(null)
   const chatEndRef = useRef(null)
+
+  const handleCreateAndOpenCanvas = async (text) => {
+    setGeneratingCanvasFor(text)
+    try {
+      const res = await autoGenerateCanvas({
+        text,
+        title: 'AI Extracted Investigation Canvas'
+      })
+      if (res?.status === 'success' && res.canvas_id) {
+        navigate(`/connections?canvasId=${res.canvas_id}`)
+      }
+    } catch (e) {
+      console.error('Failed to auto generate canvas from chat:', e)
+    } finally {
+      setGeneratingCanvasFor(null)
+    }
+  }
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -466,6 +485,35 @@ export default function AIAssistant() {
                 msg.content
               )}
 
+              {msg.role === 'assistant' && msg.content?.length > 40 && (
+                <div style={{
+                  marginTop: 10, padding: '8px 12px', borderRadius: 8,
+                  background: 'linear-gradient(135deg, rgba(200,129,74,0.15), rgba(245,158,11,0.08))',
+                  border: '1px solid rgba(200,129,74,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <Layers size={14} color="#fbbf24" />
+                    <span style={{ fontSize: 11, color: '#f8fafc', fontWeight: 600 }}>Create Interactive Investigation Canvas</span>
+                  </div>
+                  <button
+                    onClick={() => handleCreateAndOpenCanvas(msg.content)}
+                    disabled={generatingCanvasFor === msg.content}
+                    style={{
+                      background: 'linear-gradient(135deg, #c8814a, #f59e0b)',
+                      color: '#000', fontWeight: 800, fontSize: 10,
+                      padding: '5px 10px', borderRadius: 6, border: 'none',
+                      cursor: generatingCanvasFor === msg.content ? 'wait' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      boxShadow: '0 0 10px rgba(245,158,11,0.25)'
+                    }}
+                  >
+                    <span>{generatingCanvasFor === msg.content ? 'Extracting Nodes...' : '⚡ Open in Canvas'}</span>
+                    <ArrowRight size={11} />
+                  </button>
+                </div>
+              )}
+
               {msg.citations && (
                 <MessageCitations
                   citations={msg.citations}
@@ -500,6 +548,7 @@ export default function AIAssistant() {
         overflowX: 'auto',
       }}>
         {[
+          '✨ Create Canvas report for my uploaded case files',
           'Who stole the white Hyundai Creta on canvas CANVAS-VEHICLE-THEFT-01?',
           'Trace the getaway route and FASTag toll pings for the stolen car.',
           'Check alibi contradictions for Imran Pasha vs cell tower CDR logs.',

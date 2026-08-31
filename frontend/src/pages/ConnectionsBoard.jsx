@@ -5,6 +5,7 @@
  * Biometric Disguise Morph AI, and AI Interrogation Copilot.
  */
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ReactFlow, {
   Background, Controls, MiniMap,
   addEdge, useNodesState, useEdgesState,
@@ -28,6 +29,7 @@ import {
   saveCanvasById,
   deleteCanvasById,
   runCanvasDetective,
+  autoGenerateCanvas,
   generateBNSChargesheet,
   runANPRConvoyAnalysis,
   planStingIntercept,
@@ -679,10 +681,14 @@ const btnSecondary = {
 // ─── Main Component ──────────────────────────────────────────────────
 export default function ConnectionsBoard() {
   const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
+  const urlCanvasId = searchParams.get('canvasId')
+
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [showNewCanvasModal, setShowNewCanvasModal] = useState(false)
+  const [showAutoGenerateModal, setShowAutoGenerateModal] = useState(false)
   const [showChargesheetModal, setShowChargesheetModal] = useState(false)
   const [showANPRModal, setShowANPRModal] = useState(false)
   const [showStingModal, setShowStingModal] = useState(false)
@@ -691,7 +697,14 @@ export default function ConnectionsBoard() {
   const [pendingEdge, setPendingEdge] = useState(null)
   const [saveStatus, setSaveStatus] = useState('')
   const [canvases, setCanvases] = useState([])
-  const [currentCanvasId, setCurrentCanvasId] = useState('CANVAS-VEHICLE-THEFT-01')
+  const [currentCanvasId, setCurrentCanvasId] = useState(urlCanvasId || 'CANVAS-VEHICLE-THEFT-01')
+
+  // Auto-generation state
+  const [autoGenTitle, setAutoGenTitle] = useState('')
+  const [autoGenText, setAutoGenText] = useState('')
+  const [autoGenFileId, setAutoGenFileId] = useState('')
+  const [autoGenLoading, setAutoGenLoading] = useState(false)
+  const [uploadedFilesList, setUploadedFilesList] = useState([])
 
   // AI Detective state
   const [showDetectiveDrawer, setShowDetectiveDrawer] = useState(false)
@@ -701,6 +714,19 @@ export default function ConnectionsBoard() {
 
   const nodeIdRef = useRef(10)
   const saveTimer = useRef(null)
+
+  const loadUploadedFiles = useCallback(async () => {
+    try {
+      const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const res = await fetch(`${BASE}/api/v1/uploads/list`)
+      const data = await res.json()
+      if (Array.isArray(data?.files)) {
+        setUploadedFilesList(data.files)
+      }
+    } catch (e) {
+      console.warn('Could not load uploaded files list:', e)
+    }
+  }, [])
 
   const loadCanvasList = useCallback(async () => {
     try {
@@ -734,8 +760,34 @@ export default function ConnectionsBoard() {
 
   useEffect(() => {
     loadCanvasList()
-    switchCanvas('CANVAS-VEHICLE-THEFT-01')
-  }, [loadCanvasList, switchCanvas])
+    const targetId = urlCanvasId || 'CANVAS-VEHICLE-THEFT-01'
+    switchCanvas(targetId)
+  }, [loadCanvasList, switchCanvas, urlCanvasId])
+
+  const handleAutoGenerate = async () => {
+    setAutoGenLoading(true)
+    try {
+      const res = await autoGenerateCanvas({
+        title: autoGenTitle || 'AI Extracted Investigation Canvas',
+        text: autoGenText,
+        file_id: autoGenFileId || undefined
+      })
+      if (res?.status === 'success' && res.nodes) {
+        setNodes(res.nodes)
+        setEdges(res.edges || [])
+        setCurrentCanvasId(res.canvas_id)
+        setShowAutoGenerateModal(false)
+        setAutoGenText('')
+        setAutoGenTitle('')
+        setAutoGenFileId('')
+        loadCanvasList()
+      }
+    } catch (err) {
+      console.error('Auto generate canvas failed:', err)
+    } finally {
+      setAutoGenLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (nodes.length === 0) return
@@ -886,6 +938,22 @@ export default function ConnectionsBoard() {
         >
           <Plus size={13} />
           <span>New Canvas</span>
+        </button>
+
+        <button
+          onClick={() => { setShowAutoGenerateModal(true); loadUploadedFiles(); }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(200,129,74,0.35), rgba(245,158,11,0.25))',
+            color: '#fbbf24',
+            border: '1px solid rgba(245,158,11,0.5)',
+            borderRadius: 6, padding: '4px 10px',
+            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            boxShadow: '0 0 12px rgba(245,158,11,0.2)'
+          }}
+        >
+          <Sparkles size={13} color="#fbbf24" />
+          <span>AI Auto-Generate</span>
         </button>
 
         {saveStatus && (
@@ -1158,11 +1226,162 @@ export default function ConnectionsBoard() {
       {/* Modals */}
       {showAddModal && <AddNodeModal onAdd={addNode} onClose={() => setShowAddModal(false)} />}
       {showNewCanvasModal && <NewCanvasModal onCreate={handleCreateCanvas} onClose={() => setShowNewCanvasModal(false)} />}
+      {showAutoGenerateModal && (
+        <AutoGenerateCanvasModal
+          files={uploadedFilesList}
+          loading={autoGenLoading}
+          onGenerate={handleAutoGenerate}
+          onClose={() => setShowAutoGenerateModal(false)}
+          title={autoGenTitle}
+          setTitle={setAutoGenTitle}
+          text={autoGenText}
+          setText={setAutoGenText}
+          fileId={autoGenFileId}
+          setFileId={setAutoGenFileId}
+        />
+      )}
       {showChargesheetModal && <BNSChargesheetModal caseId={currentCanvasId} onClose={() => setShowChargesheetModal(false)} />}
       {showANPRModal && <ANPRConvoyModal onClose={() => setShowANPRModal(false)} />}
       {showStingModal && <TacticalStingModal onClose={() => setShowStingModal(false)} />}
       {showMorphModal && <BiometricMorphModal onClose={() => setShowMorphModal(false)} />}
       {showInterrogationModal && <InterrogationCopilotModal onClose={() => setShowInterrogationModal(false)} />}
+    </div>
+  )
+}
+
+function AutoGenerateCanvasModal({ files, loading, onGenerate, onClose, title, setTitle, text, setText, fileId, setFileId }) {
+  const presets = [
+    { label: 'OBD Keyless Vehicle Theft', t: 'Luxury SUV Theft in Koramangala', text: 'Investigation into luxury SUV thefts in Koramangala & Indiranagar. Prime suspect Imran Pasha operating with accomplice Ashok Kumar. Stolen Hyundai Creta KA-04-MB-8821 detected crossing Attibele Toll Plaza at 02:48 AM trailing Swift KA-51-Z-9988. Keyless ECM cloning hardware seized.' },
+    { label: 'UPI Mule Smurfing Ring', t: 'Transnational UPI Smurfing Ring', text: 'Transnational cyber investment fraud case registered at Cyber Crime PS. Victim siphoned of ₹8.4L via 14 rapid UPI transactions under ₹50,000 to primary mule handle drain99@okaxis held by Dinesh Gupta. Fund layering detected through Karnataka Bank A/c 401009182744 and crypto P2P off-ramp.' },
+    { label: 'Interstate NDPS Contraband Hub', t: 'Belagavi Checkpoint NDPS Intercept', text: 'Checkpoint interdiction near Belagavi-Maharashtra border. Seized 14.5 kg commercial MDPS contraband from transport vehicle KA-22-T-4910. Accused Shankar Hosamani detained with 3 burner phones and Hawala payment ledger.' },
+  ]
+
+  const inputStyle = {
+    width: '100%', background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6,
+    padding: '8px 10px', color: '#fff', fontSize: 12, outline: 'none'
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{
+        background: '#0d0d1a', border: '1px solid var(--copper-500)',
+        borderRadius: 14, padding: 24, width: 620, maxHeight: '90vh',
+        overflowY: 'auto', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={18} color="#fbbf24" />
+            <span style={{ fontWeight: 800, fontSize: 16 }}>AI AUTO-GENERATE INVESTIGATION CANVAS</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+
+        <div style={{ fontSize: 12, color: '#aaa', marginTop: 12, lineHeight: 1.5 }}>
+          Auto-extracts criminal entities (suspects, vehicles, bank accounts, cell towers, evidence) from uploaded FIR reports or case descriptions and auto-lays them out on an interactive graph canvas.
+        </div>
+
+        {/* Preset quick buttons */}
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper-400)', marginBottom: 6, textTransform: 'uppercase' }}>Quick Presets:</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {presets.map(p => (
+              <button
+                key={p.label}
+                onClick={() => { setTitle(p.t); setText(p.text); setFileId(''); }}
+                style={{
+                  fontSize: 10, padding: '4px 8px', borderRadius: 6,
+                  background: 'rgba(200,129,74,0.15)', color: 'var(--copper-300)',
+                  border: '1px solid rgba(200,129,74,0.3)', cursor: 'pointer'
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Uploaded File Selector */}
+        {files && files.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', marginBottom: 4, textTransform: 'uppercase' }}>Or Select Uploaded Case Document / PDF:</div>
+            <select
+              value={fileId}
+              onChange={e => {
+                setFileId(e.target.value)
+                const f = files.find(x => x.id === e.target.value)
+                if (f) {
+                  setTitle(f.label || f.filename)
+                  setText(f.ai_summary || '')
+                }
+              }}
+              style={{
+                width: '100%', background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(56,189,248,0.3)', borderRadius: 6,
+                padding: '8px 10px', color: '#fff', fontSize: 12
+              }}
+            >
+              <option value="">-- Choose an uploaded case file --</option>
+              {files.map(f => (
+                <option key={f.id} value={f.id} style={{ background: '#121222' }}>
+                  {f.filename} ({f.label || f.file_type})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div style={{ marginTop: 14 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: '#ccc', display: 'block', marginBottom: 4 }}>Canvas Title:</label>
+          <input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="e.g. Koramangala Luxury Car Theft Syndicate"
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: '#ccc', display: 'block', marginBottom: 4 }}>Case Intel / Narrative to Extract Graph From:</label>
+          <textarea
+            rows={5}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Paste case facts, FIR summary, suspect names, vehicle numbers, phone numbers, bank accounts..."
+            style={{
+              width: '100%', background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8,
+              padding: '10px', color: '#fff', fontSize: 12, resize: 'vertical'
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+          <button
+            onClick={onClose}
+            style={{ background: 'rgba(255,255,255,0.1)', color: '#aaa', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onGenerate}
+            disabled={loading}
+            style={{
+              background: 'linear-gradient(135deg, #c8814a, #f59e0b)',
+              color: '#000', border: 'none', borderRadius: 8,
+              padding: '8px 20px', fontWeight: 800, fontSize: 12,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6
+            }}
+          >
+            <Sparkles size={14} />
+            <span>{loading ? 'Extracting & Laying Out Canvas...' : 'Generate Live Canvas'}</span>
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
