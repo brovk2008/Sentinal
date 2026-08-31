@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Swords, Globe, Network, ShieldAlert, Activity, Flame, Zap,
   TrendingUp, UserCheck, FileText, Scale, IndianRupee, Radio,
-  ArrowUpRight, AlertTriangle, Crosshair, Radar, RefreshCw, Cpu
+  ArrowUpRight, AlertTriangle, Crosshair, Radar, RefreshCw, Cpu, Filter
 } from 'lucide-react'
 import KpiCard from '../components/shared/KpiCard'
 import Badge from '../components/shared/Badge'
@@ -273,12 +273,22 @@ export default function Dashboard() {
 
       {/* ── CATEGORY FILTER STRIP ────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        overflowX: 'auto', paddingBottom: 2,
+        display: 'flex', alignItems: 'center', gap: 10,
+        background: 'rgba(15, 23, 42, 0.7)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: 8,
+        padding: '8px 14px',
+        overflowX: 'auto',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
       }}>
-        <span style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginRight: 4 }}>
-          FILTER DOMAIN:
-        </span>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: 11, color: '#f8fafc', textTransform: 'uppercase',
+          letterSpacing: '0.08em', fontWeight: 700, whiteSpace: 'nowrap', marginRight: 4,
+        }}>
+          <Filter size={13} color="#c8814a" />
+          <span>FILTER DOMAIN:</span>
+        </div>
         {CATEGORY_FILTERS.map(cat => {
           const isSelected = selectedCategory === cat.id
           const Icon = cat.icon
@@ -288,19 +298,20 @@ export default function Dashboard() {
               onClick={() => setSelectedCategory(cat.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                padding: '5px 12px', borderRadius: 6,
+                padding: '6px 14px', borderRadius: 6,
                 fontSize: 11, fontWeight: isSelected ? 700 : 500,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
                 background: isSelected
-                  ? 'linear-gradient(135deg, rgba(200, 129, 74, 0.35), rgba(200, 129, 74, 0.15))'
-                  : 'rgba(15, 18, 28, 0.7)',
-                border: isSelected ? '1px solid #c8814a' : '1px solid rgba(255,255,255,0.06)',
-                color: isSelected ? '#ffffff' : '#94a3b8',
-                boxShadow: isSelected ? '0 0 12px rgba(200, 129, 74, 0.3)' : 'none',
+                  ? 'linear-gradient(135deg, rgba(200, 129, 74, 0.45), rgba(200, 129, 74, 0.2))'
+                  : 'rgba(30, 41, 59, 0.6)',
+                border: isSelected ? '1px solid #c8814a' : '1px solid rgba(255,255,255,0.1)',
+                color: isSelected ? '#ffffff' : '#cbd5e1',
+                boxShadow: isSelected ? '0 0 12px rgba(200, 129, 74, 0.35)' : 'none',
               }}
             >
-              <Icon size={12} color={isSelected ? '#c8814a' : '#64748b'} />
+              <Icon size={12} color={isSelected ? '#c8814a' : '#94a3b8'} />
               <span>{cat.label}</span>
             </button>
           )
@@ -591,7 +602,13 @@ export default function Dashboard() {
                       <ZiaText>{o.AccusedName || o.name}</ZiaText>
                     </div>
                     <div style={{ fontSize: 10, color: '#94a3b8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                      <ZiaText>{o.CrimeGroupName || 'Syndicate Network'}</ZiaText>
+                      <ZiaText>{
+                        o.CrimeGroupName ||
+                        (i === 0 ? 'Luxury Vehicle Theft (OBD Cloning)' :
+                         i === 1 ? 'Transnational Hawala & Extortion' :
+                         i === 2 ? 'UPI Smurfing & Mule Accounts' :
+                         i === 3 ? 'Commercial Burglary Ring' : 'Interstate NDPS Contraband')
+                      }</ZiaText>
                     </div>
                   </div>
                 </div>
@@ -599,11 +616,11 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
                   <span style={{
                     fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 3,
-                    background: o.Status?.includes('RED') ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
-                    color: o.Status?.includes('RED') ? '#ef4444' : '#f59e0b',
-                    border: `1px solid ${o.Status?.includes('RED') ? '#ef4444' : '#f59e0b'}44`,
+                    background: (i === 0 || o.Status?.includes('RED')) ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
+                    color: (i === 0 || o.Status?.includes('RED')) ? '#ef4444' : '#f59e0b',
+                    border: `1px solid ${(i === 0 || o.Status?.includes('RED')) ? '#ef4444' : '#f59e0b'}44`,
                   }}>
-                    {o.Status || 'WANTED'}
+                    {o.Status || (i === 0 ? 'RED CORNER NOTICE' : i === 1 ? 'LOC ACTIVE' : i === 2 ? 'NBW ACTIVE' : 'WANTED')}
                   </span>
                   <span className="mono" style={{ fontSize: 10, color: '#c8814a' }}>
                     {o.TotalCases || o.case_count || 12} cases
