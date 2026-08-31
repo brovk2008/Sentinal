@@ -93,13 +93,24 @@ const DEFAULT_ALERTS = [
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [liveCount, setLiveCount] = useState(0)
+  const [liveCount, setLiveCount] = useState(() => {
+    const saved = sessionStorage.getItem('sentinal_live_count')
+    return saved ? parseInt(saved, 10) : 0
+  })
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [trendWindow, setTrendWindow] = useState('monthly')
   const [selectedDistrictRisk, setSelectedDistrictRisk] = useState('Bengaluru Urban')
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString())
 
-  useLiveFeed({ onNewEvent: () => setLiveCount(c => c + 1) })
+  useLiveFeed({
+    onNewEvent: () => {
+      setLiveCount(prev => {
+        const next = prev + 1
+        sessionStorage.setItem('sentinal_live_count', String(next))
+        return next
+      })
+    }
+  })
 
   // Live Clock
   useEffect(() => {
