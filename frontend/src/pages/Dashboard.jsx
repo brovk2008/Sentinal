@@ -398,18 +398,19 @@ export default function Dashboard() {
         display: 'grid',
         gridTemplateColumns: '2fr 1.35fr 1.15fr',
         gap: 12,
-        minHeight: 330,
+        flexShrink: 0,
       }}>
         {/* Crime Trend & Hawkes Contagion Forecast */}
         <div className="card" style={{
-          padding: '16px 18px', minWidth: 0,
+          padding: '14px 16px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex', flexDirection: 'column',
         }}>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: 12,
+            marginBottom: 10,
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -441,19 +442,20 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div style={{ height: 260 }}>
+          <div style={{ height: 240 }}>
             <TrendLine data={trend} />
           </div>
         </div>
 
         {/* Crime Distribution Donut */}
         <div className="card" style={{
-          padding: '16px 18px', minWidth: 0,
+          padding: '14px 16px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Radar size={15} color="#38bdf8" />
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
@@ -462,20 +464,20 @@ export default function Dashboard() {
             </div>
             <span style={{ fontSize: 10, color: '#94a3b8' }}>10,000 FIRs</span>
           </div>
-          <div style={{ height: 260 }}>
+          <div style={{ height: 240 }}>
             <CrimeDonut data={filteredCrimeData} total={kpis?.total_cases} />
           </div>
         </div>
 
         {/* Live Incident Telemetry Feed */}
         <div className="card" style={{
-          padding: '16px 18px', overflowY: 'auto',
+          padding: '14px 16px',
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Radio size={14} color="#10b981" />
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
@@ -488,18 +490,19 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1 }}>
-            {filteredTimeline.slice(0, 6).map((ev, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', height: 240 }}>
+            {filteredTimeline.slice(0, 5).map((ev, i) => (
               <div
                 key={ev.CaseMasterID || i}
                 onClick={() => navigate(`/timeline`)}
                 style={{
-                  padding: '8px 10px',
+                  padding: '7px 9px',
                   borderRadius: 6,
                   background: 'rgba(255,255,255,0.02)',
                   border: '1px solid rgba(255,255,255,0.05)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(200, 129, 74, 0.08)'
@@ -526,14 +529,14 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4, lineHeight: 1.3 }}>
+                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   <ZiaText>{ev.BriefFacts}</ZiaText>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                   <span style={{
                     fontSize: 9, color: '#38bdf8', background: 'rgba(56,189,248,0.1)',
-                    padding: '1px 6px', borderRadius: 3, fontWeight: 600,
+                    padding: '1px 5px', borderRadius: 3, fontWeight: 600,
                   }}>
                     {ev.DistrictName}
                   </span>
@@ -552,17 +555,17 @@ export default function Dashboard() {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 0.9fr 1.1fr',
         gap: 12,
-        minHeight: 300,
+        flexShrink: 0,
       }}>
         {/* 1. Most Wanted Crime Syndicates */}
         <div className="card" style={{
-          padding: '16px 18px',
+          padding: '14px 16px',
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Crosshair size={15} color="#ef4444" />
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
@@ -574,18 +577,19 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1 }}>
-            {offenders.map((o, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', height: 230 }}>
+            {DEFAULT_OFFENDERS.map((o, i) => (
               <div
                 key={o.AccusedName || o.name || i}
                 onClick={() => navigate('/persons')}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '7px 10px', borderRadius: 6,
+                  padding: '6px 8px', borderRadius: 6,
                   background: 'rgba(255,255,255,0.02)',
                   border: '1px solid rgba(255,255,255,0.05)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
@@ -596,42 +600,36 @@ export default function Dashboard() {
                   e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
                   <div style={{
-                    width: 26, height: 26, borderRadius: '50%',
+                    width: 24, height: 24, borderRadius: '50%',
                     background: 'linear-gradient(135deg, #ef4444, #991b1b)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 800, color: '#ffffff', flexShrink: 0,
+                    fontSize: 9, fontWeight: 800, color: '#ffffff', flexShrink: 0,
                     boxShadow: '0 0 8px rgba(239,68,68,0.4)',
                   }}>
                     {i + 1}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#f8fafc', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#f8fafc', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       <ZiaText>{o.AccusedName || o.name}</ZiaText>
                     </div>
-                    <div style={{ fontSize: 10, color: '#94a3b8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                      <ZiaText>{
-                        o.CrimeGroupName ||
-                        (i === 0 ? 'Luxury Vehicle Theft (OBD Cloning)' :
-                         i === 1 ? 'Transnational Hawala & Extortion' :
-                         i === 2 ? 'UPI Smurfing & Mule Accounts' :
-                         i === 3 ? 'Commercial Burglary Ring' : 'Interstate NDPS Contraband')
-                      }</ZiaText>
+                    <div style={{ fontSize: 9, color: '#94a3b8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <ZiaText>{o.CrimeGroupName || 'Syndicate Network'}</ZiaText>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, flexShrink: 0 }}>
                   <span style={{
-                    fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 3,
+                    fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 3,
                     background: (i === 0 || o.Status?.includes('RED')) ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
                     color: (i === 0 || o.Status?.includes('RED')) ? '#ef4444' : '#f59e0b',
                     border: `1px solid ${(i === 0 || o.Status?.includes('RED')) ? '#ef4444' : '#f59e0b'}44`,
                   }}>
                     {o.Status || (i === 0 ? 'RED CORNER NOTICE' : i === 1 ? 'LOC ACTIVE' : i === 2 ? 'NBW ACTIVE' : 'WANTED')}
                   </span>
-                  <span className="mono" style={{ fontSize: 10, color: '#c8814a' }}>
+                  <span className="mono" style={{ fontSize: 9, color: '#c8814a' }}>
                     {o.TotalCases || o.case_count || 12} cases
                   </span>
                 </div>
@@ -642,12 +640,13 @@ export default function Dashboard() {
 
         {/* 2. Top District Comparison & Clearance */}
         <div className="card" style={{
-          padding: '16px 18px', minWidth: 0,
+          padding: '14px 16px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Scale size={15} color="#c8814a" />
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
@@ -656,20 +655,20 @@ export default function Dashboard() {
             </div>
             <span style={{ fontSize: 10, color: '#94a3b8' }}>Top 6 Districts</span>
           </div>
-          <div style={{ height: 235 }}>
+          <div style={{ height: 230 }}>
             <DistrictBar data={districts.districts || []} />
           </div>
         </div>
 
         {/* 3. Predictive Risk & Hawkes Contagion Radar */}
         <div className="card" style={{
-          padding: '16px 16px',
+          padding: '14px 14px',
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
         }}>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
               <ZiaText>HAWKES AI RISK</ZiaText>
             </span>
@@ -692,9 +691,9 @@ export default function Dashboard() {
           <RiskGauge value={forecast?.risk_score || (selectedDistrictRisk === 'Bengaluru Urban' ? 78 : selectedDistrictRisk === 'Mysuru City' ? 64 : 58)} />
 
           <div style={{
-            width: '100%', marginTop: 8, padding: '8px 10px', borderRadius: 6,
+            width: '100%', marginTop: 6, padding: '6px 8px', borderRadius: 6,
             background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)',
-            fontSize: 10, color: '#94a3b8', lineHeight: 1.5,
+            fontSize: 10, color: '#94a3b8', lineHeight: 1.4,
           }}>
             <div style={{ fontWeight: 600, color: '#f8fafc', marginBottom: 2 }}>Top Risk Contributors:</div>
             <div>• Hawkes Near-Repeat Contagion ↑ 28%</div>
@@ -705,13 +704,13 @@ export default function Dashboard() {
 
         {/* 4. Tactical Patrol Dispatches & Alerts */}
         <div className="card" style={{
-          padding: '16px 18px', overflowY: 'auto',
+          padding: '14px 16px',
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <AlertTriangle size={15} color="#f59e0b" />
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
@@ -723,20 +722,21 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1 }}>
-            {alerts.map((a, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', height: 230 }}>
+            {DEFAULT_ALERTS.map((a, i) => (
               <div
                 key={a.alert_id || a.id || i}
                 style={{
-                  padding: '8px 10px',
+                  padding: '7px 9px',
                   borderRadius: 6,
                   background: 'rgba(255,255,255,0.02)',
                   border: `1px solid ${a.severity === 'critical' ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.25)'}`,
+                  flexShrink: 0,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{
-                    fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3,
+                    fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3,
                     background: a.severity === 'critical' ? '#ef444422' : '#f59e0b22',
                     color: a.severity === 'critical' ? '#ef4444' : '#f59e0b',
                   }}>
@@ -747,24 +747,24 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#f8fafc', marginTop: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#f8fafc', marginTop: 3 }}>
                   <ZiaText>{a.title}</ZiaText>
                 </div>
-                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2, lineHeight: 1.3 }}>
+                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   <ZiaText>{a.description || a.message}</ZiaText>
                 </div>
 
-                <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => navigate('/map')}
                     style={{
-                      fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
+                      fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 3,
                       background: 'rgba(200, 129, 74, 0.15)', border: '1px solid rgba(200, 129, 74, 0.4)',
                       color: '#c8814a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3,
                     }}
                   >
                     <span>Deploy Hoysala Patrol</span>
-                    <ArrowUpRight size={10} />
+                    <ArrowUpRight size={9} />
                   </button>
                 </div>
               </div>
