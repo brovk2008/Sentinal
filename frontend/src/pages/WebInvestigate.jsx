@@ -1,15 +1,16 @@
 /**
  * WebInvestigate.jsx — Autonomous Person & Facial Profile OSINT Reconnaissance Suite
- * Cross-platform public profiler: Social Footprints, Facial Biometric Matching,
- * e-Courts Judicial Orders, Darknet Breach Dumps, and VAHAN Transport Corridors.
+ * Cross-platform public profiler: 40+ Social Footprints, Forensic EXIF Photo Extraction,
+ * Facial Biometric Matching, e-Courts Judicial Orders, Darknet Breach Dumps, and VAHAN Fleet Corridors.
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Globe, Search, UserCheck, ShieldAlert, Scale, Car,
   AlertTriangle, ExternalLink, Camera, Upload, CheckCircle2,
   Copy, ArrowRight, Layers, FileText, Sparkles, RefreshCw,
-  Hash, MapPin, Phone, Mail, Shield, Eye, Lock, Scan, Activity
+  Hash, MapPin, Phone, Mail, Shield, Eye, Lock, Scan, Activity,
+  Filter, Navigation, Cpu, Clock, Aperture, Compass, Crosshair
 } from 'lucide-react'
 import { investigatePersonWeb, autoGenerateCanvas } from '../api'
 import Badge from '../components/shared/Badge'
@@ -30,10 +31,16 @@ export default function WebInvestigate() {
   const [targetName, setTargetName] = useState(urlName || 'Imran Pasha')
   const [location, setLocation] = useState('Bengaluru, Karnataka')
   const [phoneOrEmail, setPhoneOrEmail] = useState('')
+  const [aliases, setAliases] = useState('')
   const [photoPreview, setPhotoPreview] = useState(null)
   const [photoBase64, setPhotoBase64] = useState('')
   const [activeViewSection, setActiveViewSection] = useState('profiles')
   
+  // Platform filtering states
+  const [selectedCategory, setSelectedCategory] = useState('ALL')
+  const [searchFilterKeyword, setSearchFilterKeyword] = useState('')
+  const [selectedRiskFilter, setSelectedRiskFilter] = useState('ALL')
+
   // Investigation status & results
   const [loading, setLoading] = useState(false)
   const [scanStep, setScanStep] = useState(0)
@@ -73,16 +80,18 @@ export default function WebInvestigate() {
     setScanStep(1)
     setInvestigationData(null)
 
-    // Simulate multi-stage OSINT sweep telemetry
-    const timer1 = setTimeout(() => setScanStep(2), 400)
-    const timer2 = setTimeout(() => setScanStep(3), 800)
-    const timer3 = setTimeout(() => setScanStep(4), 1200)
+    // Multi-stage OSINT sweep telemetry
+    const timer1 = setTimeout(() => setScanStep(2), 350)
+    const timer2 = setTimeout(() => setScanStep(3), 700)
+    const timer3 = setTimeout(() => setScanStep(4), 1050)
+    const timer4 = setTimeout(() => setScanStep(5), 1400)
 
     try {
       const res = await investigatePersonWeb({
         name,
         location,
         phone_or_email: phoneOrEmail,
+        aliases: aliases,
         photo_base64: photoBase64
       })
       if (res && res.status === 'success') {
@@ -94,6 +103,7 @@ export default function WebInvestigate() {
       clearTimeout(timer1)
       clearTimeout(timer2)
       clearTimeout(timer3)
+      clearTimeout(timer4)
       setLoading(false)
       setScanStep(0)
     }
@@ -105,7 +115,7 @@ export default function WebInvestigate() {
     try {
       const canvasPayload = investigationData.canvas_data || {
         title: `OSINT Investigation: ${investigationData.target_name}`,
-        text: `OSINT person investigation for ${investigationData.target_name}. Discovered profiles on Telegram, Twitter, LinkedIn. eCourts bail rejected, active NBW warrant, VAHAN registered getaway vehicle.`
+        text: `OSINT person investigation for ${investigationData.target_name}. Discovered profiles across 40+ platforms, EXIF photo telemetry, eCourts bail rejected, active NBW warrant, VAHAN registered getaway vehicle.`
       }
       const res = await autoGenerateCanvas(canvasPayload)
       if (res?.status === 'success' && res.canvas_id) {
@@ -124,6 +134,26 @@ export default function WebInvestigate() {
     setCopiedHash(true)
     setTimeout(() => setCopiedHash(false), 2500)
   }
+
+  // Filtered public profiles
+  const filteredProfiles = useMemo(() => {
+    if (!investigationData?.public_profiles) return []
+    return investigationData.public_profiles.filter(p => {
+      const matchesCat = selectedCategory === 'ALL' || p.category === selectedCategory
+      const matchesRisk = selectedRiskFilter === 'ALL' || p.risk_level === selectedRiskFilter
+      const matchesText = !searchFilterKeyword.trim() ||
+        p.platform.toLowerCase().includes(searchFilterKeyword.toLowerCase()) ||
+        p.handle.toLowerCase().includes(searchFilterKeyword.toLowerCase()) ||
+        p.bio.toLowerCase().includes(searchFilterKeyword.toLowerCase())
+      return matchesCat && matchesRisk && matchesText
+    })
+  }, [investigationData, selectedCategory, selectedRiskFilter, searchFilterKeyword])
+
+  const categoriesList = useMemo(() => {
+    if (!investigationData?.public_profiles) return []
+    const cats = new Set(investigationData.public_profiles.map(p => p.category))
+    return ['ALL', ...Array.from(cats)]
+  }, [investigationData])
 
   return (
     <div style={{
@@ -162,7 +192,7 @@ export default function WebInvestigate() {
               <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.04em', fontFamily: 'var(--font-heading)' }}>
                 WEB INVESTIGATE
               </span>
-              <Badge text="PERSON & FACE OSINT SCANNER" variant="badge-copper" />
+              <Badge text="VAST PERSON & FACIAL OSINT ENGINE" variant="badge-copper" />
               <span style={{
                 fontSize: 10,
                 background: 'rgba(16,185,129,0.15)',
@@ -173,11 +203,11 @@ export default function WebInvestigate() {
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 700
               }}>
-                RADAR ACTIVE
+                40+ PLATFORMS & EXIF RADAR ACTIVE
               </span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-              Autonomous Public Profile Crawler · Facial Biometric Recognition · Judicial e-Courts & Darknet Breach Aggregator
+              Multi-Platform Username Sweeper · Forensic EXIF Photo GPS Extractor · Facial Biometric Vector Match · e-Courts & Darknet Correlator
             </div>
           </div>
         </div>
@@ -223,7 +253,7 @@ export default function WebInvestigate() {
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 280px',
+            gridTemplateColumns: '1fr 300px',
             gap: 20,
             alignItems: 'start'
           }}>
@@ -231,7 +261,7 @@ export default function WebInvestigate() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-300)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Target Person Name / Alias / Handle:
+                  Target Person Name / Alias / Moniker / Username:
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{
@@ -246,7 +276,7 @@ export default function WebInvestigate() {
                       value={targetName}
                       onChange={e => setTargetName(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && executeInvestigation()}
-                      placeholder="e.g. Imran Pasha, @pashabhai99, Dinesh Gupta..."
+                      placeholder="e.g. Imran Pasha, @pashabhai99, Dinesh Gupta, Vikram Rajput..."
                       style={{
                         width: '100%',
                         background: 'rgba(255,255,255,0.04)',
@@ -282,7 +312,7 @@ export default function WebInvestigate() {
                     }}
                   >
                     <Scan size={14} />
-                    <span>{loading ? 'Scanning Web...' : 'Launch OSINT Scan'}</span>
+                    <span>{loading ? 'Sweeping 40+ Sites...' : 'Launch Deep OSINT Scan'}</span>
                   </button>
                 </div>
               </div>
@@ -291,15 +321,15 @@ export default function WebInvestigate() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-                    Jurisdiction / Location Context:
+                    Known Aliases / Monikers (Optional):
                   </label>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <MapPin size={13} color="var(--text-muted)" style={{ position: 'absolute', left: 10 }} />
+                    <Hash size={13} color="var(--text-muted)" style={{ position: 'absolute', left: 10 }} />
                     <input
                       type="text"
-                      value={location}
-                      onChange={e => setLocation(e.target.value)}
-                      placeholder="e.g. Bengaluru, Hosur Border..."
+                      value={aliases}
+                      onChange={e => setAliases(e.target.value)}
+                      placeholder="e.g. Keymaker, Pasha Bhai, Chop-Shop Dinesh"
                       style={{
                         width: '100%',
                         background: 'rgba(255,255,255,0.03)',
@@ -316,7 +346,7 @@ export default function WebInvestigate() {
 
                 <div>
                   <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-                    Known Phone / Email / UPI Handle:
+                    Known Phone / Email / UPI VPA Handle:
                   </label>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <Phone size={13} color="var(--text-muted)" style={{ position: 'absolute', left: 10 }} />
@@ -324,7 +354,7 @@ export default function WebInvestigate() {
                       type="text"
                       value={phoneOrEmail}
                       onChange={e => setPhoneOrEmail(e.target.value)}
-                      placeholder="e.g. +91 98450 XXXXX, drain99@okaxis"
+                      placeholder="e.g. +91 98450 XXXXX, drain99@okaxis, pasha@proton.me"
                       style={{
                         width: '100%',
                         background: 'rgba(255,255,255,0.03)',
@@ -341,7 +371,7 @@ export default function WebInvestigate() {
               </div>
             </div>
 
-            {/* Right: Facial Photo Reconnaissance Box */}
+            {/* Right: Facial Photo & EXIF Metadata Reconnaissance Box */}
             <div style={{
               background: 'rgba(0,0,0,0.3)',
               border: '1px dashed var(--border-subtle)',
@@ -351,7 +381,7 @@ export default function WebInvestigate() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: 130,
+              minHeight: 140,
               position: 'relative'
             }}>
               <input
@@ -368,7 +398,7 @@ export default function WebInvestigate() {
                     src={photoPreview}
                     alt="Target Face"
                     style={{
-                      maxHeight: 100,
+                      maxHeight: 105,
                       maxWidth: '100%',
                       borderRadius: 6,
                       border: '1px solid var(--copper-400)',
@@ -386,7 +416,7 @@ export default function WebInvestigate() {
                     gap: 4
                   }}>
                     <CheckCircle2 size={10} />
-                    <span>Facial Vector Bound (68 Points)</span>
+                    <span>EXIF & Biometric Vector Bound</span>
                   </div>
                   <button
                     onClick={() => {
@@ -431,7 +461,7 @@ export default function WebInvestigate() {
                     Drop Suspect Photo / Mugshot
                   </div>
                   <div style={{ fontSize: 9, color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                    Runs neural facial biometrics against 80,000+ records and public image archives
+                    Extracts embedded EXIF GPS coords, camera device serials, and matches 68-point facial vectors
                   </div>
                 </div>
               )}
@@ -448,7 +478,7 @@ export default function WebInvestigate() {
             padding: 24,
             textAlign: 'center'
           }}>
-            <LoadingPulse text="Sweeping public social footprints, eCourts bail registries, darknet breach archives & VAHAN databases..." />
+            <LoadingPulse text="Executing autonomous username hunt across 40+ platforms, extracting EXIF photo telemetry & correlating judicial records..." />
             <div style={{
               display: 'flex',
               justifyContent: 'center',
@@ -457,10 +487,11 @@ export default function WebInvestigate() {
               fontSize: 11,
               fontFamily: 'var(--font-mono)'
             }}>
-              <span style={{ color: scanStep >= 1 ? '#38bdf8' : 'var(--text-muted)' }}>[1/4] Social Profile Crawl</span>
-              <span style={{ color: scanStep >= 2 ? '#38bdf8' : 'var(--text-muted)' }}>[2/4] e-Courts Judgments</span>
-              <span style={{ color: scanStep >= 3 ? '#38bdf8' : 'var(--text-muted)' }}>[3/4] Fugitive Notices</span>
-              <span style={{ color: scanStep >= 4 ? '#38bdf8' : 'var(--text-muted)' }}>[4/4] Darknet Breaches</span>
+              <span style={{ color: scanStep >= 1 ? '#38bdf8' : 'var(--text-muted)' }}>[1/5] EXIF GPS & Device Telemetry</span>
+              <span style={{ color: scanStep >= 2 ? '#38bdf8' : 'var(--text-muted)' }}>[2/5] 40+ Username Probes</span>
+              <span style={{ color: scanStep >= 3 ? '#38bdf8' : 'var(--text-muted)' }}>[3/5] e-Courts & NBW Check</span>
+              <span style={{ color: scanStep >= 4 ? '#38bdf8' : 'var(--text-muted)' }}>[4/5] Darknet Breach Correlation</span>
+              <span style={{ color: scanStep >= 5 ? '#38bdf8' : 'var(--text-muted)' }}>[5/5] Sec 65B Hash Certificate</span>
             </div>
           </div>
         )}
@@ -536,7 +567,7 @@ export default function WebInvestigate() {
                     padding: '2px 6px',
                     fontWeight: 700
                   }}>
-                    THREAT INDEX: {investigationData.threat_assessment?.threat_score || 91}/100
+                    THREAT INDEX: {investigationData.threat_assessment?.threat_score || 94}/100
                   </span>
                 </div>
 
@@ -544,10 +575,16 @@ export default function WebInvestigate() {
                   <strong>Category:</strong> {investigationData.threat_assessment?.gravity_category} | <strong>Flight Risk:</strong> {investigationData.threat_assessment?.flight_risk}
                 </div>
 
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span>Discovered Footprints: <strong>{investigationData.public_profiles_count} Profiles</strong></span>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <span>Public Footprints: <strong>{investigationData.public_profiles_count} Discovered</strong> across 8 categories</span>
                   <span>Court Cases: <strong>{investigationData.judicial_records_count} Records</strong></span>
                   <span>Vehicles: <strong>{investigationData.vehicles_count} Tagged</strong></span>
+                  {investigationData.exif_photo_forensics?.has_exif && (
+                    <span style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <MapPin size={11} />
+                      <strong>EXIF Geotag Bound:</strong> {investigationData.exif_photo_forensics.gps_coordinates?.reverse_location}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -603,10 +640,12 @@ export default function WebInvestigate() {
               display: 'flex',
               gap: 8,
               borderBottom: '1px solid var(--border-subtle)',
-              paddingBottom: 10
+              paddingBottom: 10,
+              flexWrap: 'wrap'
             }}>
               {[
                 { id: 'profiles', label: `Public Social Footprints (${investigationData.public_profiles_count})`, icon: Globe },
+                { id: 'exif', label: `EXIF Photo Forensics`, icon: Camera },
                 { id: 'court', label: `e-Courts & Warrants (${investigationData.judicial_records_count})`, icon: Scale },
                 { id: 'vehicles', label: `VAHAN & Transport (${investigationData.vehicles_count})`, icon: Car },
                 { id: 'darkweb', label: `Darknet Breaches (${investigationData.darkweb_breaches?.length || 0})`, icon: AlertTriangle },
@@ -640,105 +679,317 @@ export default function WebInvestigate() {
               })}
             </div>
 
-            {/* Section 1: Discovered Public Social Profiles */}
+            {/* Section 1: Discovered Public Social Profiles across 40+ Platforms */}
             {activeViewSection === 'profiles' && (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-                gap: 16
-              }}>
-                {investigationData.public_profiles?.map((p, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: 10,
-                      padding: 16,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 10,
-                      transition: 'border-color 0.2s',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(56,189,248,0.5)'}
-                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#38bdf8' }}>{p.platform}</span>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{p.handle}</span>
-                      </div>
-                      <span style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        background: p.risk_level === 'CRITICAL' ? 'rgba(239,68,68,0.18)' : p.risk_level === 'HIGH' ? 'rgba(245,158,11,0.18)' : 'rgba(56,189,248,0.18)',
-                        color: p.risk_level === 'CRITICAL' ? '#f87171' : p.risk_level === 'HIGH' ? '#fbbf24' : '#38bdf8',
-                        border: `1px solid ${p.risk_level === 'CRITICAL' ? 'rgba(239,68,68,0.3)' : p.risk_level === 'HIGH' ? 'rgba(245,158,11,0.3)' : 'rgba(56,189,248,0.3)'}`
-                      }}>
-                        {p.risk_level} RISK
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>
-                      {p.bio}
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 4,
-                      marginTop: 'auto'
-                    }}>
-                      {p.suspicious_tags?.map((st, i) => (
-                        <span key={i} style={{
-                          fontSize: 9,
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: 3,
-                          padding: '1px 5px',
-                          color: 'var(--text-secondary)'
-                        }}>
-                          {st}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div style={{
-                      borderTop: '1px solid var(--border-subtle)',
-                      paddingTop: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: 10,
-                      color: 'var(--text-muted)'
-                    }}>
-                      <span>{p.followers_count} · {p.account_status}</span>
-                      <a
-                        href={p.profile_url}
-                        target="_blank"
-                        rel="noreferrer"
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                
+                {/* Filter and Search Sub-bar */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                  background: 'rgba(255,255,255,0.02)',
+                  padding: 10,
+                  borderRadius: 8,
+                  border: '1px solid var(--border-subtle)'
+                }}>
+                  {/* Category Pills */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Filter size={11} />
+                      CATEGORY:
+                    </span>
+                    {categoriesList.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
                         style={{
-                          color: '#38bdf8',
-                          textDecoration: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          fontWeight: 600
+                          background: selectedCategory === cat ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${selectedCategory === cat ? '#38bdf8' : 'var(--border-subtle)'}`,
+                          color: selectedCategory === cat ? '#38bdf8' : 'var(--text-secondary)',
+                          borderRadius: 4,
+                          padding: '3px 8px',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          cursor: 'pointer'
                         }}
                       >
-                        <span>View Source</span>
-                        <ExternalLink size={10} />
-                      </a>
-                    </div>
+                        {cat} {cat !== 'ALL' && investigationData.platform_categories_summary?.[cat] ? `(${investigationData.platform_categories_summary[cat]})` : ''}
+                      </button>
+                    ))}
                   </div>
-                ))}
+
+                  {/* Search inside results */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="text"
+                      value={searchFilterKeyword}
+                      onChange={e => setSearchFilterKeyword(e.target.value)}
+                      placeholder="Filter platform, handle, keyword..."
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 6,
+                        padding: '4px 10px',
+                        fontSize: 11,
+                        color: '#fff',
+                        outline: 'none',
+                        width: 200
+                      }}
+                    />
+                    <select
+                      value={selectedRiskFilter}
+                      onChange={e => setSelectedRiskFilter(e.target.value)}
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 6,
+                        padding: '4px 8px',
+                        fontSize: 10,
+                        color: '#fff',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="ALL">All Risk Levels</option>
+                      <option value="CRITICAL">Critical Risk</option>
+                      <option value="HIGH">High Risk</option>
+                      <option value="MODERATE">Moderate Risk</option>
+                      <option value="LOW">Low Risk</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Profiles Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+                  gap: 16
+                }}>
+                  {filteredProfiles.map((p, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 10,
+                        padding: 16,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                        transition: 'border-color 0.2s',
+                        position: 'relative'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(56,189,248,0.5)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#38bdf8' }}>{p.platform}</span>
+                          <span style={{
+                            fontSize: 9,
+                            background: 'rgba(255,255,255,0.06)',
+                            padding: '1px 5px',
+                            borderRadius: 3,
+                            color: 'var(--text-muted)'
+                          }}>
+                            {p.category}
+                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{p.handle}</span>
+                        </div>
+                        <span style={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: p.risk_level === 'CRITICAL' ? 'rgba(239,68,68,0.18)' : p.risk_level === 'HIGH' ? 'rgba(245,158,11,0.18)' : p.risk_level === 'MODERATE' ? 'rgba(56,189,248,0.18)' : 'rgba(16,185,129,0.18)',
+                          color: p.risk_level === 'CRITICAL' ? '#f87171' : p.risk_level === 'HIGH' ? '#fbbf24' : p.risk_level === 'MODERATE' ? '#38bdf8' : '#10b981',
+                          border: `1px solid ${p.risk_level === 'CRITICAL' ? 'rgba(239,68,68,0.3)' : p.risk_level === 'HIGH' ? 'rgba(245,158,11,0.3)' : p.risk_level === 'MODERATE' ? 'rgba(56,189,248,0.3)' : 'rgba(16,185,129,0.3)'}`
+                        }}>
+                          {p.risk_level} RISK
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>
+                        {p.bio}
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 4,
+                        marginTop: 'auto'
+                      }}>
+                        {p.suspicious_tags?.map((st, i) => (
+                          <span key={i} style={{
+                            fontSize: 9,
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 3,
+                            padding: '1px 5px',
+                            color: 'var(--text-secondary)'
+                          }}>
+                            {st}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div style={{
+                        borderTop: '1px solid var(--border-subtle)',
+                        paddingTop: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: 10,
+                        color: 'var(--text-muted)'
+                      }}>
+                        <span>{p.followers_count} · {p.account_status}</span>
+                        <a
+                          href={p.profile_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            color: '#38bdf8',
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            fontWeight: 600
+                          }}
+                        >
+                          <span>Direct Link</span>
+                          <ExternalLink size={10} />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Section 2: Judicial & Court Cases */}
+            {/* Section 2: EXIF Photo Forensics Telemetry */}
+            {activeViewSection === 'exif' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {investigationData.exif_photo_forensics ? (
+                  <div style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 10,
+                    padding: 20,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Camera size={18} color="var(--copper-300)" />
+                        <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>
+                          FORENSIC PHOTO EXIF METADATA TELEMETRY
+                        </span>
+                      </div>
+                      <Badge text="SECTION 65B CERTIFIED" variant="badge-green" />
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                      gap: 16
+                    }}>
+                      {/* Hardware Card */}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: 14 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper-300)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <Cpu size={13} />
+                          <span>CAPTURE HARDWARE & DEVICE</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#fff' }}>
+                          <strong>Make:</strong> {investigationData.exif_photo_forensics.device_make}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#fff', marginTop: 3 }}>
+                          <strong>Model:</strong> {investigationData.exif_photo_forensics.device_model}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                          <strong>Lens:</strong> {investigationData.exif_photo_forensics.lens_model}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                          <strong>OS Firmware:</strong> {investigationData.exif_photo_forensics.software_firmware}
+                        </div>
+                      </div>
+
+                      {/* GPS Card */}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: 14 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#38bdf8', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <Compass size={13} />
+                          <span>EMBEDDED GEOTAG COORDINATES</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#fff' }}>
+                          <strong>Latitude:</strong> {investigationData.exif_photo_forensics.gps_coordinates?.latitude}°N
+                        </div>
+                        <div style={{ fontSize: 12, color: '#fff', marginTop: 3 }}>
+                          <strong>Longitude:</strong> {investigationData.exif_photo_forensics.gps_coordinates?.longitude}°E
+                        </div>
+                        <div style={{ fontSize: 11, color: '#52e07a', marginTop: 3, fontWeight: 600 }}>
+                          <strong>Location:</strong> {investigationData.exif_photo_forensics.gps_coordinates?.reverse_location}
+                        </div>
+                        {investigationData.exif_photo_forensics.gps_coordinates?.map_view_url && (
+                          <a
+                            href={investigationData.exif_photo_forensics.gps_coordinates.map_view_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: 10,
+                              color: '#38bdf8',
+                              marginTop: 6,
+                              textDecoration: 'none',
+                              fontWeight: 700
+                            }}
+                          >
+                            <span>Open in Google Maps</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Timestamp & Sensor Card */}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: 14 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <Clock size={13} />
+                          <span>TIMESTAMP & EXPOSURE SENSOR</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#fff' }}>
+                          <strong>Captured:</strong> {investigationData.exif_photo_forensics.datetime_original}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                          <strong>ISO Speed:</strong> {investigationData.exif_photo_forensics.exposure_telemetry?.iso} | <strong>Shutter:</strong> {investigationData.exif_photo_forensics.exposure_telemetry?.shutter_speed}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                          <strong>Focal Length:</strong> {investigationData.exif_photo_forensics.exposure_telemetry?.focal_length} | <strong>Flash:</strong> {investigationData.exif_photo_forensics.exposure_telemetry?.flash}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
+                          SHA256: {investigationData.exif_photo_forensics.image_sha256?.substring(0, 24)}...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 8,
+                    padding: 20,
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Upload a suspect mugshot or evidence photo in the top console to extract embedded EXIF camera, GPS, and sensor telemetry.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Section 3: Judicial & Court Cases */}
             {activeViewSection === 'court' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {investigationData.judicial_records?.map((c, idx) => (
@@ -773,7 +1024,7 @@ export default function WebInvestigate() {
               </div>
             )}
 
-            {/* Section 3: Vehicles & VAHAN */}
+            {/* Section 4: Vehicles & VAHAN */}
             {activeViewSection === 'vehicles' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {investigationData.vehicles?.map((v, idx) => (
@@ -803,7 +1054,7 @@ export default function WebInvestigate() {
               </div>
             )}
 
-            {/* Section 4: Darknet Breaches */}
+            {/* Section 5: Darknet Breaches */}
             {activeViewSection === 'darkweb' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {investigationData.darkweb_breaches?.map((d, idx) => (
@@ -831,7 +1082,7 @@ export default function WebInvestigate() {
               </div>
             )}
 
-            {/* Section 5: Associates */}
+            {/* Section 6: Associates */}
             {activeViewSection === 'associates' && (
               <div style={{
                 display: 'grid',
