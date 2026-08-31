@@ -165,9 +165,10 @@ export default function Dashboard() {
       padding: '16px 20px 24px 20px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 16,
+      gap: 14,
       background: '#04060c',
-      minHeight: '100%',
+      minHeight: 'min-content',
+      width: '100%',
       color: '#e8e6e0',
     }}>
 
@@ -181,6 +182,7 @@ export default function Dashboard() {
         borderRadius: 10,
         padding: '12px 18px',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+        flexShrink: 0,
       }}>
         {/* Title & Status Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -273,49 +275,55 @@ export default function Dashboard() {
 
       {/* ── CATEGORY FILTER STRIP ────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        background: 'rgba(15, 23, 42, 0.7)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.8) 0%, rgba(20, 27, 45, 0.8) 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.09)',
         borderRadius: 8,
-        padding: '8px 14px',
-        overflowX: 'auto',
+        padding: '10px 14px',
+        flexShrink: 0,
         boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
       }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6,
           fontSize: 11, color: '#f8fafc', textTransform: 'uppercase',
-          letterSpacing: '0.08em', fontWeight: 700, whiteSpace: 'nowrap', marginRight: 4,
+          letterSpacing: '0.08em', fontWeight: 700, whiteSpace: 'nowrap', marginRight: 4, flexShrink: 0,
         }}>
           <Filter size={13} color="#c8814a" />
           <span>FILTER DOMAIN:</span>
         </div>
-        {CATEGORY_FILTERS.map(cat => {
-          const isSelected = selectedCategory === cat.id
-          const Icon = cat.icon
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 14px', borderRadius: 6,
-                fontSize: 11, fontWeight: isSelected ? 700 : 500,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
-                background: isSelected
-                  ? 'linear-gradient(135deg, rgba(200, 129, 74, 0.45), rgba(200, 129, 74, 0.2))'
-                  : 'rgba(30, 41, 59, 0.6)',
-                border: isSelected ? '1px solid #c8814a' : '1px solid rgba(255,255,255,0.1)',
-                color: isSelected ? '#ffffff' : '#cbd5e1',
-                boxShadow: isSelected ? '0 0 12px rgba(200, 129, 74, 0.35)' : 'none',
-              }}
-            >
-              <Icon size={12} color={isSelected ? '#c8814a' : '#94a3b8'} />
-              <span>{cat.label}</span>
-            </button>
-          )
-        })}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', flex: 1 }}>
+          {CATEGORY_FILTERS.map(cat => {
+            const isSelected = selectedCategory === cat.id
+            const Icon = cat.icon
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 6,
+                  fontSize: 11, fontWeight: isSelected ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  height: 30,
+                  background: isSelected
+                    ? 'linear-gradient(135deg, rgba(200, 129, 74, 0.45), rgba(200, 129, 74, 0.2))'
+                    : 'rgba(30, 41, 59, 0.7)',
+                  border: isSelected ? '1px solid #c8814a' : '1px solid rgba(255,255,255,0.12)',
+                  color: isSelected ? '#ffffff' : '#cbd5e1',
+                  boxShadow: isSelected ? '0 0 12px rgba(200, 129, 74, 0.35)' : 'none',
+                }}
+              >
+                <Icon size={12} color={isSelected ? '#c8814a' : '#94a3b8'} />
+                <span>{cat.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* ── ROW 1: ELEVATED 6 KPI CARDS ─────────────────────────────────── */}
@@ -323,6 +331,7 @@ export default function Dashboard() {
         display: 'grid',
         gridTemplateColumns: 'repeat(6, 1fr)',
         gap: 12,
+        flexShrink: 0,
       }}>
         <KpiCard
           label="Total Cases"
