@@ -17,6 +17,7 @@ import sqlite3
 import hashlib
 import json
 import time
+import re
 from config import config
 from database import query, query_one, execute
 from services.rag_service import rag_service
@@ -632,42 +633,36 @@ def investigate_person_public_footprint(
     }
 
     # 2. Database Lookup: Court & Fugitive Records
-    conn = sqlite3.connect(config.DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    court_rows = cur.execute("""
+    court_rows = query("""
         SELECT * FROM ecourts_records 
         WHERE accused_name LIKE ? OR order_summary LIKE ?
         ORDER BY id DESC LIMIT 4
-    """, (f"%{target_name}%", f"%{target_name}%")).fetchall()
+    """, (f"%{target_name}%", f"%{target_name}%"))
 
     if not court_rows:
         # Dynamically seed live record if not present
         _scrape_ecourts_live(target_name)
-        court_rows = cur.execute("""
+        court_rows = query("""
             SELECT * FROM ecourts_records 
             WHERE accused_name LIKE ? 
             ORDER BY id DESC LIMIT 4
-        """, (f"%{target_name}%",)).fetchall()
+        """, (f"%{target_name}%",))
 
-    fugitive_rows = cur.execute("""
+    fugitive_rows = query("""
         SELECT * FROM fugitive_records 
         WHERE name LIKE ? OR aliases LIKE ? OR wanted_for_crimes LIKE ?
         ORDER BY id DESC LIMIT 2
-    """, (f"%{target_name}%", f"%{target_name}%", f"%{target_name}%")).fetchall()
+    """, (f"%{target_name}%", f"%{target_name}%", f"%{target_name}%"))
 
-    vahan_rows = cur.execute("""
+    vahan_rows = query("""
         SELECT * FROM vahan_records 
         WHERE registered_owner LIKE ?
         ORDER BY id DESC LIMIT 3
-    """, (f"%{target_name}%",)).fetchall()
+    """, (f"%{target_name}%",))
 
-    conn.close()
-
-    court_cases = [dict(r) for r in court_rows]
-    fugitive_records = [dict(r) for r in fugitive_rows]
-    vehicles = [dict(r) for r in vahan_rows]
+    court_cases = list(court_rows)
+    fugitive_records = list(fugitive_rows)
+    vehicles = list(vahan_rows)
 
     # 3. Public Social & Professional Profiles Swept
     public_profiles = [
