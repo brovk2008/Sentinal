@@ -1,18 +1,29 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2, Layers, ShieldAlert, Compass, Radio, X, ArrowRight } from 'lucide-react'
+import {
+  Mic, Paperclip, AlertCircle, Sparkles, Send, Volume2,
+  Layers, ShieldAlert, Compass, Radio, X, ArrowRight,
+  Globe, ExternalLink, Search, Terminal
+} from 'lucide-react'
 import Badge from '../components/shared/Badge'
 import LoadingPulse from '../components/shared/LoadingPulse'
-import { queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList, runAudioForensicProfile, autoGenerateCanvas, executeChatCommand } from '../api'
+import {
+  queryIntelligence, uploadToRag, textToSpeech, fetchCanvasList,
+  runAudioForensicProfile, autoGenerateCanvas, executeChatCommand,
+  searchLiveWeb, browseLiveUrl
+} from '../api'
 import VoiceInterface from '../components/rag/VoiceInterface'
 import { useTranslation } from 'react-i18next'
 
-function MessageCitations({ citations = [], debugInfo = {} }) {
+function MessageCitations({ citations = [], webCitations = [], debugInfo = {} }) {
   const [open, setOpen] = useState(false)
   const [expandedIndex, setExpandedIndex] = useState(null)
 
-  if (!citations || citations.length === 0) return null
+  const hasDocs = citations && citations.length > 0
+  const hasWeb = webCitations && webCitations.length > 0
+
+  if (!hasDocs && !hasWeb) return null
 
   const retrievalTime = debugInfo.retrievalTime || 8
   const searchedChunks = debugInfo.searchedChunks || 2384
@@ -23,70 +34,131 @@ function MessageCitations({ citations = [], debugInfo = {} }) {
       paddingTop: 8,
       borderTop: '1px solid var(--border-subtle)',
     }}>
-      <button
-        onClick={() => setOpen(!open)}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--copper-300)',
-          cursor: 'pointer',
-          fontSize: 10,
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          padding: 0,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          outline: 'none'
-        }}
-      >
-        {open ? '▼' : '▶'} Sources — {citations.length} documents retrieved in {retrievalTime}ms from {searchedChunks} chunks
-      </button>
-
-      {open && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-          {citations.map((c, idx) => {
-            const isExpanded = expandedIndex === idx
-            const matchPercent = (c.similarity_score * 100).toFixed(1)
-            return (
-              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div
-                  onClick={() => setExpandedIndex(isExpanded ? null : idx)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 11,
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    background: isExpanded ? 'var(--bg-secondary)' : 'transparent',
-                    padding: '4px 6px',
-                    borderRadius: 4,
-                  }}
-                >
-                  <span style={{ color: 'var(--copper-400)', fontWeight: 600 }}>#{idx + 1}</span>
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{c.document_title || c.crime_head || 'Report'}</span>
-                  {c.crime_no && <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>({c.crime_no})</span>}
-                  <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--copper-300)' }}>{matchPercent}% match</span>
-                </div>
-                {isExpanded && (
-                  <div style={{
-                    padding: '8px 10px',
-                    background: 'var(--bg-secondary)',
-                    borderRadius: 4,
-                    borderLeft: '2px solid var(--copper-400)',
-                    fontSize: 11,
-                    lineHeight: 1.5,
-                    color: 'var(--text-secondary)',
-                  }}>
-                    {c.text || c.content}
+      {/* ── Live Web Citations ────────────────────────────────────────── */}
+      {hasWeb && (
+        <div style={{ marginBottom: 10 }}>
+          <div style={{
+            fontSize: 10, fontWeight: 800, color: '#38bdf8',
+            display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6,
+            textTransform: 'uppercase', letterSpacing: '0.05em'
+          }}>
+            <Globe size={13} color="#38bdf8" />
+            <span>LIVE BROWSER & OSINT CITATIONS ({webCitations.length} SOURCES):</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {webCitations.map((w, idx) => (
+              <a
+                key={idx}
+                href={w.url}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  background: 'rgba(56,189,248,0.08)',
+                  border: '1px solid rgba(56,189,248,0.25)',
+                  borderRadius: 6, padding: '7px 12px',
+                  textDecoration: 'none', color: '#fff',
+                  display: 'flex', flexDirection: 'column', gap: 3,
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(56,189,248,0.16)'
+                  e.currentTarget.style.borderColor = 'rgba(56,189,248,0.5)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(56,189,248,0.08)'
+                  e.currentTarget.style.borderColor = 'rgba(56,189,248,0.25)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#38bdf8' }}>{w.title}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <span style={{
+                      fontSize: 9, background: 'rgba(56,189,248,0.2)',
+                      padding: '1px 5px', borderRadius: 3, color: '#bae6fd',
+                      fontFamily: 'var(--font-mono)'
+                    }}>
+                      {w.domain}
+                    </span>
+                    <ExternalLink size={10} color="#38bdf8" />
                   </div>
-                )}
-              </div>
-            )
-          })}
+                </div>
+                <div style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{w.snippet}</div>
+                <div style={{ fontSize: 9, color: '#64748b', fontStyle: 'italic' }}>{w.published_date}</div>
+              </a>
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* ── Local Police Records ─────────────────────────────────────── */}
+      {hasDocs && (
+        <>
+          <button
+            onClick={() => setOpen(!open)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--copper-300)',
+              cursor: 'pointer',
+              fontSize: 10,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: 0,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              outline: 'none'
+            }}
+          >
+            {open ? '▼' : '▶'} Police Records — {citations.length} documents retrieved in {retrievalTime}ms from {searchedChunks} chunks
+          </button>
+
+          {open && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+              {citations.map((c, idx) => {
+                const isExpanded = expandedIndex === idx
+                const matchPercent = (c.similarity_score * 100).toFixed(1)
+                return (
+                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div
+                      onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 11,
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        background: isExpanded ? 'var(--bg-secondary)' : 'transparent',
+                        padding: '4px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
+                      <span style={{ color: 'var(--copper-400)', fontWeight: 600 }}>#{idx + 1}</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{c.document_title || c.crime_head || 'Report'}</span>
+                      {c.crime_no && <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>({c.crime_no})</span>}
+                      <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--copper-300)' }}>{matchPercent}% match</span>
+                    </div>
+                    {isExpanded && (
+                      <div style={{
+                        padding: '8px 10px',
+                        background: 'var(--bg-secondary)',
+                        borderRadius: 4,
+                        borderLeft: '2px solid var(--copper-400)',
+                        fontSize: 11,
+                        lineHeight: 1.5,
+                        color: 'var(--text-secondary)',
+                      }}>
+                        {c.text || c.content}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -172,6 +244,8 @@ function AudioForensicModal({ onClose }) {
 
 const SLASH_COMMANDS = [
   { cmd: '/mcp', label: '/mcp <instruction>', title: 'Autonomous AI Site Control', desc: 'Autonomous AI control across all Sentinal features', example: '/mcp make canvas on latest vehicle theft' },
+  { cmd: '/web', label: '/web <query>', title: 'Live Browser & Web Search', desc: 'Real-time search across news, police press releases, court records', example: '/web luxury vehicle theft Karnataka 2026' },
+  { cmd: '/browse', label: '/browse <url>', title: 'Forensic Webpage Scraper', desc: 'Forensically browses and scrapes any target public webpage URL', example: '/browse https://ksp.karnataka.gov.in' },
   { cmd: '/canvas', label: '/canvas <case/query>', title: 'Instant Investigation Canvas', desc: 'Auto-generate and open investigation canvas', example: '/canvas Koramangala Luxury Creta Theft with Imran Pasha' },
   { cmd: '/search', label: '/search <query>', title: '10,000 FIR Deep Search', desc: 'Deep search across 10,000 Karnataka police FIRs', example: '/search luxury vehicle theft Bengaluru Urban' },
   { cmd: '/convoy', label: '/convoy <plate>', title: 'FASTag ANPR Highway Intercept', desc: 'FASTag ANPR toll corridor intercept tracking', example: '/convoy KA-04-MB-8821' },
@@ -190,11 +264,12 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState([
     {
       role: 'system',
-      content: t('ai.welcome') || 'Sentinal Cognitive Criminology Engine online. Connected to Karnataka State Police Records, Zia NLP, Kaggle National Crime AI models, and live multi-canvas investigation boards. Type / for MCP shortcuts.',
+      content: t('ai.welcome') || 'Sentinal Cognitive Criminology Engine online. Connected to Karnataka State Police Records, Zia NLP, Kaggle National Crime AI models, and live multi-canvas investigation boards. Type / for MCP shortcuts or toggle Live Web Search.',
     },
   ])
   const [input, setInput] = useState('')
   const [voiceMode, setVoiceMode] = useState(false)
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
   const [generatingCanvasFor, setGeneratingCanvasFor] = useState(null)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -275,7 +350,15 @@ export default function AIAssistant() {
         if (cmdRes.status === 'success') {
           let formattedContent = `### Sentinal MCP Tool Executed: \`${cmdRes.tool}\`\n\n`
           
-          if (cmdRes.tool === 'create_investigation_canvas') {
+          if (cmdRes.tool === 'search_live_web_engine') {
+            formattedContent += `**Live Web & Browser Search Results for** \`${cmdRes.query}\` (${cmdRes.results_count} sources):\n\n`
+            cmdRes.citations?.forEach((w, idx) => {
+              formattedContent += `${idx + 1}. [**${w.title}**](${w.url}) *(${w.domain})*\n   *Published*: ${w.published_date}\n   ${w.snippet}\n\n`
+            })
+          } else if (cmdRes.tool === 'browse_live_url') {
+            formattedContent += `**Live Webpage Scraped**: [**${cmdRes.page_data?.title}**](${cmdRes.page_data?.url})\n*Domain*: \`${cmdRes.page_data?.domain}\`\n\n`
+            formattedContent += `\`\`\`text\n${cmdRes.page_data?.text_content?.slice(0, 700)}...\n\`\`\`\n`
+          } else if (cmdRes.tool === 'create_investigation_canvas') {
             formattedContent += `**Canvas Created Successfully**: ID \`${cmdRes.result?.canvas_id}\` with **${cmdRes.result?.nodes_created || 9} nodes** and **${cmdRes.result?.edges_created || 8} causal edges**.\n\n*Entities Extracted*: Case FIR, Primary Suspects, Vehicles, FASTag Tolls, Bank Accounts & Seized Digital Evidence.`
           } else if (cmdRes.tool === 'search_fir_database') {
             formattedContent += `**Found ${cmdRes.count} matching FIR records**:\n\n`
@@ -307,7 +390,8 @@ export default function AIAssistant() {
             {
               role: 'assistant',
               content: formattedContent,
-              actionCard: cmdRes.action_card
+              actionCard: cmdRes.action_card,
+              webCitations: cmdRes.citations || []
             }
           ])
           setLoading(false)
@@ -327,10 +411,12 @@ export default function AIAssistant() {
 
     try {
       const activeLang = i18n.language || 'en'
+      const isWebQuery = webSearchEnabled || q.startsWith('/web') || q.startsWith('/browse')
       const res = await queryIntelligence({
         query: q,
         target_lang: activeLang,
-        board_id: selectedCanvas
+        board_id: selectedCanvas,
+        web_search: isWebQuery
       })
       setMessages(prev => [
         ...prev,
@@ -338,6 +424,7 @@ export default function AIAssistant() {
           role: 'assistant',
           content: res?.answer || 'No response content returned.',
           citations: res?.citations || [],
+          webCitations: res?.web_citations || [],
           debugInfo: {
             retrievalTime: res?.retrieval_time_ms,
             searchedChunks: res?.total_chunks_searched,
@@ -461,6 +548,25 @@ export default function AIAssistant() {
 
         <div style={{ flex: 1 }} />
 
+        {/* Live Web Search Toggle Button */}
+        <button
+          onClick={() => setWebSearchEnabled(w => !w)}
+          style={{
+            background: webSearchEnabled ? 'linear-gradient(135deg, #0284c7, #38bdf8)' : 'rgba(56,189,248,0.12)',
+            border: `1px solid ${webSearchEnabled ? '#38bdf8' : 'rgba(56,189,248,0.35)'}`,
+            color: webSearchEnabled ? '#000' : '#38bdf8',
+            fontWeight: 800,
+            padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+            outline: 'none', marginRight: 8, display: 'flex', alignItems: 'center', gap: 5,
+            boxShadow: webSearchEnabled ? '0 0 12px rgba(56,189,248,0.45)' : 'none',
+            transition: 'all 0.2s ease'
+          }}
+          title="Enable real-time autonomous internet, court records & news search"
+        >
+          <Globe size={13} />
+          <span>{webSearchEnabled ? '🌐 WEB SEARCH: ON' : '🌐 WEB SEARCH'}</span>
+        </button>
+
         {/* 112 Audio Profiler Button */}
         <button
           onClick={() => setShowAudioProfiler(true)}
@@ -570,7 +676,9 @@ export default function AIAssistant() {
                   </div>
                   <button
                     onClick={() => {
-                      if (msg.actionCard.target_url) {
+                      if (msg.actionCard.type === 'canvas_generator') {
+                        handleCreateAndOpenCanvas(msg.actionCard.action_prompt || msg.content)
+                      } else if (msg.actionCard.target_url) {
                         navigate(msg.actionCard.target_url.replace('#', ''))
                       }
                     }}
@@ -582,7 +690,7 @@ export default function AIAssistant() {
                       boxShadow: '0 0 12px rgba(245,158,11,0.3)'
                     }}
                   >
-                    <span>⚡ Open View</span>
+                    <span>⚡ {msg.actionCard.type === 'canvas_generator' ? 'Create Canvas' : 'Open View'}</span>
                     <ArrowRight size={12} />
                   </button>
                 </div>
@@ -617,9 +725,10 @@ export default function AIAssistant() {
                 </div>
               )}
 
-              {msg.citations && (
+              {((msg.citations && msg.citations.length > 0) || (msg.webCitations && msg.webCitations.length > 0)) && (
                 <MessageCitations
                   citations={msg.citations}
+                  webCitations={msg.webCitations}
                   debugInfo={msg.debugInfo}
                 />
               )}
@@ -635,7 +744,7 @@ export default function AIAssistant() {
               background: 'var(--bg-card)',
               border: '1px solid var(--border-subtle)',
             }}>
-              <LoadingPulse text="Correlating canvas evidence, Kaggle crime models & CCTV/CDR telemetry..." />
+              <LoadingPulse text="Correlating canvas evidence, live browser search, Kaggle crime models & CCTV/CDR telemetry..." />
             </div>
           </div>
         )}
@@ -651,6 +760,8 @@ export default function AIAssistant() {
         overflowX: 'auto',
       }}>
         {[
+          '/web luxury vehicle theft Karnataka 2026',
+          '/browse https://ksp.karnataka.gov.in',
           '/canvas Koramangala Luxury Creta Theft with Imran Pasha',
           '/search luxury vehicle theft Bengaluru Urban',
           '/convoy KA-04-MB-8821',

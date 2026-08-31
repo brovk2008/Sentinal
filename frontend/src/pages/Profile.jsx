@@ -18,6 +18,22 @@ const SHORTCUTS_DATA = [
     example: '/mcp make canvas on latest vehicle theft case with Imran Pasha'
   },
   {
+    command: '/web',
+    syntax: '/web <investigative_query | topic>',
+    title: 'Live Browser & Internet Search',
+    category: 'Browser & OSINT',
+    description: 'Executes autonomous real-time internet search across Google News, Karnataka Police Press Bureau, and High Court portals with live web citations.',
+    example: '/web luxury vehicle theft Karnataka 2026'
+  },
+  {
+    command: '/browse',
+    syntax: '/browse <public_webpage_url>',
+    title: 'Forensic Deep Webpage Scraper',
+    category: 'Browser & OSINT',
+    description: 'Forensically crawls, sanitizes, and extracts readable evidentiary text and entity graphs from any public target URL.',
+    example: '/browse https://ksp.karnataka.gov.in'
+  },
+  {
     command: '/canvas',
     syntax: '/canvas [case_id | query | *latest]',
     title: 'Instant Investigation Canvas',

@@ -133,6 +133,33 @@ SENTINAL_MCP_TOOLS = [
         "example": "/osint luxury car keyless theft"
     },
     {
+        "name": "search_live_web_engine",
+        "description": "Performs real-time live browser & web search across news, police press releases, court records, and online portals with citations.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query or investigative topic"},
+                "limit": {"type": "integer", "description": "Maximum number of citations to return (default 5)"}
+            },
+            "required": ["query"]
+        },
+        "shortcut": "/web",
+        "example": "/web luxury car theft cases Karnataka 2026"
+    },
+    {
+        "name": "browse_live_url",
+        "description": "Forensically browses and scrapes any target public webpage URL, extracting core text, metadata, and criminal entities.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "Target webpage URL (e.g. https://ksp.karnataka.gov.in)"}
+            },
+            "required": ["url"]
+        },
+        "shortcut": "/browse",
+        "example": "/browse https://ksp.karnataka.gov.in"
+    },
+    {
         "name": "navigate_app_tab",
         "description": "Commands the frontend UI to navigate to any module (Dashboard, War Room, 3D Globe, Investigation Canvas, Financial Intel, CDR Analytics, Predict).",
         "parameters": {
@@ -320,7 +347,42 @@ async def execute_mcp_tool(req: MCPExecuteRequest, http_request: Request):
             "news_items": res.get("items", [])[:3]
         }
 
-    # 9. navigate_app_tab
+    # 9. search_live_web_engine
+    elif name == "search_live_web_engine":
+        from routers.web_scraper import perform_live_web_search
+        q = args.get("query", "Karnataka Police news")
+        limit = args.get("limit", 5)
+        results = perform_live_web_search(q, limit)
+        return {
+            "status": "success",
+            "tool": name,
+            "query": q,
+            "results_count": len(results),
+            "citations": results,
+            "action_card": {
+                "type": "canvas_generator",
+                "label": "Turn Live Web Intel into Investigation Canvas",
+                "action_prompt": f"Extract investigation canvas from live web findings: {q}"
+            }
+        }
+
+    # 10. browse_live_url
+    elif name == "browse_live_url":
+        from routers.web_scraper import scrape_webpage_content
+        target_url = args.get("url", "https://ksp.karnataka.gov.in")
+        res = scrape_webpage_content(target_url)
+        return {
+            "status": "success",
+            "tool": name,
+            "page_data": res,
+            "action_card": {
+                "type": "canvas_generator",
+                "label": "Extract Canvas Graph from Scraped Webpage",
+                "action_prompt": f"Extract entities from webpage {target_url}: {res.get('title', '')}"
+            }
+        }
+
+    # 11. navigate_app_tab
     elif name == "navigate_app_tab":
         tab = args.get("target_tab", "dashboard").lower().strip()
         routes = {
@@ -363,7 +425,7 @@ async def execute_mcp_tool(req: MCPExecuteRequest, http_request: Request):
 @router.post("/chat-command")
 async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Request):
     """
-    Parses and handles slash commands like /mcp, /canvas, /search, /convoy, /chargesheet, /patrol, /dossier, /navigate.
+    Parses and handles slash commands like /mcp, /canvas, /search, /convoy, /chargesheet, /patrol, /dossier, /navigate, /web, /browse.
     """
     cmd = req.command.strip()
     if not cmd.startswith("/"):
@@ -374,7 +436,19 @@ async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Re
     payload_text = parts[1].strip() if len(parts) > 1 else ""
 
     # Routing commands to tools
-    if slash_cmd in ("/canvas", "/make-canvas"):
+    if slash_cmd in ("/web", "/search-web", "/google"):
+        return await execute_mcp_tool(MCPExecuteRequest(
+            name="search_live_web_engine",
+            arguments={"query": payload_text or "Karnataka crime updates", "limit": 5}
+        ), http_request)
+
+    elif slash_cmd in ("/browse", "/url", "/fetch-page"):
+        return await execute_mcp_tool(MCPExecuteRequest(
+            name="browse_live_url",
+            arguments={"url": payload_text or "https://ksp.karnataka.gov.in"}
+        ), http_request)
+
+    elif slash_cmd in ("/canvas", "/make-canvas"):
         return await execute_mcp_tool(MCPExecuteRequest(
             name="create_investigation_canvas",
             arguments={"text": payload_text or "Latest crime intel and luxury vehicle theft syndicate"}
@@ -424,13 +498,18 @@ async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Re
 
     elif slash_cmd in ("/osint", "/news"):
         return await execute_mcp_tool(MCPExecuteRequest(
-            name="perform_osint_intel_scrape",
-            arguments={"topic": payload_text or "Karnataka Police"}
+            name="search_live_web_engine",
+            arguments={"query": payload_text or "Karnataka Police news"}
         ), http_request)
 
     elif slash_cmd == "/mcp":
         # General AI MCP dispatch
-        if any(w in payload_text.lower() for w in ["canvas", "graph", "board"]):
+        if any(w in payload_text.lower() for w in ["web", "google", "search online", "internet", "news", "recent"]):
+            return await execute_mcp_tool(MCPExecuteRequest(
+                name="search_live_web_engine",
+                arguments={"query": payload_text}
+            ), http_request)
+        elif any(w in payload_text.lower() for w in ["canvas", "graph", "board"]):
             return await execute_mcp_tool(MCPExecuteRequest(
                 name="create_investigation_canvas",
                 arguments={"text": payload_text}
@@ -452,8 +531,8 @@ async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Re
             ), http_request)
         else:
             return await execute_mcp_tool(MCPExecuteRequest(
-                name="create_investigation_canvas",
-                arguments={"text": payload_text}
+                name="search_live_web_engine",
+                arguments={"query": payload_text}
             ), http_request)
 
     else:

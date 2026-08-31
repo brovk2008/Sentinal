@@ -525,6 +525,16 @@ export const executeChatCommand = (payload = {}) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+export const searchLiveWeb = (payload = {}) =>
+  request('/api/v1/web-scraper/live-search', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+export const browseLiveUrl = (payload = {}) =>
+  request('/api/v1/web-scraper/browse', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
 // ── Tactical Criminology & Financial Forensics Engines ───────────────────────
 export const generateBNSChargesheet = (payload = {}) =>

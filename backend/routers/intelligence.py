@@ -22,6 +22,7 @@ class QueryRequest(BaseModel):
     conversation_history: Optional[List[dict]] = []
     board_id: Optional[str] = None
     target_lang: Optional[str] = "en"
+    web_search: Optional[bool] = False
 
 
 class DiagramRequest(BaseModel):
@@ -109,6 +110,7 @@ async def debug_quickml(request: Request):
 @router.post("/query")
 async def intelligence_query(req: QueryRequest, request: Request):
     """Run RAG pipeline: embed query → retrieve → generate answer with history and board context."""
+    web_citations = []
     try:
         start_time = time.perf_counter()
         
@@ -307,6 +309,27 @@ async def intelligence_query(req: QueryRequest, request: Request):
                         web_intel_context += f"  * Advisory: {cr['cert_in_advisory_no']} | Action: {cr['action_recommended']}\n"
 
             _con.close()
+
+            # 5. Live Browser & Web Search Intelligence
+            web_citations = []
+            if req.web_search or any(w in req.query.lower() for w in ["/web", "google", "online", "internet", "breaking", "latest news", "today", "yesterday", "recent"]):
+                try:
+                    from routers.web_scraper import perform_live_web_search
+                    live_search_results = perform_live_web_search(req.query, max_results=5)
+                    if live_search_results:
+                        web_intel_context += "\n\n[LIVE INTERNET & BROWSER OSINT SEARCH RESULTS]\n"
+                        for item in live_search_results:
+                            web_intel_context += f"  * Title: {item['title']} ({item['domain']} - {item['published_date']})\n    Snippet: {item['snippet']}\n    URL: {item['url']}\n"
+                            web_citations.append({
+                                "title": item["title"],
+                                "url": item["url"],
+                                "domain": item["domain"],
+                                "snippet": item["snippet"],
+                                "published_date": item["published_date"],
+                                "type": "live_web"
+                            })
+                except Exception as web_err:
+                    print(f"[Intelligence] Live web search error: {web_err}")
         except Exception as e:
             print(f"[RAG Web Intel Context] Error: {e}")
 
@@ -446,6 +469,7 @@ Analyze the inquiry against the provided database context above. Deliver a direc
         return {
             "answer": answer,
             "citations": citations,
+            "web_citations": web_citations,
             "query_vector_norm": query_vector_norm,
             "retrieval_time_ms": retrieval_time_ms,
             "total_chunks_searched": total_chunks_searched,
@@ -456,6 +480,7 @@ Analyze the inquiry against the provided database context above. Deliver a direc
         return {
             "answer": _generate_data_answer(req.query),
             "citations": [],
+            "web_citations": [],
             "query_vector_norm": 1.0,
             "retrieval_time_ms": 12,
             "total_chunks_searched": 1420,
