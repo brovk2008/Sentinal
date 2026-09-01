@@ -365,6 +365,11 @@ export const translateText = (text, sourceLang = 'en', targetLang = 'kn') =>
     method: 'POST',
     body: JSON.stringify({ text, source_lang: sourceLang, target_lang: targetLang }),
   });
+export const translateBatch = (texts = [], targetLang = 'kn', sourceLang = 'en') =>
+  request('/api/v1/nlp/translate-batch', {
+    method: 'POST',
+    body: JSON.stringify({ texts, target_lang: targetLang, source_lang: sourceLang }),
+  });
 export const textToSpeech = (text, language = 'en-IN') =>
   request('/api/v1/nlp/text-to-speech', {
     method: 'POST',
