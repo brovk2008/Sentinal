@@ -618,28 +618,34 @@ function MapRefTracker({ mapRef }) {
 
 const TILE_LAYERS = {
   dark: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    overlayUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &copy; OpenStreetMap',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     label: 'Dark Tactical',
+    subdomains: 'abcd',
+    maxZoom: 20,
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     overlayUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles &copy; Esri',
     label: 'Satellite HD',
+    maxZoom: 19,
   },
   topo: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri',
-    label: 'Esri Topo',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    label: 'Carto Topo',
+    subdomains: 'abcd',
+    maxZoom: 20,
   },
   street: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap contributors',
     label: 'Street Vector',
+    maxZoom: 19,
   },
 }
+
 
 
 // ── Realistic Tactical Map Pointer Generator ──
@@ -1405,6 +1411,8 @@ export default function GeospatialMap() {
               key={mapStyle}
               url={TILE_LAYERS[mapStyle].url}
               attribution={TILE_LAYERS[mapStyle].attribution}
+              subdomains={TILE_LAYERS[mapStyle].subdomains || 'abc'}
+              maxZoom={TILE_LAYERS[mapStyle].maxZoom || 19}
             />
             {TILE_LAYERS[mapStyle]?.overlayUrl && (
               <TileLayer
@@ -1412,6 +1420,7 @@ export default function GeospatialMap() {
                 url={TILE_LAYERS[mapStyle].overlayUrl}
                 attribution="&copy; Esri"
                 opacity={0.85}
+                maxZoom={TILE_LAYERS[mapStyle].maxZoom || 19}
               />
             )}
             

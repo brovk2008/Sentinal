@@ -641,15 +641,12 @@ export default function WarRoom() {
                     />
                   </>
                 ) : (
-                  <>
-                    <TileLayer
-                      url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-                      attribution="&copy; Esri &copy; OpenStreetMap"
-                    />
-                    <TileLayer
-                      url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-                    />
-                  </>
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> &copy; <a href='https://carto.com/attributions'>CARTO</a>"
+                    subdomains="abcd"
+                    maxZoom={20}
+                  />
                 )}
                 {firMarkers.map((m, i) => (
                   <CircleMarker
