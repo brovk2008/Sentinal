@@ -619,11 +619,11 @@ function MapRefTracker({ mapRef }) {
 
 const TILE_LAYERS = {
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    className: 'tactical-dark-tiles',
+    attribution: 'Tiles &copy; Esri',
     label: 'Dark Tactical',
-    subdomains: 'abcd',
-    maxZoom: 20,
+    maxZoom: 19,
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -633,15 +633,14 @@ const TILE_LAYERS = {
     maxZoom: 19,
   },
   topo: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    label: 'Carto Topo',
-    subdomains: 'abcd',
-    maxZoom: 20,
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri',
+    label: 'Topo Map',
+    maxZoom: 19,
   },
   street: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenStreetMap contributors',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri',
     label: 'Street Vector',
     maxZoom: 19,
   },
@@ -1412,7 +1411,7 @@ export default function GeospatialMap() {
               key={mapStyle}
               url={TILE_LAYERS[mapStyle].url}
               attribution={TILE_LAYERS[mapStyle].attribution}
-              subdomains={TILE_LAYERS[mapStyle].subdomains || 'abc'}
+              className={TILE_LAYERS[mapStyle].className || ''}
               maxZoom={TILE_LAYERS[mapStyle].maxZoom || 19}
             />
             {TILE_LAYERS[mapStyle]?.overlayUrl && (

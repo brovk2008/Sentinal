@@ -184,10 +184,17 @@ body {
 
 /* ── Leaflet overrides ── */
 .leaflet-container {
-  background: var(--bg-primary) !important;
+  background: #04060c !important;
+}
+
+/* ── Tactical Dark Map Tile Shader (Esri Topo / Street) ── */
+.tactical-dark-tiles img,
+.tactical-dark-tiles .leaflet-tile {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(125%) saturate(30%) !important;
 }
 
 /* ── Vis-network overrides ── */
 .vis-network {
   outline: none !important;
 }
+
