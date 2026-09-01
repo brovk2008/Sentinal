@@ -94,7 +94,7 @@ function createDistrictBadgeCanvas(count, isCritical, isHigh) {
 }
 
 // ── CesiumJS 3D Globe Component ──
-function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }) {
+function CesiumGlobe({ points = [], districts = [], casePins = [], hotspots = [], onSelectCase }) {
   const mountRef = useRef(null)
   const viewerRef = useRef(null)
   const [cesiumReady, setCesiumReady] = useState(false)
@@ -284,7 +284,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
 
     viewer.entities.removeAll()
 
-    // 1. High-Altitude Regional Overview Badges (Culled when zoomed in < 45km)
+    // 1. High-Altitude District Overview Badges (Visible only at regional zoom > 60km)
     const FALLBACK_POINTS = [
       { lat: 12.9716, lng: 77.5946, label: 'Bengaluru Urban HQ', severity: 'critical', count: 199 },
       { lat: 15.3647, lng: 75.1240, label: 'Hubballi-Dharwad Sector', severity: 'medium', count: 73 },
@@ -303,18 +303,19 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
       { lat: 16.8302, lng: 75.7100, label: 'Vijayapura District', severity: 'medium', count: 115 },
     ]
 
-    const displayPoints = (points && points.length > 0) ? points.slice(0, 150) : FALLBACK_POINTS
+    const districtList = (districts && districts.length > 0) ? districts : FALLBACK_POINTS
 
-    displayPoints.forEach(pt => {
-      const lat = parseFloat(pt.lat)
-      const lng = parseFloat(pt.lng)
+    districtList.forEach(dist => {
+      const lat = parseFloat(dist.lat)
+      const lng = parseFloat(dist.lng)
       if (isNaN(lat) || isNaN(lng)) return
 
-      const isCritical = pt.severity === 'critical' || pt.count > 150
-      const isHigh = pt.severity === 'high' || pt.count > 80
-      const count = pt.count || pt.incident_count || 1
+      const count = dist.case_count || dist.count || 50
+      const isCritical = count > 150
+      const isHigh = count > 80
+      const name = dist.name || dist.label || dist.DistrictName || 'District HQ'
 
-      // Flat Ground Badge - Visible in high-altitude regional view only
+      // Flat Ground Badge - Visible in high-altitude regional view only (> 60 km)
       viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
         billboard: {
@@ -323,11 +324,11 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           height: 38,
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(45000.0, 5000000.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(60000.0, 5000000.0),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
         label: {
-          text: pt.label || pt.district_name || 'Zone',
+          text: `${name}\n(${count} Cases)`,
           font: 'bold 11px "Inter", sans-serif',
           fillColor: Cesium.Color.WHITE,
           outlineColor: Cesium.Color.BLACK,
@@ -335,7 +336,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
           pixelOffset: new Cesium.Cartesian2(0, -24),
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(55000.0, 1800000.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(60000.0, 1800000.0),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           showBackground: true,
           backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.90),
@@ -344,7 +345,7 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
       })
     })
 
-    // 2. Individual Case Pins Clamped Flat to Ground (ZERO 3D cylinders/towers)
+    // 2. Individual Case Pins Clamped Flat to Ground (Visible when zoomed in closer < 70km)
     casePins.forEach((cp, idx) => {
       const lat = parseFloat(cp.latitude)
       const lng = parseFloat(cp.longitude)
@@ -360,35 +361,35 @@ function CesiumGlobe({ points = [], casePins = [], hotspots = [], onSelectCase }
         position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
         billboard: {
           image: createTacticalPinCanvas(isHeinous, isHigh, isCyber),
-          width: 32,
-          height: 40,
+          width: 28,
+          height: 36,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          scaleByDistance: new Cesium.NearFarScalar(1e3, 1.15, 3e5, 0.45),
+          scaleByDistance: new Cesium.NearFarScalar(1e3, 1.0, 7e4, 0.45),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 350000.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 70000.0),
         },
         label: {
           text: `FIR #${caseNo}\n${cp.CrimeGroupName || 'Offence'}`,
-          font: 'bold 11px "Inter", sans-serif',
+          font: 'bold 10px "Inter", sans-serif',
           fillColor: Cesium.Color.WHITE,
           outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 2.5,
+          outlineWidth: 2,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -42),
-          scaleByDistance: new Cesium.NearFarScalar(3e3, 1.0, 1.0e5, 0.0),
+          pixelOffset: new Cesium.Cartesian2(0, -38),
+          scaleByDistance: new Cesium.NearFarScalar(2e3, 1.0, 2.5e4, 0.0),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           showBackground: true,
           backgroundColor: new Cesium.Color(0.04, 0.06, 0.14, 0.92),
-          backgroundPadding: new Cesium.Cartesian2(8, 4),
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 100000.0),
+          backgroundPadding: new Cesium.Cartesian2(6, 3),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 25000.0),
         }
       })
       pinEntity.caseData = cp
     })
 
-  }, [points, casePins, hotspots, cesiumReady])
+  }, [districts, casePins, hotspots, cesiumReady])
 
   // Fly directly perpendicular to the geodetic surface normal (-89.9° nadir)
   const flyToLocation = (lng, lat, altitude = 1800, headingDeg = 0, pitchDeg = -89.9) => {
@@ -1395,7 +1396,7 @@ export default function GeospatialMap() {
         {loading ? (
           <LoadingPulse height={400} text="Mapping coordinates..." />
         ) : globeMode ? (
-          <CesiumGlobe points={activePoints} casePins={casePins} hotspots={hotspots} onSelectCase={setSelectedCasePin} />
+          <CesiumGlobe points={activePoints} districts={districts} casePins={casePins} hotspots={hotspots} onSelectCase={setSelectedCasePin} />
         ) : (
           <MapContainer
             center={KA_CENTER}
