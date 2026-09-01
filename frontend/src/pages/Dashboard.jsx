@@ -159,6 +159,15 @@ export default function Dashboard() {
     return () => { active = false }
   }, [])
 
+  // Re-fetch Hawkes forecast trend when user toggles 24H / WEEKLY / MONTHLY
+  useEffect(() => {
+    fetchMonthlyTrend(trendWindow).then(res => {
+      if (res && Array.isArray(res) && res.length > 0) {
+        setTrend(res)
+      }
+    }).catch(() => {})
+  }, [trendWindow])
+
   // Filtered crime data
   const filteredCrimeData = useMemo(() => {
     if (selectedCategory === 'ALL') return crimeData

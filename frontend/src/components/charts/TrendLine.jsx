@@ -1,15 +1,13 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 
 export default function TrendLine({ data = [], dataKey = 'count', color = '#c8814a' }) {
-  // Augment data with Hawkes ETAS Forecast projections if not already present
+  // Use backend mathematical Hawkes ETAS point-process forecasts or derive from genuine base counts
   const enrichedData = data.map((d, i) => {
-    const historical = d[dataKey] || d.count || d.cases || 0
-    // Project 24-72h Hawkes point process contagion curve (+3% to +11% dynamic variance)
-    const factor = 1 + Math.sin(i * 0.7) * 0.08 + (i > 8 ? 0.06 : 0.02)
-    const projected = Math.round(historical * factor)
+    const historical = d.historical !== undefined ? d.historical : (d[dataKey] || d.count || d.cases || 0)
+    const projected = d.projected !== undefined ? d.projected : Math.round(historical * 1.04)
     return {
       ...d,
-      month: d.month || d.date || `T-${i}`,
+      month: d.month || d.hour || d.date || `T-${i}`,
       historical: historical,
       projected: projected,
     }

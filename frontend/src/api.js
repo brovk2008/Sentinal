@@ -78,7 +78,7 @@ export const fetchCrimeDistribution = () => request('/api/v1/analytics/crime-dis
 export const fetchTopOffenders = (limit = 5) => request(`/api/v1/analytics/top-offenders?limit=${limit}`);
 export const fetchDistrictComparison = (y1 = 2025, y2 = 2026) =>
   request(`/api/v1/analytics/district-comparison?year1=${y1}&year2=${y2}`);
-export const fetchMonthlyTrend = () => request('/api/v1/analytics/monthly-trend');
+export const fetchMonthlyTrend = (window = 'monthly') => request(`/api/v1/analytics/monthly-trend?window=${window}`);
 export const fetchStatusBreakdown = () => request('/api/v1/analytics/status-breakdown');
 
 // ── Heatmap ──
