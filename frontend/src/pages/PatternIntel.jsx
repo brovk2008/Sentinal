@@ -500,11 +500,16 @@ export default function PatternIntel() {
       {/* ── TABS NAVIGATION ─────────────────────────────────────────────── */}
       <div style={{
         display: 'flex',
-        gap: 6,
-        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.8) 0%, rgba(20, 27, 45, 0.8) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: 8,
-        padding: '6px 10px',
+        gap: 8,
+        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 27, 45, 0.95) 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: 10,
+        padding: '10px 14px',
+        marginTop: 14,
+        marginBottom: 16,
+        flexShrink: 0,
+        boxSizing: 'border-box',
+        alignItems: 'center',
         overflowX: 'auto',
       }}>
         {[
@@ -521,19 +526,21 @@ export default function PatternIntel() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
-                padding: '7px 14px',
+                padding: '9px 16px',
                 fontSize: 12,
                 fontWeight: isSelected ? 700 : 500,
                 cursor: 'pointer',
                 borderRadius: 6,
-                border: isSelected ? '1px solid var(--copper-400)' : '1px solid transparent',
-                background: isSelected ? 'rgba(200, 129, 74, 0.2)' : 'transparent',
+                border: isSelected ? '1px solid var(--copper-400)' : '1px solid rgba(255,255,255,0.06)',
+                background: isSelected ? 'rgba(200, 129, 74, 0.22)' : 'rgba(255,255,255,0.03)',
                 color: isSelected ? '#ffffff' : '#94a3b8',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 7,
                 transition: 'all 0.15s ease',
                 whiteSpace: 'nowrap',
+                boxSizing: 'border-box',
+                lineHeight: 1.2,
               }}
             >
               <Icon size={14} color={isSelected ? 'var(--copper-400)' : '#64748b'} />
