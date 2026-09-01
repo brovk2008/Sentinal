@@ -105,7 +105,7 @@ export default function Sidebar() {
           </div>
         </div>
         <span className="badge badge-copper" style={{ fontSize: 9, padding: '2px 6px' }}>
-          v1.4
+          v1.5
         </span>
       </div>
 

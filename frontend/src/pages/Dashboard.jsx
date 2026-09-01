@@ -219,7 +219,7 @@ export default function Dashboard() {
                 background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)',
                 letterSpacing: '0.06em', textTransform: 'uppercase',
               }}>
-                STATE POLICE HQ · V1.4
+                STATE POLICE HQ · V1.5
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4 }}>
