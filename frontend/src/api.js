@@ -166,10 +166,6 @@ export const deleteUploadedFile = (fileId) => request(`/api/v1/uploads/file/${fi
 
 // ── Pattern Intelligence & Criminology ──
 export const fetchPatterns = () => request('/api/v1/intelligence/patterns');
-export const fetchMoClusters = () => request('/api/v1/criminology/mo-clusters');
-export const fetchNearRepeatRisk = () => request('/api/v1/criminology/near-repeat-risk');
-export const fetchSyndicateGraph = () => request('/api/v1/criminology/syndicate-graph');
-export const fetchSpreeAlerts = () => request('/api/v1/criminology/spree-alerts');
 
 
 // ── Intelligence ──
@@ -424,6 +420,22 @@ export const fetchUploads = (params = {}) => {
   return request(`/api/v1/uploads/list?${qs}`);
 };
 
+export const fetchMoClusters = (limit = 200) =>
+  request(`/api/v1/criminology/mo-clusters?limit=${limit}`);
+
+export const fetchNearRepeatRisk = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/api/v1/criminology/near-repeat-risk${qs ? `?${qs}` : ''}`);
+};
+
+export const fetchSyndicateGraph = (limit = 200) =>
+  request(`/api/v1/criminology/syndicates?limit=${limit}`);
+
+export const fetchSpreeAlerts = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/api/v1/criminology/spree-alerts${qs ? `?${qs}` : ''}`);
+};
+
 export const fetchEscalationMatrix = () =>
   request('/api/v1/criminology/escalation-matrix');
 
@@ -438,11 +450,11 @@ export const fetchPatternIntel = async () => {
   return {
     success: true,
     data: {
-      mo_clusters: mo.mo_clusters || [],
-      near_repeat_risk: nr.risk_zones || nr || [],
-      syndicates: syn.syndicates || syn || [],
-      spree_alerts: spree.sprees || spree.spree_alerts || [],
-      escalation_chains: esc.escalation_chains || []
+      mo_clusters: mo?.mo_clusters || [],
+      near_repeat_risk: nr?.risk_zones || nr?.zones || (Array.isArray(nr) ? nr : []),
+      syndicates: syn?.syndicates || (Array.isArray(syn) ? syn : []),
+      spree_alerts: spree?.sprees || spree?.alerts || spree?.spree_alerts || [],
+      escalation_chains: esc?.escalation_chains || (Array.isArray(esc) ? esc : [])
     }
   };
 };
