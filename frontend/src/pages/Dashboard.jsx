@@ -173,14 +173,17 @@ export default function Dashboard() {
 
   return (
     <div style={{
-      padding: '16px 20px 24px 20px',
+      padding: '20px 24px 32px 24px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 14,
-      background: '#04060c',
-      minHeight: 'min-content',
+      gap: 16,
+      background: 'var(--bg-primary)',
+      minHeight: '100%',
       width: '100%',
-      color: '#e8e6e0',
+      maxWidth: 1840,
+      margin: '0 auto',
+      color: '#e2e8f0',
+      fontFamily: 'Inter, system-ui, sans-serif'
     }}>
 
       {/* ── TOP HUD & COMMAND HEADER ────────────────────────────────────── */}
@@ -188,10 +191,10 @@ export default function Dashboard() {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: 'linear-gradient(90deg, rgba(200, 129, 74, 0.08) 0%, rgba(56, 189, 248, 0.04) 50%, rgba(15, 18, 28, 0.6) 100%)',
+        background: 'linear-gradient(90deg, rgba(200, 129, 74, 0.1) 0%, rgba(56, 189, 248, 0.05) 50%, rgba(15, 18, 28, 0.8) 100%)',
         border: '1px solid rgba(200, 129, 74, 0.25)',
         borderRadius: 10,
-        padding: '12px 18px',
+        padding: '14px 20px',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
         flexShrink: 0,
       }}>
@@ -199,7 +202,7 @@ export default function Dashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <h1 style={{ fontSize: 19, fontWeight: 800, color: '#f8fafc', margin: 0, letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontSize: 18, fontWeight: 800, color: '#f8fafc', margin: 0, letterSpacing: '-0.02em' }}>
                 <ZiaText>COMMAND CENTER INTELLIGENCE HUB</ZiaText>
               </h1>
               <span style={{
@@ -218,7 +221,7 @@ export default function Dashboard() {
               <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#94a3b8' }}>
                 <Cpu size={12} color="#c8814a" />
-                <span>Hawkes ETAS & ML Ensembles: 90.8% Acc</span>
+                <span>Hawkes ETAS &amp; ML Ensembles: 90.8% Acc</span>
               </div>
               <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#38bdf8', fontFamily: 'monospace' }}>
@@ -288,11 +291,11 @@ export default function Dashboard() {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
         background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.8) 0%, rgba(20, 27, 45, 0.8) 100%)',
         border: '1px solid rgba(255, 255, 255, 0.09)',
         borderRadius: 8,
-        padding: '10px 14px',
+        padding: '8px 14px',
         flexShrink: 0,
         boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
       }}>
@@ -314,7 +317,7 @@ export default function Dashboard() {
                 onClick={() => setSelectedCategory(cat.id)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 14px', borderRadius: 6,
+                  padding: '5px 14px', borderRadius: 6,
                   fontSize: 11, fontWeight: isSelected ? 700 : 500,
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
@@ -340,8 +343,8 @@ export default function Dashboard() {
       {/* ── ROW 1: ELEVATED 6 KPI CARDS ─────────────────────────────────── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(6, 1fr)',
-        gap: 12,
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: 14,
         flexShrink: 0,
       }}>
         <KpiCard
@@ -407,41 +410,41 @@ export default function Dashboard() {
       {/* ── ROW 2: CRIME TREND, DISTRIBUTION & LIVE TELEMETRY ──────────── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '2fr 1.35fr 1.15fr',
-        gap: 12,
+        gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1.05fr) minmax(0, 1.25fr)',
+        gap: 14,
         flexShrink: 0,
       }}>
         {/* Crime Trend & Hawkes Contagion Forecast */}
         <div className="card" style={{
-          padding: '14px 16px', minWidth: 0,
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
           <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: 10,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+            marginBottom: 10, gap: 8,
           }}>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TrendingUp size={15} color="#c8814a" />
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
-                  <ZiaText>CRIME TREND & HAWKES CONTAGION FORECAST</ZiaText>
+                <TrendingUp size={15} color="#c8814a" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#f8fafc', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                  <ZiaText>CRIME TREND &amp; HAWKES FORECAST</ZiaText>
                 </span>
               </div>
               <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                Dual-Series: Historical Baseline vs. 24h-72h Hawkes Point-Process Projection
+                24h-72h Hawkes Point-Process Projection
               </div>
             </div>
             {/* Time toggles */}
-            <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.5)', padding: 3, borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', gap: 3, background: 'rgba(0,0,0,0.5)', padding: 2, borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
               {['24H', 'WEEKLY', 'MONTHLY'].map(t => (
                 <button
                   key={t}
                   onClick={() => setTrendWindow(t.toLowerCase())}
                   style={{
-                    padding: '3px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700,
+                    padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700,
                     cursor: 'pointer',
                     background: trendWindow === t.toLowerCase() ? '#c8814a' : 'transparent',
                     color: trendWindow === t.toLowerCase() ? '#ffffff' : '#64748b',
@@ -453,45 +456,45 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div style={{ height: 240 }}>
+          <div style={{ height: 235 }}>
             <TrendLine data={trend} />
           </div>
         </div>
 
         {/* Crime Distribution Donut */}
         <div className="card" style={{
-          padding: '14px 16px', minWidth: 0,
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Radar size={15} color="#38bdf8" />
-              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#f8fafc' }}>
                 <ZiaText>CRIME MATRIX BREAKDOWN</ZiaText>
               </span>
             </div>
             <span style={{ fontSize: 10, color: '#94a3b8' }}>10,000 FIRs</span>
           </div>
-          <div style={{ height: 240 }}>
+          <div style={{ height: 235 }}>
             <CrimeDonut data={filteredCrimeData} total={kpis?.total_cases} />
           </div>
         </div>
 
         {/* Live Incident Telemetry Feed */}
         <div className="card" style={{
-          padding: '14px 16px',
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Radio size={14} color="#10b981" />
-              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#f8fafc' }}>
                 <ZiaText>LIVE TELEMETRY FEED</ZiaText>
               </span>
             </div>
@@ -501,19 +504,20 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', height: 240 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', height: 235 }}>
             {filteredTimeline.slice(0, 5).map((ev, i) => (
               <div
                 key={ev.CaseMasterID || i}
                 onClick={() => navigate(`/timeline`)}
                 style={{
-                  padding: '7px 9px',
+                  padding: '8px 10px',
                   borderRadius: 6,
                   background: 'rgba(255,255,255,0.02)',
                   border: '1px solid rgba(255,255,255,0.05)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   flexShrink: 0,
+                  minWidth: 0,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(200, 129, 74, 0.08)'
@@ -525,29 +529,30 @@ export default function Dashboard() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                     <span style={{
                       width: 6, height: 6, borderRadius: '50%',
                       background: ev.severity === 'critical' ? '#ef4444' : ev.severity === 'high' ? '#f59e0b' : '#38bdf8',
                       boxShadow: `0 0 6px ${ev.severity === 'critical' ? '#ef4444' : '#f59e0b'}`,
+                      flexShrink: 0,
                     }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#f8fafc' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#f8fafc', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       <ZiaText>{ev.CrimeGroupName}</ZiaText>
                     </span>
                   </div>
-                  <span style={{ fontSize: 9, color: '#94a3b8', fontFamily: 'monospace' }}>
+                  <span style={{ fontSize: 9, color: '#94a3b8', fontFamily: 'monospace', flexShrink: 0, marginLeft: 6 }}>
                     {ev.CrimeRegisteredDate}
                   </span>
                 </div>
 
-                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, lineHeight: 1.3, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   <ZiaText>{ev.BriefFacts}</ZiaText>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                   <span style={{
                     fontSize: 9, color: '#38bdf8', background: 'rgba(56,189,248,0.1)',
-                    padding: '1px 5px', borderRadius: 3, fontWeight: 600,
+                    padding: '1px 6px', borderRadius: 3, fontWeight: 600,
                   }}>
                     {ev.DistrictName}
                   </span>
@@ -564,13 +569,13 @@ export default function Dashboard() {
       {/* ── ROW 3: MOST WANTED, DISTRICT BAR, PREDICTIVE RISK, ALERTS ────── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 0.9fr 1.1fr',
-        gap: 12,
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        gap: 14,
         flexShrink: 0,
       }}>
         {/* 1. Most Wanted Crime Syndicates */}
         <div className="card" style={{
-          padding: '14px 16px',
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
@@ -651,17 +656,17 @@ export default function Dashboard() {
 
         {/* 2. Top District Comparison & Clearance */}
         <div className="card" style={{
-          padding: '14px 16px', minWidth: 0,
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Scale size={15} color="#c8814a" />
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f8fafc' }}>
-                <ZiaText>DISTRICT CLEARANCE & CASELOAD</ZiaText>
+                <ZiaText>DISTRICT CLEARANCE &amp; CASELOAD</ZiaText>
               </span>
             </div>
             <span style={{ fontSize: 10, color: '#94a3b8' }}>Top 6 Districts</span>
@@ -673,7 +678,7 @@ export default function Dashboard() {
 
         {/* 3. Predictive Risk & Hawkes Contagion Radar */}
         <div className="card" style={{
-          padding: '14px 14px',
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
@@ -715,7 +720,7 @@ export default function Dashboard() {
 
         {/* 4. Tactical Patrol Dispatches & Alerts */}
         <div className="card" style={{
-          padding: '14px 16px',
+          padding: '16px 18px', minWidth: 0,
           background: 'linear-gradient(180deg, rgba(15, 18, 28, 0.9) 0%, rgba(10, 12, 20, 0.95) 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',

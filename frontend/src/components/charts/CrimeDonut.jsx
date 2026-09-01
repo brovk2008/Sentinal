@@ -17,18 +17,18 @@ export default function CrimeDonut({ data = [], total }) {
   const computedTotal = total || data.reduce((s, d) => s + d.value, 0) || 10000
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, height: '100%', minWidth: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, height: '100%', minWidth: 0, width: '100%' }}>
       {/* Donut Graphic */}
-      <div style={{ width: 170, height: 170, position: 'relative', flexShrink: 0 }}>
+      <div style={{ width: 125, height: 125, position: 'relative', flexShrink: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%" cy="50%"
-              innerRadius={52} outerRadius={78}
+              innerRadius={36} outerRadius={58}
               dataKey="value"
               stroke="#0a0c14"
-              strokeWidth={3}
+              strokeWidth={2}
               paddingAngle={2}
               isAnimationActive={false}
             >
@@ -54,10 +54,10 @@ export default function CrimeDonut({ data = [], total }) {
           transform: 'translate(-50%, -50%)', textAlign: 'center',
           pointerEvents: 'none',
         }}>
-          <div style={{ fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', lineHeight: 1.1 }}>
             {computedTotal.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: 8, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
+          <div style={{ fontSize: 7, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 1 }}>
             TOTAL FIRs
           </div>
         </div>
@@ -65,8 +65,8 @@ export default function CrimeDonut({ data = [], total }) {
 
       {/* Legend List */}
       <div style={{
-        display: 'flex', flexDirection: 'column', gap: 6,
-        overflowY: 'auto', maxHeight: '100%', flex: 1, paddingRight: 4,
+        display: 'flex', flexDirection: 'column', gap: 4,
+        overflowY: 'auto', maxHeight: '100%', flex: 1, minWidth: 0,
       }}>
         {data.map((d, i) => {
           const color = COLOR_HEX[i % COLOR_HEX.length]
@@ -76,32 +76,33 @@ export default function CrimeDonut({ data = [], total }) {
               key={d.name || i}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '4px 6px', borderRadius: 4,
+                padding: '3px 6px', borderRadius: 4,
                 background: 'rgba(255,255,255,0.02)',
                 border: '1px solid rgba(255,255,255,0.03)',
-                fontSize: 11,
+                fontSize: 10,
+                minWidth: 0,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
                 <div style={{
-                  width: 7, height: 7, borderRadius: 2,
+                  width: 6, height: 6, borderRadius: 2,
                   background: color,
-                  boxShadow: `0 0 6px ${color}88`,
+                  boxShadow: `0 0 4px ${color}88`,
                   flexShrink: 0,
                 }} />
                 <span style={{
                   color: 'var(--text-secondary)',
                   textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap',
-                  fontSize: 11,
+                  fontSize: 10,
                 }} title={d.name}>
                   <ZiaText>{d.name}</ZiaText>
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <span className="mono" style={{ fontSize: 11, color: 'var(--text-primary)' }}>{d.value.toLocaleString('en-IN')}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 4 }}>
+                <span className="mono" style={{ fontSize: 10, color: 'var(--text-primary)' }}>{d.value.toLocaleString('en-IN')}</span>
                 <span style={{
-                  fontSize: 9, fontWeight: 600, color: color,
-                  background: `${color}18`, padding: '1px 4px', borderRadius: 3,
+                  fontSize: 8, fontWeight: 700, color: color,
+                  background: `${color}18`, padding: '1px 3px', borderRadius: 3,
                 }}>
                   {pct}%
                 </span>

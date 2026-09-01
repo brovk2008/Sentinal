@@ -22,11 +22,11 @@ export default function DistrictBar({ data = [], year1 = 2023, year2 = 2024 }) {
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={chartData.slice(0, 6)} layout="vertical" margin={{ left: -10, right: 10, top: 5, bottom: 0 }}>
+      <BarChart data={chartData.slice(0, 6)} layout="vertical" margin={{ left: 5, right: 12, top: 8, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 9, fill: '#8e8d8a', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
         <YAxis
-          dataKey="district" type="category" width={105}
+          dataKey="district" type="category" width={110}
           tick={{ fontSize: 10, fill: '#c0beb5' }} axisLine={false} tickLine={false}
         />
         <Tooltip
