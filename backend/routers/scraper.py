@@ -21,7 +21,7 @@ from scrapers.scraper_store import query_firs, get_pdf_download_url
 
 router = APIRouter()
 
-VALID_YEARS = [str(y) for y in range(2015, 2026)]
+VALID_YEARS = [str(y) for y in range(2015, 2031)]
 
 
 # ── Start scrape ──────────────────────────────────────────────────────────────

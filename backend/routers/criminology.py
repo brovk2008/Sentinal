@@ -343,38 +343,20 @@ async def post_anpr_convoy_analysis(req: ANPRRequest):
 class AudioForensicRequest(BaseModel):
     audio_text: Optional[str] = "Emergency call 112: Indiranagar 100ft road alli car theft aagide. White Creta car, key illa adru unlock madi tagondu hogidare Hosur road kadege."
     sample_id: Optional[str] = "112-AUDIO-BLR-8921"
+    audio_base64: Optional[str] = None
 
 @router.post("/audio-forensic-profile")
 async def post_audio_forensic_profile(req: AudioForensicRequest):
     """
     Bilingual 112 Emergency Audio & Voice Dialect Forensic Profiler.
-    Extracts dialect accents, stress levels, and critical emergency entities.
+    Runs real Fast Fourier Transform (FFT), F0 pitch tracking, Jitter/Shimmer stress analysis, and dialect extraction.
     """
-    return {
-        "status": "ok",
-        "sample_id": req.sample_id,
-        "transcription": req.audio_text,
-        "language_detected": "Kannada + English (Bilingual Dispatch)",
-        "dialect_classification": {
-            "primary_dialect": "Bengaluru Urban Colloquial Kannada",
-            "confidence": 92.4,
-            "regional_markers": ["alli", "tagondu hogidare", "kadege"]
-        },
-        "acoustic_stress_analysis": {
-            "urgency_score": 88.5,
-            "pitch_jitter_pct": 3.8,
-            "emotional_state": "High Agitation / Immediate Distress",
-            "background_noise": "Urban Traffic / Street Ambient (100ft Road Acoustic Signature)"
-        },
-        "extracted_critical_entities": {
-            "crime_type": "Motor Vehicle Grand Theft",
-            "target_asset": "White Hyundai Creta",
-            "crime_location": "Indiranagar 100ft Road",
-            "escape_vector": "Hosur Road / NH-44 Southbound",
-            "modus_operandi": "Electronic Keyless Bypass without physical key"
-        },
-        "suggested_police_dispatch": "Dispatch nearest Hoysala Patrol #14 & alert Hosur Road Outer Checkpoints."
-    }
+    from services.audio_forensics import analyze_audio_forensics
+    return analyze_audio_forensics(
+        transcript=req.audio_text or "Emergency call 112: Indiranagar 100ft road car theft.",
+        audio_base64=req.audio_base64,
+        sample_id=req.sample_id or "112-AUDIO-BLR-8921"
+    )
 
 
 class StingInterceptRequest(BaseModel):

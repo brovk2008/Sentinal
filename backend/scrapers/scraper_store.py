@@ -7,8 +7,15 @@ Storage layer for scraped FIR data.
 
 import os, sqlite3, logging
 
-log            = logging.getLogger(__name__)
-DB_PATH        = os.getenv("DB_PATH", "data/sentinal.db")
+log = logging.getLogger(__name__)
+
+try:
+    from config import config
+    DB_PATH = config.DB_PATH
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DB_PATH = os.path.join(BASE_DIR, "data", "sentinal.db")
+
 STRATUS_BUCKET = os.getenv("STRATUS_BUCKET", "sentinal-fir-pdfs")
 
 

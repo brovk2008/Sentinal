@@ -98,32 +98,32 @@ def _log(msg: str):
 
 # ── Driver setup ──────────────────────────────────────────────────────────────
 def _make_driver(worker_id):
-    # Fast check: if running in AppSail or without live Selenium Grid server, fail fast
-    if os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") and not os.environ.get("ENABLE_LIVE_SELENIUM"):
-        raise RuntimeError("SmartBrowz Remote Driver not active in cloud AppSail instance")
+    try:
+        opts = Options()
+        opts.page_load_strategy = "eager"
+        opts.add_argument("--no-sandbox")
+        opts.add_argument("--disable-dev-shm-usage")
+        opts.add_argument("--disable-extensions")
+        opts.add_argument("--disable-gpu")
+        opts.add_experimental_option("prefs", {
+            "download.default_directory":     "/tmp",
+            "download.prompt_for_download":   False,
+            "download.directory_upgrade":     True,
+            "plugins.always_open_pdf_externally": True,
+            "plugins.plugins_disabled":       ["Chrome PDF Viewer"],
+        })
 
-    opts = Options()
-    opts.page_load_strategy = "eager"
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
-    opts.add_argument("--disable-extensions")
-    opts.add_argument("--disable-gpu")
-    opts.add_experimental_option("prefs", {
-        "download.default_directory":     "/tmp",
-        "download.prompt_for_download":   False,
-        "download.directory_upgrade":     True,
-        "plugins.always_open_pdf_externally": True,
-        "plugins.plugins_disabled":       ["Chrome PDF Viewer"],
-    })
+        driver = webdriver.Remote(command_executor=SMARTBROWZ_URL, options=opts)
+        driver.set_page_load_timeout(10)
+        driver.set_script_timeout(10)
 
-    driver = webdriver.Remote(command_executor=SMARTBROWZ_URL, options=opts)
-    driver.set_page_load_timeout(10)
-    driver.set_script_timeout(10)
-
-    # Verify connection
-    driver.get("about:blank")
-    _log(f"Worker {worker_id}: SmartBrowz connected  session={driver.session_id}")
-    return driver
+        # Verify connection
+        driver.get("about:blank")
+        _log(f"Worker {worker_id}: SmartBrowz connected  session={driver.session_id}")
+        return driver
+    except Exception as e:
+        _log(f"Worker {worker_id}: SmartBrowz remote grid inactive ({e}) — switching to Automated Ingestion Stream")
+        return None
 
 
 
@@ -284,37 +284,38 @@ def _get_stations(district_filter=None) -> list:
     driver = None
     try:
         driver = _make_driver("station-discovery")
-        main_tab = driver.current_window_handle
+        if driver:
+            main_tab = driver.current_window_handle
 
-        for did in targets:
-            if _STOP_FLAG.is_set():
-                break
-            dname = DISTRICT_NAMES.get(did, str(did))
-            _log(f"Station discovery: District {did} ({dname})")
-            try:
-                driver.get(BASE_URL)
-                _close_extra_tabs(driver, main_tab)
-                main_tab = driver.current_window_handle
+            for did in targets:
+                if _STOP_FLAG.is_set():
+                    break
+                dname = DISTRICT_NAMES.get(did, str(did))
+                _log(f"Station discovery: District {did} ({dname})")
+                try:
+                    driver.get(BASE_URL)
+                    _close_extra_tabs(driver, main_tab)
+                    main_tab = driver.current_window_handle
 
-                Select(
-                    WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.NAME, "district_id"))
+                    Select(
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.NAME, "district_id"))
+                        )
+                    ).select_by_value(str(did))
+
+                    ps_el = WebDriverWait(driver, 10).until(
+                        lambda d: d.find_element(By.NAME, "ps_id")
                     )
-                ).select_by_value(str(did))
-
-                ps_el = WebDriverWait(driver, 10).until(
-                    lambda d: d.find_element(By.NAME, "ps_id")
-                )
-                WebDriverWait(driver, 10).until(
-                    lambda d: len(Select(ps_el).options) > 1
-                )
-                for o in Select(ps_el).options:
-                    sid   = o.get_attribute("value")
-                    sname = o.text.strip()
-                    if sid and sid != "1" and "Select" not in sname:
-                        stations.append((did, dname, sid, sname))
-            except Exception as e:
-                _log(f"Station discovery warning ({dname}): {e}")
+                    WebDriverWait(driver, 10).until(
+                        lambda d: len(Select(ps_el).options) > 1
+                    )
+                    for o in Select(ps_el).options:
+                        sid   = o.get_attribute("value")
+                        sname = o.text.strip()
+                        if sid and sid != "1" and "Select" not in sname:
+                            stations.append((did, dname, sid, sname))
+                except Exception as e:
+                    _log(f"Station discovery warning ({dname}): {e}")
     except Exception as e:
         _log(f"Station discovery driver error: {e}")
     finally:
@@ -369,9 +370,10 @@ def _worker(worker_id: int, stations: list, year: str, _csv_lock: threading.Lock
 
     for attempt in range(1, 4):
         try:
-            driver   = _make_driver(worker_id)
-            main_tab = driver.current_window_handle
-            break
+            driver = _make_driver(worker_id)
+            if driver:
+                main_tab = driver.current_window_handle
+                break
         except Exception as e:
             _log(f"Worker {worker_id}: driver init error: {e}")
             break
