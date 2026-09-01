@@ -1142,6 +1142,20 @@ function BailRiskAssessor() {
               <div style={{ width: `${riskScore}%`, height: '100%', background: `linear-gradient(90deg, #22c55e, #f59e0b, #ef4444)`, borderRadius: 4, transition: 'width 0.6s ease' }} />
             </div>
           </div>
+          {data.verified_firs && data.verified_firs.length > 0 && (
+            <div style={{ ...st.card, borderColor: 'rgba(56,189,248,0.3)' }}>
+              <div style={{ ...st.sectionTitle, color: '#38bdf8' }}>Verified Criminal Database FIRs ({data.verified_firs.length} Found in sentinal.db)</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {data.verified_firs.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: 'rgba(0,0,0,0.25)', borderRadius: 6, fontSize: 11 }}>
+                    <span style={{ fontWeight: 700, color: '#fbbf24' }}>{f.crime_no}</span>
+                    <span style={{ color: '#cbd5e1' }}>{f.station} ({f.district})</span>
+                    <span style={{ color: '#64748b' }}>{f.date}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {data.prosecutor_bail_objection_affidavit && (
             <div style={{ ...st.card, borderColor: 'rgba(139,92,246,0.3)' }}>
               <div style={st.sectionTitle}>Prosecutor Bail Objection Affidavit (Auto-Generated)</div>
