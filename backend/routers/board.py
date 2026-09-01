@@ -353,17 +353,52 @@ def get_demo_board():
 def canvas_load(case_id: str):
     """Load ReactFlow nodes + edges for a given case canvas."""
     row = query_one("SELECT nodes_json, edges_json, updated_at FROM board_state WHERE case_id = ?", (case_id,))
-    if not row:
-        return {"nodes": [], "edges": [], "case_id": case_id}
-    try:
-        return {
-            "case_id":    case_id,
-            "nodes":      json.loads(row["nodes_json"] or "[]"),
-            "edges":      json.loads(row["edges_json"] or "[]"),
-            "updated_at": row["updated_at"],
-        }
-    except Exception as e:
-        raise HTTPException(500, f"Error decoding canvas state: {e}")
+    if row and (row["nodes_json"] or row["edges_json"]):
+        try:
+            return {
+                "case_id":    case_id,
+                "nodes":      json.loads(row["nodes_json"] or "[]"),
+                "edges":      json.loads(row["edges_json"] or "[]"),
+                "updated_at": row["updated_at"],
+            }
+        except Exception as e:
+            raise HTTPException(500, f"Error decoding canvas state: {e}")
+
+    # Fallback to evidence_boards table
+    eb_row = query_one("SELECT name, data, updated_at FROM evidence_boards WHERE board_id = ?", (case_id,))
+    if eb_row and eb_row["data"]:
+        try:
+            data = json.loads(eb_row["data"])
+            return {
+                "case_id": case_id,
+                "name": eb_row["name"],
+                "nodes": data.get("nodes", []),
+                "edges": data.get("connections", []) or data.get("edges", []),
+                "updated_at": eb_row["updated_at"]
+            }
+        except Exception:
+            pass
+
+    if case_id == "CANVAS-VEHICLE-THEFT-01":
+        default_nodes = [
+            {"id": "sn_1", "type": "sentinalNode", "position": {"x": 80, "y": 140}, "data": {"type": "case", "label": "FIR No. 2026/0456", "subtitle": "Sec 303(2) & 111 BNS", "tags": ["Active", "High Priority"], "color": "#c8814a"}},
+            {"id": "sn_2", "type": "sentinalNode", "position": {"x": 380, "y": 140}, "data": {"type": "location", "label": "Koramangala 100ft Rd", "subtitle": "Crime Scene (02:14 AM)", "tags": ["Incident Spot"], "color": "#52b0e0"}},
+            {"id": "sn_3", "type": "sentinalNode", "position": {"x": 380, "y": 290}, "data": {"type": "vehicle", "label": "Hyundai Creta (KA-04-MB-8821)", "subtitle": "Keyless ECM Bypass", "tags": ["Stolen Asset"], "color": "#b452e0"}},
+            {"id": "sn_4", "type": "sentinalNode", "position": {"x": 380, "y": 440}, "data": {"type": "location", "label": "Attibele Toll Plaza", "subtitle": "FASTag Ping 02:48 AM", "tags": ["Transit Corridor"], "color": "#52b0e0"}},
+            {"id": "sn_5", "type": "sentinalNode", "position": {"x": 680, "y": 140}, "data": {"type": "evidence", "label": "OBD Relay Scanner Tool", "subtitle": "Hardware Fingerprint", "tags": ["Physical Seizure"], "color": "#e0c852"}},
+            {"id": "sn_6", "type": "sentinalNode", "position": {"x": 680, "y": 290}, "data": {"type": "phone", "label": "+91 98450-XXXXX", "subtitle": "Burner IMEI 8642010...", "tags": ["CDR Tower Hop"], "color": "#52e07a"}},
+            {"id": "sn_7", "type": "sentinalNode", "position": {"x": 980, "y": 200}, "data": {"type": "person", "label": "Imran Pasha", "subtitle": "Prime Suspect / Syndicate Lead", "tags": ["Red Corner Notice", "Wanted"], "color": "#e05252", "risk": "HIGH"}}
+        ]
+        default_edges = [
+            {"id": "e_1", "source": "sn_1", "target": "sn_2", "label": "Registered At", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+            {"id": "e_2", "source": "sn_2", "target": "sn_3", "label": "Theft of Asset", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+            {"id": "e_3", "source": "sn_3", "target": "sn_4", "label": "FASTag Trail", "animated": True, "style": {"stroke": "rgba(82,176,224,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(82,176,224,0.85)"}},
+            {"id": "e_4", "source": "sn_7", "target": "sn_3", "label": "Drives / Bypasses", "animated": True, "style": {"stroke": "rgba(224,82,82,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,82,82,0.85)"}},
+            {"id": "e_5", "source": "sn_7", "target": "sn_5", "label": "Uses Tool", "animated": True, "style": {"stroke": "rgba(224,200,82,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,200,82,0.85)"}}
+        ]
+        return {"nodes": default_nodes, "edges": default_edges, "case_id": case_id}
+
+    return {"nodes": [], "edges": [], "case_id": case_id}
 
 
 @router.post("/canvas/save")
@@ -384,6 +419,13 @@ def canvas_save(req: CanvasSaveRequest):
                 "INSERT INTO board_state (case_id, nodes_json, edges_json, updated_at) VALUES (?, ?, ?, ?)",
                 (req.case_id, nodes_str, edges_str, now)
             )
+        
+        # Dual write to evidence_boards
+        board_data = {"nodes": req.nodes, "connections": req.edges}
+        execute(
+            "INSERT OR REPLACE INTO evidence_boards (board_id, name, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            (req.case_id, req.case_id.replace("CANVAS-", "").replace("_", " ").title(), json.dumps(board_data), now, now)
+        )
         return {"success": True, "case_id": req.case_id, "updated_at": now}
     except Exception as e:
         raise HTTPException(500, f"Failed to save canvas: {e}")
@@ -404,6 +446,7 @@ def list_canvases():
     try:
         rows = query("SELECT case_id, nodes_json, edges_json, updated_at FROM board_state ORDER BY updated_at DESC")
         canvases = []
+        seen_ids = set()
         for r in rows:
             try:
                 nodes = json.loads(r["nodes_json"] or "[]")
@@ -413,6 +456,7 @@ def list_canvases():
             
             # Format display title
             cid = r["case_id"]
+            seen_ids.add(cid)
             name = cid.replace("CANVAS-", "").replace("BOARD-", "").replace("_", " ").title()
             if cid == "default_canvas":
                 name = "General Investigation Canvas"
@@ -427,9 +471,30 @@ def list_canvases():
                 "updated_at": r["updated_at"]
             })
 
+        # Also pull from evidence_boards table
+        try:
+            eb_rows = query("SELECT board_id, name, data, updated_at FROM evidence_boards ORDER BY updated_at DESC")
+            for eb in eb_rows:
+                if eb["board_id"] not in seen_ids:
+                    try:
+                        b_data = json.loads(eb["data"] or "{}")
+                        n_count = len(b_data.get("nodes", []))
+                        e_count = len(b_data.get("connections", []) or b_data.get("edges", []))
+                    except Exception:
+                        n_count, e_count = 0, 0
+                    canvases.append({
+                        "canvas_id": eb["board_id"],
+                        "name": eb["name"],
+                        "node_count": n_count,
+                        "edge_count": e_count,
+                        "updated_at": eb["updated_at"]
+                    })
+                    seen_ids.add(eb["board_id"])
+        except Exception:
+            pass
+
         # If empty, ensure default and car theft preset are visible
-        existing_ids = {c["canvas_id"] for c in canvases}
-        if "CANVAS-VEHICLE-THEFT-01" not in existing_ids:
+        if "CANVAS-VEHICLE-THEFT-01" not in seen_ids:
             canvases.insert(0, {
                 "canvas_id": "CANVAS-VEHICLE-THEFT-01",
                 "name": "Auto Theft — Hyundai Creta (KA-04-MB-1234)",
@@ -437,7 +502,7 @@ def list_canvases():
                 "edge_count": 5,
                 "updated_at": datetime.now().isoformat()
             })
-        if "default_canvas" not in existing_ids:
+        if "default_canvas" not in seen_ids:
             canvases.append({
                 "canvas_id": "default_canvas",
                 "name": "General Investigation Canvas",
@@ -607,6 +672,9 @@ class AutoGenerateCanvasRequest(BaseModel):
     text: Optional[str] = None
     file_id: Optional[str] = None
     prompt: Optional[str] = None
+    canvas_id: Optional[str] = None
+    nodes: Optional[list] = None
+    edges: Optional[list] = None
 
 
 @router.post("/canvas/auto-generate")
@@ -617,6 +685,51 @@ async def auto_generate_canvas(req: AutoGenerateCanvasRequest, http_request: Req
     """
     import random
     import time
+
+    now = datetime.now().isoformat()
+
+    # If predefined canvas nodes and edges are provided (e.g. from OSINT Recon Engine)
+    if req.nodes and len(req.nodes) > 0:
+        canvas_id = req.canvas_id or f"CANVAS-AUTO-{int(time.time())}"
+        canvas_name = req.title or "OSINT Investigation Canvas"
+        layout_nodes = req.nodes
+        layout_edges = req.edges or []
+        summary = req.text or f"Investigation graph for {canvas_name}"
+
+        nodes_str = json.dumps(layout_nodes)
+        edges_str = json.dumps(layout_edges)
+
+        try:
+            exists = query_one("SELECT case_id FROM board_state WHERE case_id = ?", (canvas_id,))
+            if exists:
+                execute(
+                    "UPDATE board_state SET nodes_json = ?, edges_json = ?, updated_at = ? WHERE case_id = ?",
+                    (nodes_str, edges_str, now, canvas_id)
+                )
+            else:
+                execute(
+                    "INSERT INTO board_state (case_id, nodes_json, edges_json, updated_at) VALUES (?, ?, ?, ?)",
+                    (canvas_id, nodes_str, edges_str, now)
+                )
+
+            board_data = {"nodes": layout_nodes, "connections": layout_edges}
+            execute(
+                "INSERT OR REPLACE INTO evidence_boards (board_id, name, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                (canvas_id, canvas_name, json.dumps(board_data), now, now)
+            )
+        except Exception as db_err:
+            print(f"[Canvas DB Error]: {db_err}")
+
+        return {
+            "status": "success",
+            "canvas_id": canvas_id,
+            "name": canvas_name,
+            "summary": summary,
+            "nodes": layout_nodes,
+            "edges": layout_edges,
+            "node_count": len(layout_nodes),
+            "edge_count": len(layout_edges)
+        }
 
     source_text = req.text or req.prompt or ""
 
@@ -774,22 +887,35 @@ async def auto_generate_canvas(req: AutoGenerateCanvasRequest, http_request: Req
         })
 
     # Generate custom Canvas ID and persist to database
-    canvas_id = f"CANVAS-AUTO-{int(time.time())}"
+    canvas_id = req.canvas_id or f"CANVAS-AUTO-{int(time.time())}"
     canvas_name = extracted_graph.get("canvas_title") or req.title or "AI Extracted Investigation Canvas"
 
     try:
-        now = datetime.now().isoformat()
+        nodes_str = json.dumps(layout_nodes)
+        edges_str = json.dumps(layout_edges)
+        exists = query_one("SELECT case_id FROM board_state WHERE case_id = ?", (canvas_id,))
+        if exists:
+            execute(
+                "UPDATE board_state SET nodes_json = ?, edges_json = ?, updated_at = ? WHERE case_id = ?",
+                (nodes_str, edges_str, now, canvas_id)
+            )
+        else:
+            execute(
+                "INSERT INTO board_state (case_id, nodes_json, edges_json, updated_at) VALUES (?, ?, ?, ?)",
+                (canvas_id, nodes_str, edges_str, now)
+            )
+
         board_data = {
             "nodes": layout_nodes,
             "connections": layout_edges
         }
         data_str = json.dumps(board_data)
         execute(
-            "INSERT INTO evidence_boards (board_id, name, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT OR REPLACE INTO evidence_boards (board_id, name, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
             (canvas_id, canvas_name, data_str, now, now)
         )
     except Exception as db_err:
-        pass
+        print(f"[Canvas DB Error]: {db_err}")
 
     return {
         "status": "success",

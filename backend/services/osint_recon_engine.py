@@ -516,20 +516,20 @@ def run_autonomous_osint_investigation(
 
     # 7. 2D ReactFlow Canvas Ready Nodes & Edges
     canvas_nodes = [
-        {"id": "node-target", "type": "person", "position": {"x": 450, "y": 220}, "data": {"label": target_name, "title": target_name, "type": "person", "risk": "CRITICAL", "subtitle": f"Target Suspect | Threat Index: {threat_score}%", "tags": ["PRIMARY_TARGET", "ORGANIZED_SYNDICATE"]}},
-        {"id": "node-telegram", "type": "cyber", "position": {"x": 180, "y": 100}, "data": {"label": "Telegram @parts_blr", "title": "Encrypted Channel", "type": "cyber", "risk": "CRITICAL", "subtitle": "Monitored Keyless Tools Feed", "tags": ["TELEGRAM", "CYBER_INTEL"]}},
-        {"id": "node-github", "type": "cyber", "position": {"x": 180, "y": 280}, "data": {"label": "GitHub CAN-Bus Tools", "title": "ECU Flashing Scripts", "type": "cyber", "risk": "HIGH", "subtitle": "Automotive Exploit Repository", "tags": ["GITHUB", "EXPLOIT_REPO"]}},
-        {"id": "node-warrant", "type": "court", "position": {"x": 750, "y": 100}, "data": {"label": "eCourts Active NBW", "title": "District Court Warrant", "type": "legal", "risk": "CRITICAL", "subtitle": "Bail Rejected | NBW Active", "tags": ["ECOURTS", "WARRANT"]}},
-        {"id": "node-vehicle", "type": "vehicle", "position": {"x": 750, "y": 300}, "data": {"label": "Hyundai Creta (KA-04-MB-1234)", "title": "Getaway Luxury SUV", "type": "vehicle", "risk": "HIGH", "subtitle": "VAHAN Blacklist Flagged", "tags": ["VAHAN", "STOLEN_FLAG"]}},
-        {"id": "node-gps", "type": "location", "position": {"x": 450, "y": 420}, "data": {"label": "EXIF GPS: Koramangala 5th Block", "title": "Photo Capture Geotag", "type": "location", "risk": "HIGH", "subtitle": "Lat: 12.9352°N, Lng: 77.6245°E", "tags": ["EXIF_GPS", "FORENSIC_GEO"]}}
+        {"id": "node-target", "type": "sentinalNode", "position": {"x": 480, "y": 200}, "data": {"label": target_name, "title": target_name, "type": "person", "risk": "HIGH", "subtitle": f"Prime Target · Threat: {threat_score}%", "tags": ["PRIMARY_TARGET", "WANTED"], "color": "#e05252"}},
+        {"id": "node-telegram", "type": "sentinalNode", "position": {"x": 160, "y": 100}, "data": {"label": "Telegram Feed", "title": "Encrypted Channel", "type": "evidence", "risk": "HIGH", "subtitle": "Monitored Keyless Tools Channel", "tags": ["TELEGRAM", "CYBER_INTEL"], "color": "#e0c852"}},
+        {"id": "node-github", "type": "sentinalNode", "position": {"x": 160, "y": 300}, "data": {"label": "GitHub Exploit Repo", "title": "ECU Flashing Code", "type": "evidence", "risk": "HIGH", "subtitle": "Automotive Exploit Code Repository", "tags": ["GITHUB", "EXPLOIT"], "color": "#e0c852"}},
+        {"id": "node-warrant", "type": "sentinalNode", "position": {"x": 800, "y": 100}, "data": {"label": "eCourts NBW Warrant", "title": "District Court Warrant", "type": "case", "risk": "HIGH", "subtitle": "Bail Rejected · NBW Active", "tags": ["ECOURTS", "WARRANT"], "color": "#c8814a"}},
+        {"id": "node-vehicle", "type": "sentinalNode", "position": {"x": 800, "y": 300}, "data": {"label": "Hyundai Creta (KA-04)", "title": "Getaway Luxury SUV", "type": "vehicle", "risk": "HIGH", "subtitle": "VAHAN Blacklist Flagged", "tags": ["VAHAN", "STOLEN"], "color": "#b452e0"}},
+        {"id": "node-gps", "type": "sentinalNode", "position": {"x": 480, "y": 420}, "data": {"label": "EXIF GPS: Koramangala", "title": "Photo Capture Geotag", "type": "location", "risk": "HIGH", "subtitle": "Lat: 12.9352°N, Lng: 77.6245°E", "tags": ["EXIF_GPS", "LOCATION"], "color": "#52b0e0"}}
     ]
 
     canvas_edges = [
-        {"id": "e-tg", "source": "node-target", "target": "node-telegram", "label": "operates channel"},
-        {"id": "e-gh", "source": "node-target", "target": "node-github", "label": "maintains exploit code"},
-        {"id": "e-wr", "source": "node-target", "target": "node-warrant", "label": "non-bailable warrant"},
-        {"id": "e-vh", "source": "node-target", "target": "node-vehicle", "label": "registered getaway SUV"},
-        {"id": "e-gp", "source": "node-target", "target": "node-gps", "label": "photo origin coordinate"}
+        {"id": "e-tg", "source": "node-target", "target": "node-telegram", "label": "operates channel", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+        {"id": "e-gh", "source": "node-target", "target": "node-github", "label": "maintains exploit code", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+        {"id": "e-wr", "source": "node-target", "target": "node-warrant", "label": "non-bailable warrant", "animated": True, "style": {"stroke": "rgba(239,68,68,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(239,68,68,0.85)"}},
+        {"id": "e-vh", "source": "node-target", "target": "node-vehicle", "label": "registered getaway SUV", "animated": True, "style": {"stroke": "rgba(180,82,224,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(180,82,224,0.85)"}},
+        {"id": "e-gp", "source": "node-target", "target": "node-gps", "label": "photo origin coordinate", "animated": True, "style": {"stroke": "rgba(82,176,224,0.85)", "strokeWidth": 2}, "labelStyle": {"fontSize": 10, "fill": "#fff", "fontWeight": 600}, "labelBgStyle": {"fill": "rgba(12,12,24,0.85)", "rx": 4}, "markerEnd": {"type": "arrowclosed", "color": "rgba(82,176,224,0.85)"}}
     ]
 
     return {
