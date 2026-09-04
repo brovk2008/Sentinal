@@ -1,0 +1,13 @@
+{
+  "name": "appsail_keep_alive",
+  "type": "cron",
+  "stack": "node18",
+  "timeout": 30,
+  "memory": 128,
+  "env_variables": {},
+  "deployment": {
+    "name": "appsail_keep_alive",
+    "type": "cron",
+    "stack": "node18"
+  }
+}

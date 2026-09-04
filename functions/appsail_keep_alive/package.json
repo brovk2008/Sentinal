@@ -1,0 +1,8 @@
+{
+  "name": "appsail_keep_alive",
+  "version": "1.0.0",
+  "description": "Catalyst Scheduled Cron Function to keep AppSail backend active and prevent cold-start idle sleep",
+  "main": "index.js",
+  "author": "Sentinal Team",
+  "license": "ISC"
+}

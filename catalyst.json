@@ -8,7 +8,8 @@
   "functions": {
     "source": "functions",
     "targets": [
-      "fir_ocr_processor"
+      "fir_ocr_processor",
+      "appsail_keep_alive"
     ],
     "ignore": [
       "node_modules",
