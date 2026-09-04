@@ -326,9 +326,9 @@ export const analyzeBoard = (payload) => request('/api/v1/brain/analyze-board', 
   method: 'POST',
   body: JSON.stringify(payload)
 });
-export const predictNextCrime = (payload) => request('/api/v1/brain/predict-next-crime', {
+export const predictNextCrime = (payload = {}) => request('/api/v1/brain/predict-next-crime', {
   method: 'POST',
-  body: JSON.stringify(payload)
+  body: JSON.stringify(payload || {})
 });
 export const connectDots = (payload) => request('/api/v1/brain/connect-dots', {
   method: 'POST',

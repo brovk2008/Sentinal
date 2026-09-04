@@ -180,10 +180,12 @@ async def analyze_board(request: AnalyzeBoardRequest, http_request: Request):
         raise HTTPException(500, f"Board analysis failed: {e}")
 
 @router.post("/predict-next-crime")
-async def predict_next_crime(request: PredictNextCrimeRequest, http_request: Request):
+async def predict_next_crime(http_request: Request, request: Optional[PredictNextCrimeRequest] = None):
     """
     Suspect-centric crime forecasting.
     """
+    if request is None:
+        request = PredictNextCrimeRequest()
     try:
         suspect = request.suspect_name
         if not suspect:
