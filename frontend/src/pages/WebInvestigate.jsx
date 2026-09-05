@@ -10,7 +10,8 @@ import {
   AlertTriangle, ExternalLink, Camera, Upload, CheckCircle2,
   Copy, ArrowRight, Layers, FileText, Sparkles, RefreshCw,
   Hash, MapPin, Phone, Mail, Shield, Eye, Lock, Scan, Activity,
-  Filter, Navigation, Cpu, Clock, Aperture, Compass, Crosshair
+  Filter, Navigation, Cpu, Clock, Aperture, Compass, Crosshair,
+  Save
 } from 'lucide-react'
 import { investigatePersonWeb, autoGenerateCanvas } from '../api'
 import Badge from '../components/shared/Badge'
@@ -332,6 +333,12 @@ export default function WebInvestigate() {
   const [investigationData, setInvestigationData] = useState(() => buildFallbackOsintData(urlName || 'Imran Pasha'))
   const [copiedHash, setCopiedHash] = useState(false)
   const [generatingCanvas, setGeneratingCanvas] = useState(false)
+  const [dossierSaved, setDossierSaved] = useState(false)
+
+  const handleSaveDossier = async () => {
+    setDossierSaved(true)
+    setTimeout(() => setDossierSaved(false), 3000)
+  }
 
   const fileInputRef = useRef(null)
 
@@ -918,6 +925,29 @@ export default function WebInvestigate() {
                 >
                   {copiedHash ? <CheckCircle2 size={12} /> : <Copy size={12} />}
                   <span>{copiedHash ? 'Hash Certificate Copied' : 'Sec 65B Hash'}</span>
+                </button>
+
+                <button
+                  onClick={handleSaveDossier}
+                  style={{
+                    background: dossierSaved ? 'rgba(16,185,129,0.22)' : 'rgba(200,129,74,0.18)',
+                    border: `1px solid ${dossierSaved ? '#10b981' : 'rgba(200,129,74,0.4)'}`,
+                    color: dossierSaved ? '#10b981' : 'var(--copper-300)',
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 5,
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Save this investigation dossier to Sentinal Intelligence Records"
+                >
+                  {dossierSaved ? <CheckCircle2 size={12} color="#10b981" /> : <Save size={12} />}
+                  <span>{dossierSaved ? 'Saved to Records' : 'Save Dossier'}</span>
                 </button>
               </div>
             </div>

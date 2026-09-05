@@ -1738,6 +1738,32 @@ export default function ConnectionsBoard() {
         </button>
 
         <button
+          onClick={handleManualSave}
+          style={{
+            background: saveStatus === 'Saved!' || saveStatus === 'Saved'
+              ? 'rgba(82,224,122,0.25)'
+              : 'linear-gradient(135deg, rgba(200,129,74,0.35), rgba(82,224,122,0.2))',
+            color: saveStatus === 'Saved!' || saveStatus === 'Saved' ? '#52e07a' : '#fff',
+            border: `1px solid ${saveStatus === 'Saved!' || saveStatus === 'Saved' ? '#52e07a' : 'rgba(200,129,74,0.6)'}`,
+            borderRadius: 7,
+            padding: '6px 12px', fontSize: 11, fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            boxShadow: '0 0 12px rgba(200,129,74,0.3)',
+            transition: 'all 0.2s ease'
+          }}
+          title="Save Investigation Canvas"
+        >
+          {saveStatus === 'Saving...' ? (
+            <RotateCcw size={12} className="animate-spin" />
+          ) : saveStatus === 'Saved!' || saveStatus === 'Saved' ? (
+            <Check size={12} color="#52e07a" />
+          ) : (
+            <Save size={12} color="var(--copper-300)" />
+          )}
+          <span>{saveStatus || 'Save'}</span>
+        </button>
+
+        <button
           onClick={() => setShowAddModal(true)}
           style={{
             background: 'rgba(255,255,255,0.08)', color: '#fff',
@@ -1777,7 +1803,7 @@ export default function ConnectionsBoard() {
           padding: '28px 36px',
           textAlign: 'center',
           maxWidth: 520,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.85)',
           backdropFilter: 'blur(16px)'
         }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(200,129,74,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
@@ -1845,6 +1871,50 @@ export default function ConnectionsBoard() {
           style={{ background: 'rgba(12,12,24,0.9)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8 }}
           nodeColor={n => NODE_TYPES[n.data?.type]?.color || '#c8814a'}
         />
+        <Panel position="bottom-center">
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(12, 12, 24, 0.94)',
+            padding: '6px 14px', borderRadius: 24,
+            border: '1px solid rgba(200,129,74,0.4)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.7)'
+          }}>
+            <button
+              onClick={handleManualSave}
+              style={{
+                background: saveStatus === 'Saved!' || saveStatus === 'Saved'
+                  ? 'rgba(82,224,122,0.25)'
+                  : 'linear-gradient(135deg, #c8814a, #d97706)',
+                color: '#fff',
+                border: saveStatus === 'Saved!' || saveStatus === 'Saved' ? '1px solid #52e07a' : 'none',
+                borderRadius: 16,
+                padding: '6px 14px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Save Canvas State to SQLite Database & Catalyst File Store"
+            >
+              {saveStatus === 'Saving...' ? (
+                <RotateCcw size={13} className="animate-spin" />
+              ) : saveStatus === 'Saved!' || saveStatus === 'Saved' ? (
+                <Check size={13} color="#52e07a" />
+              ) : (
+                <Save size={13} />
+              )}
+              <span>{saveStatus || 'Save Canvas'}</span>
+            </button>
+            <span style={{ fontSize: 11, color: '#aaa', fontWeight: 600 }}>
+              {nodes.length} entities · {edges.length} links
+            </span>
+          </div>
+        </Panel>
       </ReactFlow>
 
       {/* ── AI Forensic Detective Drawer ───────────────────────────── */}
