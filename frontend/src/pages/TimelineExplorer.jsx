@@ -8,6 +8,7 @@ import CaseActionPanel from '../components/timeline/CaseActionPanel'
 import CaseCompareModal from '../components/timeline/CaseCompareModal'
 import AITimelineReconstruction from '../components/timeline/AITimelineReconstruction'
 import CognitiveInvestigationView from '../components/timeline/CognitiveInvestigationView'
+import ForensicFlowchartRenderer from '../components/timeline/ForensicFlowchartRenderer'
 import FileUploader from '../components/FileUploader'
 
 export default function TimelineExplorer() {
@@ -27,6 +28,7 @@ export default function TimelineExplorer() {
 
   // Mermaid code state
   const [flowchartCode, setFlowchartCode] = useState('')
+  const [flowchartLoading, setFlowchartLoading] = useState(false)
   const [enhancing, setEnhancing] = useState(false)
   const [reportLoading, setReportLoading] = useState(false)
 
@@ -89,7 +91,7 @@ export default function TimelineExplorer() {
     }).catch(() => setLoading(false))
   }, [page])
 
-  // Load case detail if caseId in URL
+  // Load case detail & flowchart if caseId in URL
   const [diagramTypology, setDiagramTypology] = useState('CHRONOLOGICAL')
 
   useEffect(() => {
@@ -101,33 +103,18 @@ export default function TimelineExplorer() {
       }).catch(() => setDetailLoading(false))
 
       // Automatically fetch 100% real database-grounded flowchart
+      setFlowchartLoading(true)
       fetchCaseFlowchart(caseId, diagramTypology).then(res => {
         if (res && res.mermaid_code) {
           setFlowchartCode(res.mermaid_code)
         }
+        setFlowchartLoading(false)
       }).catch(err => {
         console.warn('Flowchart fetch failed:', err)
+        setFlowchartLoading(false)
       })
     }
   }, [caseId, diagramTypology])
-
-  // Render mermaid when code changes
-  useEffect(() => {
-    if (!window.mermaid || !flowchartCode) return
-    const id = 'mermaid-diagram-' + Math.floor(Math.random() * 100000)
-    const container = document.getElementById('mermaid-container')
-    if (!container) return
-    try {
-      window.mermaid.render(id, flowchartCode).then(({ svg }) => {
-        container.innerHTML = svg
-      }).catch(e => {
-        console.error('Mermaid render error:', e)
-        container.innerHTML = `<pre style="font-size:11px;color:#8a8885;text-align:left;white-space:pre-wrap;padding:10px;">${flowchartCode}</pre>`
-      })
-    } catch (e) {
-      console.error('Mermaid sync error:', e)
-    }
-  }, [flowchartCode])
 
   // AI enhance / reconstruct diagram click
   const handleEnhance = async () => {
@@ -399,7 +386,7 @@ export default function TimelineExplorer() {
                 <button
                   className="btn btn-sm btn-copper"
                   onClick={handleEnhance}
-                  disabled={enhancing}
+                  disabled={enhancing || flowchartLoading}
                   style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <RefreshCw size={13} className={enhancing ? 'animate-spin' : ''} />
@@ -407,14 +394,13 @@ export default function TimelineExplorer() {
                 </button>
               </div>
               
-              <div style={{
-                background: 'var(--bg-secondary)', borderRadius: 6,
-                border: '1px solid var(--border-subtle)', padding: 16,
-                display: 'flex', justifyContent: 'center', overflowX: 'auto',
-                minHeight: 120,
-              }}>
-                <div id="mermaid-container" style={{ width: '100%', textAlign: 'center' }} />
-              </div>
+              <ForensicFlowchartRenderer
+                code={flowchartCode}
+                loading={flowchartLoading}
+                enhancing={enhancing}
+                typology={diagramTypology}
+                onEnhance={handleEnhance}
+              />
             </div>
 
             {/* Timeline */}

@@ -52,12 +52,18 @@ class CrimeFlowchartEngine:
 
     def _clean_id(self, text: str) -> str:
         """Converts strings to valid mermaid node IDs."""
-        return re.sub(r'[^a-zA-Z0-9_]', '_', str(text).strip())[:25]
+        clean = re.sub(r'[^a-zA-Z0-9_]', '_', str(text).strip())[:25]
+        if not clean or clean[0].isdigit():
+            clean = f"ID_{clean}"
+        return clean
 
     def _escape_label(self, text: str) -> str:
-        """Escapes quotes and special characters for Mermaid labels."""
-        clean = re.sub(r'["\n\r]', ' ', str(text).strip())
-        return clean[:60]
+        """Escapes quotes, brackets, and special characters for Mermaid labels."""
+        if not text:
+            return ""
+        clean = str(text).replace('"', "'").replace('[', '(').replace(']', ')').replace('{', '(').replace('}', ')').replace('\n', ' ').replace('\r', ' ')
+        clean = re.sub(r'\s+', ' ', clean).strip()
+        return clean[:70]
 
     # ── 1. Chronological Crime Execution Flowchart ───────────────────────────
 
