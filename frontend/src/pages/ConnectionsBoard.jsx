@@ -1310,6 +1310,20 @@ export default function ConnectionsBoard() {
     })
   }
 
+  const handleManualSave = async () => {
+    setSaveStatus('Saving...')
+    try {
+      await saveCanvasById(currentCanvasId, nodes, edges)
+      setSaveStatus('Saved!')
+      setTimeout(() => setSaveStatus(''), 2500)
+      loadCanvasList()
+    } catch (err) {
+      console.error('Manual save failed:', err)
+      setSaveStatus('Save failed')
+      setTimeout(() => setSaveStatus(''), 3000)
+    }
+  }
+
   const handleRunDetective = async (customPrompt = null) => {
     const queryToRun = customPrompt || detectiveQuery || 'Who stole the car and what is the primary chain of evidence?'
     setDetectiveLoading(true)
@@ -1553,6 +1567,34 @@ export default function ConnectionsBoard() {
         >
           <Plus size={13} />
           <span>New Canvas</span>
+        </button>
+
+        <button
+          onClick={handleManualSave}
+          style={{
+            background: saveStatus === 'Saved!' || saveStatus === 'Saved'
+              ? 'rgba(82,224,122,0.22)'
+              : 'rgba(200,129,74,0.25)',
+            color: saveStatus === 'Saved!' || saveStatus === 'Saved'
+              ? '#52e07a'
+              : 'var(--copper-200)',
+            border: `1px solid ${saveStatus === 'Saved!' || saveStatus === 'Saved' ? '#52e07a' : 'rgba(200,129,74,0.5)'}`,
+            borderRadius: 6, padding: '4px 9px',
+            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 4,
+            boxShadow: saveStatus ? '0 0 10px rgba(82,224,122,0.3)' : 'none',
+            transition: 'all 0.2s ease'
+          }}
+          title="Explicitly save canvas nodes and connections to backend database"
+        >
+          {saveStatus === 'Saving...' ? (
+            <RotateCcw size={12} className="animate-spin" />
+          ) : saveStatus === 'Saved!' || saveStatus === 'Saved' ? (
+            <Check size={12} color="#52e07a" />
+          ) : (
+            <Save size={12} />
+          )}
+          <span>{saveStatus || 'Save Canvas'}</span>
         </button>
 
         <button
