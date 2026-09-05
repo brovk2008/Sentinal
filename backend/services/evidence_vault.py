@@ -36,7 +36,7 @@ DATASETS_DIR.mkdir(parents=True, exist_ok=True)
 
 @dataclass
 class EvidenceProofCertificate:
-    """Courtroom-admissible cryptographic proof certificate for an uploaded piece of evidence."""
+    """Evidence Integrity & Statutory Legal Documentation (Sec 63 BSA / Sec 65B IEA Compliant) cryptographic proof certificate for uploaded evidence."""
     certificate_id: str
     file_id: str
     filename: str

@@ -93,6 +93,7 @@ ALL_ROUTERS = [
 ]
 
 LOADED_ROUTERS = set()
+ROUTER_ERRORS = {}
 
 def _import_and_mount_router(mod_name: str, prefix: str, tag: str) -> bool:
     if mod_name in LOADED_ROUTERS:
@@ -106,6 +107,8 @@ def _import_and_mount_router(mod_name: str, prefix: str, tag: str) -> bool:
             _log_debug(f"Router mounted: {mod_name} -> {prefix}")
             return True
     except Exception as e:
+        import traceback
+        ROUTER_ERRORS[mod_name] = traceback.format_exc()
         _log_debug(f"Router {mod_name} skipped for now: {e}")
     return False
 
@@ -247,6 +250,17 @@ app = FastAPI(
 # Attempt top-level granular import of all routers
 for _mname, _prefix, _tag in ALL_ROUTERS:
     _import_and_mount_router(_mname, _prefix, _tag)
+
+@app.get("/api/v1/debug/routers")
+async def debug_routers():
+    # Attempt to reload any unmounted router dynamically
+    for _mname, _prefix, _tag in ALL_ROUTERS:
+        _import_and_mount_router(_mname, _prefix, _tag)
+    return {
+        "loaded_routers": list(LOADED_ROUTERS),
+        "router_errors": ROUTER_ERRORS,
+        "total_routes": len(app.routes)
+    }
 
 # ─── Defensive Header Deduplication Middleware ───────────────────────────────
 class DeduplicateCORSMiddleware:

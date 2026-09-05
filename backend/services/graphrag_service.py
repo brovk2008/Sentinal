@@ -132,9 +132,17 @@ YOUR STRICT RULES:
 
         try:
             llm_answer = await call_ai_messages(messages, max_tokens=1200, request=request)
+            if llm_answer == "LLM_SERVICE_UNAVAILABLE" or not llm_answer:
+                from routers.intelligence import _generate_data_answer
+                llm_answer = _generate_data_answer(text)
         except Exception as e:
             log.error(f"[GraphRAG] LLM call failed: {e}")
-            llm_answer = f"Intelligence synthesis unavailable: {e}"
+            try:
+                from routers.intelligence import _generate_data_answer
+                llm_answer = _generate_data_answer(text)
+            except Exception:
+                llm_answer = f"Intelligence synthesis grounded summary: {context_str}"
+
 
         # ── Step 5: Hallucination guard ────────────────────────────────────────
         if grounded:

@@ -2,7 +2,7 @@
 provenance_guard.py — Sentinal Data Provenance, Segregation & Dual-Corpus Manager
 
 Ensures strict separation between:
-  1. REAL_OPERATIONAL  — Real evidence, real FIRs, verified suspect records (100% court-admissible)
+  1. REAL_OPERATIONAL  — Real evidence, real FIRs, verified suspect records (Sec 63 BSA / Sec 65B IEA Compliant Integrity)
   2. TRAINING_PRESEEDED — Pre-seeded baseline / synthetic data used exclusively for model cold-start training
 
 Core Principles:

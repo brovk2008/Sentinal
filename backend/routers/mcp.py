@@ -549,9 +549,35 @@ async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Re
             arguments={"query": payload_text or "Karnataka Police news"}
         ), http_request)
 
+    elif slash_cmd in ("/help", "/tools", "/commands", "/info"):
+        return {
+            "status": "success",
+            "tool": "mcp_help_catalog",
+            "message": "Project Sentinal Autonomous Model Context Protocol (MCP) Tools Catalog",
+            "data": {
+                "available_commands": [
+                    {"command": "/canvas <topic>", "desc": "Auto-generates structured ReactFlow investigation graph"},
+                    {"command": "/search <query>", "desc": "Searches 10,000+ Karnataka State Police FIR dockets"},
+                    {"command": "/convoy <plate>", "desc": "Runs FASTag ANPR convoy shadow-tracking on highway tolls"},
+                    {"command": "/chargesheet <name>", "desc": "Drafts court-ready Section 173 BNSS police report"},
+                    {"command": "/mule <handle>", "desc": "Detects high-velocity UPI mule accounts for Sec 106 freeze"},
+                    {"command": "/patrol <district>", "desc": "Dispatches Hoysala patrol unit to predictive hotspots"},
+                    {"command": "/dossier <name>", "desc": "Fetches suspect CCTNS criminal intelligence profile"},
+                    {"command": "/web <query>", "desc": "Live web & news OSINT search with verified citations"},
+                    {"command": "/browse <url>", "desc": "Live headless browser scrape of online court/portal records"}
+                ]
+            }
+        }
+
     elif slash_cmd == "/mcp":
         # General AI MCP dispatch
-        if any(w in payload_text.lower() for w in ["web", "google", "search online", "internet", "news", "recent"]):
+        if not payload_text or payload_text.lower() in ("hi", "hello", "help", "tools", "info", "test"):
+            return {
+                "status": "success",
+                "tool": "mcp_orchestrator",
+                "message": "Sentinal Autonomous MCP Orchestrator Online. Ready to execute commands: /canvas, /search, /convoy, /chargesheet, /mule, /patrol, /dossier, /web, /browse"
+            }
+        elif any(w in payload_text.lower() for w in ["web", "google", "search online", "internet", "news", "recent"]):
             return await execute_mcp_tool(MCPExecuteRequest(
                 name="search_live_web_engine",
                 arguments={"query": payload_text}
@@ -585,5 +611,5 @@ async def handle_chat_slash_command(req: MCPChatCommandRequest, http_request: Re
     else:
         return {
             "status": "error",
-            "message": f"Unknown shortcut: {slash_cmd}. Type /mcp or check Profile -> Shortcuts."
+            "message": f"Unknown shortcut: {slash_cmd}. Type /help or /commands to view all 10 available MCP commands."
         }

@@ -320,6 +320,10 @@ export const deleteBoard = (boardId) => request(`/api/v1/board/${boardId}`, {
 });
 export const uploadEvidence = (formData) => uploadRequest('/api/v1/board/upload-evidence', formData);
 export const matchSuspect = (formData) => uploadRequest('/api/v1/board/match-suspect', formData);
+export const analyzeVideoEvidence = (payload = {}) => request('/api/v1/board/video-analyze', {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
 
 // ── AI Brain & Timeline Reconstruction ──
 export const analyzeBoard = (payload) => request('/api/v1/brain/analyze-board', {
@@ -494,11 +498,13 @@ export const solveCaseWithAI = (caseId = 1, imageBase64 = null) =>
     body: JSON.stringify({ case_id: caseId, image_base64: imageBase64 })
   });
 
+
 export const matchSuspectFace = (imageBase64, topK = 5) =>
   request('/api/v1/criminology/match-face', {
     method: 'POST',
     body: JSON.stringify({ image_base64: imageBase64, top_k: topK })
   });
+
 
 
 export const fetchCustomAIInference = (payload = {}) =>

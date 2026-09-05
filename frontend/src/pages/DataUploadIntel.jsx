@@ -6,11 +6,13 @@
  * Per-user storage keyed by Catalyst user ID
  */
 import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FileSpreadsheet, FileText, Image as ImageIcon, Music,
   Paperclip, FolderUp, Brain, Check, CheckCircle2,
-  AlertCircle, ExternalLink, Activity
+  AlertCircle, ExternalLink, Activity, Sparkles, LayoutDashboard
 } from 'lucide-react';
+import { autoGenerateCanvas } from '../api';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -43,12 +45,39 @@ function FileTypeIcon({ type, size = 16 }) {
 }
 
 export default function DataUploadIntel() {
+  const navigate = useNavigate();
   const [uploads,     setUploads]     = useState([]);
   const [dragging,    setDragging]    = useState(false);
   const [processing,  setProcessing]  = useState(false);
   const [label,       setLabel]       = useState('');
   const [myFiles,     setMyFiles]     = useState([]);
   const [loadingFiles,setLoadingFiles]= useState(false);
+  const [generatingCanvasId, setGeneratingCanvasId] = useState(null);
+
+  const handleOpenCanvas = async (fileObj) => {
+    const fileId = fileObj.file_id || fileObj.id;
+    const title = fileObj.label || fileObj.filename || 'Uploaded Document Investigation Canvas';
+    const text = fileObj.ai_summary || fileObj.filename || '';
+
+    setGeneratingCanvasId(fileId || 'active');
+    try {
+      const res = await autoGenerateCanvas({
+        file_id: fileId,
+        title: `Canvas: ${title}`,
+        text: text
+      });
+      if (res?.status === 'success' && res.canvas_id) {
+        navigate(`/connections?canvasId=${res.canvas_id}`);
+      } else {
+        navigate(`/connections`);
+      }
+    } catch (err) {
+      console.error('Failed to generate canvas from uploaded file:', err);
+      navigate(`/connections`);
+    } finally {
+      setGeneratingCanvasId(null);
+    }
+  };
 
   // Load user's existing uploads on mount
   useEffect(() => {
@@ -250,6 +279,29 @@ export default function DataUploadIntel() {
                   ))}
                 </div>
               )}
+              <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  onClick={() => handleOpenCanvas(u)}
+                  disabled={generatingCanvasId === (u.file_id || 'active')}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(200,129,74,0.25) 0%, rgba(200,129,74,0.12) 100%)',
+                    border: '1px solid var(--copper-400)',
+                    color: '#f8fafc',
+                    borderRadius: 5,
+                    padding: '5px 12px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: generatingCanvasId === (u.file_id || 'active') ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Sparkles size={12} color="var(--copper-400)" />
+                  <span>{generatingCanvasId === (u.file_id || 'active') ? 'Building Canvas...' : '⚡ Open in Investigation Canvas'}</span>
+                </button>
+              </div>
             </div>
           ))}
 
@@ -284,14 +336,37 @@ export default function DataUploadIntel() {
                     {f.file_type} · {f.uploaded_at?.slice(0, 10)}
                   </div>
                 </div>
-                {f.stratus_url && (
-                  <a href={f.stratus_url} target="_blank" rel="noreferrer"
-                    style={{ fontSize: 10, color: 'var(--copper-400)',
-                             textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <span>View</span>
-                    <ExternalLink size={10} />
-                  </a>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    onClick={() => handleOpenCanvas(f)}
+                    disabled={generatingCanvasId === (f.id || f.file_id)}
+                    title="Extract entities & Open Investigation Canvas"
+                    style={{
+                      background: 'rgba(200,129,74,0.12)',
+                      border: '1px solid rgba(200,129,74,0.35)',
+                      color: 'var(--copper-400)',
+                      borderRadius: 4,
+                      padding: '3px 9px',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      cursor: generatingCanvasId === (f.id || f.file_id) ? 'wait' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    <Sparkles size={10} />
+                    <span>{generatingCanvasId === (f.id || f.file_id) ? 'Extracting...' : 'Canvas'}</span>
+                  </button>
+                  {f.stratus_url && (
+                    <a href={f.stratus_url} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 10, color: 'var(--copper-400)',
+                               textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span>View</span>
+                      <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>

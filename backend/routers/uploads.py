@@ -801,7 +801,7 @@ async def get_proof_certificate(file_id: str):
         "category":         row["evidence_category"],
         "created_at":       row["created_at"],
         "is_verified":      bool(row["is_verified"]),
-        "court_admissibility": "Valid under Section 65B, Indian Evidence Act",
+        "statutory_compliance": "Evidence Integrity & Statutory Legal Documentation (Sec 63 BSA / Sec 65B IEA Compliant)",
     }
 
 
@@ -882,7 +882,7 @@ async def get_court_evidence(case_id: str):
             "verified_count": len(evidence),
             "evidence_items": evidence,
             "isolation_status": "STRICT_REAL_OPERATIONAL_ONLY",
-            "legal_standard": "Admissible under Section 65B, Indian Evidence Act",
+            "legal_standard": "Evidence Integrity & Statutory Legal Documentation (Sec 63 BSA / Sec 65B IEA Compliant)",
         }
     except Exception as e:
         raise HTTPException(500, f"Court evidence retrieval failed: {e}")
