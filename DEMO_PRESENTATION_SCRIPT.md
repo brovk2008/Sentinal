@@ -1,223 +1,122 @@
-# PROJECT SENTINAL — HACKATHON WINNING LIVE DEMO SCRIPT
-### *Statewide Autonomous Police Intelligence & Criminological AI Platform*
+# PROJECT SENTINAL — 3-MINUTE HIGH-IMPACT LIVE DEMO SCRIPT
+### *Karnataka State Police Autonomous Crime Intelligence & Predictive AI Platform*
+**Total Video Target Duration:** Strictly 3:00 Minutes (180 Seconds)  
+**Tone:** Authoritative, crisp, confident, law-enforcement tech director.
 
 ---
 
-## 🎙️ PITCH INTRO: THE HOOK (0:00 – 0:45)
-> **[Stance]**: Confident, authoritative, speaking like a State Police Tech Director.  
-> **[Screen]**: Standing on `/#/dashboard` with the Live Telemetry streaming.
+## ⏱️ MASTER TIMING BREAKDOWN
 
-**Say this word-for-word:**
-> *"Respected Judges — across Karnataka’s 41 police districts, over 10,000 FIRs are registered every month. But while organized syndicates use encrypted Telegram channels, luxury OBD cloners, multi-tier UPI mule smurfing, and crypto mixers, our police forces have historically been forced to rely on siloed, manual paper trails.*
+| Section | Feature Area | Time Range | Duration | Key Goal |
+|---|---|---|---|---|
+| **Part 1** | **Statewide Intelligence Dashboard & 20 Core Features Overview** | 0:00 – 0:50 | 50s | Wow judges with scale, UI polish, and rapid summary of all 20 modules |
+| **Part 2** | **PDF Case Ingestion $\rightarrow$ AI Extraction $\rightarrow$ Investigation Canvas** | 0:50 – 1:35 | 45s | Drop FIR PDF (Case 10042) $\rightarrow$ Zia AI parses $\rightarrow$ Click "⚡ Open in Canvas" $\rightarrow$ Relational Graph $\rightarrow$ "Show in Predictive Intel" button |
+| **Part 3** | **FIR Search & Live Processing** | 1:35 – 2:05 | 30s | Live search FIR, run bilingual OCR, translation & BNS section extraction |
+| **Part 4** | **Geospatial Intelligence: 2D Tactical & 3D Cesium Earth** | 2:05 – 2:35 | 30s | Switch between 2D DBSCAN tactical density & 3D Cesium Globe with 90° Nadir camera alignment |
+| **Part 5** | **Predictive Intelligence & Hawkes ETAS Solvability Engine** | 2:35 – 3:00 | 25s | Showcase Case 10042 Solvability resolution, 7-day hotspot forecast & wrap pitch |
+
+---
+
+## 🎙️ PART 1: COMMAND DASHBOARD & 20 CORE FEATURES (0:00 – 0:50)
+
+> **[Screen]**: Standing on `/#/dashboard` (Statewide Intelligence Dashboard). Live telemetry metrics streaming, crime trend chart, real-time activity feed.
+> **[Actions]**:
+> 1. (0:00) Pan over the top KPI cards (10,000+ FIRs, 41 Districts, ₹42.4L Assets Frozen under Sec 106 BNSS).
+> 2. (0:15) Quickly hover over the sidebar navigation or click domain filters (`All Domains`, `Cyber & Mule`, `Heinous & Robbery`).
+> 3. (0:30) Point at the live Hawkes ETAS time-series chart and Kannada instant language toggle.
+
+### 🗣️ Spoken Narration (Word-for-Word):
+> *"Respected Judges, across Karnataka’s 41 police districts, investigating officers handle thousands of complex cases every month. But modern crime syndicates move fast across digital and physical jurisdictions.*
 > 
-> *Today, we change that forever.*
+> *Welcome to **Project Sentinal** — India’s first Palantir-grade autonomous crime intelligence platform, built entirely on **Zoho Catalyst serverless microservices** and **QuickML AI**.*
 > 
-> *Welcome to **Project Sentinal** — India’s first Palantir-grade, statewide autonomous crime intelligence and predictive criminology command center. Powered entirely by Zoho Catalyst serverless microservices, SmartBrowz automated ingestion, Zia OCR, and real mathematical Hawkes point-process contagion AI.*
+> *Sentinal integrates **20 mission-critical law enforcement capabilities**: from real-time CCTNS telemetry, bilingual Zia OCR, and financial UPI mule smurfing freeze under Section 106 BNSS, to 3D Cesium geospatial tracking, ANPR convoy intelligence, automated BNS chargesheet formulation, and mathematical Hawkes ETAS contagion forecasting.*
 > 
-> *Let me take you on a live tactical tour."*
+> *Let's see the live system in action."*
+
+---
+
+## 🎙️ PART 2: CASE PDF INGESTION $\rightarrow$ AI EXTRACTION $\rightarrow$ INVESTIGATION CANVAS (0:50 – 1:35)
+
+> **[Screen]**: Click **"Data Ingestion / Uploads"** (`/#/upload`).
+> **[Actions]**:
+> 1. (0:50) Drag and drop the Karnataka Police Form 1 Test FIR PDF (`CaseMaster 10042` — Sneha Ramaiah Robbery).
+> 2. (0:58) The dropzone shows *“AI is analyzing your file...”* $\rightarrow$ green verified badge appears showing parsed entities (`Case 10042`, `Robbery u/s BNS 309`, `Sneha Ramaiah`, `Manjunath Gowda`, `Motorcycle KA-05-EF-7823`, `Gold Chain 10g`, `Samsung S23`).
+> 3. (1:10) Click the glowing button: **`⚡ Open in Investigation Canvas`**.
+> 4. (1:14) The screen navigates directly into `/connections?canvasId=CANVAS-ROBBERY-10042`. A complete 10-node relational causal graph renders with auto-layout coordinates, animated directed edges, and evidence classifications.
+> 5. (1:22) Highlight the suspect nodes (`Manjunath Gowda A1`, `Praveen Shetty A2`), the seized loot, and the getaway bike.
+> 6. (1:28) Point to the top toolbar and highlight the new action button: **`🔮 Predictive Intel`**.
+
+### 🗣️ Spoken Narration (Word-for-Word):
+> *"Here in our Universal Ingestion engine, I’ll upload a raw, multi-page police FIR document — Case 10042 from Koramangala Station.*
 > 
-> *(Click `▶ DEMO` in the top header or press `Ctrl + K` to start the live interactive tour)*
+> *In real-time, **Zoho Catalyst Zia AI** parses the document, extracts key named entities, registers a tamper-proof Section 65B cryptographic proof hash, and indexes it into our RAG knowledge base.*
+> 
+> *Now, I click **'Open in Investigation Canvas'**.*
+> 
+> *Instantly, Sentinal constructs a complete 10-node relational knowledge graph: linking victim Sneha Ramaiah to prime accused Manjunath Gowda, accomplice Praveen Shetty, the getaway motorcycle KA-05-EF-7823, and the recovered 10-gram gold chain and Samsung Galaxy S23.*
+> 
+> *Notice our toolbar bridge: with one click on **'Predictive Intel'**, this exact case telemetry is fed directly into our predictive modeling suite."*
 
 ---
 
-## 🧭 STEP-BY-STEP LIVE DEMO TOUR
+## 🎙️ PART 3: FIR SEARCH, BILINGUAL OCR & LIVE TRANSLATION (1:35 – 2:05)
+
+> **[Screen]**: Navigate to **"FIR Search"** (`/#/fir-search`).
+> **[Actions]**:
+> 1. (1:35) Select District: **Bengaluru City**, Police Station: **Koramangala**, FIR No: **10042 / 2026**.
+> 2. (1:45) Click **`Search & Process FIR`**.
+> 3. (1:52) Show the split view: raw police document preview on the left; structured BNS sections, accused details, and instant Kannada-to-English legal translation on the right.
+
+### 🗣️ Spoken Narration (Word-for-Word):
+> *"Next, our **CCTNS FIR Intelligence Search**.*
+> 
+> *Officers can query any FIR across Karnataka by station, crime number, or natural language query.*
+> 
+> *When we process this record, Sentinal executes optical OCR across bilingual Kannada-English scripts, maps legacy IPC references into the new Bharatiya Nyaya Sanhita 2023 statutes — here identifying Section 309 Robbery and Motor Vehicles Act 184 — and translates the entire legal testimony instantly for multi-agency joint operations."*
 
 ---
 
-### Step 1: Statewide Intelligence Command Center (`/dashboard`)
-* **Action on Screen**: Click `FILTER DOMAIN` pills (`Cyber & Mule Smurfing`, `OBD Vehicle Theft`), toggle `24H / WEEKLY / MONTHLY` on the Crime Trend chart.
-* **What to Say**:
-  > *"We are looking at the Central Intelligence HUD. Notice the top metric bar — it aggregates over **10,000 real Karnataka FIRs** across 41 districts, with ₹42.4 Lakhs in mule assets frozen under the new **Section 106 BNSS** statute.*
-  > 
-  > *Look at our **Crime Trend & Hawkes Forecast** chart. This isn't a static line. It runs an Epidemic-Type Aftershock Sequence (ETAS) self-exciting point process: $\lambda(t) = \mu + \theta \sum c_i e^{-\omega \Delta t}$, forecasting near-repeat crime spikes over the next 24 to 72 hours with 90.8% calibrated accuracy.*
-  > 
-  > *Watch the top right — with one click on the language toggle, our entire interface translates into **Kannada in 0 milliseconds** using our persistent legal lexicon."*
-* **Key Point for Judges**: Show the live telemetry feed streaming genuine FIRs from Bengaluru, Mysuru, and Ballari.
+## 🎙️ PART 4: GEOSPATIAL INTELLIGENCE: 2D TACTICAL & 3D CESIUM EARTH (2:05 – 2:35)
+
+> **[Screen]**: Navigate to **"Geospatial Map"** (`/#/spatial`).
+> **[Actions]**:
+> 1. (2:05) Show the 2D Tactical Dark Map with live DBSCAN crime clusters, hotspot radius circles, and police station jurisdiction boundaries.
+> 2. (2:15) Click the **`3D Globe / Cesium View`** button in the top right.
+> 3. (2:20) The camera smoothly pans into an ultra-high-resolution 3D CesiumJS Earth Globe with 90° Nadir surface normal auto-alignment, volumetric crime pillars, and patrol route vectors across Bengaluru Urban.
+
+### 🗣️ Spoken Narration (Word-for-Word):
+> *"Moving to our **Geospatial Intelligence Engine**.*
+> 
+> *In 2D Tactical View, officers see real-time DBSCAN spatial clustering, telecommunication tower azimuths, and patrol beat coverage.*
+> 
+> *With one toggle, we launch our **CesiumJS 3D Earth Globe**. Built with 90-degree Nadir surface normal auto-alignment, it renders volumetric spatial crime density, highway transit corridors, and high-risk patrol sectors in immersive photorealistic 3D."*
 
 ---
 
-### Step 2: War Room Live Operations & Emergency Dispatch (`/warroom`)
-* **Action on Screen**: Press `Next` to enter `/warroom`. Click on an active incident and click `Deploy Patrol`.
-* **What to Say**:
-  > *"Next is the Tactical War Room. When a critical trigger occurs — like a luxury Creta theft on Indiranagar 100ft Road — Sentinal correlates live 112 emergency calls with GPS telemetry from the nearest Hoysala patrol fleet.*
-  > 
-  > *With one click on 'Deploy Patrol', the system calculates optimal roadblock interception coordinates across 4 adjacent police sectors before the vehicle reaches the highway toll."*
+## 🎙️ PART 5: PREDICTIVE INTEL & HAWKES ETAS SOLVABILITY ENGINE (2:35 – 3:00)
+
+> **[Screen]**: Navigate to **"Predictive Intel"** (`/#/predict`) — preloaded with Case `10042` and `PS-0006 Koramangala`.
+> **[Actions]**:
+> 1. (2:35) Show the **Case Resolution Analyzer** preloaded with Case `10042`: Click **`Predict`** $\rightarrow$ shows **Chargesheeted (82.4%)** probability with key signals (Arrests Made: 2, Accused: 2, Seized Property).
+> 2. (2:45) Point to the **7-Day Hotspot Risk Forecast**, **Temporal Peak Window**, and **High-Risk Recidivism Watchlist**.
+> 3. (2:55) Final closing camera gaze / wrap up.
+
+### 🗣️ Spoken Narration (Word-for-Word):
+> *"Finally, **Predictive Intelligence**.*
+> 
+> *Here, our Kaggle-trained machine learning models and Hawkes ETAS contagion point process calculate real-time case solvability — projecting an 82% chargesheet resolution probability for Case 10042 based on physical custody and recovered property.*
+> 
+> *Project Sentinal bridges the gap between raw police data and autonomous, court-ready intelligence — making Karnataka safer, faster, and smarter.*
+> 
+> *Thank you."*
 
 ---
 
-### Step 3: Multi-Modal Evidence Upload & Zia OCR (`/upload`)
-* **Action on Screen**: Press `Next` to enter `/upload`. Point out the multi-modal evidence dropzone.
-* **What to Say**:
-  > *"Police evidence is messy — scanned Kannada PDFs, CCTV clips, and CDR spreadsheets. Sentinal features a multi-modal ingestion pipeline.*
-  > 
-  > *Using **Zoho Catalyst Zia OCR**, scanned bilingual Kannada Form 1 FIRs are parsed in seconds, automatically extracting accused names, vehicle registration numbers, and converting legacy IPC codes into the new **Bharatiya Nyaya Sanhita (BNS 2023)** sections."*
+## 🎬 QUICK DEMO CHECKLIST FOR RECORDING
 
----
-
-### Step 4: SmartBrowz Automated KSP Ingestion (`/ingestion`)
-* **Action on Screen**: Press `Next`. Click `Start SmartBrowz Ingestion` to see the live crawling queue.
-* **What to Say**:
-  > *"How does the data get here? Through **Zoho Catalyst SmartBrowz**.*
-  > 
-  > *Our autonomous ingestion engine uses headless browser automation with automated CAPTCHA resolution to scrape official public FIRs from the Karnataka State Police portal station-by-station, structuring raw court dockets into our database in real-time."*
-
----
-
-### Step 5: Structured Case Dossiers & Legal Records (`/cases`)
-* **Action on Screen**: Press `Next` to enter `/cases`. Click on case `CR/2026/0456` (Imran Pasha OBD Ring).
-* **What to Say**:
-  > *"Every FIR becomes an interactive digital dossier. Here in case CR/2026/0456, we see the complete timeline, seized OBD key programmer evidence, complainant statements, and charge-sheet readiness under **Section 173 BNSS**.*
-  > 
-  > *Every piece of metadata is indexed and searchable across the entire state."*
-
----
-
-### Step 6: Palantir-Grade Investigation Canvas (`/connections`)
-* **Action on Screen**: Press `Next`. Click `Populate Investigation Graph`. Drag nodes around to show dynamic physics.
-* **What to Say**:
-  > *"Now, the crown jewel of our forensic platform: our **Palantir-grade Investigation Canvas**.*
-  > 
-  > *Instead of staring at spreadsheets, detectives visually map criminal syndicates. Here, kingpin Imran Pasha is mapped to his scout vehicle, his burner IMEI hardware, his WazirX crypto wallet, and his chop-shop receiver Dinesh Gupta."*
-
----
-
-### Step 7: AI Graph Reasoner & QuickML Link Discovery (`/connections`)
-* **Action on Screen**: Press `Next`. Click `Run AI Graph Analysis` in the canvas toolbar. Watch green edges appear.
-* **What to Say**:
-  > *"Watch what happens when I click 'AI Analyze'. Our **Catalyst QuickML reasoner** traverses multi-hop graph embeddings, analyzing shared tower pings and bank branches.*
-  > 
-  > *Look at this green edge — it just uncovered a covert financial link between Ashok Kumar's hawala desk and Imran Pasha's vehicle theft ring based on matching Telegram OTC transaction timestamps."*
-
----
-
-### Step 8: Digital Evidence Board & Sec 65B BSA Vault (`/board`)
-* **Action on Screen**: Press `Next` to enter `/board`. Click `Verify Hash` and `Generate Section 65B Certificate`.
-* **What to Say**:
-  > *"Under the new **Bharatiya Sakshya Adhiniyam (BSA 2023)**, electronic evidence is inadmissible without strict chain-of-custody verification.*
-  > 
-  > *Sentinal computes immutable **SHA-256 cryptographic hashes** for every digital asset the moment it enters the system. One click generates an automated, court-admissible **Section 65B / Section 63 BSA legal affidavit** ready for High Court submission."*
-
----
-
-### Step 9: 3D Geospatial Globe & GIS Tactical Command (`/map`)
-* **Action on Screen**: Press `Next`. Use the mouse wheel to tilt and rotate the 3D globe, then zoom into the Bengaluru cluster.
-* **What to Say**:
-  > *"Here is our **3D CesiumJS Geospatial Satellite Command**. We project 10,000 crime records onto a 3D Earth globe with geodetic surface normal alignment.*
-  > 
-  > *Notice this red density cone in the Indiranagar-Koramangala corridor — it computes **Kim Rossmo geographic profiling** to identify serial offender anchor points and predict where the syndicate will strike next."*
-
----
-
-### Step 10: Modus Operandi (MO) Series Linking (`/patterns` -> `MO`)
-* **Action on Screen**: Press `Next`. Click on cluster card `MO-SERIES-OBD-01`.
-* **What to Say**:
-  > *"In our Criminology AI suite, we solve the hardest police problem: **Modus Operandi Series Linking**.*
-  > 
-  > *Using TF-IDF n-gram vectorization and single-linkage clustering across 10,000 FIR brief facts, Sentinal grouped 12 separate theft cases across 4 districts sharing the exact same keyless relay cloning signature with **96.4% mathematical confidence**."*
-
----
-
-### Step 11: Bowers & Johnson Near-Repeat Spatial Risk (`/patterns` -> `Near Repeat`)
-* **Action on Screen**: Press `Next`. Show the `4.2x` risk multiplier badge.
-* **What to Say**:
-  > *"Next is **Bowers & Johnson Near-Repeat Theory**. When a burglary occurs, spatial contagion predicts a 4.2x spike in repeat offenses within a 400-meter buffer over the subsequent 48 hours.*
-  > 
-  > *Sentinal automatically schedules proactive police beat routes before the repeat strike happens."*
-
----
-
-### Step 12: Organized Crime Syndicate Roster (`/patterns` -> `Syndicates`)
-* **Action on Screen**: Press `Next`. View the dossier for `Imran Pasha ('Keyless Pasha')`.
-* **What to Say**:
-  > *"Sentinal automatically extracts organized crime syndicates under **Section 111 BNS**.*
-  > 
-  > *Here is the full syndicate roster for the Pasha Ring — tracking Red Corner Notices, active LOCs, associated chop-shops, and ₹8.4 Crores in illicit proceeds."*
-
----
-
-### Step 13: Markov Chain Crime Escalation Flowcharts (`/patterns` -> `Flowchart`)
-* **Action on Screen**: Press `Next`. Hover over the `74%` transition path.
-* **What to Say**:
-  > *"We also model criminal career progression using mathematical **Markov Transition Chains**.*
-  > 
-  > *We calculate transition probabilities $P(\text{Violent Tier} \mid \text{Property Tier})$. For example, juvenile repeat offenders with 2+ snatchings exhibit a 74% transition probability into armed syndicate operations, enabling early rehabilitation interventions."*
-
----
-
-### Step 14: Persons of Interest & Biometric Recon (`/persons`)
-* **Action on Screen**: Press `Next` to enter `/persons`. Filter by `Risk Score > 90`.
-* **What to Say**:
-  > *"Our Persons of Interest registry maintains biometric profiles for high-risk re-offenders, calculating AI flight risk scores and tracking cross-district bail violations in real-time."*
-
----
-
-### Step 15: Semantic FIR Search & Bilingual OCR Store (`/fir-search`)
-* **Action on Screen**: Press `Next` to enter `/fir-search`. Type `OBD relay` or `Mule Hawala`.
-* **What to Say**:
-  > *"Our FIR Search engine supports bilingual phonetic search. Whether an officer types in English or Kannada, our vector search retrieves matching FIRs across 10,000 cases in under 50 milliseconds."*
-
----
-
-### Step 16: UPI Mule Smurfing & Financial Hawala Intel (`/financial`)
-* **Action on Screen**: Press `Next` to enter `/financial`. Click `Issue Section 106 BNSS Freeze Directive`.
-* **What to Say**:
-  > *"In cyber fraud, speed is everything. Here in Financial Intel, we monitor **15,000 transactions** across Karnataka.*
-  > 
-  > *Sentinal detects rapid P2P velocity bursts under ₹50,000 across compromised Jan Dhan student accounts and auto-generates instant **Section 106 BNSS Bank Freeze Directives** to block fund siphoning within 15 minutes."*
-
----
-
-### Step 17: Interactive Crypto Blockchain Forensic Tracker (`/forensic`)
-* **Action on Screen**: Press `Next` to enter `/forensic`. Click `Trace & Unmix`, inspect the On-Chain Ledger blocks, and click `⚡ Open in Canvas`.
-* **What to Say**:
-  > *"When extortion funds leave UPI, they enter crypto. Sentinal includes a full **On-Chain Blockchain Unmixer**.*
-  > 
-  > *It connects directly to live Ethereum Mainnet RPC nodes, calculates 4-hop fund peels, cross-checks OFAC Tornado Cash contract lists, flags WazirX and Binance KYC off-ramps, and auto-drafts **Section 94 BNSS court subpoenas** for exchange compliance."*
-
----
-
-### Step 18: Zia RAG AI Copilot & Legal Brief Generator (`/assistant`)
-* **Action on Screen**: Press `Next` to enter `/assistant`. The demo auto-types: *"Summarize the criminal network of Imran Pasha and draft charges under Section 111 BNS"*.
-* **What to Say**:
-  > *"Meet the Zia RAG AI Copilot. It operates on a Multi-Hop GraphRAG pipeline over all 10,000 cases and legal statutes.*
-  > 
-  > *Watch it summarize Imran Pasha's entire cross-district syndicate and auto-draft a complete, court-ready **Section 111 BNS prosecution brief** with exact FIR citations in seconds."*
-
----
-
-### Step 19: Dark Web & Telegram Black Market Monitor (`/darkweb`)
-* **Action on Screen**: Press `Next` to enter `/darkweb`. Highlight intercepted Telegram listings and CIRCL CVE vulnerability alerts.
-* **What to Say**:
-  > *"Finally, our Dark Web OSINT Scanner. It indexes live Ahmia Tor threat intelligence and underground Telegram channels, intercepting illicit sales of forged RTO documents, stolen Hyundai transponder keys, and leaked KYC databases before crimes occur."*
-
----
-
-### Step 20: Conclusion & Architecture Wrap-Up
-* **Action on Screen**: Press `Next` to return to `/dashboard`.
-* **What to Say**:
-  > *"Every single feature you saw today is 100% functional, database-backed, deployed on **Zoho Catalyst**, and ready for statewide deployment.*
-  > 
-  > *Project Sentinal doesn't just log crime — it predicts it, connects it, and equips law enforcement to stop it.*
-  > 
-  > *Thank you. We are now open for questions!"*
-
----
-
-## 🛡️ JUDGE Q&A DEFENSE MATRIX
-
-| Judge Question | Your Winning Answer |
-| :--- | :--- |
-| **"Is this live data or mock data?"** | *"Everything is 100% database-backed. Our backend runs on SQLite with 10,000 real Karnataka FIR records, 21,722 accused dossiers, 323 police stations, and 15,000 financial transactions. Our crypto unmixer queries live Ethereum RPC nodes, and our darkweb scanner queries live Ahmia Tor endpoints."* |
-| **"How does your Hawkes process work mathematically?"** | *"We model crime contagion as a self-exciting point process $\lambda(t) = \mu + \theta \sum c_j e^{-\omega \Delta t}$. The base rate $\mu$ captures Poisson background frequency, while the triggering kernel $e^{-\omega \Delta t}$ captures near-repeat escalation aftershocks."* |
-| **"How do you ensure court admissibility under the new criminal laws?"** | *"Under Section 65B of the Indian Evidence Act and Section 63 of the new Bharatiya Sakshya Adhiniyam (BSA 2023), electronic evidence requires proof of integrity. Sentinal computes SHA-256 hashes upon upload, logs immutable audit trails, and auto-generates signed Section 65B legal certificates."* |
-| **"What Zoho Catalyst services did you use?"** | *"We used the entire Zoho Catalyst ecosystem: **AppSail** for our containerized FastAPI backend, **Web Client Hosting** for Vite React, **SmartBrowz** for automated KSP scraping, **Zia OCR & NLP** for bilingual Kannada translation, and **Catalyst Serverless Functions** for async document processing."* |
-| **"How scalable is this architecture across other Indian states?"** | *"The data schema conforms to national CCTNS standards. Because the compute is 100% serverless on Zoho Catalyst with horizontal AppSail auto-scaling, onboarding another state (like Maharashtra or Delhi) simply requires pointing our SmartBrowz ingestion scraper to their state portal."* |
-
----
-
-## ⌨️ QUICK KEYBOARD SHORTCUTS REFERENCE FOR DEMO
-* **`▶ DEMO`**: Click top-right button to launch stepper
-* **`N`** or **`Right Arrow`**: Next Demo Step
-* **`P`** or **`Left Arrow`**: Previous Demo Step
-* **`Esc`**: Exit Tour
-* **`Ctrl + K`**: Open Global Command Palette & Semantic Search
+- [ ] **Browser Resolution**: Full HD (1920x1080) at 100% zoom.
+- [ ] **Tab Setup**: Have `/#/dashboard`, `/#/upload`, `/#/fir-search`, `/#/spatial`, and `/#/predict` ready and tested.
+- [ ] **Test PDF File**: Have the synthetic `Karnataka_Police_FIR_Sample_10042.pdf` on your desktop or ready to drag.
+- [ ] **Audio**: Clear, steady microphone; practice speaking at an energetic, steady pace (~130 words per minute).
+- [ ] **Total Time**: 2 minutes 50 seconds to 2 minutes 58 seconds (perfect fit under the 3:00 limit!).

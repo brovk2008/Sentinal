@@ -546,6 +546,51 @@ def create_evidence_chain_of_custody():
     _exec("CREATE INDEX IF NOT EXISTS idx_ev_case ON evidence_chain_of_custody(case_id)")
 
 
+def seed_case_10042():
+    """Seed synthetic FIR Case 10042 for Koramangala PS (Sneha Ramaiah Robbery)."""
+    con = _con()
+    try:
+        # Check if CaseMaster 10042 exists
+        row = con.execute("SELECT CaseMasterID FROM CaseMaster WHERE CaseMasterID = 10042").fetchone()
+        if not row:
+            con.execute("""
+                INSERT OR REPLACE INTO CaseMaster (
+                    CaseMasterID, CrimeNo, CaseNo, CrimeRegisteredDate,
+                    PolicePersonID, PoliceStationID, CaseCategoryID, GravityOffenceID,
+                    CrimeMajorHeadID, CrimeMinorHeadID, CaseStatusID, CourtID,
+                    IncidentFromDate, IncidentToDate, InfoReceivedPSDate,
+                    Latitude, Longitude, BriefFacts
+                ) VALUES (
+                    10042, '1044300062026 00001', '202600001', '2026-03-14',
+                    'EMP-3817', 'PS-0006', 1, 2,
+                    'CH-01', 'CSH-004', 3, 'CRT-011',
+                    '2026-03-13 21:30', '2026-03-13 22:10', '2026-03-13 23:05',
+                    12.934567, 77.610234,
+                    'The complainant, Sneha Ramaiah, reported that while returning home from her workplace at approximately 21:30 hrs on 13-Mar-2026, two unknown male persons on a motorcycle (No. KA-05-EF-7823) forcibly snatched her handbag containing cash of Rs 18,500/-, one gold chain (approx 10 grams), and a Samsung Galaxy S23 mobile phone. The accused persons fled towards Outer Ring Road. A case of robbery u/s BNS 309 has been registered.'
+                )
+            """)
+            con.execute("""
+                INSERT OR REPLACE INTO Accused (AccusedMasterID, CaseMasterID, PersonID, AccusedName, AgeYear, GenderID)
+                VALUES (7701, 10042, 'A1', 'Manjunath Gowda', 34, 'M'),
+                       (7702, 10042, 'A2', 'Praveen Shetty', 28, 'M')
+            """)
+            con.execute("""
+                INSERT OR REPLACE INTO Victim (VictimMasterID, CaseMasterID, VictimName, AgeYear, GenderID, VictimPolice)
+                VALUES (5501, 10042, 'Sneha Ramaiah', 29, 'F', 0)
+            """)
+            con.execute("""
+                INSERT OR REPLACE INTO ArrestSurrender (ArrestSurrenderID, CaseMasterID, Type, Date, StateID, DistrictID, PoliceStationID, IOID, CourtID, AccusedMasterID, IsAccused, IsComplainantAccused)
+                VALUES (3301, 10042, 1, '2026-03-16', 'ST-29', 'DIST-443', 'PS-0006', 'EMP-3817', 'CRT-011', 7701, 1, 0),
+                       (3302, 10042, 1, '2026-03-17', 'ST-29', 'DIST-443', 'PS-0006', 'EMP-3817', 'CRT-011', 7702, 1, 0)
+            """)
+            con.commit()
+            print("[init_db] Seeded CaseMaster 10042 (Koramangala Robbery).")
+    except Exception as e:
+        print(f"[init_db] Notice seeding Case 10042: {e}")
+    finally:
+        con.close()
+
+
 # ─── Main entry point ───────────────────────────────────────────────────────
 
 def init_all_tables():
@@ -590,6 +635,7 @@ def init_all_tables():
         seed_cdr_records()
         seed_evidence_boards()
         seed_crime_syndicates()
+        seed_case_10042()
 
         # ── Lazy alias index build (background thread) ─────────────────────
         try:

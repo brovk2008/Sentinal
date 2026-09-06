@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import LoadingPulse from '../components/shared/LoadingPulse'
 import Badge from '../components/shared/Badge'
@@ -18,6 +18,9 @@ const KA_CENTER = [14.5, 76.0]
 
 export default function PredictiveIntelligence() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlCaseId = searchParams.get('caseId')
+  const urlStation = searchParams.get('station')
   
   // State variables
   const [loading, setLoading] = useState(true)
@@ -29,7 +32,7 @@ export default function PredictiveIntelligence() {
   const [mapMode, setMapMode] = useState('dark')
 
   // Case resolution predictor state
-  const [caseIdInput, setCaseIdInput] = useState('')
+  const [caseIdInput, setCaseIdInput] = useState(urlCaseId || '10042')
   const [resolutionLoading, setResolutionLoading] = useState(false)
   const [resolutionResult, setResolutionResult] = useState(null)
   const [resolutionError, setResolutionError] = useState('')
@@ -63,15 +66,33 @@ export default function PredictiveIntelligence() {
       if (hot && hot.predictions) {
         setHotspots(hot.predictions)
         if (hot.predictions.length > 0) {
-          setSelectedStationId(hot.predictions[0].station_id)
+          const matchedStation = urlStation
+            ? hot.predictions.find(h => (h.station_name || '').toLowerCase().includes(urlStation.toLowerCase()) || h.station_id === urlStation)
+            : null
+          setSelectedStationId(matchedStation ? matchedStation.station_id : hot.predictions[0].station_id)
         }
       }
       if (temp) {
         setTemporal(temp)
       }
       setLoading(false)
+
+      // Auto-trigger case resolution if caseId provided
+      const targetCase = urlCaseId ? parseInt(urlCaseId) : 10042
+      if (targetCase) {
+        setResolutionLoading(true)
+        fetchCaseResolution(targetCase)
+          .then(res => {
+            setResolutionResult(res)
+            setResolutionLoading(false)
+          })
+          .catch(err => {
+            console.warn('[PredictiveIntel] Auto-resolution warning:', err)
+            setResolutionLoading(false)
+          })
+      }
     })
-  }, [])
+  }, [urlCaseId, urlStation])
 
   // Fetch crime type forecast whenever station selection changes
   useEffect(() => {
@@ -92,8 +113,8 @@ export default function PredictiveIntelligence() {
 
   // Run case resolution prediction
   const handlePredictResolution = async (e) => {
-    e.preventDefault()
-    if (!caseIdInput.trim()) return
+    if (e && e.preventDefault) e.preventDefault()
+    if (!caseIdInput.toString().trim()) return
     setResolutionLoading(true)
     setResolutionError('')
     setResolutionResult(null)
