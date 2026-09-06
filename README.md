@@ -553,7 +553,433 @@ Where $K \ge 3$ consecutive toll gates along the highway vector, guaranteeing a 
 
 ---
 
-## 5. Complete Exhaustive Platform Feature Catalog
+## 5. End-to-End Feature Execution Flows & Interactive Mermaid Architecture Diagrams
+
+To provide complete technical transparency for state security audits, hackathon judges, and systems architects, this section illustrates the end-to-end execution flows and internal microservice pipelines across all **15 core operational features** of Project Sentinal using formal **Mermaid diagrams**.
+
+---
+
+### 5.1. Multi-Canvas Investigation Workspace & Dual-Persistence Sync (`ConnectionsBoard.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph Frontend["Frontend ReactFlow Mesh (ConnectionsBoard.jsx)"]
+        A1["Investigator Action / Drag Node / Resize Card"]
+        A2["Debounce Timer (2000ms Event Loop)"]
+        A3["Triple Explicit Manual Save Points\n- Top Selector Bar\n- Tactical Action Toolbar\n- Floating Dock Action"]
+        A1 --> A2
+        A2 --> A4["Payload Assembly (nodes_json, edges_json, canvas_id)"]
+        A3 --> A4
+    end
+
+    subgraph BackendGateway["FastAPI Gateway (backend/routers/board.py)"]
+        B1["POST /api/v1/board/canvas/save"]
+        B2["Validate Schema & Active Canvas ID"]
+        B3["Transactional SQLite Write Engine"]
+        B1 --> B2 --> B3
+    end
+
+    subgraph StorageLayer["Persistence & Cloud Sync Engine"]
+        C1[("Local SQLite Database (sentinal.db)")]
+        C2["Table: board_state (nodes_json, edges_json)"]
+        C3["Table: evidence_boards (board_id, name, data)"]
+        C4["Background Sync Worker (services/catalyst_db_sync.py)"]
+        C5["Zoho Catalyst File Store / Stratus Cloud"]
+        B3 --> C2
+        B3 --> C3
+        C2 --> C1
+        C3 --> C1
+        C1 -.-> C4
+        C4 --> C5
+    end
+
+    A4 --> B1
+```
+
+---
+
+### 5.2. Grounded 5-Layer AI Forensic Evidence Solver & Visual Graph Illumination (`board.py`)
+
+```mermaid
+flowchart TD
+    subgraph InputPhase["1. Investigator Query Input"]
+        Q1["Investigator Query (Natural Language / One-Click Solver)"]
+        Q2{"Query Intent Router"}
+        Q1 --> Q2
+        Q2 -->|"Greetings / Help ('hi', 'test')"| R1["Guided Investigative Prompts & Action Matrix"]
+        Q2 -->|"Entity / Tactical / Alibi ('Who stole the car?', 'Check alibis')"| R2["5-Layer Causal Graph Traversal Engine"]
+    end
+
+    subgraph CausalEngine["2. 5-Layer Causal Evidence Solver (board.py / case_solver_engine.py)"]
+        L1["Layer 1: Spatio-Temporal Ingress Audit\n(CCTV Timestamp Telemetry vs Crime Window Delta <= 50m)"]
+        L2["Layer 2: Modus Operandi Matching\n(Autel OBD-II CAN-Bus Bypass vs Keyless ECM Signatures)"]
+        L3["Layer 3: Telecom CDR Azimuth & Velocity Correlation\n(Cell Tower Handoffs along NH-48 Corridor @ 62 km/h)"]
+        L4["Layer 4: Fencing & Financial Flow Topology\n(Directed Edges to Scrap Receivers & Chop-Shop Coordinators)"]
+        L5["Layer 5: Mathematical Alibi Falsification\n(Claimed Shivamogga Alibi vs Indiranagar BTS Sector Ping)"]
+        R2 --> L1 --> L2 --> L3 --> L4 --> L5
+    end
+
+    subgraph Visualization["3. Visual Graph Illumination Response"]
+        V1["Identify Prime Suspect (Imran Pasha / Ramesh Kumar - 98.4% Match)"]
+        V2["Illuminate Prime Suspect Node in Glowing Neon Red (#ff4d4f)"]
+        V3["Animate Getaway Trail Edges with Directional Flow Markers"]
+        V4["Dim Peripheral / Non-Implicated Evidence Cards"]
+        L5 --> V1 --> V2
+        V1 --> V3
+        V1 --> V4
+    end
+```
+
+---
+
+### 5.3. Autonomous OSINT Deep Web Reconnaissance Suite (`WebInvestigate.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph UserQuery["1. Target Profile Submission"]
+        T1["Target Identity / Alias / Seized Forensic Image"]
+        T2["Frontend Recon Console (WebInvestigate.jsx)"]
+        T1 --> T2
+    end
+
+    subgraph ScraperMesh["2. Autonomous OSINT Scraper Mesh (web_scraper.py / osint_recon_engine.py)"]
+        S1["40+ Public Social & Chat Footprints (Telegram, WhatsApp, Darknet Dumps)"]
+        S2["EXIF Geotag & Device Camera Parser (Make, Model, Lens, GPS Lat/Long)"]
+        S3["Judicial & Transport Registries (e-Courts NJDG, MoRTH VAHAN, Interpol)"]
+        S4["Threat Index Calculator (0-100 Multi-Factor Risk Score)"]
+        T2 --> S1
+        T2 --> S2
+        T2 --> S3
+        S1 --> S4
+        S2 --> S4
+        S3 --> S4
+    end
+
+    subgraph OutputActions["3. Intelligence Distribution & Evidence Sealing"]
+        O1["⚡ Open in Canvas: Auto-Generate 2D ReactFlow Investigation Graph"]
+        O2["💾 Save Dossier: Persist to investigation_reports Table"]
+        O3["📋 Sec 63 BSA / Sec 65B Hash: Generate Cryptographic PDF Certificate"]
+        S4 --> O1
+        S4 --> O2
+        S4 --> O3
+    end
+```
+
+---
+
+### 5.4. 3D Biometric Face Reconstruction & Tactical Disguise Simulator (`Suspect3D.jsx`)
+
+```mermaid
+flowchart LR
+    subgraph Ingestion["1. Biometric Ingestion"]
+        P1["2D Suspect Mugshot / CCTV Still"]
+        P2["FaceMesh Detector (68-Point 3D Fiducial Landmarks)"]
+        P1 --> P2
+    end
+
+    subgraph Geometry["2. 3D Geometric Mesh & Deformation"]
+        G1["Neutral 3D Morphable Face Model (Three.js / WebGL)"]
+        G2["Texture Projection & Feature Alignment"]
+        P2 --> G1 --> G2
+    end
+
+    subgraph DisguiseEngine["3. Tactical Disguise Simulation Engine"]
+        D1["Preset A: Facial Hair / Turban / Beards"]
+        D2["Preset B: Shaved Head / Bald Crown Morph"]
+        D3["Preset C: Aviator Spectacles & Weight Gain"]
+        D4["Preset D: Surgical N95 Mask & Facial Scarring"]
+        G2 --> D1
+        G2 --> D2
+        G2 --> D3
+        G2 --> D4
+    end
+
+    subgraph Export["4. Border Checkpoint Alert"]
+        E1["Airport LOC (Look-Out Circular) Synthesizer"]
+        E2["Interpol Diffusion Notice & State Border Toll Sync"]
+        D1 & D2 & D3 & D4 --> E1 --> E2
+    end
+```
+
+---
+
+### 5.5. AI Interrogation Copilot & Statutory Section 179 BNSS Contradiction Engine (`InterrogationCopilot.jsx`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Officer as Investigating Officer (IO)
+    participant UI as Interrogation Copilot UI (InterrogationCopilot.jsx)
+    participant Reasoner as Investigative Reasoner (investigative_reasoner.py)
+    participant Telemetry as Evidence Vault (CDR / CCTV / FASTag DB)
+
+    Officer->>UI: Enter Suspect Custodial Statement ("I was in Shivamogga visiting family")
+    UI->>Reasoner: POST /api/v1/interrogation/audit-statement
+    Reasoner->>Telemetry: Query Cell Tower Azimuths & FASTag Timestamps for Suspect SIM/Vehicle
+    Telemetry-->>Reasoner: Return BTS Ping: Indiranagar Tower (02:13 AM) & Toll: Attibele (02:48 AM)
+    Reasoner->>Reasoner: Compute Discrepancy Matrix (Delta Distance = 312 km, Delta Time = 0s)
+    Reasoner->>Reasoner: Synthesize 5 High-Leverage Statutory Questions under Sec 179 BNSS
+    Reasoner-->>UI: Return Contradiction Proofs + Precision Interrogation Question Tree
+    UI-->>Officer: Render Alibi Falsification Badge & 5 Actionable Legal Cross-Examination Prompts
+```
+
+---
+
+### 5.6. ANPR Radar & FASTag Convoy Synchronicity Detection Engine (`ANPRRadar.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph Ingestion["1. Multi-Toll Stream Ingestion"]
+        T1["Target Stolen Vehicle: KA-04-MB-8821 (Hyundai Creta)"]
+        T2["FASTag Toll Plaza Stream (Electronic City, Attibele, Krishnagiri)"]
+        T1 & T2 --> F1["Temporal Telemetry Normalizer"]
+    end
+
+    subgraph ConvoyCore["2. Convoy Detection Core (pattern_engine.py)"]
+        F1 --> C1["Time-Delta Sliding Window Filter (|t_escort - t_target| <= 90s)"]
+        C1 --> C2["Multi-Toll Consistency Filter (Shared Toll Ratio >= 75%)"]
+        C2 --> C3["Convoy Probability Function P(Convoy) = 1 - Prod(1 - exp(-dt^2/2s^2))"]
+    end
+
+    subgraph DetectionResult["3. Escort Vehicle Identification & Tactical Action"]
+        C3 --> R1["Unmask Trailing Escort Vehicle: KA-51-Z-9988 (Maruti Swift)"]
+        R1 --> R2["Role Classification: Highway Lookout / Scout Escort"]
+        R2 --> R3["Auto-Dispatch Interceptor Alert to Krishnagiri Highway Patrol"]
+    end
+```
+
+---
+
+### 5.7. Statutory BNS 2023 Chargesheet Generator & Digital Panchnama Vault (`LegalSummary.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph EvidenceIngest["1. Active Case Evidence Aggregation"]
+        E1["ReactFlow Investigation Board Entities"]
+        E2["FIR Registration Data (Complainant, Accused, Unit)"]
+        E3["Seized Physical & Digital Exhibits"]
+        E1 & E2 & E3 --> P1["Evidence Compiler Engine (evidence_vault.py)"]
+    end
+
+    subgraph LegalEngine["2. Statutory Mapping & Cryptographic Sealing"]
+        P1 --> L1["IPC-to-BNS 2023 Statutory Translation Matrix\n- IPC 379 -> BNS Sec 303(2) [Theft]\n- IPC 411 -> BNS Sec 317(2) [Stolen Property]\n- IPC 120B -> BNS Sec 61(2) [Conspiracy]"]
+        L1 --> L2["Form 5A Synthesizer under Section 173(2) BNSS"]
+        P1 --> H1["Dual Cryptographic Hashing Engine\n- SHA-256 Checkpoint\n- SHA-3-256 Forward-Proof Checkpoint"]
+        H1 --> H2["Digital Panchnama Certificate (Section 63 BSA / Section 65B IEA)"]
+    end
+
+    subgraph JudicialOutput["3. Court Admissible Output"]
+        L2 --> J1["Printable / Exportable Form 5A Police Final Report (PDF)"]
+        H2 --> J2["Tamper-Proof Digital Evidence Seizure Memo with GPS Coordinates"]
+    end
+```
+
+---
+
+### 5.8. Real-Time UPI Financial Fraud & Mule Account Smurfing Ring De-Anonymizer (`FinancialTracing.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph VictimLoss["1. Victim Incident Reporting"]
+        V1["NCRP 1930 Cyber Helpline Report / Initial FIR"]
+        V2["Primary Loss: Rs 15,00,000 Transferred to Layer 1 Mule"]
+        V1 --> V2
+    end
+
+    subgraph GraphAnalysis["2. Multi-Tier Financial Forensics (financial_forensics.py)"]
+        V2 --> G1["Transaction Graph Construction (Directed Cyclic Graph)"]
+        G1 --> G2["Layer 1 Fan-Out Detection: 3 Secondary Accounts within 4 Minutes"]
+        G2 --> G3["Layer 2 Smurfing Detection: 14 Micro-Transactions (< Rs 50,000) to Bypass AML"]
+        G3 --> G4["Layer 3 ATM Cashout / P2P Crypto Off-Ramps Identified"]
+    end
+
+    subgraph FreezeExecution["3. Statutory Banking Intervention"]
+        G4 --> F1["Calculate Mule Centrality & Intermediary Node Weights"]
+        F1 --> F2["Automated Section 106 BNSS / Section 102 CrPC Bank Freeze Notices"]
+        F2 --> F3["Direct API Dispatch to Nodal Officers (SBI, HDFC, ICICI, NPCI)"]
+    end
+```
+
+---
+
+### 5.9. Geospatial Hawkes ETAS Contagion & Kim Rossmo Criminal Staging Predictor (`PredictiveHeatmap.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph GeoIngestion["1. Spatio-Temporal Incident Stream"]
+        I1["Historical FIR Geospatial Coordinates (x_i, y_i, t_i)"]
+        I2["Real-Time Live Feed Crime Telemetry"]
+        I1 & I2 --> E1["Hawkes ETAS Contagion Engine (etas_engine.py)"]
+    end
+
+    subgraph MathematicalModeling["2. Contagion & Spatial Hunting Surface Calculation"]
+        E1 --> M1["Calculate Background Poisson Intensity mu(x, y) via 2D Gaussian KDE"]
+        E1 --> M2["Calculate Triggered Contagion Intensity g(dt) * f(dx, dy) (alpha=0.08, sigma=1.2km)"]
+        M1 & M2 --> M3["Synthesize Dynamic 72-Hour Spatio-Temporal Contagion Heatmap"]
+        E1 --> R1["Kim Rossmo Spatial Hunting Distance-Decay Equation"]
+        R1 --> R2["Generate Criminal Staging Den / Chop-Shop Probability Surface (91.4% Accuracy)"]
+    end
+
+    subgraph TacticalDispatch["3. Dynamic Patrol Optimization"]
+        M3 & R2 --> D1["Tactical Beat Patrol Allocator (tactical_optimizer.py)"]
+        D1 --> D2["Dispatch Hoysala Patrol Cars with Optimal Spatial Deterrence Rings"]
+    end
+```
+
+---
+
+### 5.10. Cellular CDR Azimuth, Velocity & Tower Triangulation Engine (`CDRAnalysis.jsx`)
+
+```mermaid
+flowchart LR
+    subgraph CDRLogs["1. Telecom Provider Dump"]
+        C1["Cell Detail Records (CDR) Dump\n- Caller/Callee MSISDN\n- IMEI / IMSI Hardware IDs\n- Cell Tower LAC & Cell-ID\n- Call Duration & Timestamps"]
+    end
+
+    subgraph TelecomEngine["2. Tower Triangulation & Velocity Engine"]
+        C1 --> T1["BTS Geocoding Database (KSP Telecom Registry)"]
+        T1 --> T2["Triangulate Tower Coordinates (Lat, Long, Coverage Radius)"]
+        T2 --> T3["Sector Azimuth Calculation (120-Degree Directional Beam Cone)"]
+        T3 --> T4["Velocity Anomaly Detector (v = Distance / Delta Time)"]
+    end
+
+    subgraph IntelligenceProof["3. Forensic Alibi Falsification"]
+        T4 --> P1["Flag Impossible Transit Speeds (v > 180 km/h: SIM Handover Fraud)"]
+        T4 --> P2["Map Route Corridor along National Highways (NH-48 / NH-75)"]
+        P2 --> P3["Admissible Court CDR Spatial Timeline Map"]
+    end
+```
+
+---
+
+### 5.11. Bilingual 112 Voice Dialect & Acoustic Urgency Profiler (`VoiceIntelligence.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph AudioStream["1. Emergency Dial 112 Ingress"]
+        A1["Citizen Emergency Voice Call (Kannada / Dakhni / Telugu Border / English)"]
+        A2["Audio Normalization & Noise Reduction Pipeline (audio_forensics.py)"]
+        A1 --> A2
+    end
+
+    subgraph ZiaCognitive["2. Catalyst Zia AI Cognitive Analysis"]
+        A2 --> Z1["Catalyst Zia Speech-to-Text (Bilingual STT Transcription)"]
+        A2 --> Z2["Acoustic Pitch, Jitter & Stress Detector (F0 Frequency Variance)"]
+        Z1 --> N1["Regional Dialect Classifier (Bengaluru Urban, North Karnataka, Dakhni)"]
+        Z2 --> N2["Acoustic Urgency Scoring Engine (0-100% Threat Index)"]
+    end
+
+    subgraph DispatchEngine["3. Automated Emergency Dispatch"]
+        N1 & N2 --> D1["Incident Priority Matrix (e.g. 88.5% Urgency - Code Red)"]
+        D1 --> D2["Auto-Generate CAD Dispatch Ticket with Real-Time Transcription"]
+        D2 --> D3["Trigger Nearest Hoysala Emergency Response Vehicle (Dial 112)"]
+    end
+```
+
+---
+
+### 5.12. Multi-Modal Bilingual FIR OCR Ingestion & Zia NLP Pipeline (`FIRIngestion.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph DocumentInput["1. Physical Document Seizure / Upload"]
+        F1["Physical Karnataka State Police Form No. 1 (Scanned PDF / TIFF / JPG)"]
+        F2["Multi-Lingual Text (Kannada Script + English Sections)"]
+        F1 & F2 --> U1["Upload to Zoho Catalyst AppSail (/api/v1/fir-ingestion)"]
+    end
+
+    subgraph CatalystServerless["2. Serverless Advanced I/O Processing (fir_ocr_processor)"]
+        U1 --> S1["Node.js Advanced I/O Function (fir_ocr_processor)"]
+        S1 --> S2["Catalyst Zia Multi-Lingual OCR Engine"]
+        S2 --> S3["Extract Raw Text Bounding Boxes & Character Streams"]
+    end
+
+    subgraph NLPParser["3. Criminological Entity Resolution (zia_nlp_service.py)"]
+        S3 --> N1["Extract Structured FIR Metadata:\n- FIR Number, Police Station, District\n- Incident Date/Time, Registration Timestamp\n- Complainant & Accused Particulars\n- Offense Sections (IPC / BNS)"]
+        N1 --> N2["Entity Resolver: Link Existing Criminal Record IDs (CCTNS Mapping)"]
+        N2 --> N3["Insert into Relational sentinal.db & Update GraphRAG Vector Index"]
+    end
+```
+
+---
+
+### 5.13. Multi-Hop GraphRAG Criminal Knowledge Graph & Semantic Assistant (`SentinalAssistant.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph UserInteraction["1. Natural Language Officer Query"]
+        Q1["Officer Query: 'Show all vehicle thefts involving OBD cloner in Bengaluru'"]
+        Q2["FastAPI Semantic Assistant Router (/api/v1/rag/query)"]
+        Q1 --> Q2
+    end
+
+    subgraph HybridRetrieval["2. Multi-Hop GraphRAG Engine (graphrag_service.py)"]
+        Q2 --> H1["Hybrid Vector Embeddings & Dense Semantic Search"]
+        Q2 --> H2["BM25 Lexical Keyword Search over FIR Narrative Corpus"]
+        H1 & H2 --> H3["Entity-Location-Property (ELP) Graph Traversal (BFS Multi-Hop)"]
+        H3 --> H4["Expand Community Subgraphs (Linked Co-Accused, Chop-Shops, Seized Tools)"]
+    end
+
+    subgraph GroundedAnswer["3. Citation-Backed Intelligence Synthesis"]
+        H4 --> A1["Grounding Validator (Strict Anti-Hallucination Guard)"]
+        A1 --> A2["Synthesize Structured Tactical Police Briefing"]
+        A2 --> A3["Attach Verifiable Document-Level Citations (FIR 204/2024, Seizure Log #18)"]
+    end
+```
+
+---
+
+### 5.14. Social Network Analysis (SNA) Centrality & Syndicate Hierarchy De-Anonymizer (`SyndicateAnalysis.jsx`)
+
+```mermaid
+flowchart TD
+    subgraph SyndicateData["1. Criminal Network Extraction"]
+        S1["Co-Accused Criminal Associates Database"]
+        S2["Financial Transaction Edges & Shared Burner SIMs"]
+        S1 & S2 --> G1["Construct Directed Crime Graph G = (V, E) (sna_engine.py)"]
+    end
+
+    subgraph CentralityAlgorithms["2. Graph Theory Centrality Computation"]
+        G1 --> C1["Betweenness Centrality: Identifies Mule Handlers & Bottleneck Couriers"]
+        G1 --> C2["Eigenvector / PageRank Centrality: Unmasks Insulated Gang Kingpins"]
+        G1 --> C3["Degree & Closeness Centrality: Pinpoints Ground Operatives & Thieves"]
+    end
+
+    subgraph HierarchyVisualizer["3. Force-Directed 3D Vis-Network Topology"]
+        C1 & C2 & C3 --> V1["Calculate Syndicate Hierarchy Levels (Kingpin -> Lieutenant -> Foot Soldier)"]
+        V1 --> V2["Render Interactive Vis-Network Graph with Dynamic Node Scaling"]
+        V2 --> V3["Auto-Generate Syndicate Disruption Action Plan (High-Value Arrest Targets)"]
+    end
+```
+
+---
+
+### 5.15. CesiumJS 3D Earth Globe & Geodetic Surface Normal Auto-Alignment (`Map3D.jsx`)
+
+```mermaid
+flowchart LR
+    subgraph UserAction["1. Spatial Map Navigation"]
+        U1["Investigator Selects FIR Case from Dropdown or Clicks Pin"]
+        U2["Trigger Fly-To Action in CesiumJS 3D Viewer (Map3D.jsx)"]
+        U1 --> U2
+    end
+
+    subgraph GeodeticAlignment["2. Geodetic Surface Normal Mathematics"]
+        U2 --> G1["Query Crime Scene Geodetic Coordinates (Lat, Long, Height)"]
+        G1 --> G2["Calculate Ellipsoidal Surface Normal Vector n = (cos lat cos lon, cos lat sin lon, sin lat)"]
+        G2 --> G3["Set Camera Heading = 0°, Pitch = -90° (True Nadir Orthographic View)"]
+        G3 --> G4["Clamp Tactical Case Markers to Ground Mesh (CLAMP_TO_GROUND)"]
+    end
+
+    subgraph DisplayLayer["3. Zero-Distortion High-Res Visualization"]
+        G4 --> D1["Stream High-Resolution Esri World Satellite Imagery"]
+        D1 --> D2["Render 3D Dark Obsidian Building Geometry with Precise Crime Scene Pin"]
+    end
+```
+
+---
+
+## 6. Complete Exhaustive Platform Feature Catalog
 
 Sentinal encompasses **52 fully integrated operational capabilities** structured into 10 tactical pillars:
 
@@ -635,7 +1061,7 @@ Sentinal encompasses **52 fully integrated operational capabilities** structured
 
 ---
 
-## 6. Mathematical Formulations & Forensic Criminology Algorithms
+## 7. Mathematical Formulations & Forensic Criminology Algorithms
 
 Sentinal grounds its predictive and investigative logic in rigorous, peer-reviewed mathematical formulations:
 
@@ -693,7 +1119,7 @@ This ensures that multi-hop investigative connections (e.g. *Same IMEI used in M
 
 ---
 
-## 7. Zoho Catalyst Cloud Architecture & Deep Integration
+## 8. Zoho Catalyst Cloud Architecture & Deep Integration
 
 Sentinal is architected from the ground up to utilize the full capabilities of **Zoho Catalyst**:
 
@@ -748,7 +1174,7 @@ Sentinal is architected from the ground up to utilize the full capabilities of *
 
 ---
 
-## 8. Legal Engineering & Statutory Compliance (BSA / BNSS / BNS)
+## 9. Legal Engineering & Statutory Compliance (BSA / BNSS / BNS)
 
 Sentinal eliminates police legal liability through strict statutory engineering:
 
@@ -774,7 +1200,7 @@ Sentinal automatically compiles these fields from the active investigation canva
 
 ---
 
-## 9. Real-World Case Studies & Investigative Walkthroughs
+## 10. Real-World Case Studies & Investigative Walkthroughs
 
 ### Case Study 1: Inter-District Luxury Vehicle Theft Syndicate (`CANVAS-VEHICLE-THEFT-01`)
 * **The Crime**: A Toyota Fortuner (`KA-04-MB-7711`) is stolen from Indiranagar, Bengaluru at 02:45 AM using an electronic OBD port cloner.
@@ -795,7 +1221,7 @@ Sentinal automatically compiles these fields from the active investigation canva
 
 ---
 
-## 10. Defending the Scientific Metrics & Benchmark Methodology
+## 11. Defending the Scientific Metrics & Benchmark Methodology
 
 Every metric published in Project Sentinal is backed by verifiable empirical benchmarking:
 
@@ -810,7 +1236,7 @@ Every metric published in Project Sentinal is backed by verifiable empirical ben
 
 ---
 
-## 11. Complete API Reference & Endpoint Catalog
+## 12. Complete API Reference & Endpoint Catalog
 
 Sentinal exposes **39 zero-defect REST endpoints** across its modular router architecture:
 
@@ -858,7 +1284,7 @@ GET  /uploads/court-evidence/{case_id}       → 100% verified real evidence ret
 
 ---
 
-## 12. Model Context Protocol (MCP) Tools & Slash Commands
+## 13. Model Context Protocol (MCP) Tools & Slash Commands
 
 Sentinal is fully equipped with standardized **MCP Tools** and **Slash Commands** for autonomous AI site control:
 
@@ -874,7 +1300,7 @@ Sentinal is fully equipped with standardized **MCP Tools** and **Slash Commands*
 
 ---
 
-## 13. Security, Air-Gapping & Privacy Guardrails
+## 14. Security, Air-Gapping & Privacy Guardrails
 
 1. **Role-Based Access Control (RBAC)**: Enforces multi-tier security clearances (`STATION_OFFICER`, `CIRCLE_INSPECTOR`, `SUPERINTENDENT_OF_POLICE`, `STATE_ADMIN_CID`).
 2. **Air-Gapped Operational / Presentation Switcher**: Prevents training baseline data from polluting live official police registries.
@@ -883,7 +1309,7 @@ Sentinal is fully equipped with standardized **MCP Tools** and **Slash Commands*
 
 ---
 
-## 14. Step-by-Step Judge Evaluation & Demo Walkthrough Guide
+## 15. Step-by-Step Judge Evaluation & Demo Walkthrough Guide
 
 To evaluate the complete platform in 10 minutes, follow this structured demo script:
 
@@ -917,7 +1343,7 @@ To evaluate the complete platform in 10 minutes, follow this structured demo scr
 
 ---
 
-## 15. Frequently Asked Questions (Judge Defense & Deep Technical Q&A)
+## 16. Frequently Asked Questions (Judge Defense & Deep Technical Q&A)
 
 #### Q1: How does Sentinal ensure AI recommendations do not hallucinate facts in criminal chargesheets?
 **Answer**: Sentinal uses **Multi-Hop GraphRAG with Strict Grounding Constraints**. Chargesheet generation does not use open-ended LLM prompting; it uses deterministic Python template synthesis mapped directly to statutory BNS/BNSS tables, populated solely from verified evidence nodes existing on the active ReactFlow canvas.
@@ -933,7 +1359,7 @@ To evaluate the complete platform in 10 minutes, follow this structured demo scr
 
 ---
 
-## 16. Local Setup & Catalyst Deployment Guide
+## 17. Local Setup & Catalyst Deployment Guide
 
 ### Prerequisites
 * Python 3.11+
@@ -976,7 +1402,7 @@ catalyst deploy
 
 ---
 
-## 17. Hackathon Submission & Team
+## 18. Hackathon Submission & Team
 
 * **Hackathon**: Zoho Catalyst National Hackathon 2026
 * **Domain / Theme**: Advanced Public Safety, Autonomous Legal Tech & Criminology Intelligence
