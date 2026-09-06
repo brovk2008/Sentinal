@@ -1024,7 +1024,7 @@ export default function ConnectionsBoard() {
   const [pendingEdge, setPendingEdge] = useState(null)
   const [saveStatus, setSaveStatus] = useState('')
   const [canvases, setCanvases] = useState(DEFAULT_CANVAS_OPTIONS)
-  const [currentCanvasId, setCurrentCanvasId] = useState(urlCanvasId || 'CANVAS-VEHICLE-THEFT-01')
+  const [currentCanvasId, setCurrentCanvasId] = useState(urlCanvasId || 'CANVAS-ROBBERY-10042')
 
   // Auto-generation state
   const [autoGenTitle, setAutoGenTitle] = useState('')
@@ -1089,7 +1089,7 @@ export default function ConnectionsBoard() {
     setCurrentCanvasId(canvasId)
     setDetectiveVerdict(null)
     
-    const preset = PRESET_CANVAS_DATA[canvasId] || (canvasId === 'default_canvas' ? PRESET_CANVAS_DATA['CANVAS-VEHICLE-THEFT-01'] : null)
+    const preset = PRESET_CANVAS_DATA[canvasId] || (canvasId === 'default_canvas' ? PRESET_CANVAS_DATA['CANVAS-ROBBERY-10042'] : null)
 
     if (!forcePreset) {
       try {
@@ -1133,7 +1133,7 @@ export default function ConnectionsBoard() {
 
   useEffect(() => {
     loadCanvasList()
-    const targetId = urlCanvasId || 'CANVAS-VEHICLE-THEFT-01'
+    const targetId = urlCanvasId || 'CANVAS-ROBBERY-10042'
     switchCanvas(targetId)
   }, [loadCanvasList, switchCanvas, urlCanvasId])
 
@@ -2017,10 +2017,11 @@ export default function ConnectionsBoard() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {[
+              { label: 'Who committed the robbery?', q: 'Who committed the robbery in Case 10042 and what evidence links the suspects?' },
               { label: 'Who stole the car?', q: 'Who stole the white Hyundai Creta and how did they execute the theft?' },
-              { label: 'Trace Escape Route', q: 'Trace the vehicle getaway path from Indiranagar to the toll checkpoint.' },
-              { label: 'Check Alibis', q: 'Assess suspect alibis and point out contradictions with cell tower CDR logs.' },
-              { label: 'Action Plan', q: 'What immediate police warrants and search actions should be executed?' }
+              { label: 'Trace Escape Route', q: 'Trace the vehicle getaway path from Koramangala to the outer ring road.' },
+              { label: 'Check Alibis', q: 'Assess suspect alibis and point out contradictions with cell tower CDR logs and physical seizures.' },
+              { label: 'Action Plan', q: 'What immediate chargesheet submission, warrants, and court actions should be executed?' }
             ].map(p => (
               <button
                 key={p.label}

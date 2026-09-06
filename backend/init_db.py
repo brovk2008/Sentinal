@@ -585,6 +585,45 @@ def seed_case_10042():
             """)
             con.commit()
             print("[init_db] Seeded CaseMaster 10042 (Koramangala Robbery).")
+
+        # Also seed CANVAS-ROBBERY-10042 into board_state and evidence_boards
+        now = datetime.now().isoformat()
+        robbery_nodes = [
+            {"id": "sn_1", "type": "sentinalNode", "position": {"x": 60, "y": 140}, "data": {"type": "case", "label": "FIR #1044300062026", "subtitle": "Case 10042 · Sec 309 BNS & 184 MVA", "content": "Robbery of handbag, 10g gold chain & cash. Koramangala PS.", "tags": ["Heinous", "Under Investigation"], "color": "#c8814a"}},
+            {"id": "sn_2", "type": "sentinalNode", "position": {"x": 360, "y": 80}, "data": {"type": "person", "label": "Sneha Ramaiah (29 yrs)", "subtitle": "Victim / Complainant", "content": "Software Engineer returning home at 21:30 hrs. Deposition recorded.", "tags": ["Complainant", "CW-1"], "color": "#52b0e0"}},
+            {"id": "sn_3", "type": "sentinalNode", "position": {"x": 360, "y": 260}, "data": {"type": "location", "label": "Koramangala Incident Spot", "subtitle": "Lat 12.934567, Lng 77.610234", "content": "Robbery site. 13-Mar-2026 21:30 hrs. PS-0006 Koramangala jurisdiction.", "tags": ["Crime Scene", "PS-0006"], "color": "#52b0e0"}},
+            {"id": "sn_4", "type": "sentinalNode", "position": {"x": 360, "y": 460}, "data": {"type": "vehicle", "label": "Motorcycle KA-05-EF-7823", "subtitle": "Getaway Vehicle · Fled via ORR", "content": "Two suspects escaped on black motorcycle towards Outer Ring Road.", "tags": ["Vehicle Seized", "MVA 184"], "color": "#b452e0"}},
+            {"id": "sn_5", "type": "sentinalNode", "position": {"x": 680, "y": 80}, "data": {"type": "evidence", "label": "Handbag & ₹18,500 Cash", "subtitle": "Recovered Physical Loot", "content": "Seized during custodial search. Section 106 BNSS inventory complete.", "tags": ["Physical Seizure", "Sec 106 BNSS"], "color": "#e0c852"}},
+            {"id": "sn_6", "type": "sentinalNode", "position": {"x": 680, "y": 250}, "data": {"type": "evidence", "label": "Gold Chain (10 grams)", "subtitle": "Recovered from Accused A1", "content": "Identified by complainant during test identification parade (TIP).", "tags": ["Property Seizure"], "color": "#e0c852"}},
+            {"id": "sn_7", "type": "phone", "label": "Samsung Galaxy S23", "subtitle": "Stolen Mobile Device", "content": "IMEI matched victim handset. Tracked via Koramangala cell tower ping.", "tags": ["Digital Telemetry", "CDR Intercept"], "color": "#52e07a"},
+            {"id": "sn_8", "type": "sentinalNode", "position": {"x": 1000, "y": 120}, "data": {"type": "person", "size": "md", "label": "Manjunath Gowda (A1, 34 yrs)", "subtitle": "Prime Accused (ACC-7701)", "content": "Arrested 16-Mar-2026 by SI Ravi Kumar Nair (EMP-3817). Rider of KA-05-EF-7823.", "tags": ["Prime Suspect", "Arrest ARR-3301"], "color": "#e05252", "risk": "HIGH"}},
+            {"id": "sn_9", "type": "sentinalNode", "position": {"x": 1000, "y": 320}, "data": {"type": "person", "size": "md", "label": "Praveen Shetty (A2, 28 yrs)", "subtitle": "Accomplice (ACC-7702)", "content": "Arrested 17-Mar-2026. Pillion rider who forcibly snatched the handbag.", "tags": ["Co-Accused", "Arrest ARR-3302"], "color": "#e05252", "risk": "HIGH"}},
+            {"id": "sn_10", "type": "sentinalNode", "position": {"x": 60, "y": 440}, "data": {"type": "case", "label": "Chargesheet CS-881", "subtitle": "XLII City Sessions Court (CRT-011)", "content": "Chargesheet filed 02-May-2026 by IO Ravi Kumar Nair. Form 5A ready.", "tags": ["Court Ready", "SI Ravi Kumar"], "color": "#c8814a"}}
+        ]
+        robbery_edges = [
+            {"id": "re_1", "source": "sn_1", "target": "sn_2", "label": "Complainant Deposition", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+            {"id": "re_2", "source": "sn_1", "target": "sn_3", "label": "Incident Occurred At", "animated": True, "style": {"stroke": "rgba(82,176,224,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(82,176,224,0.85)"}},
+            {"id": "re_3", "source": "sn_3", "target": "sn_4", "label": "Getaway Route (ORR)", "animated": True, "style": {"stroke": "rgba(180,82,224,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(180,82,224,0.85)"}},
+            {"id": "re_4", "source": "sn_8", "target": "sn_4", "label": "Rider / Operates Bike", "animated": True, "style": {"stroke": "rgba(224,82,82,0.85)", "strokeWidth": 2.5}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,82,82,0.85)"}},
+            {"id": "re_5", "source": "sn_9", "target": "sn_5", "label": "Snatched Handbag", "animated": True, "style": {"stroke": "rgba(224,200,82,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,200,82,0.85)"}},
+            {"id": "re_6", "source": "sn_8", "target": "sn_6", "label": "Seized 10g Gold Chain", "animated": True, "style": {"stroke": "rgba(224,200,82,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,200,82,0.85)"}},
+            {"id": "re_7", "source": "sn_9", "target": "sn_7", "label": "Possessed Stolen S23", "animated": True, "style": {"stroke": "rgba(82,224,122,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(82,224,122,0.85)"}},
+            {"id": "re_8", "source": "sn_8", "target": "sn_10", "label": "Chargesheet Filed", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+            {"id": "re_9", "source": "sn_9", "target": "sn_10", "label": "Chargesheet Filed", "animated": True, "style": {"stroke": "rgba(200,129,74,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(200,129,74,0.85)"}},
+            {"id": "re_10", "source": "sn_1", "target": "sn_8", "label": "Arrested ARR-3301", "animated": True, "style": {"stroke": "rgba(224,82,82,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,82,82,0.85)"}},
+            {"id": "re_11", "source": "sn_1", "target": "sn_9", "label": "Arrested ARR-3302", "animated": True, "style": {"stroke": "rgba(224,82,82,0.85)", "strokeWidth": 2}, "markerEnd": {"type": "arrowclosed", "color": "rgba(224,82,82,0.85)"}}
+        ]
+        con.execute("""
+            INSERT OR REPLACE INTO board_state (case_id, nodes_json, edges_json, updated_at)
+            VALUES (?, ?, ?, ?)
+        """, ("CANVAS-ROBBERY-10042", json.dumps(robbery_nodes), json.dumps(robbery_edges), now))
+        
+        board_data = {"nodes": robbery_nodes, "connections": robbery_edges}
+        con.execute("""
+            INSERT OR REPLACE INTO evidence_boards (board_id, name, data, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, ("CANVAS-ROBBERY-10042", "Armed Robbery — Sneha Ramaiah (Case #10042)", json.dumps(board_data), now, now))
+        con.commit()
     except Exception as e:
         print(f"[init_db] Notice seeding Case 10042: {e}")
     finally:
