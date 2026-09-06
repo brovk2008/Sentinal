@@ -39,10 +39,26 @@ backend/threadpoolctl.py
 backend/test_server.py
 get_appsail_logs.js
 deploy_appsail.js
+deploy_sync.js
 *_debug.txt
 imports.txt
 structure.txt
 project_structure.txt
+
+# Test / Scratch Imagery & Artifacts
+test_*.png
+test_*.jpg
+test_*.jpeg
+*_test.png
+*_test.jpg
+tile_test.png
+osm_dark_test.png
+*.tmp
+*.bak
+scratch/
+.system_generated/
+*.suo
+*.user
 
 # Ignore large raw data files
 data_raw/
