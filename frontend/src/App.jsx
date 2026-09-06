@@ -105,8 +105,13 @@ export default function App() {
           <Route path="/"                   element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard"          element={<Dashboard />} />
           <Route path="/map"                element={<GeospatialMap />} />
+          <Route path="/spatial"            element={<Navigate to="/map" replace />} />
           <Route path="/connections"        element={<ConnectionsBoard />} />
+          <Route path="/canvas"             element={<Navigate to="/connections" replace />} />
           <Route path="/timeline/:caseId?"  element={<TimelineExplorer />} />
+          <Route path="/cases/:caseId?"     element={<TimelineExplorer />} />
+          <Route path="/case/:caseId?"      element={<TimelineExplorer />} />
+          <Route path="/cases"              element={<TimelineExplorer />} />
           <Route path="/persons"            element={<Persons />} />
           <Route path="/assistant"          element={<AIAssistant />} />
           <Route path="/ai"                 element={<Navigate to="/assistant" replace />} />
@@ -114,6 +119,7 @@ export default function App() {
           <Route path="/cdr"                element={<CDRAnalytics />} />
           <Route path="/predict"            element={<PredictiveIntelligence />} />
           <Route path="/predictions"        element={<Navigate to="/predict" replace />} />
+          <Route path="/hotspots"           element={<Navigate to="/predict" replace />} />
           <Route path="/board"              element={<EvidenceBoard />} />
           <Route path="/evidence"           element={<Navigate to="/board" replace />} />
           <Route path="/network-3d"         element={<NetworkGraph3D />} />
@@ -133,9 +139,17 @@ export default function App() {
           <Route path="/upload"             element={<DataUploadIntel />} />
           <Route path="/data-upload"        element={<Navigate to="/upload" replace />} />
           <Route path="/ocr-records"        element={<OCRRecords />} />
-          <Route path="/forensic"            element={<ForensicIntel />} />
-          <Route path="/forensics"           element={<Navigate to="/forensic" replace />} />
+          <Route path="/forensic"           element={<ForensicIntel />} />
+          <Route path="/forensics"          element={<Navigate to="/forensic" replace />} />
+          <Route path="/forensic-intel"     element={<Navigate to="/forensic" replace />} />
+          <Route path="/suspect-morph"      element={<Navigate to="/forensic" replace />} />
+          <Route path="/suspect3d"          element={<Navigate to="/forensic" replace />} />
+          <Route path="/interrogation"      element={<Navigate to="/forensic" replace />} />
+          <Route path="/fraud-room"         element={<Navigate to="/financial" replace />} />
+          <Route path="/fraud"              element={<Navigate to="/financial" replace />} />
+          <Route path="*"                   element={<Navigate to="/dashboard" replace />} />
         </Route>
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </HashRouter>
   )

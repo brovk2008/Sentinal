@@ -1514,6 +1514,22 @@ export default function ConnectionsBoard() {
     applyVerdictToCanvas(fallbackVerdict)
   }
 
+  // Demo Overlay Event Handlers
+  useEffect(() => {
+    const handlePopulate = () => {
+      switchCanvas('CANVAS-VEHICLE-THEFT-01', true)
+    }
+    const handleAI = () => {
+      handleRunDetective('Who stole the car?')
+    }
+    window.addEventListener('demo-trigger-canvas-populate', handlePopulate)
+    window.addEventListener('demo-trigger-canvas-ai', handleAI)
+    return () => {
+      window.removeEventListener('demo-trigger-canvas-populate', handlePopulate)
+      window.removeEventListener('demo-trigger-canvas-ai', handleAI)
+    }
+  }, [switchCanvas])
+
   return (
     <div style={{ width: '100%', height: 'calc(100vh - 64px)', position: 'relative', background: '#0a0a14' }}>
 
