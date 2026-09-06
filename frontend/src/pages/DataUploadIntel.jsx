@@ -57,7 +57,7 @@ export default function DataUploadIntel() {
   const handleOpenCanvas = async (fileObj) => {
     const fileId = fileObj.file_id || fileObj.id;
     const title = fileObj.label || fileObj.filename || 'Uploaded Document Investigation Canvas';
-    const text = fileObj.ai_summary || fileObj.filename || '';
+    const text = fileObj.extracted_text || fileObj.ai_summary || fileObj.filename || '';
 
     setGeneratingCanvasId(fileId || 'active');
     try {
@@ -106,6 +106,7 @@ export default function DataUploadIntel() {
         size:     (file.size / 1024).toFixed(1) + ' KB',
         ai_summary: data.ai_summary || 'Processing...',
         ai_tags:    data.ai_tags    || [],
+        extracted_text: data.extracted_text || '',
         status:     data.success ? 'success' : 'error',
         file_id:    data.file_id,
         rag_added:  data.rag_added,
